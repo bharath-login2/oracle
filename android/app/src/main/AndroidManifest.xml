@@ -6,20 +6,28 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION." />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <application
         android:label="Login2 Pro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true" 
         android:requestLegacyExternalStorage="true">
-        <receiver android:name="com.login2Pro.MyStartupReceiver" android:enabled="true" android:exported="false">
+        <!-- <receiver android:name="com.login2Pro.MyStartupReceiver" android:enabled="true" android:exported="false"> -->
+        <receiver android:name="com.example.login2.MyStartupReceiver"
+        android:enabled="true"
+        android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -65,7 +73,7 @@
             <meta-data android:name="flutterEmbedding" android:value="2" />
         <service android:name="flutter.overlay.window.flutter_overlay_window.OverlayService" android:exported="false" />
         <service android:name=".MyService" android:enabled="true" android:exported="false" android:foregroundServiceType="location" android:stopWithTask="false" />
-        <service android:name="id.flutter.flutter_background_service.BackgroundService" android:foregroundServiceType="remoteMessaging" />
+        <service android:name="id.flutter.flutter_background_service.BackgroundService" android:exported="true" android:foregroundServiceType="remoteMessaging" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

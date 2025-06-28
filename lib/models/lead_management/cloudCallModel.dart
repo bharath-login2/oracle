@@ -6,9 +6,9 @@ class CloudCallModel {
   CloudCallModel({this.status, this.message, this.data});
 
   CloudCallModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    message = json['message'];
-    data = json['data'];
+    status = json['status']??"";
+    message = json['message']??"";
+    data = json['data']??"";
   }
 
   Map<String, dynamic> toJson() {

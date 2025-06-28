@@ -4,6 +4,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/accountHeadDialog.dart';
 import '../../../models/expense/account_head_model.dart';
 
 class AccountHead extends StatefulWidget {
@@ -79,25 +80,30 @@ class _AccountHeadState extends State<AccountHead> {
                     EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                    colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.only(
-                      left: 10.0, top: 10.0, bottom: 10.0, right: 0),
+                      left: 10.0,
+                      top: 10.0,
+                      bottom: 10.0,
+                      right: 10.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       InkWell(
-                        onTap: () async {
+                        onTap: () {
                           Navigator.pop(context);
                         },
                         child: Container(
                           height: 25,
                           width: 25,
                           decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white),
-                              shape: BoxShape.circle),
+                            border: Border.all(color: Colors.white),
+                            shape: BoxShape.circle,
+                          ),
                           child: const Icon(
                             Icons.arrow_back_ios_outlined,
                             color: Colors.white,
@@ -105,12 +111,25 @@ class _AccountHeadState extends State<AccountHead> {
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        width: 25,
-                      ),
+                      const SizedBox(width: 25),
                       const Text(
                         "Account Head",
                         style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                      const Spacer(), 
+                      InkWell(
+                        onTap: () {
+                            showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        const AddAccountHeadDialog(),
+                                  );
+                        },
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                     ],
                   ),

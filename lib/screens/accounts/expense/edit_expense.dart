@@ -333,7 +333,7 @@ class _EditExpenseState extends State<EditExpense> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Person/Company"),
+                  const Text("Account Head"),
                   GestureDetector(
                     onTap: () {
                       accountsDialog(context, "to");

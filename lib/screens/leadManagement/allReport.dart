@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/lead_management/leadSubTypeModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -58,6 +59,8 @@ class AllReport extends StatefulWidget {
 class _AllReportState extends State<AllReport> {
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
+  LeadSubTypeModel? leadSubTypeList;
+  Map<String, String?> selectedSubCategories = {};
   bool? result = true;
   bool? result1 = true;
   String fromdate = DateTime.now().toString();
@@ -1575,6 +1578,255 @@ class _AllReportState extends State<AllReport> {
                             const SizedBox(
                               height: 10,
                             ),
+                            // InkWell(
+                            //   onTap: () {
+                            //     showDialog(
+                            //         context: context,
+                            //         builder: (BuildContext context) {
+                            //           return AlertDialog(
+                            //             scrollable: true,
+                            //             title: const Text('Lead Category'),
+                            //             content: SizedBox(
+                            //               height: MediaQuery.of(context)
+                            //                       .size
+                            //                       .height *
+                            //                   .32,
+                            //               width: MediaQuery.of(context)
+                            //                       .size
+                            //                       .height *
+                            //                   .8,
+                            //               child: ListView.builder(
+                            //                 shrinkWrap: true,
+                            //                 itemCount: commonDetails!
+                            //                     .data.leadCategory.length,
+                            //                 itemBuilder: (context, ind) {
+                            //                   return CheckboxListTile(
+                            //                     title: SizedBox(
+                            //                       width: 200,
+                            //                       child: Text(
+                            //                         commonDetails!
+                            //                             .data
+                            //                             .leadCategory[ind]
+                            //                             .leadCategory
+                            //                             .toString(),
+                            //                         style: const TextStyle(
+                            //                             color: Colors.black,
+                            //                             fontWeight:
+                            //                                 FontWeight.w400,
+                            //                             fontSize: 14),
+                            //                       ),
+                            //                     ),
+                            //                     value: checkedCategoryItems
+                            //                             .contains(commonDetails!
+                            //                                 .data
+                            //                                 .leadCategory[ind]
+                            //                                 .leadCategoryId
+                            //                                 .toString())
+                            //                         ? true
+                            //                         : false,
+                            //                     onChanged: (bool? value) {
+                            //                       if (value == true) {
+                            //                         setState(() {
+                            //                           checkedCategoryItems.add(
+                            //                               commonDetails!
+                            //                                   .data
+                            //                                   .leadCategory[ind]
+                            //                                   .leadCategoryId
+                            //                                   .toString());
+                            //                           checkedCategoryItemsName
+                            //                               .add(commonDetails!
+                            //                                   .data
+                            //                                   .leadCategory[ind]
+                            //                                   .leadCategory
+                            //                                   .toString());
+
+                            //                           Navigator.pop(
+                            //                               context, true);
+                            //                         });
+                            //                       } else {
+                            //                         setState(() {
+                            //                           checkedCategoryItems
+                            //                               .remove(commonDetails!
+                            //                                   .data
+                            //                                   .leadCategory[ind]
+                            //                                   .leadCategoryId
+                            //                                   .toString());
+                            //                           checkedCategoryItemsName
+                            //                               .remove(commonDetails!
+                            //                                   .data
+                            //                                   .leadCategory[ind]
+                            //                                   .leadCategory
+                            //                                   .toString());
+
+                            //                           Navigator.pop(
+                            //                               context, true);
+                            //                         });
+                            //                       }
+                            //                     },
+                            //                     controlAffinity:
+                            //                         ListTileControlAffinity
+                            //                             .leading,
+                            //                   );
+                            //                 },
+                            //               ),
+                            //             ),
+                            //           );
+                            //         });
+                            //   },
+                            //   child: Container(
+                            //     width: MediaQuery.of(context).size.width * 1,
+                            //     height: 50,
+                            //     decoration: BoxDecoration(
+                            //       border: Border.all(),
+                            //       borderRadius: BorderRadius.circular(5),
+                            //     ),
+                            //     child: checkedCategoryItems.isEmpty
+                            //         ? const Padding(
+                            //             padding: EdgeInsets.only(
+                            //                 left: 10, top: 15, bottom: 10),
+                            //             child: Text('Lead Category'))
+                            //         : Padding(
+                            //             padding:
+                            //                 const EdgeInsets.only(right: 40),
+                            //             child: SizedBox(
+                            //               height: 35,
+                            //               child: ListView.builder(
+                            //                 scrollDirection: Axis.horizontal,
+                            //                 itemCount:
+                            //                     checkedCategoryItemsName.length,
+                            //                 itemBuilder: (context, i) {
+                            //                   return Padding(
+                            //                     padding: const EdgeInsets.only(
+                            //                         left: 5, right: 5),
+                            //                     child: InkWell(
+                            //                       onTap: () async {
+                            //                         leadSubTypeList =
+                            //                             await HttpService.leadSubType(
+                            //                           commonDetails!
+                            //                               .data
+                            //                               .leadCategory[i]
+                            //                               .leadCategoryId
+                            //                               .toString(),
+                            //                         );
+                            //                         setState(() {});
+                            //                       },
+                            //                       child: Row(
+                            //                         children: [
+                            //                           Container(
+                            //                             height: 35,
+                            //                             decoration: BoxDecoration(
+                            //                                 border: Border.all(
+                            //                                     color:
+                            //                                         Colors.grey,
+                            //                                     width: 0),
+                            //                                 color: Colors.white,
+                            //                                 borderRadius: const BorderRadius
+                            //                                     .only(
+                            //                                     topLeft: Radius
+                            //                                         .circular(
+                            //                                             6),
+                            //                                     bottomLeft: Radius
+                            //                                         .circular(
+                            //                                             6))),
+                            //                             child: Center(
+                            //                               child: Row(
+                            //                                 mainAxisAlignment:
+                            //                                     MainAxisAlignment
+                            //                                         .center,
+                            //                                 children: [
+                            //                                   Padding(
+                            //                                     padding:
+                            //                                         const EdgeInsets
+                            //                                             .all(
+                            //                                             10),
+                            //                                     child: Text(
+                            //                                       checkedCategoryItemsName[
+                            //                                           i],
+                            //                                       style:
+                            //                                           const TextStyle(
+                            //                                         color: Colors
+                            //                                             .black,
+                            //                                       ),
+                            //                                     ),
+                            //                                   ),
+                            //                                 ],
+                            //                               ),
+                            //                             ),
+                            //                           ),
+                            //                           InkWell(
+                            //                             onTap: () {
+                            //                               showDialog(
+                            //                                   context: context,
+                            //                                   builder:
+                            //                                       (BuildContext
+                            //                                           context) {
+                            //                                     return AlertDialog(
+                            //                                       title: const Text(
+                            //                                           'Please Confirm'),
+                            //                                       content:
+                            //                                           const Text(
+                            //                                               'Are you sure to Remove this Number?'),
+                            //                                       actions: [
+                            //                                         TextButton(
+                            //                                             onPressed:
+                            //                                                 () {
+                            //                                               Navigator.of(context)
+                            //                                                   .pop();
+                            //                                             },
+                            //                                             child: const Text(
+                            //                                                 'No')),
+                            //                                         TextButton(
+                            //                                             onPressed:
+                            //                                                 () async {
+                            //                                               setState(
+                            //                                                   () {
+                            //                                                 checkedCategoryItemsName.remove(checkedCategoryItemsName[i]);
+                            //                                                 checkedCategoryItems.remove(checkedCategoryItems[i]);
+                            //                                               });
+
+                            //                                               Navigator.of(context)
+                            //                                                   .pop();
+                            //                                             },
+                            //                                             child: const Text(
+                            //                                                 'Yes')),
+                            //                                       ],
+                            //                                     );
+                            //                                   });
+                            //                             },
+                            //                             child: Container(
+                            //                               height: 35,
+                            //                               width: 30,
+                            //                               decoration: BoxDecoration(
+                            //                                   border: Border.all(
+                            //                                       color: Colors
+                            //                                           .grey,
+                            //                                       width: 0),
+                            //                                   color: Colors.grey
+                            //                                       .shade100,
+                            //                                   borderRadius: const BorderRadius
+                            //                                       .only(
+                            //                                       topRight: Radius
+                            //                                           .circular(
+                            //                                               6),
+                            //                                       bottomRight: Radius
+                            //                                           .circular(
+                            //                                               6))),
+                            //                               child: const Icon(
+                            //                                 Icons.close,
+                            //                                 color: Colors.red,
+                            //                               ),
+                            //                             ),
+                            //                           ),
+                            //                         ],
+                            //                       ),
+                            //                     ),
+                            //                   );
+                            //                 },
+                            //               ),
+                            //             ),
+                            //           ),
+                            //   ),
+                            // ),
                             InkWell(
                               onTap: () {
                                 showDialog(
@@ -1636,7 +1888,16 @@ class _AllReportState extends State<AllReport> {
                                                               .leadCategory[ind]
                                                               .leadCategory
                                                               .toString());
-
+                                                      selectedSubCategories
+                                                          .removeWhere((key,
+                                                                  value) =>
+                                                              key ==
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategoryId
+                                                                  .toString());
                                                       Navigator.pop(
                                                           context, true);
                                                     });
@@ -1654,7 +1915,12 @@ class _AllReportState extends State<AllReport> {
                                                               .leadCategory[ind]
                                                               .leadCategory
                                                               .toString());
-
+                                                      selectedSubCategories
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategoryId
+                                                              .toString());
                                                       Navigator.pop(
                                                           context, true);
                                                     });
@@ -1670,150 +1936,247 @@ class _AllReportState extends State<AllReport> {
                                       );
                                     });
                               },
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 1,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  border: Border.all(),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: checkedCategoryItems.isEmpty
-                                    ? const Padding(
-                                        padding: EdgeInsets.only(
-                                            left: 10, top: 15, bottom: 10),
-                                        child: Text('Lead Category'))
-                                    : Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 40),
-                                        child: SizedBox(
-                                          height: 35,
-                                          child: ListView.builder(
-                                            scrollDirection: Axis.horizontal,
-                                            itemCount:
-                                                checkedCategoryItemsName.length,
-                                            itemBuilder: (context, i) {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 5, right: 5),
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    setState(() {});
-                                                  },
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        height: 35,
-                                                        decoration: BoxDecoration(
-                                                            border: Border.all(
-                                                                color:
-                                                                    Colors.grey,
-                                                                width: 0),
-                                                            color: Colors.white,
-                                                            borderRadius: const BorderRadius
-                                                                .only(
-                                                                topLeft: Radius
-                                                                    .circular(
-                                                                        6),
-                                                                bottomLeft: Radius
-                                                                    .circular(
-                                                                        6))),
-                                                        child: Center(
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        10),
-                                                                child: Text(
-                                                                  checkedCategoryItemsName[
-                                                                      i],
-                                                                  style:
-                                                                      const TextStyle(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * 1,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: checkedCategoryItems.isEmpty
+                                        ? const Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 10, top: 15, bottom: 10),
+                                            child: Text('Lead Category'))
+                                        : Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 40),
+                                            child: SizedBox(
+                                              height: 35,
+                                              child: ListView.builder(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                itemCount:
+                                                    checkedCategoryItemsName
+                                                        .length,
+                                                itemBuilder: (context, i) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5, right: 5),
+                                                    child: InkWell(
+                                                      onTap: () async {
+                                                        leadSubTypeList =
+                                                            await HttpService
+                                                                .leadSubType(
+                                                          commonDetails!
+                                                              .data
+                                                              .leadCategory[i]
+                                                              .leadCategoryId
+                                                              .toString(),
+                                                        );
+                                                        setState(() {});
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            height: 35,
+                                                            decoration: BoxDecoration(
+                                                                border: Border.all(
                                                                     color: Colors
-                                                                        .black,
+                                                                        .grey,
+                                                                    width: 0),
+                                                                color: Colors
+                                                                    .white,
+                                                                borderRadius: const BorderRadius
+                                                                    .only(
+                                                                    topLeft: Radius
+                                                                        .circular(
+                                                                            6),
+                                                                    bottomLeft:
+                                                                        Radius.circular(
+                                                                            6))),
+                                                            child: Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Padding(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    child: Text(
+                                                                      checkedCategoryItemsName[
+                                                                          i],
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                    ),
                                                                   ),
-                                                                ),
+                                                                ],
                                                               ),
-                                                            ],
+                                                            ),
                                                           ),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      context) {
-                                                                return AlertDialog(
-                                                                  title: const Text(
-                                                                      'Please Confirm'),
-                                                                  content:
-                                                                      const Text(
-                                                                          'Are you sure to Remove this Number?'),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () async {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCategoryItemsName.remove(checkedCategoryItemsName[i]);
-                                                                            checkedCategoryItems.remove(checkedCategoryItems[i]);
-                                                                          });
-
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'Yes')),
-                                                                  ],
-                                                                );
-                                                              });
-                                                        },
-                                                        child: Container(
-                                                          height: 35,
-                                                          width: 30,
-                                                          decoration: BoxDecoration(
-                                                              border: Border.all(
+                                                          InkWell(
+                                                            onTap: () {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          context) {
+                                                                    return AlertDialog(
+                                                                      title: const Text(
+                                                                          'Please Confirm'),
+                                                                      content:
+                                                                          const Text(
+                                                                              'Are you sure to Remove this Number?'),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('No')),
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () async {
+                                                                              setState(() {
+                                                                                // Remove the category and its subcategories
+                                                                                String categoryId = checkedCategoryItems[i];
+                                                                                checkedCategoryItemsName.removeAt(i);
+                                                                                checkedCategoryItems.removeAt(i);
+                                                                                selectedSubCategories.remove(categoryId);
+                                                                              });
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('Yes')),
+                                                                      ],
+                                                                    );
+                                                                  });
+                                                            },
+                                                            child: Container(
+                                                              height: 35,
+                                                              width: 30,
+                                                              decoration: BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      width: 0),
                                                                   color: Colors
-                                                                      .grey,
-                                                                  width: 0),
-                                                              color: Colors.grey
-                                                                  .shade100,
-                                                              borderRadius: const BorderRadius
-                                                                  .only(
-                                                                  topRight: Radius
-                                                                      .circular(
-                                                                          6),
-                                                                  bottomRight: Radius
-                                                                      .circular(
-                                                                          6))),
-                                                          child: const Icon(
-                                                            Icons.close,
-                                                            color: Colors.red,
+                                                                      .grey
+                                                                      .shade100,
+                                                                  borderRadius: const BorderRadius
+                                                                      .only(
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              6),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              6))),
+                                                              child: const Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
                                                           ),
-                                                        ),
+                                                        ],
                                                       ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
+                                  ),
+                                  ...checkedCategoryItems.map((categoryId) {
+                                    int index = checkedCategoryItems
+                                        .indexOf(categoryId);
+                                    String categoryName =
+                                        checkedCategoryItemsName[index];
+
+                                    return FutureBuilder(
+                                      future:
+                                          HttpService.leadSubType(categoryId),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return const CircularProgressIndicator();
+                                        } else if (snapshot.hasError) {
+                                          return Text(
+                                              'Error: ${snapshot.error}');
+                                        } else {
+                                          LeadSubTypeModel? subTypeData =
+                                              snapshot.data;
+                                          if (subTypeData?.data?.isEmpty ??
+                                              true) {
+                                            return Container();
+                                          }
+
+                                          return Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text('Lead Sub Category'),
+                                                DropdownButtonFormField<String>(
+                                                  value: selectedSubCategories[
+                                                      categoryId],
+                                                  decoration: InputDecoration(
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5),
+                                                    ),
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 10,
+                                                            vertical: 5),
+                                                  ),
+                                                  items: subTypeData!.data!
+                                                      .map((subCategory) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: subCategory
+                                                          .leadSubCategoryId,
+                                                      child: Text(subCategory
+                                                              .leadSubCategory ??
+                                                          ''),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged:
+                                                      (String? newValue) {
+                                                    setState(() {
+                                                      selectedSubCategories[
+                                                              categoryId] =
+                                                          newValue;
+                                                    });
+                                                  },
+                                                  hint: const Text(
+                                                      'Select Subcategory'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  }),
+                                ],
                               ),
                             ),
                           ],

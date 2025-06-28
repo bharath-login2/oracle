@@ -5,6 +5,8 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/accountHeadDialog.dart';
+import 'package:login2/widgets/expenseCategoryDialog.dart';
 
 class AddExpense extends StatefulWidget {
   const AddExpense({super.key});
@@ -233,43 +235,120 @@ class _AddExpenseState extends State<AddExpense> {
               const SizedBox(
                 height: 10,
               ),
+              // Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     const Text("Category"),
+              //     GestureDetector(
+              //       onTap: () {
+              //         categoryDialog(context);
+              //       },
+              //       child: Padding(
+              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
+              //         child: Container(
+              //           decoration: BoxDecoration(
+              //             color: Colors.grey.shade300,
+              //             borderRadius: BorderRadius.circular(8),
+              //           ),
+              //           child: Center(
+              //               child: Padding(
+              //             padding: const EdgeInsets.symmetric(
+              //                 horizontal: 16.0, vertical: 14.0),
+              //             child: Row(
+              //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //               children: [
+              //                 SizedBox(
+              //                     width:
+              //                         MediaQuery.of(context).size.width * 0.35,
+              //                     child: Text(
+              //                       categoryName,
+              //                       overflow: TextOverflow.ellipsis,
+              //                     )),
+              //                 GestureDetector(
+              //                   onTap: () {
+
+              //                     categoryDialog(context);
+              //                   },
+              //                   child: const Icon(
+              //                     Icons.add_circle,
+              //                     color: Colors.green,
+              //                   ),
+              //                 ),
+              //               ],
+              //             ),
+              //           )),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Category"),
-                  GestureDetector(
-                    onTap: () {
-                      categoryDialog(context);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 2.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                categoryDialog(context);
+                              },
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.35,
+                                child: Text(
+                                  categoryName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add_circle,
+                                  color: Colors.green),
+                              onPressed: () async {
+                                final newCategory = await showDialog<String>(
+                                  context: context,
+                                  builder: (context) =>
+                                      const AddCategoryDialog(),
+                                );
+
+                                if (newCategory != null &&
+                                    newCategory.isNotEmpty) {
+                                  final response =
+                                      await HttpService.addCategoryExpense(
+                                    newCategory: newCategory,
+                                  );
+
+                                  if (response != null &&
+                                      response.status == true) {
+                                    categories.add(ExpenseType(
+                                      expCatName: newCategory,
+                                      expCatId: '',
+                                    ));
+                                    filteredCategories = List.from(categories);
+                                    setState(() {});
+                                  }
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                        child: Center(
-                            child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 14.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.35,
-                                  child: Text(
-                                    categoryName,
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
-                            ],
-                          ),
-                        )),
                       ),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(
                 height: 10,
               ),
@@ -302,10 +381,48 @@ class _AddExpenseState extends State<AddExpense> {
               const SizedBox(
                 height: 10,
               ),
+              // Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     const Text("Person/Company"),
+              //     GestureDetector(
+              //       onTap: () {
+              //         accountsDialog(context, "to");
+              //       },
+              //       child: Padding(
+              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
+              //         child: Container(
+              //           decoration: BoxDecoration(
+              //             color: Colors.grey.shade300,
+              //             borderRadius: BorderRadius.circular(8),
+              //           ),
+              //           child: Center(
+              //               child: Padding(
+              //             padding: const EdgeInsets.symmetric(
+              //                 horizontal: 16.0, vertical: 14.0),
+              //             child: Row(
+              //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //               children: [
+              //                 SizedBox(
+              //                     width:
+              //                         MediaQuery.of(context).size.width * 0.35,
+              //                     child: Text(
+              //                       toAcName,
+              //                       overflow: TextOverflow.ellipsis,
+              //                     )),
+              //               ],
+              //             ),
+              //           )),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Person/Company"),
+                  const Text("Account Head"),
                   GestureDetector(
                     onTap: () {
                       accountsDialog(context, "to");
@@ -317,28 +434,60 @@ class _AddExpenseState extends State<AddExpense> {
                           color: Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Center(
-                            child: Padding(
+                        child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 14.0),
+                              horizontal: 16.0, vertical: 1.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.35,
-                                  child: Text(
-                                    toAcName,
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
+                                width: MediaQuery.of(context).size.width * 0.35,
+                                child: Text(
+                                  toAcName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // IconButton(
+                              //   icon: const Icon(Icons.add_circle,
+                              //       color: Colors.green),
+                              //   onPressed: () async {
+                              //     await showDialog(
+                              //       context: context,
+                              //       builder: (context) =>
+                              //           const AddAccountHeadDialog(),
+                              //     );
+                              //   },
+                              // )
+
+                              IconButton(
+                                icon: const Icon(Icons.add_circle,
+                                    color: Colors.green),
+                                onPressed: () async {
+                                  final result = await showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        const AddAccountHeadDialog(),
+                                  );
+
+                                  if (result == true) {
+                                    expenseMasterData =
+                                        await HttpService.expenseMasterData();
+                                    accountHeads = expenseMasterData!.data.accountHead;
+                                     filteredAccounts = List.from(accountHeads);
+
+                                    setState(() {}); 
+                                  }
+                                },
+                              ),
                             ],
                           ),
-                        )),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(
                 height: 10,
               ),
@@ -526,6 +675,52 @@ class _AddExpenseState extends State<AddExpense> {
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
+
+                  //     TextField(
+                  //   controller: searchController,
+                  //   autocorrect: false,
+                  //   keyboardType: TextInputType.visiblePassword,
+                  //   autofocus: true,
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       filteredCategories = categories
+                  //           .where((item) => item.expCatName
+                  //               .toLowerCase()
+                  //               .contains(value.toLowerCase()))
+                  //           .toList();
+                  //     });
+                  //   },
+                  //   decoration: InputDecoration(
+                  //     contentPadding: const EdgeInsets.all(8),
+                  //     hintText: 'Search',
+                  //     prefixIcon: const Icon(Icons.search),
+                  //     suffixIcon: IconButton(
+                  //       icon:
+                  //           const Icon(Icons.add_circle, color: Colors.blue),
+                  //       onPressed: () async {
+                  //         final newCategory = await showDialog<String>(
+                  //           context: context,
+                  //           builder: (context) => const AddCategoryDialog(),
+                  //         );
+
+                  //         if (newCategory != null && newCategory.isNotEmpty) {
+                  //           final response =
+                  //               await HttpService.addCategoryExpense(
+                  //                   newCategory: newCategory);
+                  //           if (response != null && response.status == true) {
+                  //             categories.add(ExpenseType(
+                  //               expCatName: newCategory,
+                  //               expCatId: '',
+                  //             ));
+
+                  //             filteredCategories = List.from(categories);
+                  //             setState(() {});
+                  //           }
+                  //         }
+                  //       },
+                  //     ),
+                  //   ),
+                  // )
                 ),
                 SizedBox(
                   height: MediaQuery.of(context).size.height * .3,

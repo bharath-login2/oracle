@@ -120,13 +120,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isAndroid) {
    final service = FlutterBackgroundService();
-  
   bool isRunning = await service.isRunning();
-  
   if (isRunning) {
     service.invoke('stopService');
   }
-
   await initService();
   service.invoke('setAsForeground');
   }

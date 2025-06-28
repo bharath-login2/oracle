@@ -205,7 +205,6 @@ class _LeadDetailsState extends State<LeadDetails> {
   LeadDeatailsModelAdd? leadDetailsAdditional;
   String? contactPermission = '';
   String? transferPermission = '';
-
   LeadMileStoneListModel? mileStone;
   bool? result = true;
   bool? result1 = true;
@@ -234,7 +233,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   bool timeOut = false;
   String callMasterId = "";
   bool canPop = true;
-
+   String cloudCall = "";
   @override
   void initState() {
     super.initState();
@@ -247,6 +246,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   getData() async {
     contactPermission = await Common.getSharedPref("saveContactPermission");
     transferPermission = await Common.getSharedPref("transferLeads");
+       cloudCall = await Common.getSharedPref("cloudCallPermission");
     setState(() {
       timeOut = false;
     });
@@ -918,13 +918,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     ),
                                                   ),
                                                 ),
-                                               // print("leadCategories length: ${leadDetails!.data!.leadCategories!.length}");
+                                                // print("leadCategories length: ${leadDetails!.data!.leadCategories!.length}");
                                                 leadDetails!
                                                             .data!
                                                             .leadCategories!
                                                             .length >
                                                         1
-                                                        
                                                     ? PopupMenuButton(
                                                         // add icon, by default "3 dot" icon
                                                         child: Container(
@@ -952,45 +951,118 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         .length;
                                                                 i++)
                                                               PopupMenuItem<
-                                                                      int>(
-                                                                  value: int.parse(leadDetails!
-                                                                      .data!
-                                                                      .leadCategories![
-                                                                          i]
-                                                                      .callMasterId
-                                                                      .toString()),
-                                                                  child: Row(
-                                                                    children: [
-                                                                      leadDetails!.data!.leadCategories![i].isSelected ==
-                                                                              true
-                                                                          ? const Icon(
-                                                                              Icons.done,
-                                                                              size: 20,
-                                                                              color: Colors.green,
-                                                                            )
-                                                                          : const SizedBox(
-                                                                              width: 15,
-                                                                            ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.5,
-                                                                        child:
-                                                                            Text(
-                                                                          leadDetails!
-                                                                              .data!
-                                                                              .leadCategories![i]
-                                                                              .leadCategory
-                                                                              .toString(),
-                                                                          maxLines:
-                                                                              3,
+                                                                  int>(
+                                                                value: int.parse(leadDetails!
+                                                                    .data!
+                                                                    .leadCategories![
+                                                                        i]
+                                                                    .callMasterId
+                                                                    .toString()),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        leadDetails!.data!.leadCategories![i].isSelected ==
+                                                                                true
+                                                                            ? const Icon(
+                                                                                Icons.done,
+                                                                                size: 20,
+                                                                                color: Colors.green,
+                                                                              )
+                                                                            : const SizedBox(width: 15),
+                                                                        const SizedBox(
+                                                                            width:
+                                                                                10),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              MediaQuery.of(context).size.width * 0.5,
+                                                                          child:
+                                                                              Text(
+                                                                            leadDetails!.data!.leadCategories![i].leadCategory.toString(),
+                                                                            maxLines:
+                                                                                3,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
                                                                         ),
+                                                                        Flexible(
+                                                                          child:
+                                                                              Container(
+                                                                            padding:
+                                                                                const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              color: leadDetails!.data!.leadCategories![i].leadStatus == "New"
+                                                                                  ? Colors.blue
+                                                                                  : leadDetails!.data!.leadCategories![i].leadStatus == "Follow Up"
+                                                                                      ? Colors.yellow
+                                                                                      : leadDetails!.data!.leadCategories![i].leadStatus == "Rejected"
+                                                                                          ? Colors.red
+                                                                                          : const Color.fromARGB(255, 96, 66, 226),
+                                                                              borderRadius: BorderRadius.circular(4),
+                                                                            ),
+                                                                            child:
+                                                                                Text(
+                                                                              leadDetails!.data!.leadCategories![i].leadStatus.toString(),
+                                                                              style: const TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 7.5,
+                                                                                fontWeight: FontWeight.bold,
+                                                                              ),
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            4),
+                                                                    SingleChildScrollView(
+                                                                       scrollDirection: Axis.horizontal,
+                                                                      child: Row(
+                                                                        children: [
+                                                                          Padding(
+                                                                            padding: const EdgeInsets
+                                                                                .only(
+                                                                                left: 25),
+                                                                            child:
+                                                                                Text(
+                                                                              'Staff: ${leadDetails!.data!.leadCategories![i].staffName.toString()}',
+                                                                              style:
+                                                                                  TextStyle(
+                                                                                fontSize: 11,
+                                                                                color: Colors.grey,
+                                                                              ),
+                                                                              overflow:
+                                                                                  TextOverflow.ellipsis,
+                                                                            ),
+                                                                          ),
+                                                                          Padding(
+                                                                            padding: const EdgeInsets
+                                                                                .only(
+                                                                                left: 10),
+                                                                            child:
+                                                                                Text(
+                                                                              'Created Date: ${leadDetails!.data!.leadCategories![i].createdDate.toString()}',
+                                                                              style:
+                                                                                  TextStyle(
+                                                                                fontSize: 11,
+                                                                                color: Colors.grey,
+                                                                              ),
+                                                                              overflow:
+                                                                                  TextOverflow.ellipsis,
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
-                                                                    ],
-                                                                  )),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
                                                           ];
                                                         },
                                                         onSelected: (value) {
@@ -1040,7 +1112,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           leadDetails!.data!
                                                               .callResultId
                                                               .toString())],
-                                                    
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               5)),
@@ -1218,8 +1289,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         );
                                                       });
                                                 } else {
-                                                  if (widget.cloudCall ==
-                                                      true) {
+                                                 if (cloudCall.trim().toLowerCase() == "true") {
                                                     chooseCallDialog(context);
                                                   } else {
                                                     Common.dialPad(leadDetails!
@@ -1471,8 +1541,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 ),
                               ),
                             ),
-                            leadDetailsAdditional != null
-                             && listFolder != null &&
+                            leadDetailsAdditional != null &&
+                                    listFolder != null &&
                                     mileStone != null
                                 ? Column(
                                     children: [
@@ -2490,12 +2560,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 //           width:
                                                                 //               10,
                                                                 //         ),
-                                                                       
+
                                                                 //         const SizedBox(
                                                                 //           width:
                                                                 //               10,
                                                                 //         ),
-                                                                       
+
                                                                 //       ],
                                                                 //     ),
                                                                 //   ],
@@ -7686,11 +7756,19 @@ class _AudioItemState extends State<AudioItem> {
   bool audioPlayed = false;
   Duration duration = Duration.zero; // For total duration
   Duration position = Duration.zero; // For the current position
+   LeadDeatailsModel? leadDetails;
   @override
   void initState() {
     super.initState();
+    
 
     Future.delayed(Duration.zero, () async {
+       try {
+        leadDetails = await HttpService.leadDetails(widget.token, widget.callMasterId);
+        setState(() {});
+      } catch (e) {
+        print("Error fetching lead details: $e");
+      }
       audioPlayer.onDurationChanged.listen((Duration d) {
         //get the duration of audio
         maxDuration = d.inMilliseconds;
@@ -7759,6 +7837,7 @@ class _AudioItemState extends State<AudioItem> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Stack(
       children: [
         Padding(
@@ -7916,10 +7995,20 @@ class _AudioItemState extends State<AudioItem> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            //
                             Padding(
                               padding: const EdgeInsets.only(left: 10),
-                              child: Text('Called By ${widget.staffName}'),
+                              child: widget.direction.toString() ==
+                                      'Incoming Call'
+                                  ? Text('Called By ${widget.staffName}')
+                                  : widget.direction.toString() ==
+                                          'Outgoing Call'
+                                      ? Text(
+                                          'Called By: ${leadDetails!.data!.staffName}')
+                                          
+                                      : const SizedBox(), 
                             ),
+
                             const SizedBox(
                               width: 10,
                             ),

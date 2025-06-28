@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:login2/models/expense/exp_history.dart';
+import 'package:login2/models/expense/exp_list.dart';
+import 'package:login2/screens/accounts/expense/edit_expense.dart';
 import 'package:login2/service/service.dart';
 
 class ExpenseHistory extends StatefulWidget {
   String expId;
-  ExpenseHistory({super.key, required this.expId});
+  String fromAccPerson;
+  String toAccPerson;
+  final Expense data;
+
+  ExpenseHistory(
+      {super.key,
+      required this.expId,
+      required this.fromAccPerson,
+      required this.toAccPerson,
+      required this.data});
 
   @override
   State<ExpenseHistory> createState() => _ExpenseHistoryState();
@@ -34,6 +45,7 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
   void initState() {
     getList();
     super.initState();
+    print("Expense title: ${widget.data}");
   }
 
   @override
@@ -50,42 +62,67 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                 LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(
-                left: 10.0, top: 10.0, bottom: 10.0, right: 0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
             child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      InkWell(
-                        onTap: () async {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: 25,
-                          width: 25,
-                          decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white),
-                              shape: BoxShape.circle),
-                          child: const Icon(
-                            Icons.arrow_back_ios_outlined,
-                            color: Colors.white,
-                            size: 16,
-                          ),
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left side: Back icon and Title
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        height: 25,
+                        width: 25,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_outlined,
+                          color: Colors.white,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(
-                        width: 25,
-                      ),
-                      const Text(
-                        "Expense History",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ]),
+                    ),
+                    const SizedBox(width: 25),
+                    const Text(
+                      "Expense History",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditExpense(data: widget.data),
+                          ),
+                        );
+
+                        getList();
+                      },
+                    ),
+                    IconButton(
+                      icon:
+                          const Icon(Icons.delete_outline, color: Colors.white),
+                      onPressed: () {
+                        deleteDialog(context, widget.expId);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -164,6 +201,26 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                                 ),
                                 Text(
                                   history!.data.expenseDate,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * .28,
+                                  child: const Text(
+                                    "Remark: ",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15),
+                                  ),
+                                ),
+                                Text(
+                                  history!.data.remark,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15),
@@ -256,4 +313,31 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                 ),
     );
   }
+  void deleteDialog(BuildContext context, String expId) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Confirm Delete"),
+      content: const Text("Are you sure you want to delete this expense?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(context); 
+            bool deleted = await HttpService.deleteExpense(expId);
+            if (deleted && mounted) {
+              Navigator.pop(context); 
+              
+            }
+          },
+          child: const Text("Delete"),
+        ),
+      ],
+    ),
+  );
+}
+
 }

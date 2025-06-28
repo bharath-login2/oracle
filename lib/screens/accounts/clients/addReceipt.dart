@@ -32,7 +32,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
   List<Staff> items = [];
   List<Staff> filteredItems = [];
   String collectedBy = "";
-  String collectedByName = "Collected By";
+  String collectedByName = "Account Head";
   List<TargetGroup> targets = [];
   List<TargetGroup> filteredTargets = [];
   List targetGroups = [];
@@ -277,7 +277,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Collected By',
+                                  const Text('Account Head',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,

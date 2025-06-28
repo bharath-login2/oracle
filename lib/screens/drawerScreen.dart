@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
 import 'package:login2/screens/leadManagement/webview.dart';
@@ -247,7 +248,40 @@ class _DraweScreenState extends State<DraweScreen> {
                                           fit: BoxFit.contain),
                                     )),
                                 title: const Text('Logout'),
-                                onTap: () => logout(context),
+                                //  onTap: () => logout(context),
+                                onTap: () async {
+                                  try {
+                                    final result =
+                                        await HttpService.getWorkStatus();
+                                    if (result != null &&
+                                        result.data.isNotEmpty) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Logout Blocked'),
+                                          content: const Text(
+                                              'Work is in progress. Please close all work before logging out.'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    } else {
+                                      logout(context);
+                                    }
+                                  } catch (e) {
+                                    print('Error checking work status: $e');
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Failed to check work status')),
+                                    );
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -420,9 +454,51 @@ void logout(BuildContext context) {
                 },
                 child: const Text('No')),
             TextButton(
-                onPressed: () {
-                  Common.clearSharedPref();
-                   HiveUtil.clearAllCallLogs();
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  final isWorkStarted =
+                      await Common.getSharedPref("is_work_started");
+                  if (isWorkStarted == "true") {
+                    final now = DateTime.now();
+                    // final response = await HttpService.stopWork(now);
+                    // if (response != null && response.status == true) {
+                    //   await Common.saveSharedPref("is_work_started", "false");
+                    //   debugPrint("Work stopped on logout at $now");
+                    // } else {
+                    //   debugPrint("Failed to stop work during logout");
+                    try {
+                      final position = await Geolocator.getCurrentPosition(
+                        desiredAccuracy: LocationAccuracy.high,
+                      );
+
+                      final response = await HttpService.stopWork(
+                        now,
+                        latitude: position.latitude,
+                        longitude: position.longitude,
+                      );
+
+                      if (response != null && response.status == true) {
+                        await Common.saveSharedPref("is_work_started", "false");
+                        debugPrint("Work stopped on logout at $now");
+                      } else {
+                        debugPrint("Failed to stop work during logout");
+                      }
+                    } catch (e) {
+                      debugPrint("Error getting location or stopping work: $e");
+                    }
+                    // }
+                  }
+
+                  // Common.clearSharedPref();
+                  await Common.clearSharedPref(excludeKeys: [
+                    'callTypes',
+                    'callLogsStartingTime',
+                    'callLogPermission'
+                  ]);
+                  HiveUtil.clearAllCallLogs();
+                  final permission =
+                      await Common.getSharedPref("callLogPermission");
+                  debugPrint("callLogPermission after logout: $permission");
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const Login()),
                       (Route<dynamic> route) => false);

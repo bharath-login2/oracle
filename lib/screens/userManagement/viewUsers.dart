@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/screens/userManagement/branches.dart';
@@ -186,15 +187,47 @@ class _ViewUsersState extends State<ViewUsers> {
                             ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: InkWell(
-                            onTap: () {
-                              _scaffoldKey.currentState!.openEndDrawer();
-                            },
-                            child:
-                                Image.asset("assets/icons/menu.png", width: 20),
-                          ),
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white,
+                                  size: 25,
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'view_target_report') {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ViewAllTargetReportPage(id: userId),
+
+                                              ),
+                                    );
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) =>
+                                    <PopupMenuEntry<String>>[
+                                  const PopupMenuItem<String>(
+                                    value: 'view_target_report',
+                                    child: Text('View Target Report'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(right: 8.0),
+                            //   child: InkWell(
+                            //     onTap: () {
+                            //       _scaffoldKey.currentState!.openEndDrawer();
+                            //     },
+                            //     child: Image.asset("assets/icons/menu.png",
+                            //         width: 20),
+                            //   ),
+                            // ),
+                          ],
                         ),
                       ],
                     ),
@@ -308,7 +341,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                                     SizedBox(
                                                       width: 10,
                                                     ),
-                                                    Text('Add User'),
+                                                    Text('Add Staff'),
                                                   ],
                                                 )),
                                             if (multiBranch == 'true' &&
@@ -653,58 +686,143 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                         MainAxisAlignment
                                                                             .start,
                                                                     children: [
-                                                                      Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            .46,
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          color:
-                                                                              const Color(0xFFCDD6FE),
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(8),
-                                                                        ),
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            right:
+                                                                                19.0),
                                                                         child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .symmetric(
-                                                                              vertical: 8.0),
-                                                                          child:
-                                                                              Row(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Column(
-                                                                                children: [
-                                                                                  const Text(
-                                                                                    "Phone Call",
-                                                                                    style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                  Text(
-                                                                                    filteredStaffs[i].totalCallDuration,
-                                                                                    style: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                ],
+                                                                            Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceBetween,
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            Container(
+                                                                              width: MediaQuery.of(context).size.width * .40,
+                                                                              decoration: BoxDecoration(
+                                                                                color: const Color(0xFFCDD6FE),
+                                                                                borderRadius: BorderRadius.circular(8),
                                                                               ),
-                                                                              Container(
-                                                                                width: 1,
-                                                                                height: 40,
-                                                                                color: Colors.grey,
-                                                                                // margin: const EdgeInsets.symmetric(horizontal: 5),
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                                                child: Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Column(
+                                                                                      children: [
+                                                                                        const Text(
+                                                                                          "Phone Call",
+                                                                                          style: TextStyle(
+                                                                                            fontSize: 11,
+                                                                                            color: Colors.black54,
+                                                                                            fontWeight: FontWeight.w500,
+                                                                                          ),
+                                                                                        ),
+                                                                                        Text(
+                                                                                          filteredStaffs[i].totalCallDuration,
+                                                                                          style: const TextStyle(
+                                                                                            fontSize: 12,
+                                                                                            color: Colors.black,
+                                                                                            fontWeight: FontWeight.w500,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    Container(
+                                                                                      width: 1,
+                                                                                      height: 40,
+                                                                                      color: Colors.grey,
+                                                                                    ),
+                                                                                    Column(
+                                                                                      children: [
+                                                                                        const Text(
+                                                                                          "Cloud Call",
+                                                                                          style: TextStyle(
+                                                                                            fontSize: 11,
+                                                                                            color: Colors.black54,
+                                                                                            fontWeight: FontWeight.w500,
+                                                                                          ),
+                                                                                        ),
+                                                                                        Text(
+                                                                                          filteredStaffs[i].totalCloudCallDuration,
+                                                                                          style: const TextStyle(
+                                                                                            fontSize: 12,
+                                                                                            color: Colors.black,
+                                                                                            fontWeight: FontWeight.w500,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
                                                                               ),
-                                                                              Column(
-                                                                                children: [
-                                                                                  const Text(
-                                                                                    "Cloud Call",
-                                                                                    style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                  Text(
-                                                                                    filteredStaffs[i].totalCloudCallDuration,
-                                                                                    style: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ],
-                                                                          ),
+                                                                            ),
+
+                                                                            /// 3-dot menu icon
+                                                                            PopupMenuButton<String>(
+                                                                              icon: const Icon(Icons.more_vert, size: 20),
+                                                                              onSelected: (value) {
+                                                                                if (value == 'disable') {
+                                                                                  // Handle disable action
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (BuildContext context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text('Disable Staff'),
+                                                                                        content: const Text('Are you sure you want to disable this staff member?'),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                            onPressed: () {
+                                                                                              Navigator.of(context).pop();
+                                                                                            },
+                                                                                            child: const Text('Cancel'),
+                                                                                          ),
+                                                                                          TextButton(
+                                                                                            onPressed: () async {
+                                                                                              Navigator.of(context).pop();
+                                                                                              final disableStaff = await HttpService.addStaffDisable(
+                                                                                                staffId: filteredStaffs[i].staffId,
+                                                                                              );
+
+                                                                                              if (disableStaff != null && disableStaff.data == true) {
+                                                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                                                  SnackBar(
+                                                                                                    content: const Text("Staff disabled successfully"),
+                                                                                                    backgroundColor: Colors.green,
+                                                                                                    behavior: SnackBarBehavior.floating,
+                                                                                                    margin: const EdgeInsets.only(bottom: 10.0, left: 16.0, right: 16.0),
+                                                                                                    duration: const Duration(seconds: 3),
+                                                                                                  ),
+                                                                                                );
+                                                                                                getData();
+                                                                                              } else {
+                                                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                                                  SnackBar(
+                                                                                                    content: const Text("Failed to disable staff"),
+                                                                                                    backgroundColor: Colors.red,
+                                                                                                    behavior: SnackBarBehavior.floating,
+                                                                                                    margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
+                                                                                                  ),
+                                                                                                );
+                                                                                              }
+                                                                                            },
+                                                                                            child: const Text('Disable'),
+                                                                                          ),
+                                                                                        ],
+                                                                                      );
+                                                                                    },
+                                                                                  );
+                                                                                }
+                                                                              },
+                                                                              itemBuilder: (context) => [
+                                                                                const PopupMenuItem(
+                                                                                  value: 'disable',
+                                                                                  child: Text('Disable'),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ],
                                                                         ),
                                                                       ),
                                                                       const SizedBox(
@@ -719,30 +837,30 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                           mainAxisAlignment:
                                                                               MainAxisAlignment.spaceBetween,
                                                                           children: [
+                                                                            // Container(
+                                                                            //   width: MediaQuery.of(context).size.width * .22,
+                                                                            //   decoration: BoxDecoration(
+                                                                            //     color: Colors.grey.shade100,
+                                                                            //     borderRadius: BorderRadius.circular(8),
+                                                                            //   ),
+                                                                            //   child: Padding(
+                                                                            //     padding: const EdgeInsets.all(8.0),
+                                                                            //     child: Column(
+                                                                            //       children: [
+                                                                            //         const Text(
+                                                                            //           "Cost",
+                                                                            //           style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                            //         ),
+                                                                            //         Text(
+                                                                            //           "₹ ${filteredStaffs[i].totalClosedLeadCost}",
+                                                                            //           style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                            //         ),
+                                                                            //       ],
+                                                                            //     ),
+                                                                            //   ),
+                                                                            // ),
                                                                             Container(
-                                                                              width: MediaQuery.of(context).size.width * .22,
-                                                                              decoration: BoxDecoration(
-                                                                                color: Colors.grey.shade100,
-                                                                                borderRadius: BorderRadius.circular(8),
-                                                                              ),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.all(8.0),
-                                                                                child: Column(
-                                                                                  children: [
-                                                                                    const Text(
-                                                                                      "Cost",
-                                                                                      style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                                    ),
-                                                                                    Text(
-                                                                                      "₹ ${filteredStaffs[i].totalClosedLeadCost}",
-                                                                                      style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            Container(
-                                                                              width: MediaQuery.of(context).size.width * .22,
+                                                                              width: MediaQuery.of(context).size.width * .28,
                                                                               decoration: BoxDecoration(
                                                                                 color: Colors.grey.shade100,
                                                                                 borderRadius: BorderRadius.circular(8),

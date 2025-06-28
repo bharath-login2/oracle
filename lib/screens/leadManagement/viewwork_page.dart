@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
+import 'package:login2/screens/leadManagement/login_summary_page.dart';
+import 'package:login2/widgets/blinkngTime.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/lead_management/workDetailsModel.dart' as workDetails;
 import 'package:login2/models/lead_management/workstatus_model.dart'
     as workStatus;
@@ -8,7 +13,9 @@ import '../../service/service.dart';
 
 class ViewWorkPage extends StatefulWidget {
   final String staffId;
-  const ViewWorkPage({super.key, required this.staffId});
+  final DateTime? selectedDate;
+
+  const ViewWorkPage({super.key, this.selectedDate, required this.staffId});
 
   @override
   State<ViewWorkPage> createState() => _ViewWorkPageState();
@@ -19,14 +26,68 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   workDetails.WorkDetailsModel? workStatusDetails;
   workStatus.WorkStatus? existingWork;
   bool isLoading = true;
+  bool _isPanelOpen = false;
+  final double _panelWidth = 200.0;
+  double _panelPosition = -200.0;
+  String token = "";
+  //workDetails.Data? currentRunningItem;
+  late DateTime selectedDate;
+  CommonResponse? loginOrNot;
+  bool? isLoggedIn;
+  String? userId;
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  //   selectedDate = widget.selectedDate ?? DateTime.now();
+  //   currentDate =
+  //       DateFormat('yyyy-MM-dd').format(widget.selectedDate ?? DateTime.now());
+
+  //   print("Selected date passed to ViewWorkPage: ${widget.selectedDate}");
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     getWorkDuration(currentDate);
+  //     checkExistingWorkStatus();
+  //   });
+  //   loadToken();
+  // }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   selectedDate = widget.selectedDate ?? DateTime.now();
+  //   currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+  //    final userId =  Common.getSharedPref("userId");
+  //   print("Selected date passed to ViewWorkPage: ${widget.selectedDate}");
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     getWorkDuration(currentDate);
+  //     checkExistingWorkStatus();
+  //   });
+  //   loadToken();
+  //   loginorNot();
+  //    getStaffid();
+  // }
   @override
   void initState() {
     super.initState();
-    currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    selectedDate = widget.selectedDate ?? DateTime.now();
+    currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+    print("Selected date passed to ViewWorkPage: ${widget.selectedDate}");
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    userId = await Common.getSharedPref("userId");
+    print("userId:$userId");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getWorkDuration(currentDate);
       checkExistingWorkStatus();
     });
+    await loadToken();
+    await loginorNot();
+  }
+
+  Future<void> loadToken() async {
+    token = await Common.getSharedPref("token");
+    setState(() {});
   }
 
   Future<void> checkExistingWorkStatus() async {
@@ -40,6 +101,35 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
     });
   }
 
+  Future<void> loginorNot() async {
+    final token = await Common.getSharedPref("token");
+    final response = await HttpService.getLoginorNot(token);
+
+    setState(() {
+      if (response != null && response.data == true) {
+        isLoggedIn = true;
+      } else {
+        isLoggedIn = false;
+      }
+    });
+  }
+
+  void _launchMap(String? latitude, String? longitude) async {
+    final url =
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    final uri = Uri.parse(url);
+
+    try {
+      final launched =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        debugPrint('Could not launch URL: $url');
+      }
+    } catch (e) {
+      debugPrint('Exception when launching URL: $e');
+    }
+  }
+
   Future<void> getWorkDuration(String date) async {
     final response =
         await HttpService.getWorkStatusDetails(date, staffId: widget.staffId);
@@ -49,8 +139,24 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
     });
   }
 
+  String getDurationSinceLogin(String? loginTimeString) {
+    if (loginTimeString == null || loginTimeString.isEmpty) return "--";
+    try {
+      final loginTime = DateTime.parse(loginTimeString);
+      final now = DateTime.now();
+      final duration = now.difference(loginTime);
+      final hours = duration.inHours;
+      final minutes = duration.inMinutes % 60;
+      if (hours == 0 && minutes == 0) return "Just now";
+      if (hours == 0) return "$minutes min ago";
+      return "$hours hr ${minutes.toString().padLeft(2, '0')} min ago";
+    } catch (e) {
+      return "--";
+    }
+  }
+
   String _formatDuration(String? duration) {
-    if (duration == null || duration.isEmpty) return "0s";
+    if (duration == null || duration.isEmpty) return "Started";
     try {
       if (duration.contains(':')) {
         final parts = duration.split(':');
@@ -70,6 +176,13 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
     }
   }
 
+  void _togglePanel() {
+    setState(() {
+      _isPanelOpen = !_isPanelOpen;
+      _panelPosition = _isPanelOpen ? 0 : -_panelWidth;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,15 +191,32 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
+            // onPressed: () async {
+            //   final DateTime? picked = await showDatePicker(
+            //     context: context,
+            //    initialDate: selectedDate,
+            //     firstDate: DateTime(2020),
+            //     lastDate: DateTime(2100),
+            //   );
+            //   if (picked != null) {
+            //     setState(() {
+            //       currentDate = DateFormat('yyyy-MM-dd').format(picked);
+            //       isLoading = true;
+            //     });
+            //     await getWorkDuration(currentDate);
+            //   }
+            // },
+            // In the date picker onPressed handler:
             onPressed: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,
-                initialDate: DateTime.now(),
+                initialDate: selectedDate,
                 firstDate: DateTime(2020),
                 lastDate: DateTime(2100),
               );
-              if (picked != null) {
+              if (picked != null && picked != selectedDate) {
                 setState(() {
+                  selectedDate = picked;
                   currentDate = DateFormat('yyyy-MM-dd').format(picked);
                   isLoading = true;
                 });
@@ -96,392 +226,1503 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
           ),
         ],
       ),
-      floatingActionButton: existingWork != null
-          ? StreamBuilder<DateTime>(
-              stream:
-                  Stream.periodic(Duration(seconds: 1), (_) => DateTime.now()),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return SizedBox();
 
-                final now = snapshot.data!;
-                final createdAt = DateTime.parse(existingWork!.createdAt);
-                final diff = now.difference(createdAt);
-                String timeSince =
-                    "${diff.inHours.toString().padLeft(2, '0')}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
+      // floatingActionButton: existingWork != null
+      //     ? StreamBuilder<DateTime>(
+      //         stream: Stream.periodic(
+      //             const Duration(seconds: 1), (_) => DateTime.now()),
+      //         builder: (context, snapshot) {
+      //           if (!snapshot.hasData) return const SizedBox();
 
-                return FloatingActionButton.extended(
-                  onPressed: () async {
-                    final workStatusModel = await HttpService.getWorkStatus();
-                    workStatus.WorkStatus? newExistingWork;
+      //           final now = snapshot.data!;
+      //           final createdAt = DateTime.parse(existingWork!.createdAt);
+      //           final diff = now.difference(createdAt);
+      //           String timeSince =
+      //               "${diff.inHours.toString().padLeft(2, '0')}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
 
-                    if (workStatusModel != null &&
-                        workStatusModel.data.isNotEmpty) {
-                      newExistingWork = workStatusModel.data.first;
-                    }
+      //           return FloatingActionButton.extended(
+      //             onPressed: () async {
+      //               final workStatusModel = await HttpService.getWorkStatus();
+      //               workStatus.WorkStatus? newExistingWork;
 
-                    final paused = await showDialog(
-                      context: context,
-                      builder: (context) => AddWorkPage(
-                        existingWork: newExistingWork,
-                        onSuccess: () {
+      //               if (workStatusModel != null &&
+      //                   workStatusModel.data.isNotEmpty) {
+      //                 newExistingWork = workStatusModel.data.first;
+      //               }
+
+      //               final paused = await showDialog(
+      //                 context: context,
+      //                 builder: (context) => AddWorkPage(
+      //                   existingWork: newExistingWork,
+      //                   onSuccess: () {
+      //                     setState(() {
+      //                       getWorkDuration(currentDate);
+      //                       checkExistingWorkStatus();
+      //                     });
+      //                   },
+      //                 ),
+      //               );
+
+      //               if (paused == true) {
+      //                 setState(() {
+      //                   existingWork = null;
+      //                 });
+      //                 getWorkDuration(currentDate);
+      //               }
+      //             },
+      //             backgroundColor: Colors.red,
+      //             label: Row(
+      //               mainAxisSize: MainAxisSize.min,
+      //               children: [
+      //                 Text(
+      //                   timeSince,
+      //                   style: const TextStyle(
+      //                     fontSize: 14,
+      //                     color: Colors.white,
+      //                     fontWeight: FontWeight.bold,
+      //                   ),
+      //                 ),
+      //                 const SizedBox(width: 8),
+      //                 const Icon(Icons.pause, color: Colors.white),
+      //               ],
+      //             ),
+      //           );
+      //         },
+      //       )
+      //     : FloatingActionButton(
+      //         // onPressed: () async {
+      //         //   final workStatusModel = await HttpService.getWorkStatus();
+      //         //   workStatus.WorkStatus? newExistingWork;
+
+      //         //   if (workStatusModel != null &&
+      //         //       workStatusModel.data.isNotEmpty) {
+      //         //     newExistingWork = workStatusModel.data.first;
+      //         //   }
+      //         //   Navigator.push(
+      //         //     context,
+      //         //     MaterialPageRoute(
+      //         //       builder: (context) => AddWorkPage(
+      //         //         existingWork: newExistingWork,
+      //         //         onSuccess: () {
+      //         //           setState(() {
+      //         //             getWorkDuration(currentDate);
+      //         //             checkExistingWorkStatus();
+      //         //           });
+      //         //         },
+      //         //       ),
+      //         //     ),
+      //         //   );
+      //         // },
+      //         onPressed: () async {
+      //           if (isLoggedIn == true) {
+      //             final workStatusModel = await HttpService.getWorkStatus();
+      //             workStatus.WorkStatus? newExistingWork;
+
+      //             if (workStatusModel != null &&
+      //                 workStatusModel.data.isNotEmpty) {
+      //               newExistingWork = workStatusModel.data.first;
+      //             }
+
+      //             Navigator.push(
+      //               context,
+      //               MaterialPageRoute(
+      //                 builder: (context) => AddWorkPage(
+      //                   existingWork: newExistingWork,
+      //                   onSuccess: () {
+      //                     setState(() {
+      //                       getWorkDuration(currentDate);
+      //                       checkExistingWorkStatus();
+      //                     });
+      //                   },
+      //                 ),
+      //               ),
+      //             );
+      //           } else {
+      //             showDialog(
+      //               context: context,
+      //               builder: (BuildContext context) {
+      //                 return AlertDialog(
+      //                   title: const Text('Login Required'),
+      //                   content: const Text('Please login to add work.'),
+      //                   actions: [
+      //                     TextButton(
+      //                       child: const Text('OK'),
+      //                       onPressed: () {
+      //                         Navigator.of(context).pop();
+      //                       },
+      //                     ),
+      //                   ],
+      //                 );
+      //               },
+      //             );
+      //           }
+      //         },
+      //         backgroundColor: Colors.green,
+      //         child: const Icon(Icons.add, color: Colors.white),
+      //       ),
+
+      floatingActionButton: userId != null && widget.staffId == userId
+          ? (existingWork != null
+              ? StreamBuilder<DateTime>(
+                  stream: Stream.periodic(
+                    const Duration(seconds: 1),
+                    (_) => DateTime.now(),
+                  ),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
+
+                    final now = snapshot.data!;
+                    final createdAt = DateTime.parse(existingWork!.createdAt);
+                    final diff = now.difference(createdAt);
+                    String timeSince =
+                        "${diff.inHours.toString().padLeft(2, '0')}:"
+                        "${(diff.inMinutes % 60).toString().padLeft(2, '0')}:"
+                        "${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
+
+                    return FloatingActionButton.extended(
+                      onPressed: () async {
+                        final workStatusModel =
+                            await HttpService.getWorkStatus();
+                        workStatus.WorkStatus? newExistingWork;
+
+                        if (workStatusModel != null &&
+                            workStatusModel.data.isNotEmpty) {
+                          newExistingWork = workStatusModel.data.first;
+                        }
+
+                        final paused = await showDialog(
+                          context: context,
+                          builder: (context) => AddWorkPage(
+                            existingWork: newExistingWork,
+                            onSuccess: () {
+                              setState(() {
+                                getWorkDuration(currentDate);
+                                checkExistingWorkStatus();
+                              });
+                            },
+                          ),
+                        );
+
+                        if (paused == true) {
                           setState(() {
-                            getWorkDuration(currentDate);
-                            checkExistingWorkStatus();
+                            existingWork = null;
                           });
-                        },
-                      ),
-                    );
-
-                    if (paused == true) {
-                      setState(() {
-                        existingWork = null;
-                      });
-                      getWorkDuration(currentDate);
-                    }
-                  },
-                  backgroundColor: Colors.red,
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        timeSince,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.pause, color: Colors.white),
-                    ],
-                  ),
-                );
-              },
-            )
-          : FloatingActionButton(
-              onPressed: () async {
-                final workStatusModel = await HttpService.getWorkStatus();
-                workStatus.WorkStatus? newExistingWork;
-
-                if (workStatusModel != null &&
-                    workStatusModel.data.isNotEmpty) {
-                  newExistingWork = workStatusModel.data.first;
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddWorkPage(
-                      existingWork: newExistingWork,
-                      onSuccess: () {
-                        setState(() {
                           getWorkDuration(currentDate);
-                          checkExistingWorkStatus();
-                        });
+                        }
                       },
-                    ),
-                  ),
-                );
-              },
-              backgroundColor: Colors.green,
-              child: Icon(Icons.add, color: Colors.white),
-            ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : (workStatusDetails == null || workStatusDetails!.data.isEmpty)
-              ? const Center(child: Text("No work data available"))
-              : ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  itemCount: workStatusDetails!.data.length,
-                  itemBuilder: (context, index) {
-                    final item = workStatusDetails!.data[index];
-                    final isInProgress =
-                        item.endTime == "00:00:00" || item.endTime.isEmpty;
-                    final showDateHeader = index == 0 ||
-                        _getDateFromTime(item.startTime) !=
-                            _getDateFromTime(
-                                workStatusDetails!.data[index - 1].startTime);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showDateHeader)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade50,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      _getDayFromTime(currentDate),
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue.shade800,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _getMonthYearFromTime(currentDate),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
+                      backgroundColor: Colors.red,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            timeSince,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
+                          const SizedBox(width: 8),
+                          const Icon(Icons.pause, color: Colors.white),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              : FloatingActionButton(
+                  onPressed: () async {
+                    if (isLoggedIn == true) {
+                      final workStatusModel = await HttpService.getWorkStatus();
+                      workStatus.WorkStatus? newExistingWork;
+
+                      if (workStatusModel != null &&
+                          workStatusModel.data.isNotEmpty) {
+                        newExistingWork = workStatusModel.data.first;
+                      }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddWorkPage(
+                            existingWork: newExistingWork,
+                            onSuccess: () {
+                              setState(() {
+                                getWorkDuration(currentDate);
+                                checkExistingWorkStatus();
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Login Required'),
+                            content: const Text('Please login to add work.'),
+                            actions: [
+                              TextButton(
+                                child: const Text('OK'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  },
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.add, color: Colors.white),
+                ))
+          : null,
+      body: Stack(
+        children: [
+          // _buildMainContent(),
+          GestureDetector(
+            onTap: () {
+              if (_isPanelOpen) {
+                _togglePanel();
+              }
+            },
+            child: AbsorbPointer(
+              absorbing: _isPanelOpen,
+              child: _buildMainContent(),
+            ),
+          ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            right: _panelPosition,
+            top: 0,
+            bottom: 0,
+            width: _panelWidth,
+            child: GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                if (details.delta.dx < 0) {
+                  // Swiping left
+                  setState(() {
+                    _panelPosition = (_panelPosition - details.delta.dx)
+                        .clamp(-_panelWidth, 0.0);
+                  });
+                } else if (details.delta.dx > 0) {
+                  // Swiping right
+                  setState(() {
+                    _panelPosition = (_panelPosition - details.delta.dx)
+                        .clamp(-_panelWidth, 0.0);
+                  });
+                }
+              },
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity! < 0) {
+                  // Swiped left
+                  _togglePanel();
+                } else if (details.primaryVelocity! > 0) {
+                  // Swiped right
+                  _togglePanel();
+                } else {
+                  // No significant velocity - snap to nearest state
+                  if (_panelPosition.abs() > _panelWidth / 2) {
+                    _togglePanel();
+                  } else {
+                    _togglePanel();
+                  }
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(-3, 0),
+                    ),
+                  ],
+                ),
+                child: _buildTimeSummaryPanel(),
+              ),
+            ),
+          ),
+          if (!_isPanelOpen)
+            Positioned(
+              right: 0,
+              top: MediaQuery.of(context).size.height / 2 - 50,
+              child: GestureDetector(
+                onTap: _togglePanel,
+                child: Container(
+                  width: 24,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      bottomLeft: Radius.circular(12),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(-2, 0),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.chevron_left,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Column(
+      children: [
+        Expanded(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : (workStatusDetails == null ||
+                      workStatusDetails!.data.isEmpty ||
+                      workStatusDetails!.data.first.tasks.isEmpty)
+                  ? const Center(child: Text("No work data available"))
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        setState(() {
+                          isLoading = true;
+                        });
+                        await getWorkDuration(currentDate);
+                        await checkExistingWorkStatus();
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        itemCount: workStatusDetails!.data.length,
+                        itemBuilder: (context, index) {
+                          final item = workStatusDetails!.data[index];
+                          List<bool> expandedTasks = List.generate(
+                              item.tasks.length, (index) => false);
+
+                          final isInProgress = item.endTime == "00:00:00" ||
+                              item.endTime.isEmpty;
+                          final showDateHeader = index == 0 ||
+                              _getDateFromTime(item.startTime) !=
+                                  _getDateFromTime(workStatusDetails!
+                                      .data[index - 1].startTime);
+                          if (item.title != "") {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: BoxDecoration(
-                                    color: isInProgress
-                                        ? Colors.orange
-                                        : Colors.green,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                if (index != workStatusDetails!.data.length - 1)
-                                  Container(
-                                    width: 2,
-                                     height: _calculateItemHeight(item.tasks) + 210, 
-                                    color: Colors.grey.shade300,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 8  ),
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                        )
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                if (showDateHeader)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 8, bottom: 12),
+                                    child: Row(
                                       children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment
-                                              .start,
-                                          children: [
-                                            Flexible(
-                                              child: Text(
-                                                item.title ?? "No title",
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                softWrap: true,
-                                              ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text(
-                                              item.startTime,
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              _getDayFromTime(currentDate),
                                               style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade600,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue.shade800,
                                               ),
-                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                        const SizedBox(height: 8),
+                                        const SizedBox(width: 12),
                                         Text(
-                                          "Project: ${item.projectId}",
+                                          _getMonthYearFromTime(currentDate),
                                           style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 16,
                                             color: Colors.grey.shade700,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Start: ${item.startTime}",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Text(
-                                              "End: ${isInProgress ? "In Progress" : item.endTime}",
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: isInProgress
-                                                    ? Colors.orange
-                                                    : Colors.grey.shade600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        if (item.tasks.isNotEmpty) ...[
-                                          const Divider(height: 24),
-                                          const Text(
-                                            "Tasks :",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
+                                      ],
+                                    ),
+                                  ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Container(
+                                          width: 16,
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                            color: isInProgress
+                                                ? Colors.orange
+                                                : Colors.green,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          ...item.tasks.map((task) => Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 8),
-                                                child: Row(
+                                        ),
+                                        if (index !=
+                                            workStatusDetails!.data.length - 1)
+                                          Container(
+                                            width: 2,
+                                            height: _calculateItemHeight(
+                                                    item.tasks) +
+                                                210,
+                                            color: Colors.grey.shade300,
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 8),
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.05),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                )
+                                              ],
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
-                                                    Container(
-                                                      width: 8,
-                                                      height: 8,
-                                                      decoration: BoxDecoration(
-                                                        color: _getStatusColor(
-                                                            task.status),
-                                                        shape: BoxShape.circle,
+                                                    Flexible(
+                                                      child: Text(
+                                                        '${item.customerName ?? "No title"} [${item.projectId}]',
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        softWrap: true,
                                                       ),
                                                     ),
+                                                    // const SizedBox(width: 8),
+                                                    // (item.totalDuration
+                                                    //             .isNotEmpty) &&
+                                                    //         item.is_paused !=
+                                                    //             "1"
+                                                    //     ? Text(
+                                                    //         "Worked:${item.totalDuration}",
+                                                    //         style: TextStyle(
+                                                    //             fontSize: 14,
+                                                    //             color: Colors
+                                                    //                 .grey
+                                                    //                 .shade600,
+                                                    //             fontWeight:
+                                                    //                 FontWeight
+                                                    //                     .bold),
+                                                    //         overflow:
+                                                    //             TextOverflow
+                                                    //                 .ellipsis,
+                                                    //       )
+                                                    //     : item.is_paused == "1"
+                                                    //         ? GestureDetector(
+                                                    //             onTap:
+                                                    //                 () async {
+                                                    //               final workStatusModel =
+                                                    //                   await HttpService
+                                                    //                       .getWorkStatusPaused(
+                                                    //                           item.id);
+                                                    //               workStatus
+                                                    //                   .WorkStatus?
+                                                    //                   newExistingWork;
+                                                    //               if (workStatusModel !=
+                                                    //                       null &&
+                                                    //                   workStatusModel
+                                                    //                       .data
+                                                    //                       .isNotEmpty) {
+                                                    //                 newExistingWork =
+                                                    //                     workStatusModel
+                                                    //                         .data
+                                                    //                         .first;
+                                                    //               }
+                                                    //               Navigator
+                                                    //                   .push(
+                                                    //                 context,
+                                                    //                 MaterialPageRoute(
+                                                    //                   builder:
+                                                    //                       (context) =>
+                                                    //                           AddWorkPage(
+                                                    //                     existingWork:
+                                                    //                         newExistingWork,
+                                                    //                     isPaused:
+                                                    //                         0,
+                                                    //                     Restart:
+                                                    //                         1,
+                                                    //                     onSuccess:
+                                                    //                         () {
+                                                    //                       setState(
+                                                    //                           () {
+                                                    //                         getWorkDuration(currentDate);
+                                                    //                         checkExistingWorkStatus();
+                                                    //                       });
+                                                    //                     },
+                                                    //                   ),
+                                                    //                 ),
+                                                    //               );
+                                                    //             },
+                                                    //             child: Row(
+                                                    //               mainAxisSize:
+                                                    //                   MainAxisSize
+                                                    //                       .min,
+                                                    //               children: [
+                                                    //                 Icon(
+                                                    //                   Icons
+                                                    //                       .restart_alt,
+                                                    //                   size: 20,
+                                                    //                   color: const Color
+                                                    //                       .fromARGB(
+                                                    //                       255,
+                                                    //                       29,
+                                                    //                       183,
+                                                    //                       230),
+                                                    //                 ),
+                                                    //                 const SizedBox(
+                                                    //                     width:
+                                                    //                         4),
+                                                    //                 const Text(
+                                                    //                   "Restart",
+                                                    //                   style:
+                                                    //                       TextStyle(
+                                                    //                     fontSize:
+                                                    //                         14,
+                                                    //                     color: Color.fromARGB(
+                                                    //                         255,
+                                                    //                         29,
+                                                    //                         183,
+                                                    //                         230),
+                                                    //                     fontWeight:
+                                                    //                         FontWeight.bold,
+                                                    //                   ),
+                                                    //                   overflow:
+                                                    //                       TextOverflow
+                                                    //                           .ellipsis,
+                                                    //                 ),
+                                                    //               ],
+                                                    //             ),
+                                                    //           )
+                                                    //         : GestureDetector(
+                                                    //             onTap:
+                                                    //                 () async {
+                                                    //               final workStatusModel =
+                                                    //                   await HttpService.getWorkStatus(
+                                                    //                       isPaused:
+                                                    //                           1);
+                                                    //               workStatus
+                                                    //                   .WorkStatus?
+                                                    //                   newExistingWork;
+
+                                                    //               if (workStatusModel !=
+                                                    //                       null &&
+                                                    //                   workStatusModel
+                                                    //                       .data
+                                                    //                       .isNotEmpty) {
+                                                    //                 newExistingWork =
+                                                    //                     workStatusModel
+                                                    //                         .data
+                                                    //                         .first;
+                                                    //               }
+
+                                                    //               Navigator
+                                                    //                   .push(
+                                                    //                 context,
+                                                    //                 MaterialPageRoute(
+                                                    //                   builder:
+                                                    //                       (context) =>
+                                                    //                           AddWorkPage(
+                                                    //                     existingWork:
+                                                    //                         newExistingWork,
+                                                    //                     isPaused:
+                                                    //                         1,
+                                                    //                     onSuccess:
+                                                    //                         () {
+                                                    //                       setState(
+                                                    //                           () {
+                                                    //                         getWorkDuration(currentDate);
+                                                    //                         checkExistingWorkStatus();
+                                                    //                       });
+                                                    //                     },
+                                                    //                   ),
+                                                    //                 ),
+                                                    //               );
+                                                    //             },
+                                                    //             child: Row(
+                                                    //               mainAxisSize:
+                                                    //                   MainAxisSize
+                                                    //                       .min,
+                                                    //               children: [
+                                                    //                 Icon(
+                                                    //                   Icons
+                                                    //                       .pause_circle_filled,
+                                                    //                   size: 20,
+                                                    //                   color: const Color
+                                                    //                       .fromARGB(
+                                                    //                       255,
+                                                    //                       238,
+                                                    //                       109,
+                                                    //                       4),
+                                                    //                 ),
+                                                    //                 const SizedBox(
+                                                    //                     width:
+                                                    //                         4),
+                                                    //                 const Text(
+                                                    //                   "Pause",
+                                                    //                   style:
+                                                    //                       TextStyle(
+                                                    //                     fontSize:
+                                                    //                         14,
+                                                    //                     color: Color.fromARGB(
+                                                    //                         255,
+                                                    //                         238,
+                                                    //                         109,
+                                                    //                         4),
+                                                    //                     fontWeight:
+                                                    //                         FontWeight.bold,
+                                                    //                   ),
+                                                    //                   overflow:
+                                                    //                       TextOverflow
+                                                    //                           .ellipsis,
+                                                    //                 ),
+                                                    //               ],
+                                                    //             ),
+                                                    //           )
                                                     const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            task.taskName,
-                                                            style: const TextStyle(
-                                                                fontSize: 14),
-                                                          ),
-                                                          const SizedBox(height: 4),
-                                                          Row(
+                                                    (item.totalDuration
+                                                                .isNotEmpty) &&
+                                                            item.is_paused !=
+                                                                "1"
+                                                        ? Text(
+                                                            "Worked:${item.totalDuration}",
+                                                            style: TextStyle(
+                                                              fontSize: 14,
+                                                              color: Colors.grey
+                                                                  .shade600,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          )
+                                                        : item.is_paused == "1"
+                                                            ? (userId != null &&
+                                                                    widget.staffId ==
+                                                                        userId
+                                                                ? GestureDetector(
+                                                                    onTap:
+                                                                        () async {
+                                                                      final workStatusModel =
+                                                                          await HttpService.getWorkStatusPaused(
+                                                                              item.id);
+                                                                      workStatus
+                                                                          .WorkStatus?
+                                                                          newExistingWork;
+                                                                      if (workStatusModel !=
+                                                                              null &&
+                                                                          workStatusModel
+                                                                              .data
+                                                                              .isNotEmpty) {
+                                                                        newExistingWork = workStatusModel
+                                                                            .data
+                                                                            .first;
+                                                                      }
+                                                                      Navigator
+                                                                          .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              AddWorkPage(
+                                                                            existingWork:
+                                                                                newExistingWork,
+                                                                            isPaused:
+                                                                                0,
+                                                                            Restart:
+                                                                                1,
+                                                                            onSuccess:
+                                                                                () {
+                                                                              setState(() {
+                                                                                getWorkDuration(currentDate);
+                                                                                checkExistingWorkStatus();
+                                                                              });
+                                                                            },
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                    child: Row(
+                                                                      mainAxisSize:
+                                                                          MainAxisSize
+                                                                              .min,
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .restart_alt,
+                                                                          size:
+                                                                              20,
+                                                                          color: const Color
+                                                                              .fromARGB(
+                                                                              255,
+                                                                              29,
+                                                                              183,
+                                                                              230),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                            width:
+                                                                                4),
+                                                                        const Text(
+                                                                          "Restart",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontSize:
+                                                                                14,
+                                                                            color: Color.fromARGB(
+                                                                                255,
+                                                                                29,
+                                                                                183,
+                                                                                230),
+                                                                            fontWeight:
+                                                                                FontWeight.bold,
+                                                                          ),
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  )
+                                                                : Text(
+                                                                    "Paused",
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade600,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ))
+                                                            : (userId != null &&
+                                                                    widget.staffId ==
+                                                                        userId
+                                                                ? GestureDetector(
+                                                                    onTap:
+                                                                        () async {
+                                                                      final workStatusModel =
+                                                                          await HttpService.getWorkStatus(
+                                                                              isPaused: 1);
+                                                                      workStatus
+                                                                          .WorkStatus?
+                                                                          newExistingWork;
+                                                                      if (workStatusModel !=
+                                                                              null &&
+                                                                          workStatusModel
+                                                                              .data
+                                                                              .isNotEmpty) {
+                                                                        newExistingWork = workStatusModel
+                                                                            .data
+                                                                            .first;
+                                                                      }
+                                                                      Navigator
+                                                                          .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              AddWorkPage(
+                                                                            existingWork:
+                                                                                newExistingWork,
+                                                                            isPaused:
+                                                                                1,
+                                                                            onSuccess:
+                                                                                () {
+                                                                              setState(() {
+                                                                                getWorkDuration(currentDate);
+                                                                                checkExistingWorkStatus();
+                                                                              });
+                                                                            },
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                    child: Row(
+                                                                      mainAxisSize:
+                                                                          MainAxisSize
+                                                                              .min,
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .pause_circle_filled,
+                                                                          size:
+                                                                              20,
+                                                                          color: const Color
+                                                                              .fromARGB(
+                                                                              255,
+                                                                              238,
+                                                                              109,
+                                                                              4),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                            width:
+                                                                                4),
+                                                                        const Text(
+                                                                          "Pause",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontSize:
+                                                                                14,
+                                                                            color: Color.fromARGB(
+                                                                                255,
+                                                                                238,
+                                                                                109,
+                                                                                4),
+                                                                            fontWeight:
+                                                                                FontWeight.bold,
+                                                                          ),
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  )
+                                                                : const SizedBox())
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                // Text(
+                                                //   "Project: ${item.projectId}",
+                                                //   style: TextStyle(
+                                                //     fontSize: 14,
+                                                //     color: Colors.grey.shade700,
+                                                //   ),
+                                                // ),
+                                                 Text(
+                                                  "Module: ${item.titleName}",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                              //  const SizedBox(height: 8),
+                                                // item.customerName != ""
+                                                //     ? Text(
+                                                //         "Client: ${item.customerName}",
+                                                //         style: TextStyle(
+                                                //           fontSize: 14,
+                                                //           color: Colors
+                                                //               .grey.shade700,
+                                                //         ),
+                                                //       )
+                                                //     : SizedBox(),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      "Start: ${item.startTime}",
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors
+                                                            .grey.shade600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 16),
+                                                    // Text(
+                                                    //   "End: ${isInProgress ? "Running" : item.endTime}",
+                                                    //   style: TextStyle(
+                                                    //     fontSize: 13,
+                                                    //     color: isInProgress
+                                                    //         ? Colors.orange
+                                                    //         : Colors
+                                                    //             .grey.shade600,
+                                                    //   ),
+                                                    // ),
+                                                    isInProgress
+                                                        ? Row(
                                                             children: [
-                                                              Text(
-                                                                '${task.taskStart} - ${task.taskEnd}',
+                                                              const Text(""),
+                                                              BlinkingText(
+                                                                text: "Working",
                                                                 style:
                                                                     const TextStyle(
-                                                                        fontSize:
-                                                                            12,
-                                                                        color: Colors
-                                                                            .grey),
-                                                              ),
-                                                              const SizedBox(width: 15,),
-                                                              Container(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .symmetric(
-                                                                        horizontal:
-                                                                            8,
-                                                                        vertical:
-                                                                            2),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: _getStatusColor(
-                                                                          task
-                                                                              .status)
-                                                                      .withOpacity(
-                                                                          0.2),
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              4),
-                                                                ),
-                                                                child: Text(
-                                                                  task.status,
-                                                                  style: TextStyle(
-                                                                    fontSize: 12,
-                                                                    color: _getStatusColor(
-                                                                        task.status),
-                                                                  ),
+                                                                  fontSize: 13,
+                                                                  color: Color
+                                                                      .fromARGB(
+                                                                          255,
+                                                                          148,
+                                                                          233,
+                                                                          50),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
                                                                 ),
                                                               ),
                                                             ],
+                                                          )
+                                                        : Text(
+                                                            "End: ${item.endTime}",
+                                                            style: TextStyle(
+                                                              fontSize: 13,
+                                                              color: Colors.grey
+                                                                  .shade600,
+                                                            ),
                                                           ),
-                                                        ],
-                                                      ),
-                                                    ),
                                                   ],
                                                 ),
-                                              )),
+                                                const SizedBox(height: 8),
+                                                // if (item.latitude.isNotEmpty)
+                                                if (item.latitude.isNotEmpty &&
+                                                    double.tryParse(
+                                                            item.latitude) !=
+                                                        0)
+                                                  Row(
+                                                    children: [
+                                                      GestureDetector(
+                                                        onTap: () => _launchMap(
+                                                            item.latitude,
+                                                            item.longitude),
+                                                        child: Text(
+                                                          "View Location",
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Colors.blue,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                // ...item.tasks.map(
+                                                //   (task) => StatefulBuilder(
+                                                //     builder:
+                                                //         (context, setState) {
+                                                //       bool isExpanded = false;
+
+                                                //       return Column(
+                                                //         crossAxisAlignment:
+                                                //             CrossAxisAlignment
+                                                //                 .start,
+                                                //         children: [
+                                                //           GestureDetector(
+                                                //             onTap: () {
+                                                //               setState(() {
+                                                //                 isExpanded =
+                                                //                     !isExpanded;
+                                                //               });
+                                                //             },
+                                                //             child: Padding(
+                                                //               padding:
+                                                //                   const EdgeInsets
+                                                //                       .only(
+                                                //                       bottom:
+                                                //                           8),
+                                                //               child: Row(
+                                                //                 children: [
+                                                //                   Container(
+                                                //                     width: 8,
+                                                //                     height: 8,
+                                                //                     decoration:
+                                                //                         BoxDecoration(
+                                                //                       color: _getStatusColor(
+                                                //                           task.status),
+                                                //                       shape: BoxShape
+                                                //                           .circle,
+                                                //                     ),
+                                                //                   ),
+                                                //                   const SizedBox(
+                                                //                       width: 8),
+                                                //                   Expanded(
+                                                //                     child:
+                                                //                         Column(
+                                                //                       crossAxisAlignment:
+                                                //                           CrossAxisAlignment
+                                                //                               .start,
+                                                //                       children: [
+                                                //                         Text(
+                                                //                           task.taskName,
+                                                //                           style:
+                                                //                               const TextStyle(fontSize: 14),
+                                                //                         ),
+                                                //                         const SizedBox(
+                                                //                             height:
+                                                //                                 4),
+                                                //                         Row(
+                                                //                           children: [
+                                                //                             Text(
+                                                //                               '${task.taskStart} - ${task.taskEnd}',
+                                                //                               style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                //                             ),
+                                                //                             const SizedBox(width: 15),
+                                                //                             Container(
+                                                //                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                //                               decoration: BoxDecoration(
+                                                //                                 color: _getStatusColor(task.status).withOpacity(0.2),
+                                                //                                 borderRadius: BorderRadius.circular(4),
+                                                //                               ),
+                                                //                               child: Text(
+                                                //                                 task.status,
+                                                //                                 style: TextStyle(
+                                                //                                   fontSize: 12,
+                                                //                                   color: _getStatusColor(task.status),
+                                                //                                 ),
+                                                //                               ),
+                                                //                             ),
+                                                //                           ],
+                                                //                         ),
+                                                //                       ],
+                                                //                     ),
+                                                //                   ),
+                                                //                 ],
+                                                //               ),
+                                                //             ),
+                                                //           ),
+                                                //           AnimatedSize(
+                                                //             duration:
+                                                //                 const Duration(
+                                                //                     milliseconds:
+                                                //                         300),
+                                                //             curve: Curves
+                                                //                 .easeInOut,
+                                                //             child: isExpanded
+                                                //                 ? Padding(
+                                                //                     padding: const EdgeInsets
+                                                //                         .only(
+                                                //                         left:
+                                                //                             16,
+                                                //                         bottom:
+                                                //                             8),
+                                                //                     child:
+                                                //                         Column(
+                                                //                       crossAxisAlignment:
+                                                //                           CrossAxisAlignment
+                                                //                               .start,
+                                                //                       children: task
+                                                //                           .remarks
+                                                //                           .map(
+                                                //                               (remark) {
+                                                //                         return Padding(
+                                                //                           padding: const EdgeInsets
+                                                //                               .symmetric(
+                                                //                               vertical: 2),
+                                                //                           child:
+                                                //                               Text(
+                                                //                             '• $remark',
+                                                //                             style:
+                                                //                                 const TextStyle(fontSize: 12, color: Colors.black87),
+                                                //                           ),
+                                                //                         );
+                                                //                       }).toList(),
+                                                //                     ),
+                                                //                   )
+                                                //                 : const SizedBox(),
+                                                //           ),
+                                                //         ],
+                                                //       );
+                                                //     },
+                                                //   ),
+                                                // ),
+
+                                                ...item.tasks
+                                                    .asMap()
+                                                    .entries
+                                                    .map(
+                                                  (entry) {
+                                                    int index = entry.key;
+                                                    var task = entry.value;
+
+                                                    return StatefulBuilder(
+                                                      builder:
+                                                          (context, setState) {
+                                                        return Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  expandedTasks[
+                                                                          index] =
+                                                                      !expandedTasks[
+                                                                          index];
+                                                                });
+                                                              },
+                                                              child: Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        bottom:
+                                                                            8),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Container(
+                                                                      width: 8,
+                                                                      height: 8,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        color: _getStatusColor(
+                                                                            task.status),
+                                                                        shape: BoxShape
+                                                                            .circle,
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            8),
+                                                                    Expanded(
+                                                                      child:
+                                                                          Column(
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.start,
+                                                                        children: [
+                                                                          Text(
+                                                                            task.taskName,
+                                                                            style:
+                                                                                const TextStyle(fontSize: 14),
+                                                                          ),
+                                                                          const SizedBox(
+                                                                              height: 4),
+                                                                          Row(
+                                                                            children: [
+                                                                              Text(
+                                                                                '${task.taskStart} - ${task.taskEnd}',
+                                                                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                                              ),
+                                                                              const SizedBox(width: 15),
+                                                                              Container(
+                                                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                                                decoration: BoxDecoration(
+                                                                                  color: _getStatusColor(task.status).withOpacity(0.2),
+                                                                                  borderRadius: BorderRadius.circular(4),
+                                                                                ),
+                                                                                child: Text(
+                                                                                  task.status,
+                                                                                  style: TextStyle(
+                                                                                    fontSize: 12,
+                                                                                    color: _getStatusColor(task.status),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            AnimatedSize(
+                                                              duration:
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          300),
+                                                              curve: Curves
+                                                                  .easeInOut,
+                                                              child: expandedTasks[
+                                                                      index]
+                                                                  ? Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .only(
+                                                                          left:
+                                                                              16,
+                                                                          bottom:
+                                                                              8),
+                                                                      child:
+                                                                          Column(
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.start,
+                                                                        children: [
+                                                                          const Text(
+                                                                            'Remarks:',
+                                                                            style:
+                                                                                TextStyle(
+                                                                              fontSize: 13,
+                                                                              fontWeight: FontWeight.w600,
+                                                                              color: Colors.black87,
+                                                                            ),
+                                                                          ),
+                                                                          const SizedBox(
+                                                                              height: 4),
+                                                                          ...task
+                                                                              .remarks
+                                                                              .map((remark) {
+                                                                            return Padding(
+                                                                              padding: const EdgeInsets.symmetric(vertical: 2),
+                                                                              child: Text(
+                                                                                '• $remark',
+                                                                                style: const TextStyle(
+                                                                                  fontSize: 12,
+                                                                                  color: Colors.black87,
+                                                                                ),
+                                                                              ),
+                                                                            );
+                                                                          }),
+                                                                        ],
+                                                                      ),
+                                                                    )
+                                                                  : const SizedBox(),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.05),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                )
+                                              ],
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Ideal Time:",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _formatDuration(
+                                                      item.gapDuration),
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
                                         ],
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                              
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                        )
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          "Ideal Time:",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        Text(
-                                          _formatDuration(item.gapDuration),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.redAccent,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                    const SizedBox(height: 10,),
-                                ],
-                              ),
-                            ),
-                          ],
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimeSummaryPanel() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          color: Colors.blue,
+          child: Row(
+            children: [
+              const Text(
+                "Time Summary",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                onPressed: _togglePanel,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTimeSummaryItem(
+                  "Login",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? workStatusDetails!.data.first.loginTime
+                      : "--",
+                  Icons.login,
+                  Colors.green,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginSummaryPage(
+                          staffId: widget.staffId,
+                          token: token,
+                          date: widget.selectedDate ?? DateTime.now(),
                         ),
-                      ],
+                      ),
                     );
                   },
                 ),
+                _buildTimeSummaryItem(
+                  "Work Time",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
+                      : "--",
+                  Icons.timer,
+                  Colors.purple,
+                ),
+                _buildTimeSummaryItem(
+                  "Ideal",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? workStatusDetails!.data.first.totalIdeaTime ?? "--"
+                      : "--",
+                  Icons.hourglass_empty,
+                  Colors.orange,
+                ),
+                // _buildTimeSummaryItem(
+                //   "Break",
+                //   (workStatusDetails != null &&
+                //           workStatusDetails!.data.isNotEmpty)
+                //       ? workStatusDetails!.data.first.totalIdeaTime ?? "--"
+                //       : "--",
+                //   Icons.free_breakfast,
+                //   Colors.blue,
+                // ),
+
+                _buildTimeSummaryItem(
+                  "Loggedin Time",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? getDurationSinceLogin(
+                          workStatusDetails!.data.first.loginTime)
+                      : "--",
+                  Icons.timeline_rounded,
+                  Colors.green,
+                ),
+
+                _buildTimeSummaryItem(
+                  "Logout",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? workStatusDetails!.data.first.logoutTime ?? "--"
+                      : "--",
+                  Icons.logout,
+                  Colors.redAccent,
+                ),
+                // _buildTimeSummaryItem(
+                //   "Total",
+                //   (workStatusDetails != null &&
+                //           workStatusDetails!.data.isNotEmpty)
+                //       ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
+                //       : "--",
+                //   Icons.timer,
+                //   Colors.purple,
+                // ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildTimeSummaryItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color, {
+    VoidCallback? onTap, // only passed for "Login"
+  }) {
+    final isClickable = onTap != null;
+
+    final content = Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          if (isClickable)
+            const Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.black45),
+        ],
+      ),
+    );
+
+    return isClickable ? InkWell(onTap: onTap, child: content) : content;
   }
 
   double _calculateItemHeight(List<workDetails.Task> tasks) {

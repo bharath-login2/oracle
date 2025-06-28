@@ -1,7 +1,10 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:developer';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
@@ -9,18 +12,37 @@ import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/service/service.dart';
 
 import '../../models/lead_management/cloudCallModel.dart';
+import '../../models/lead_management/viewLeadsModel.dart';
+import '../leadManagement/add_followup.dart';
 
 class Search extends StatefulWidget {
   String token;
   bool editLead;
   bool deleteLead;
   bool cloudCall;
+  String? leadType;
+  String? pageName;
+  dynamic status; // Add this line
+  dynamic staff; // Add this line
+  bool? isCalled; // Add this line
+  DateTime? fromDate; // Add this line
+  DateTime? toDate; // Add this line
+  dynamic category; // Add this line
+
   Search({
     super.key,
     required this.cloudCall,
     required this.editLead,
     required this.deleteLead,
     required this.token,
+    required this.leadType,
+    this.pageName,
+    this.status, // Add this line
+    this.staff, // Add this line
+    this.isCalled, // Add this line
+    this.fromDate, // Add this line
+    this.toDate, // Add this line
+    this.category, // Add this line
   });
 
   @override
@@ -30,10 +52,34 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> {
   TextEditingController searchController = TextEditingController();
   SearchDataModel? response;
+  ViewLeadsModel? viewLeads;
   bool result = true;
   bool isLoading = false;
   bool custSwitch = true;
   bool leadSwitch = true;
+  String statusWise = '';
+  String statusWiseId = '';
+  String multiBranch = '';
+  String roleId = '';
+  String statusCatId = '';
+  String type = '';
+  DateTime? fromdate;
+  DateTime? todate;
+  bool isSort = true;
+  int page = 1;
+  int pageSize = 20;
+  String? branch;
+  var outputFormat = DateFormat('dd-MM-yyyy');
+  dynamic status;
+  List checkedResponseItems = [];
+  List checkedresponseItemsName = [];
+  List checkedCategoryItems = [];
+  List checkedCategoryItemsName = [];
+  List checkedPriorityItems = [];
+  List checkedPriorityItemsName = [];
+  List checkedAssignedStaffItems = [];
+  List checkedAssignedStaffItemsName = [];
+  bool? isCalled = true;
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -108,7 +154,7 @@ class _SearchState extends State<Search> {
     Colors.green.shade800,
     Colors.blueAccent,
   ];
-  getData() async {
+  getData(sort, isFirst, status1) async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -119,6 +165,59 @@ class _SearchState extends State<Search> {
       setState(() {
         result = false;
       });
+    }
+    statusWise = await Common.getSharedPref("statusWise");
+    roleId = await Common.getSharedPref("roleId");
+    multiBranch = await Common.getSharedPref("multiBranch");
+    if (statusWise == 'yes') {
+      statusWiseId = await Common.getSharedPref("statusWisId");
+      statusCatId = await Common.getSharedPref("statusCatId");
+      type = await Common.getSharedPref("type");
+      viewLeads = await HttpService.viewLeadsSts(
+          widget.token,
+          fromdate,
+          todate,
+          type,
+          statusCatId,
+          statusWiseId,
+          sort,
+          page,
+          pageSize,
+          isFirst,
+          branch);
+      if (viewLeads != null) {
+        // fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
+        // todate = DateTime.parse(viewLeads!.data!.todate.toString());
+        setState(() {});
+      }
+    } else {
+      try {
+        Map<String, dynamic> body = {
+          "token": widget.token,
+          if (fromdate != null) "fromDate": outputFormat.format(fromdate!),
+          if (todate != null) "toDate": outputFormat.format(todate!),
+          if (fromdate == null) "fromDate": "",
+          if (todate == null) "toDate": "",
+          "callResultId": status1 ?? "",
+          //status1 == "-1" ? "" : status1,
+          "leadCategoryId": checkedCategoryItems,
+          "callResponseId": checkedResponseItems,
+          "staffId": checkedAssignedStaffItems,
+          "isCalled": isCalled,
+          "priority": checkedPriorityItems,
+          "sort": sort,
+          "page": page,
+          "pageSize": pageSize,
+          "isFirst": isFirst,
+          "leadType": widget.leadType ?? "",
+          // "call_status": widget.callStatus ?? "",
+          "branchId": branch ?? ""
+        };
+        log(body.toString());
+        viewLeads = await HttpService.viewLeads(body);
+      } catch (e) {
+        log(e.toString());
+      }
     }
     // getList();
   }
@@ -141,7 +240,7 @@ class _SearchState extends State<Search> {
 
   @override
   void initState() {
-    getData();
+    getData('desc', false, status);
     super.initState();
   }
 
@@ -358,6 +457,57 @@ class _SearchState extends State<Search> {
                                         },
                                       ),
                                     ),
+                                    // if (response!.data.leadData.isNotEmpty)
+                                    //   Padding(
+                                    //     padding: const EdgeInsets.symmetric(
+                                    //         vertical: 8.0),
+                                    //     child: GestureDetector(
+                                    //       onTap: () {
+                                    //         setState(() {
+                                    //           leadSwitch = !leadSwitch;
+                                    //         });
+                                    //       },
+                                    //       child: Container(
+                                    //           width: MediaQuery.of(context)
+                                    //               .size
+                                    //               .width,
+                                    //           color: Colors.grey.shade100,
+                                    //           child: const Padding(
+                                    //             padding: EdgeInsets.symmetric(
+                                    //                 horizontal: 16.0,
+                                    //                 vertical: 8.0),
+                                    //             child: Row(
+                                    //               mainAxisAlignment:
+                                    //                   MainAxisAlignment
+                                    //                       .spaceBetween,
+                                    //               children: [
+                                    //                 Text(
+                                    //                   "Leads",
+                                    //                   style: TextStyle(
+                                    //                       fontSize: 16,
+                                    //                       fontWeight:
+                                    //                           FontWeight.bold),
+                                    //                 ),
+                                    //                 Icon(Icons
+                                    //                     .arrow_drop_down_circle_outlined)
+                                    //               ],
+                                    //             ),
+                                    //           )),
+                                    //     ),
+                                    //   ),
+                                    //  Visibility(
+                                    //    visible: leadSwitch,
+                                    //    child: ListView.builder(
+                                    //      itemCount:
+                                    //         response!.data.leadData.length,
+                                    //     shrinkWrap: true,
+                                    //      physics:
+                                    //        const NeverScrollableScrollPhysics(),
+                                    //     itemBuilder: (context, index) {
+                                    //      return leadListWidget(context, index);
+                                    //    },
+                                    //    ),
+                                    //  ),
                                     if (response!.data.leadData.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -369,31 +519,32 @@ class _SearchState extends State<Search> {
                                             });
                                           },
                                           child: Container(
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width,
-                                              color: Colors.grey.shade100,
-                                              child: const Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.0,
-                                                    vertical: 8.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      "Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    Icon(Icons
-                                                        .arrow_drop_down_circle_outlined)
-                                                  ],
-                                                ),
-                                              )),
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            color: Colors.grey.shade100,
+                                            child: const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 16.0,
+                                                  vertical: 8.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "Leads",
+                                                    style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  Icon(Icons
+                                                      .arrow_drop_down_circle_outlined)
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     Visibility(
@@ -405,7 +556,220 @@ class _SearchState extends State<Search> {
                                         physics:
                                             const NeverScrollableScrollPhysics(),
                                         itemBuilder: (context, index) {
-                                          return leadListWidget(context, index);
+                                          return Dismissible(
+                                            key: Key(response!.data
+                                                .leadData[index].callMasterId
+                                                .toString()),
+                                            background: Container(
+                                              color: Colors.green,
+                                              child: const Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    SizedBox(width: 20),
+                                                    Icon(Icons.call,
+                                                        color: Colors.white),
+                                                    Text(
+                                                      " Call",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            secondaryBackground: Container(
+                                              color: Colors.blue,
+                                              child: const Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: <Widget>[
+                                                    Icon(Icons.add,
+                                                        color: Colors.white),
+                                                    Text(
+                                                      "Add Followup",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 20),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            confirmDismiss: (direction) async {
+                                              if (direction ==
+                                                  DismissDirection.endToStart) {
+                                                if (response!
+                                                        .data
+                                                        .leadData[index]
+                                                        .callResult !=
+                                                    "Confirmed") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AddFollowup(
+                                                        widget.token,
+                                                        widget.editLead,
+                                                        widget.deleteLead,
+                                                        widget.cloudCall,
+                                                        response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .callMasterId,
+                                                        pageName:
+                                                            widget.pageName,
+                                                        status: widget.status,
+                                                        staff: widget.staff,
+                                                        isCalled:
+                                                            widget.isCalled,
+                                                        fromDate: widget.fromDate?.toIso8601String(),
+                                                        toDate: widget.toDate?.toIso8601String(),
+                                                        category:
+                                                            widget.category,
+                                                        leadType: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .leadCategory,
+                                                        leadTypeId: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .leadCategoryId,
+                                                        leadSubType: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .leadSubCategory,
+                                                        leadSubTypeId: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .leadSubCategoryId,
+                                                        priorityId: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .priority,
+                                                        priority: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .priorityName,
+                                                        cost: response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .cost,
+                                                        address:response!
+                                                            .data
+                                                            .leadData[index]
+                                                            .address,
+                                                        leadType1:
+                                                            widget.leadType,
+                                                      ),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  Common.toastMessaage(
+                                                    "You can't follow up on confirmed leads",
+                                                    Colors.red,
+                                                  );
+                                                }
+                                              } else {
+                                                if (viewLeads
+                                                        ?.data.callPermission ==
+                                                    false) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext ctx) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                            'Alert !!!'),
+                                                        content: Text(viewLeads!
+                                                            .data.warningMessage
+                                                            .toString()),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(),
+                                                            child: const Text(
+                                                                'Close'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          LeadDetails(
+                                                                    widget
+                                                                        .token,
+                                                                    widget
+                                                                        .editLead,
+                                                                    widget
+                                                                        .deleteLead,
+                                                                    widget
+                                                                        .cloudCall,
+                                                                    viewLeads!
+                                                                        .data
+                                                                        .callLeadId
+                                                                        .toString(),
+                                                                    pageName: widget
+                                                                        .pageName
+                                                                        .toString(),
+                                                                    status: widget
+                                                                        .status,
+                                                                    staff: widget
+                                                                        .staff,
+                                                                    isCalled: widget
+                                                                        .isCalled,
+                                                                    fromDate: widget
+                                                                            .fromDate?.toIso8601String(),
+                                                                    toDate: widget
+                                                                            .toDate?.toIso8601String(),
+                                                                    category: widget
+                                                                        .category,
+                                                                    leadType: widget
+                                                                        .leadType,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                            child: const Text(
+                                                                'followup'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                } else {
+                                                  if (widget.cloudCall ==
+                                                      true) {
+                                                    chooseCallDialog(
+                                                        context, index);
+                                                  } else {
+                                                    Common.dialPad(response!
+                                                        .data
+                                                        .leadData[index]
+                                                        .contactNumber1);
+                                                  }
+                                                }
+                                              }
+                                              return null; 
+                                            },
+                                            child:
+                                                leadListWidget(context, index),
+                                          );
                                         },
                                       ),
                                     ),
@@ -416,7 +780,7 @@ class _SearchState extends State<Search> {
             ),
           )
         : noInternetWidget(context);
-  }
+       }
 
   Scaffold noInternetWidget(BuildContext context) {
     return Scaffold(
@@ -446,7 +810,7 @@ class _SearchState extends State<Search> {
               ),
               InkWell(
                 onTap: () {
-                  getData();
+                  getData('desc', true, status);
                 },
                 child: SizedBox(
                   width: 120,

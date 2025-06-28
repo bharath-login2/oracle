@@ -86,7 +86,7 @@ class Data {
         callResponse: List<String>.from(json["call_response"].map((x) => x)),
         leadSource: List<LeadSource>.from(json["lead_source"].map((x) => LeadSource.fromJson(x))),
         additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
-        countryCode: json["country_code"],
+        countryCode: json["country_code"]??"",
         customerAddPermission: json["customerAddPermission"],
         customerAddInvoicePermission: json["customerAddInvoicePermission"],
         isRenewal: json["isRenewal"],

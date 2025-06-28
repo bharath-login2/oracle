@@ -58,10 +58,21 @@ class Common {
     prefs.setString(key, val);
   }
 
-  static clearSharedPref() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.clear();
+  // static clearSharedPref() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   prefs.clear();
+  // }
+  static Future<void> clearSharedPref({List<String> excludeKeys = const []}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final allKeys = prefs.getKeys();
+
+  for (String key in allKeys) {
+    if (!excludeKeys.contains(key)) {
+      await prefs.remove(key);
+    }
   }
+}
+
 
   static getSharedPref(String key) async {
     final prefs = await SharedPreferences.getInstance();

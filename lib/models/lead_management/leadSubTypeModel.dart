@@ -34,8 +34,8 @@ class Data {
   Data({this.leadSubCategoryId, this.leadSubCategory});
 
   Data.fromJson(Map<String, dynamic> json) {
-    leadSubCategoryId = json['lead_sub_category_id'];
-    leadSubCategory = json['lead_sub_category'];
+    leadSubCategoryId = json['lead_sub_category_id']??"";
+    leadSubCategory = json['lead_sub_category']??"";
   }
 
   Map<String, dynamic> toJson() {

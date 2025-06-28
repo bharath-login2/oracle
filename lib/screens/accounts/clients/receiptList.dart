@@ -1,7 +1,7 @@
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
 import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
@@ -32,11 +32,18 @@ class _ReceiptListState extends State<ReceiptList> {
   String type = "";
   List<ListElement> items = [];
   ReceiptListModel? receiptList;
+  ExpenseMasterData? expenseMasterData;
+  ExpenseMasterData? expenseHeadData;
   bool result = true;
   TextEditingController search = TextEditingController();
   int page = 1;
   int add = 1;
   int pageSize = 15;
+  bool _isDetailedView = true;
+  String headName = "Select Head";
+  String headId = "";
+  List<AccountHead> allAccountHeads = [];
+  List<AccountHead> filteredHeads = [];
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
@@ -45,6 +52,7 @@ class _ReceiptListState extends State<ReceiptList> {
     super.initState();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     getData();
+    getDetails();
   }
 
   void _onLoadMore() {
@@ -54,6 +62,17 @@ class _ReceiptListState extends State<ReceiptList> {
         page > add) {
       getList();
       add++;
+    }
+  }
+
+  getDetails() async {
+    expenseMasterData = await HttpService.expenseMasterData();
+    if (expenseMasterData != null && expenseMasterData!.status == true) {
+      allAccountHeads = expenseMasterData!.data.accountHead;
+      filteredHeads.addAll(allAccountHeads);
+      setState(() {});
+    } else {
+      setState(() {});
     }
   }
 
@@ -79,7 +98,7 @@ class _ReceiptListState extends State<ReceiptList> {
 
   getList() async {
     receiptList = await HttpService.receptList(widget.token, fDate.toString(),
-        tDate.toString(), page, pageSize, search.text, type);
+        tDate.toString(), page, pageSize,headId, search.text, type);
     if (receiptList != null) {
       items.addAll(receiptList!.data.lists);
       page++;
@@ -138,6 +157,17 @@ class _ReceiptListState extends State<ReceiptList> {
                           ),
                         ],
                       ),
+                      IconButton(
+                        icon: Icon(
+                          _isDetailedView ? Icons.list : Icons.filter_list,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isDetailedView = !_isDetailedView;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -151,180 +181,231 @@ class _ReceiptListState extends State<ReceiptList> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 1,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () async {
-                                      final selctedDatetimetemp =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime(
-                                            DateTime.now().year,
-                                            DateTime.now().month,
-                                            1),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime.now(),
-                                      );
-                                      fDate = DateFormat('dd-MM-yyyy')
-                                          .format(selctedDatetimetemp!);
-                                      setState(() {});
-                                    },
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.45,
-                                      height: 45,
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Colors.white),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                            child: Column(
+                              children: [
+                                /// 📅 From & To Date Row
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    /// From Date Picker
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final selected = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime(
+                                                DateTime.now().year,
+                                                DateTime.now().month,
+                                                1),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now(),
+                                          );
+                                          if (selected != null) {
+                                            fDate = DateFormat('dd-MM-yyyy')
+                                                .format(selected);
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: Container(
+                                          height: 45,
+                                          margin:
+                                              const EdgeInsets.only(right: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            border: Border.all(
+                                                color: Colors.grey.shade400),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                fDate,
+                                                style: const TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                              const Icon(Icons.calendar_month,
+                                                  color: Colors.grey),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    /// To Date Picker
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final selected = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime.now(),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2100),
+                                          );
+                                          if (selected != null) {
+                                            tDate = DateFormat('dd-MM-yyyy')
+                                                .format(selected);
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: Container(
+                                          height: 45,
+                                          margin:
+                                              const EdgeInsets.only(left: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            border: Border.all(
+                                                color: Colors.grey.shade400),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                tDate,
+                                                style: const TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                              const Icon(Icons.calendar_month,
+                                                  color: Colors.grey),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                /// 🔍 Search + Account Head + Submit Button
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    /// Search Field
+                                    Expanded(
+                                      flex: 4,
+                                      child: TextFormField(
+                                        controller: search,
+                                        style: const TextStyle(
+                                            color: Colors.black),
+                                        decoration: InputDecoration(
+                                          hintText: 'Search',
+                                          hintStyle: const TextStyle(
+                                              color: Colors.grey),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          contentPadding:
+                                              const EdgeInsets.all(10),
+                                          prefixIcon: const Icon(Icons.search,
+                                              color: Colors.grey),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 12),
+
+                                    /// Account Head Selector
+                                    Expanded(
+                                      flex: 4,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: Text(
-                                              fDate,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w400,
-                                                color: Colors.black,
+                                    
+                                          GestureDetector(
+                                            onTap: () async {
+                                              await accountHeadDialog(context);
+                                              setState(() {});
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                              
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      headName.isNotEmpty
+                                                          ? headName
+                                                          : "Select Account Head",
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                          fontSize: 14),
+                                                    ),
+                                                  ),
+                                                  const Icon(
+                                                      Icons.arrow_drop_down,
+                                                      color: Colors.grey),
+                                                ],
                                               ),
                                             ),
                                           ),
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
-                                              color: Colors.white,
-                                            ),
-                                            child: const Icon(
-                                              Icons.calendar_month,
-                                              color: Colors.grey,
-                                            ),
-                                          )
                                         ],
                                       ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () async {
-                                      final toDateSelectTemp =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime(2100),
-                                      );
-                                      tDate = DateFormat('dd-MM-yyyy')
-                                          .format(toDateSelectTemp!);
-                                      setState(() {});
-                                    },
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.45,
-                                      height: 45,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Colors.white,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
+
+                                    const SizedBox(width: 12),
+
+                                    /// Submit Button
+                                    Expanded(
+                                      flex: 3,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            items.clear();
+                                            page = 1;
+                                            add = 1;
+                                            getList();
+                                          });
+                                        },
+                                        child: Container(
+                                          height: 45,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xff2590cf),
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          child: const Center(
                                             child: Text(
-                                              tDate,
+                                              "Submit",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              color: Colors.white,
-                                            ),
-                                            child: const Icon(
-                                              Icons.calendar_month,
-                                              color: Colors.grey,
-                                            ),
-                                          )
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.6,
-                                  child: TextFormField(
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                    ),
-                                    controller: search,
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.all(8),
-                                      hintStyle:
-                                          const TextStyle(color: Colors.grey),
-                                      hintText: 'Search',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(5),
-                                        borderSide: BorderSide
-                                            .none, // Set the border color to none
-                                      ),
-                                      prefixIcon: const Icon(
-                                        Icons.search,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ),
+                                  ],
                                 ),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      items.clear();
-                                      page = 1;
-                                      add = 1;
-                                      getList();
-                                    });
-                                  },
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.31,
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(4),
-                                        color: const Color(0xff2590cf)),
-                                    child: const Center(
-                                      child: Text("Submit",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                          )),
-                                    ),
-                                  ),
-                                )
                               ],
                             ),
                           ),
@@ -350,95 +431,613 @@ class _ReceiptListState extends State<ReceiptList> {
                                         if (index == items.length) {
                                           return buildLoaderListItem();
                                         } else {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 10),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.2),
-                                                      spreadRadius: 1,
-                                                      blurRadius: 1,
-                                                      offset:
-                                                          const Offset(1, 1),
-                                                    )
-                                                  ],
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
-                                                  color: Colors.white),
+                                          // return Padding(
+                                          //   padding: const EdgeInsets.only(
+                                          //       bottom: 10),
+                                          //   child: Container(
+                                          //     decoration: BoxDecoration(
+                                          //         boxShadow: [
+                                          //           BoxShadow(
+                                          //             color: Colors.grey
+                                          //                 .withOpacity(0.2),
+                                          //             spreadRadius: 1,
+                                          //             blurRadius: 1,
+                                          //             offset:
+                                          //                 const Offset(1, 1),
+                                          //           )
+                                          //         ],
+                                          //         borderRadius:
+                                          //             BorderRadius.circular(5),
+                                          //         color: Colors.white),
+                                          //     child: Padding(
+                                          //       padding:
+                                          //           const EdgeInsets.all(14.0),
+                                          //       child: Column(
+                                          //         crossAxisAlignment:
+                                          //             CrossAxisAlignment.start,
+                                          //         children: [
+                                          //           Row(
+                                          //             mainAxisAlignment:
+                                          //                 MainAxisAlignment
+                                          //                     .spaceBetween,
+                                          //             children: [
+                                          //               SizedBox(
+                                          //                 width: MediaQuery.of(
+                                          //                             context)
+                                          //                         .size
+                                          //                         .width *
+                                          //                     0.6,
+                                          //                 child: InkWell(
+                                          //                   onTap: () {
+                                          //                     Navigator.push(
+                                          //                       context,
+                                          //                       MaterialPageRoute(
+                                          //                           builder: (context) => ClientDetails(
+                                          //                               widget
+                                          //                                   .token,
+                                          //                               items[index]
+                                          //                                   .clientId
+                                          //                                   .toString())),
+                                          //                     ).then((_) {
+                                          //                       items.clear();
+                                          //                       page = 1;
+                                          //                       add = 1;
+                                          //                       getData();
+                                          //                     });
+                                          //                   },
+                                          //                   child: Text(
+                                          //                       items[index]
+                                          //                           .customerName
+                                          //                           .toString(),
+                                          //                       overflow:
+                                          //                           TextOverflow
+                                          //                               .ellipsis,
+                                          //                       style:
+                                          //                           const TextStyle(
+                                          //                         fontSize: 16,
+                                          //                         fontWeight:
+                                          //                             FontWeight
+                                          //                                 .w600,
+                                          //                       )),
+                                          //                 ),
+                                          //               ),
+                                          //               Container(
+                                          //                 decoration: BoxDecoration(
+                                          //                     borderRadius:
+                                          //                         BorderRadius
+                                          //                             .circular(
+                                          //                                 2),
+                                          //                     color: const Color(
+                                          //                         0xffe6fbec)),
+                                          //                 child: Center(
+                                          //                   child: Padding(
+                                          //                     padding:
+                                          //                         const EdgeInsets
+                                          //                             .only(
+                                          //                             left: 12,
+                                          //                             right: 12,
+                                          //                             top: 6,
+                                          //                             bottom:
+                                          //                                 6),
+                                          //                     child: Text(
+                                          //                         items[index]
+                                          //                             .recieptAmount
+                                          //                             .toString(),
+                                          //                         style:
+                                          //                             const TextStyle(
+                                          //                           color: Colors
+                                          //                               .green,
+                                          //                           fontSize:
+                                          //                               14,
+                                          //                           fontWeight:
+                                          //                               FontWeight
+                                          //                                   .w600,
+                                          //                         )),
+                                          //                   ),
+                                          //                 ),
+                                          //               )
+                                          //             ],
+                                          //           ),
+                                          //           const SizedBox(
+                                          //             height: 5,
+                                          //           ),
+                                          //           // Row(
+                                          //           //   mainAxisAlignment:
+                                          //           //       MainAxisAlignment
+                                          //           //           .spaceBetween,
+                                          //           //   children: [
+                                          //           //     SizedBox(
+                                          //           //       width: MediaQuery.of(
+                                          //           //                   context)
+                                          //           //               .size
+                                          //           //               .width *
+                                          //           //           0.6,
+                                          //           //       child: Text(
+                                          //           //         "Receipt No : ${items[index].receiptNumber}",
+                                          //           //         overflow:
+                                          //           //             TextOverflow
+                                          //           //                 .ellipsis,
+                                          //           //         style:
+                                          //           //             const TextStyle(
+                                          //           //           fontSize: 14,
+                                          //           //           fontWeight:
+                                          //           //               FontWeight
+                                          //           //                   .w400,
+                                          //           //         ),
+                                          //           //       ),
+                                          //           //     ),
+                                          //           //   ],
+                                          //           // ),
+                                          //           // SizedBox(
+                                          //           //   width:
+                                          //           //       MediaQuery.of(context)
+                                          //           //               .size
+                                          //           //               .width *
+                                          //           //           0.6,
+                                          //           //   child: SizedBox(
+                                          //           //     width: MediaQuery.of(
+                                          //           //                 context)
+                                          //           //             .size
+                                          //           //             .width *
+                                          //           //         0.41,
+                                          //           //     child: Text(
+                                          //           //       "Invoice No : ${items[index].invoiceNumber}",
+                                          //           //       overflow: TextOverflow
+                                          //           //           .ellipsis,
+                                          //           //       style:
+                                          //           //           const TextStyle(
+                                          //           //         fontSize: 14,
+                                          //           //         fontWeight:
+                                          //           //             FontWeight.w400,
+                                          //           //       ),
+                                          //           //     ),
+                                          //           //   ),
+                                          //           // ),
+                                          //           // const SizedBox(
+                                          //           //   height: 5,
+                                          //           // ),
+                                          //           Row(
+                                          //             mainAxisAlignment:
+                                          //                 MainAxisAlignment
+                                          //                     .start,
+                                          //             children: [
+                                          //               const Icon(
+                                          //                 Icons.calendar_month,
+                                          //                 color: Colors.grey,
+                                          //                 size: 20,
+                                          //               ),
+                                          //               const SizedBox(
+                                          //                 width: 8,
+                                          //               ),
+                                          //               Row(
+                                          //                 mainAxisAlignment:
+                                          //                     MainAxisAlignment
+                                          //                         .spaceBetween,
+                                          //                 children: [
+                                          //                   SizedBox(
+                                          //                     width: MediaQuery.of(
+                                          //                                 context)
+                                          //                             .size
+                                          //                             .width *
+                                          //                         0.6,
+                                          //                     child: Text(
+                                          //                         items[index]
+                                          //                             .receiptDate,
+                                          //                         maxLines: 1,
+                                          //                         overflow:
+                                          //                             TextOverflow
+                                          //                                 .ellipsis,
+                                          //                         style:
+                                          //                             const TextStyle(
+                                          //                           fontSize:
+                                          //                               14,
+                                          //                           fontWeight:
+                                          //                               FontWeight
+                                          //                                   .w400,
+                                          //                         )),
+                                          //                   ),
+                                          //                 ],
+                                          //               ),
+                                          //               Transform.translate(
+                                          //                 offset: Offset(-35,
+                                          //                     0), // move 8 pixels left
+                                          //                 child: Row(
+                                          //                   children: [
+                                          //                     SizedBox(
+                                          //                       width: MediaQuery.of(
+                                          //                                   context)
+                                          //                               .size
+                                          //                               .width *
+                                          //                           0.6,
+                                          //                       child: Text(
+                                          //                         items[index]
+                                          //                             .collectedStaff,
+                                          //                         maxLines: 1,
+                                          //                         overflow:
+                                          //                             TextOverflow
+                                          //                                 .ellipsis,
+                                          //                         style:
+                                          //                             const TextStyle(
+                                          //                           fontSize:
+                                          //                               11,
+                                          //                           fontWeight:
+                                          //                               FontWeight
+                                          //                                   .w400,
+                                          //                         ),
+                                          //                       ),
+                                          //                     ),
+                                          //                   ],
+                                          //                 ),
+                                          //               )
+                                          //             ],
+                                          //           ),
+                                          //           const SizedBox(
+                                          //             height: 8,
+                                          //           ),
+                                          //           Row(
+                                          //             mainAxisAlignment:
+                                          //                 MainAxisAlignment
+                                          //                     .spaceBetween,
+                                          //             children: [
+                                          //               Row(
+                                          //                 children: [
+                                          //                   Column(
+                                          //                     crossAxisAlignment:
+                                          //                         CrossAxisAlignment
+                                          //                             .start,
+                                          //                     children: [
+                                          //                       const SizedBox(
+                                          //                         height: 5,
+                                          //                       ),
+                                          //                       // Row(
+                                          //                       //   children: [
+                                          //                       //     const Icon(
+                                          //                       //       Icons
+                                          //                       //           .calendar_month,
+                                          //                       //       color: Colors
+                                          //                       //           .grey,
+                                          //                       //       size: 20,
+                                          //                       //     ),
+                                          //                       //     const SizedBox(
+                                          //                       //       width: 8,
+                                          //                       //     ),
+                                          //                       //     Text(
+                                          //                       //         items[index]
+                                          //                       //             .receiptDate
+                                          //                       //             .toString(),
+                                          //                       //         maxLines:
+                                          //                       //             2,
+                                          //                       //         overflow:
+                                          //                       //             TextOverflow
+                                          //                       //                 .ellipsis,
+                                          //                       //         style:
+                                          //                       //             const TextStyle(
+                                          //                       //           fontSize:
+                                          //                       //               14,
+                                          //                       //           fontWeight:
+                                          //                       //               FontWeight.w400,
+                                          //                       //         )),
+                                          //                       //   ],
+                                          //                       // ),
+                                          //                     ],
+                                          //                   ),
+                                          //                 ],
+                                          //               ),
+                                          //               Row(
+                                          //                 children: [
+                                          //                   InkWell(
+                                          //                     onTap: () {
+                                          //                       Navigator.push(
+                                          //                         context,
+                                          //                         MaterialPageRoute(
+                                          //                             builder: (context) => ViewReceipt(
+                                          //                                 widget
+                                          //                                     .token,
+                                          //                                 items[index]
+                                          //                                     .id
+                                          //                                     .toString(),
+                                          //                                 items[index]
+                                          //                                     .clientId
+                                          //                                     .toString(),
+                                          //                                 items[index]
+                                          //                                     .receiptNumber
+                                          //                                     .toString())),
+                                          //                       );
+                                          //                     },
+                                          //                     child: Container(
+                                          //                       decoration: BoxDecoration(
+                                          //                           borderRadius:
+                                          //                               BorderRadius
+                                          //                                   .circular(
+                                          //                                       2),
+                                          //                           color: const Color(
+                                          //                               0xffe9d9fd)),
+                                          //                       child:
+                                          //                           const Padding(
+                                          //                         padding:
+                                          //                             EdgeInsets
+                                          //                                 .all(
+                                          //                                     8.0),
+                                          //                         child: Icon(
+                                          //                             Icons
+                                          //                                 .local_print_shop_outlined,
+                                          //                             color: Color(
+                                          //                                 0xff9747FF)),
+                                          //                       ),
+                                          //                     ),
+                                          //                   ),
+                                          //                   const SizedBox(
+                                          //                     width: 10,
+                                          //                   ),
+                                          //                   InkWell(
+                                          //                     onTap: () {
+                                          //                       Navigator.push(
+                                          //                         context,
+                                          //                         MaterialPageRoute(
+                                          //                             builder: (context) => EditReceipt(
+                                          //                                 widget
+                                          //                                     .token,
+                                          //                                 items[index]
+                                          //                                     .id
+                                          //                                     .toString())),
+                                          //                       ).then((_) {
+                                          //                         items.clear();
+                                          //                         page = 1;
+                                          //                         add = 1;
+                                          //                         getData();
+                                          //                       });
+                                          //                     },
+                                          //                     child: Container(
+                                          //                       decoration: BoxDecoration(
+                                          //                           borderRadius:
+                                          //                               BorderRadius
+                                          //                                   .circular(
+                                          //                                       2),
+                                          //                           color: const Color(
+                                          //                               0xffaedcf4)),
+                                          //                       child:
+                                          //                           const Padding(
+                                          //                         padding:
+                                          //                             EdgeInsets
+                                          //                                 .all(
+                                          //                                     8.0),
+                                          //                         child: Icon(
+                                          //                             Icons
+                                          //                                 .mode_edit_outlined,
+                                          //                             color: Colors
+                                          //                                 .blue),
+                                          //                       ),
+                                          //                     ),
+                                          //                   ),
+                                          //                   const SizedBox(
+                                          //                     width: 10,
+                                          //                   ),
+                                          //                   InkWell(
+                                          //                     onTap: () {
+                                          //                       showDialog(
+                                          //                           context:
+                                          //                               context,
+                                          //                           builder:
+                                          //                               (BuildContext
+                                          //                                   context) {
+                                          //                             return AlertDialog(
+                                          //                               scrollable:
+                                          //                                   true,
+                                          //                               title: const Text(
+                                          //                                   'Please Confirm'),
+                                          //                               content:
+                                          //                                   const Text('Are you sure to Delete?'),
+                                          //                               actions: [
+                                          //                                 TextButton(
+                                          //                                     onPressed: () {
+                                          //                                       Navigator.of(context).pop();
+                                          //                                     },
+                                          //                                     child: const Text('No')),
+                                          //                                 TextButton(
+                                          //                                     onPressed: () async {
+                                          //                                       Common.showProgressDialog(context, "Loading..");
+                                          //                                       ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                          //                                       if (deleteReceipt.data == true) {
+                                          //                                         Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                          //                                         if (context.mounted) {
+                                          //                                           getData();
+                                          //                                           Navigator.pop(context);
+                                          //                                           Navigator.pop(context);
+                                          //                                         }
+                                          //                                       } else {
+                                          //                                         Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                          //                                         if (context.mounted) {
+                                          //                                           Navigator.of(context).pop();
+                                          //                                         }
+                                          //                                       }
+                                          //                                     },
+                                          //                                     child: const Text('Yes')),
+                                          //                               ],
+                                          //                             );
+                                          //                           });
+                                          //                     },
+                                          //                     child: Container(
+                                          //                       decoration: BoxDecoration(
+                                          //                           borderRadius:
+                                          //                               BorderRadius
+                                          //                                   .circular(
+                                          //                                       2),
+                                          //                           color: const Color(
+                                          //                               0xfffcbcbc)),
+                                          //                       child:
+                                          //                           const Padding(
+                                          //                         padding:
+                                          //                             EdgeInsets
+                                          //                                 .all(
+                                          //                                     8.0),
+                                          //                         child: Icon(
+                                          //                             Icons
+                                          //                                 .delete_outline,
+                                          //                             color: Colors
+                                          //                                 .red),
+                                          //                       ),
+                                          //                     ),
+                                          //                   ),
+                                          //                   const SizedBox(
+                                          //                     width: 10,
+                                          //                   ),
+                                          //                   items[index].uploadedFile !=
+                                          //                           ''
+                                          //                       ? InkWell(
+                                          //                           onTap: () {
+                                          //                             Navigator
+                                          //                                 .push(
+                                          //                               context,
+                                          //                               MaterialPageRoute(
+                                          //                                   builder: (context) =>
+                                          //                                       WebViewPage('image', items[index].uploadedFile.toString())),
+                                          //                             );
+                                          //                           },
+                                          //                           child:
+                                          //                               Container(
+                                          //                             decoration: BoxDecoration(
+                                          //                                 borderRadius: BorderRadius.circular(
+                                          //                                     2),
+                                          //                                 color: Colors
+                                          //                                     .green
+                                          //                                     .shade100),
+                                          //                             child:
+                                          //                                 const Padding(
+                                          //                               padding:
+                                          //                                   EdgeInsets.all(8.0),
+                                          //                               child: Icon(
+                                          //                                   Icons
+                                          //                                       .screenshot,
+                                          //                                   color:
+                                          //                                       Colors.green),
+                                          //                             ),
+                                          //                           ),
+                                          //                         )
+                                          //                       : const SizedBox()
+                                          //                 ],
+                                          //               )
+                                          //             ],
+                                          //           )
+                                          //         ],
+                                          //       ),
+                                          //     ),
+                                          //   ),
+                                          // );
+
+                                          if (_isDetailedView) {
+                                            return InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ViewReceipt(
+                                                            widget.token,
+                                                            items[index]
+                                                                .id
+                                                                .toString(),
+                                                            items[index]
+                                                                .clientId
+                                                                .toString(),
+                                                            items[index]
+                                                                .receiptNumber
+                                                                .toString(),
+                                                          )),
+                                                );
+                                              },
                                               child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(14.0),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 8.0),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.grey
+                                                            .withOpacity(0.1),
+                                                        spreadRadius: 0.5,
+                                                        blurRadius: 1,
+                                                        offset:
+                                                            const Offset(1, 1),
+                                                      )
+                                                    ],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12.0,
+                                                        vertical: 10.0),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
                                                       children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) => ClientDetails(
-                                                                        widget
-                                                                            .token,
-                                                                        items[index]
-                                                                            .clientId
-                                                                            .toString())),
-                                                              ).then((_) {
-                                                                items.clear();
-                                                                page = 1;
-                                                                add = 1;
-                                                                getData();
-                                                              });
-                                                            },
-                                                            child: Text(
-                                                                items[index]
-                                                                    .customerName
-                                                                    .toString(),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                )),
-                                                          ),
-                                                        ),
-                                                        Container(
-                                                          decoration: BoxDecoration(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          2),
-                                                              color: const Color(
-                                                                  0xffe6fbec)),
-                                                          child: Center(
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 12,
-                                                                      right: 12,
-                                                                      top: 6,
-                                                                      bottom:
-                                                                          6),
-                                                              child: Text(
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Expanded(
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                        builder: (context) =>
+                                                                            ClientDetails(
+                                                                              widget.token,
+                                                                              items[index].clientId.toString(),
+                                                                            )),
+                                                                  ).then((_) {
+                                                                    items
+                                                                        .clear();
+                                                                    page = 1;
+                                                                    add = 1;
+                                                                    getData();
+                                                                  });
+                                                                },
+                                                                child: Text(
+                                                                  items[index]
+                                                                      .customerName
+                                                                      .toString(),
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        15,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 8),
+                                                            Row(children: [
+                                                              Container(
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                    vertical:
+                                                                        4),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
+                                                                  color: const Color(
+                                                                      0xffe6fbec),
+                                                                ),
+                                                                child: Text(
                                                                   items[index]
                                                                       .recieptAmount
                                                                       .toString(),
@@ -447,280 +1046,71 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                     color: Colors
                                                                         .green,
                                                                     fontSize:
-                                                                        14,
+                                                                        13,
                                                                     fontWeight:
                                                                         FontWeight
                                                                             .w600,
-                                                                  )),
-                                                            ),
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                          child: Text(
-                                                            "Receipt No : ${items[index].receiptNumber}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 14,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                      child: SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.41,
-                                                        child: Text(
-                                                          "Invoice No : ${items[index].invoiceNumber}",
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.person,
-                                                          color: Colors.grey,
-                                                          size: 20,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            SizedBox(
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.6,
-                                                              child: Text(
-                                                                  "Collected by : ${items[index].collectedStaff} ",
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400,
-                                                                  )),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 8,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                const SizedBox(
-                                                                  height: 5,
-                                                                ),
-                                                                Row(
-                                                                  children: [
-                                                                    const Icon(
-                                                                      Icons
-                                                                          .calendar_month,
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      size: 20,
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      width: 8,
-                                                                    ),
-                                                                    Text(
-                                                                        items[index]
-                                                                            .receiptDate
-                                                                            .toString(),
-                                                                        maxLines:
-                                                                            2,
-                                                                        overflow:
-                                                                            TextOverflow
-                                                                                .ellipsis,
-                                                                        style:
-                                                                            const TextStyle(
-                                                                          fontSize:
-                                                                              14,
-                                                                          fontWeight:
-                                                                              FontWeight.w400,
-                                                                        )),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: () {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) => ViewReceipt(
-                                                                          widget
-                                                                              .token,
-                                                                          items[index]
-                                                                              .id
-                                                                              .toString(),
-                                                                          items[index]
-                                                                              .clientId
-                                                                              .toString(),
-                                                                          items[index]
-                                                                              .receiptNumber
-                                                                              .toString())),
-                                                                );
-                                                              },
-                                                              child: Container(
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(
-                                                                                2),
-                                                                    color: const Color(
-                                                                        0xffe9d9fd)),
-                                                                child:
-                                                                    const Padding(
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              8.0),
-                                                                  child: Icon(
-                                                                      Icons
-                                                                          .local_print_shop_outlined,
-                                                                      color: Color(
-                                                                          0xff9747FF)),
+                                                                  ),
                                                                 ),
                                                               ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            InkWell(
-                                                              onTap: () {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) => EditReceipt(
-                                                                          widget
-                                                                              .token,
-                                                                          items[index]
-                                                                              .id
-                                                                              .toString())),
-                                                                ).then((_) {
-                                                                  items.clear();
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  getData();
-                                                                });
-                                                              },
-                                                              child: Container(
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(
-                                                                                2),
-                                                                    color: const Color(
-                                                                        0xffaedcf4)),
-                                                                child:
-                                                                    const Padding(
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              8.0),
-                                                                  child: Icon(
-                                                                      Icons
-                                                                          .mode_edit_outlined,
-                                                                      color: Colors
-                                                                          .blue),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            InkWell(
-                                                              onTap: () {
-                                                                showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (BuildContext
-                                                                            context) {
-                                                                      return AlertDialog(
-                                                                        scrollable:
-                                                                            true,
-                                                                        title: const Text(
-                                                                            'Please Confirm'),
-                                                                        content:
-                                                                            const Text('Are you sure to Delete?'),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                              onPressed: () {
-                                                                                Navigator.of(context).pop();
-                                                                              },
-                                                                              child: const Text('No')),
-                                                                          TextButton(
+                                                              PopupMenuButton<
+                                                                  String>(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .zero,
+                                                                onSelected:
+                                                                    (value) {
+                                                                  if (value ==
+                                                                      'print') {
+                                                                    Navigator
+                                                                        .push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              ViewReceipt(
+                                                                                widget.token,
+                                                                                items[index].id.toString(),
+                                                                                items[index].clientId.toString(),
+                                                                                items[index].receiptNumber.toString(),
+                                                                              )),
+                                                                    );
+                                                                  } else if (value ==
+                                                                      'edit') {
+                                                                    Navigator
+                                                                        .push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              EditReceipt(
+                                                                                widget.token,
+                                                                                items[index].id.toString(),
+                                                                              )),
+                                                                    ).then((_) {
+                                                                      items
+                                                                          .clear();
+                                                                      page = 1;
+                                                                      add = 1;
+                                                                      getData();
+                                                                    });
+                                                                  } else if (value ==
+                                                                      'delete') {
+                                                                    showDialog(
+                                                                      context:
+                                                                          context,
+                                                                      builder:
+                                                                          (BuildContext
+                                                                              context) {
+                                                                        return AlertDialog(
+                                                                          title:
+                                                                              const Text('Please Confirm'),
+                                                                          content:
+                                                                              const Text('Are you sure to Delete?'),
+                                                                          actions: [
+                                                                            TextButton(
+                                                                              onPressed: () => Navigator.pop(context),
+                                                                              child: const Text('No'),
+                                                                            ),
+                                                                            TextButton(
                                                                               onPressed: () async {
                                                                                 Common.showProgressDialog(context, "Loading..");
                                                                                 ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
@@ -734,82 +1124,535 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                                 } else {
                                                                                   Common.toastMessaage(deleteReceipt.message, Colors.red);
                                                                                   if (context.mounted) {
-                                                                                    Navigator.of(context).pop();
+                                                                                    Navigator.pop(context);
                                                                                   }
                                                                                 }
                                                                               },
-                                                                              child: const Text('Yes')),
-                                                                        ],
-                                                                      );
-                                                                    });
-                                                              },
-                                                              child: Container(
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(
-                                                                                2),
-                                                                    color: const Color(
-                                                                        0xfffcbcbc)),
-                                                                child:
-                                                                    const Padding(
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              8.0),
-                                                                  child: Icon(
-                                                                      Icons
-                                                                          .delete_outline,
-                                                                      color: Colors
-                                                                          .red),
-                                                                ),
+                                                                              child: const Text('Yes'),
+                                                                            ),
+                                                                          ],
+                                                                        );
+                                                                      },
+                                                                    );
+                                                                  }
+                                                                },
+                                                                itemBuilder:
+                                                                    (context) =>
+                                                                        [
+                                                                  const PopupMenuItem(
+                                                                      value:
+                                                                          'print',
+                                                                      child: Text(
+                                                                          'Print')),
+                                                                  const PopupMenuItem(
+                                                                      value:
+                                                                          'edit',
+                                                                      child: Text(
+                                                                          'Edit')),
+                                                                  const PopupMenuItem(
+                                                                      value:
+                                                                          'delete',
+                                                                      child: Text(
+                                                                          'Delete')),
+                                                                ],
+                                                                icon: const Icon(
+                                                                    Icons
+                                                                        .more_vert,
+                                                                    size: 18),
+                                                              ),
+                                                            ]),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 6),
+                                                        Row(children: [
+                                                          Icon(
+                                                              Icons
+                                                                  .calendar_month,
+                                                              color:
+                                                                  Colors.grey,
+                                                              size: 16),
+                                                          const SizedBox(
+                                                              width: 6),
+                                                          Text(
+                                                              items[index]
+                                                                  .receiptDate,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors.grey,
+                                                              )),
+                                                          const Spacer(),
+                                                          Flexible(
+                                                            child: Text(
+                                                              items[index]
+                                                                  .collectedStaff,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors.grey,
                                                               ),
                                                             ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            items[index].uploadedFile !=
-                                                                    ''
-                                                                ? InkWell(
-                                                                    onTap: () {
-                                                                      Navigator
-                                                                          .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                WebViewPage('image', items[index].uploadedFile.toString())),
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                              2),
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(8.0),
-                                                                        child: Icon(
-                                                                            Icons
-                                                                                .screenshot,
-                                                                            color:
-                                                                                Colors.green),
-                                                                      ),
-                                                                    ),
-                                                                  )
-                                                                : const SizedBox()
-                                                          ],
-                                                        )
+                                                          ),
+                                                        ]),
                                                       ],
-                                                    )
-                                                  ],
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          } else {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                  bottom: 10),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.grey
+                                                            .withOpacity(0.2),
+                                                        spreadRadius: 1,
+                                                        blurRadius: 1,
+                                                        offset:
+                                                            const Offset(1, 1),
+                                                      )
+                                                    ],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                    color: Colors.white),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                      14.0),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.6,
+                                                            child: InkWell(
+                                                              onTap: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) => ClientDetails(
+                                                                          widget
+                                                                              .token,
+                                                                          items[index]
+                                                                              .clientId
+                                                                              .toString())),
+                                                                ).then((_) {
+                                                                  items.clear();
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  getData();
+                                                                });
+                                                              },
+                                                              child: Text(
+                                                                  items[index]
+                                                                      .customerName
+                                                                      .toString(),
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                  )),
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            2),
+                                                                color: const Color(
+                                                                    0xffe6fbec)),
+                                                            child: Center(
+                                                              child: Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        left:
+                                                                            12,
+                                                                        right:
+                                                                            12,
+                                                                        top: 6,
+                                                                        bottom:
+                                                                            6),
+                                                                child: Text(
+                                                                    items[index]
+                                                                        .recieptAmount
+                                                                        .toString(),
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      color: Colors
+                                                                          .green,
+                                                                      fontSize:
+                                                                          14,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                    )),
+                                                              ),
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 5),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.6,
+                                                            child: Text(
+                                                              "Receipt No : ${items[index].receiptNumber}",
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            0.6,
+                                                        child: SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.41,
+                                                          child: Text(
+                                                            "Invoice No : ${items[index].invoiceNumber}",
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w400,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 5),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          const Icon(
+                                                            Icons.person,
+                                                            color: Colors.grey,
+                                                            size: 20,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                                child: Text(
+                                                                    "Collected by : ${items[index].collectedStaff} ",
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w400,
+                                                                    )),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  const SizedBox(
+                                                                      height:
+                                                                          5),
+                                                                  Row(
+                                                                    children: [
+                                                                      const Icon(
+                                                                        Icons
+                                                                            .calendar_month,
+                                                                        color: Colors
+                                                                            .grey,
+                                                                        size:
+                                                                            20,
+                                                                      ),
+                                                                      const SizedBox(
+                                                                          width:
+                                                                              8),
+                                                                      Text(
+                                                                          items[index]
+                                                                              .receiptDate
+                                                                              .toString(),
+                                                                          maxLines:
+                                                                              2,
+                                                                          overflow: TextOverflow
+                                                                              .ellipsis,
+                                                                          style:
+                                                                              const TextStyle(
+                                                                            fontSize:
+                                                                                14,
+                                                                            fontWeight:
+                                                                                FontWeight.w400,
+                                                                          )),
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            children: [
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                        builder: (context) => ViewReceipt(
+                                                                            widget.token,
+                                                                            items[index].id.toString(),
+                                                                            items[index].clientId.toString(),
+                                                                            items[index].receiptNumber.toString())),
+                                                                  );
+                                                                },
+                                                                child:
+                                                                    Container(
+                                                                  decoration: BoxDecoration(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              2),
+                                                                      color: const Color(
+                                                                          0xffe9d9fd)),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets.all(
+                                                                            8.0),
+                                                                    child: Icon(
+                                                                        Icons
+                                                                            .local_print_shop_outlined,
+                                                                        color: Color(
+                                                                            0xff9747FF)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 10),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                        builder: (context) => EditReceipt(
+                                                                            widget.token,
+                                                                            items[index].id.toString())),
+                                                                  ).then((_) {
+                                                                    items
+                                                                        .clear();
+                                                                    page = 1;
+                                                                    add = 1;
+                                                                    getData();
+                                                                  });
+                                                                },
+                                                                child:
+                                                                    Container(
+                                                                  decoration: BoxDecoration(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              2),
+                                                                      color: const Color(
+                                                                          0xffaedcf4)),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets.all(
+                                                                            8.0),
+                                                                    child: Icon(
+                                                                        Icons
+                                                                            .mode_edit_outlined,
+                                                                        color: Colors
+                                                                            .blue),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 10),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  showDialog(
+                                                                      context:
+                                                                          context,
+                                                                      builder:
+                                                                          (BuildContext
+                                                                              context) {
+                                                                        return AlertDialog(
+                                                                          scrollable:
+                                                                              true,
+                                                                          title:
+                                                                              const Text('Please Confirm'),
+                                                                          content:
+                                                                              const Text('Are you sure to Delete?'),
+                                                                          actions: [
+                                                                            TextButton(
+                                                                                onPressed: () {
+                                                                                  Navigator.of(context).pop();
+                                                                                },
+                                                                                child: const Text('No')),
+                                                                            TextButton(
+                                                                                onPressed: () async {
+                                                                                  Common.showProgressDialog(context, "Loading..");
+                                                                                  ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                                                                  if (deleteReceipt.data == true) {
+                                                                                    Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                                                                    if (context.mounted) {
+                                                                                      getData();
+                                                                                      Navigator.pop(context);
+                                                                                      Navigator.pop(context);
+                                                                                    }
+                                                                                  } else {
+                                                                                    Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                                                                    if (context.mounted) {
+                                                                                      Navigator.of(context).pop();
+                                                                                    }
+                                                                                  }
+                                                                                },
+                                                                                child: const Text('Yes')),
+                                                                          ],
+                                                                        );
+                                                                      });
+                                                                },
+                                                                child:
+                                                                    Container(
+                                                                  decoration: BoxDecoration(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              2),
+                                                                      color: const Color(
+                                                                          0xfffcbcbc)),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets.all(
+                                                                            8.0),
+                                                                    child: Icon(
+                                                                        Icons
+                                                                            .delete_outline,
+                                                                        color: Colors
+                                                                            .red),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 10),
+                                                              items[index].uploadedFile !=
+                                                                      ''
+                                                                  ? InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => WebViewPage('image', items[index].uploadedFile.toString())),
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        decoration: BoxDecoration(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(2),
+                                                                            color: Colors.green.shade100),
+                                                                        child:
+                                                                            const Padding(
+                                                                          padding:
+                                                                              EdgeInsets.all(8.0),
+                                                                          child: Icon(
+                                                                              Icons.screenshot,
+                                                                              color: Colors.green),
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  : const SizedBox()
+                                                            ],
+                                                          )
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+
+// Helper Widget for Action Buttons
+                                          }
                                         }
                                       },
                                     ),
@@ -915,5 +1758,104 @@ class _ReceiptListState extends State<ReceiptList> {
                 ],
               ),
             ));
+  }
+
+  Future<dynamic> accountHeadDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredHeads = allAccountHeads
+                            .where((item) => item.accountName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredHeads.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            headName = filteredHeads[index].accountName;
+                            headId = filteredHeads[index].accountId;
+                            search.clear();
+                            filteredHeads.clear();
+                            filteredHeads.addAll(allAccountHeads);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredHeads[index].accountName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredHeads.clear();
+                    filteredHeads.addAll(allAccountHeads);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(2),
+          color: bgColor,
+        ),
+        child: Icon(
+          icon,
+          color: color,
+          size: 18,
+        ),
+      ),
+    );
   }
 }

@@ -8,6 +8,7 @@ import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/userManagement/deleteStaffModel.dart';
 import 'package:login2/screens/callLogs/callLogs.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
+import 'package:login2/screens/staff_reports/achievementDetailspage.dart';
 import 'package:login2/screens/userManagement/changePassword.dart';
 import 'package:login2/screens/userManagement/editStaffPage.dart';
 import 'package:login2/service/service.dart';
@@ -354,7 +355,7 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text("Target",
+                                    Text("Target Report",
                                         style: TextStyle(
                                             color: Color.fromARGB(255, 0, 0, 0),
                                             fontSize: 20,
@@ -385,70 +386,70 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          selectedIndex = 0;
-                                        });
-                                      },
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .4,
-                                        height: 30,
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Colors.grey, width: 0),
-                                            color: selectedIndex == 0
-                                                ? const Color(0xFFd5f5f4)
-                                                : Colors.white,
-                                            borderRadius:
-                                                const BorderRadius.all(
-                                                    Radius.circular(6))),
-                                        child: Center(
-                                          child: Text(
-                                            'Cost',
-                                            style: TextStyle(
-                                              color: selectedIndex == 0
-                                                  ? const Color(0xFF3c9f9a)
-                                                  : const Color(0xFF717171),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          selectedIndex = 1;
-                                        });
-                                      },
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .4,
-                                        height: 30,
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Colors.grey, width: 0),
-                                            color: selectedIndex == 1
-                                                ? const Color(0xFFd5f5f4)
-                                                : Colors.white,
-                                            borderRadius:
-                                                const BorderRadius.all(
-                                                    Radius.circular(6))),
-                                        child: Center(
-                                          child: Text(
-                                            'Calls',
-                                            style: TextStyle(
-                                              color: selectedIndex == 1
-                                                  ? const Color(0xFF3c9f9a)
-                                                  : const Color(0xFF717171),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    // InkWell(
+                                    //   onTap: () {
+                                    //     setState(() {
+                                    //       selectedIndex = 0;
+                                    //     });
+                                    //   },
+                                    //   child: Container(
+                                    //     width:
+                                    //         MediaQuery.of(context).size.width *
+                                    //             .4,
+                                    //     height: 30,
+                                    //     decoration: BoxDecoration(
+                                    //         border: Border.all(
+                                    //             color: Colors.grey, width: 0),
+                                    //         color: selectedIndex == 0
+                                    //             ? const Color(0xFFd5f5f4)
+                                    //             : Colors.white,
+                                    //         borderRadius:
+                                    //             const BorderRadius.all(
+                                    //                 Radius.circular(6))),
+                                    //     child: Center(
+                                    //       child: Text(
+                                    //         'Cost',
+                                    //         style: TextStyle(
+                                    //           color: selectedIndex == 0
+                                    //               ? const Color(0xFF3c9f9a)
+                                    //               : const Color(0xFF717171),
+                                    //         ),
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // ),
+                                    // InkWell(
+                                    //   onTap: () {
+                                    //     setState(() {
+                                    //       selectedIndex = 1;
+                                    //     });
+                                    //   },
+                                    //   child: Container(
+                                    //     width:
+                                    //         MediaQuery.of(context).size.width *
+                                    //             .4,
+                                    //     height: 30,
+                                    //     decoration: BoxDecoration(
+                                    //         border: Border.all(
+                                    //             color: Colors.grey, width: 0),
+                                    //         color: selectedIndex == 1
+                                    //             ? const Color(0xFFd5f5f4)
+                                    //             : Colors.white,
+                                    //         borderRadius:
+                                    //             const BorderRadius.all(
+                                    //                 Radius.circular(6))),
+                                    //     child: Center(
+                                    //       child: Text(
+                                    //         'Calls',
+                                    //         style: TextStyle(
+                                    //           color: selectedIndex == 1
+                                    //               ? const Color(0xFF3c9f9a)
+                                    //               : const Color(0xFF717171),
+                                    //         ),
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // ),
                                   ],
                                 ),
                               ),
@@ -494,94 +495,104 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                                             .length,
                                                         itemBuilder:
                                                             (context, index) {
-                                                          return Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 15.0,
-                                                                    bottom:
-                                                                        15.0,
-                                                                    left: 20.0,
-                                                                    right:
-                                                                        20.0),
-                                                            child: Column(
-                                                              children: [
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    Text(
-                                                                      staffDetails!
-                                                                          .data
-                                                                          .userTarget[
-                                                                              index]
-                                                                          .groupName,
-                                                                      style: const TextStyle(
-                                                                          color: Colors
-                                                                              .white,
-                                                                          fontWeight: FontWeight
-                                                                              .bold,
-                                                                          fontSize:
-                                                                              16),
-                                                                    ),
-                                                                    Column(
-                                                                      crossAxisAlignment:
-                                                                          CrossAxisAlignment
-                                                                              .end,
-                                                                      children: [
-                                                                        Text(
-                                                                            "Target : ${staffDetails!.data.userTarget[index].targetAmount}",
-                                                                            style: const TextStyle(
-                                                                                color: Colors.white,
-                                                                                fontWeight: FontWeight.w600,
-                                                                                fontSize: 14)),
-                                                                        Text(
-                                                                            "Achieved : ${staffDetails!.data.userTarget[index].achieved}",
-                                                                            style: const TextStyle(
-                                                                                color: Colors.white,
-                                                                                fontWeight: FontWeight.w600,
-                                                                                fontSize: 14)),
-                                                                      ],
-                                                                    ),
-                                                                  ],
+                                                          final target =
+                                                              staffDetails!.data
+                                                                      .userTarget[
+                                                                  index];
+                                                          return GestureDetector(
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          AchievementDetailsPage(
+                                                                    targetData:
+                                                                        target,
+                                                                    targetFromDate:
+                                                                        DateTime.tryParse(
+                                                                            targetFromDate),
+                                                                    targetToDate:
+                                                                        DateTime.tryParse(
+                                                                            targetToDate),
+                                                                  ),
                                                                 ),
-                                                                Stack(
-                                                                  children: [
-                                                                    LinearProgressIndicator(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              8),
-                                                                      backgroundColor: Colors
-                                                                          .grey
-                                                                          .shade400,
-                                                                      value: double.parse(staffDetails!
-                                                                              .data
-                                                                              .userTarget[index]
-                                                                              .progressPercentage) /
-                                                                          100,
-                                                                      valueColor: AlwaysStoppedAnimation<
-                                                                              Color>(
-                                                                          Colors
-                                                                              .white),
-                                                                      minHeight:
-                                                                          20,
-                                                                    ),
-                                                                    Positioned(
-                                                                      left: 15,
-                                                                      child:
-                                                                          Text(
-                                                                        "${staffDetails!.data.userTarget[index].progressPercentage}%",
-                                                                        style: TextStyle(
+                                                              );
+                                                            },
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      top: 15.0,
+                                                                      bottom:
+                                                                          15.0,
+                                                                      left:
+                                                                          20.0,
+                                                                      right:
+                                                                          20.0),
+                                                              child: Column(
+                                                                children: [
+                                                                  Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceBetween,
+                                                                    children: [
+                                                                      Text(
+                                                                        staffDetails!
+                                                                            .data
+                                                                            .userTarget[index]
+                                                                            .groupName,
+                                                                        style: const TextStyle(
                                                                             color:
-                                                                                Colors.blue.shade900,
-                                                                            fontWeight: FontWeight.w600,
-                                                                            fontSize: 14),
+                                                                                Colors.white,
+                                                                            fontWeight: FontWeight.bold,
+                                                                            fontSize: 16),
                                                                       ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ],
+                                                                      Column(
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.end,
+                                                                        children: [
+                                                                          Text(
+                                                                              "Target : ${staffDetails!.data.userTarget[index].targetAmount}",
+                                                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                                                                          Text(
+                                                                              "Achieved : ${staffDetails!.data.userTarget[index].achieved}",
+                                                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  Stack(
+                                                                    children: [
+                                                                      LinearProgressIndicator(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8),
+                                                                        backgroundColor: Colors
+                                                                            .grey
+                                                                            .shade400,
+                                                                        value: double.parse(staffDetails!.data.userTarget[index].progressPercentage) /
+                                                                            100,
+                                                                        valueColor:
+                                                                            AlwaysStoppedAnimation<Color>(Colors.white),
+                                                                        minHeight:
+                                                                            20,
+                                                                      ),
+                                                                      Positioned(
+                                                                        left:
+                                                                            15,
+                                                                        child:
+                                                                            Text(
+                                                                          "${staffDetails!.data.userTarget[index].progressPercentage}%",
+                                                                          style: TextStyle(
+                                                                              color: Colors.blue.shade900,
+                                                                              fontWeight: FontWeight.w600,
+                                                                              fontSize: 14),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             ),
                                                           );
                                                         },

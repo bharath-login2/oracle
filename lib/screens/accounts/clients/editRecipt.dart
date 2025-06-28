@@ -32,7 +32,7 @@ class _EditReceiptState extends State<EditReceipt> {
   List<Staff> items = [];
   List<Staff> filteredItems = [];
   String collectedBy = "";
-  String collectedByName = "Collected By";
+  String collectedByName = "Account Head";
   TextEditingController search = TextEditingController();
   String? templateImage;
   List<TargetGroup> targets = [];
@@ -289,7 +289,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Collected By',
+                                  const Text('Account Head',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,

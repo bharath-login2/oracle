@@ -27,6 +27,7 @@ import 'package:text_scroll/text_scroll.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'complaints/complaint_list_screen.dart';
 import 'leadManagement/allReport.dart';
+import 'leadManagement/viewwork_page.dart';
 import 'officialWhatsapp/chat_home_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -53,6 +54,7 @@ class _HomePageState extends State<HomePage> {
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
   String phoneCallLogPermission = '';
+  String viewWorkReportPermission = '';
 
   @override
   void initState() {
@@ -77,6 +79,8 @@ class _HomePageState extends State<HomePage> {
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+         viewWorkReportPermission =
+        await Common.getSharedPref("viewWorkReportPermission");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -313,8 +317,7 @@ class _HomePageState extends State<HomePage> {
                                       children: <Widget>[
                                         // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
                                         Image.network(
-                                          userDashboard!.data.image1
-                                              .toString(),
+                                          userDashboard!.data.image1.toString(),
                                           height: 160,
                                           width: double.infinity,
                                           fit: BoxFit.cover,
@@ -517,8 +520,7 @@ class _HomePageState extends State<HomePage> {
                                           crossAxisSpacing: 4,
                                           childAspectRatio: 1.3),
                                   padding: EdgeInsets.zero,
-                                  itemCount:
-                                      userDashboard!.data.modules.length,
+                                  itemCount: userDashboard!.data.modules.length,
                                   itemBuilder: (BuildContext context, i) {
                                     return Card(
                                       elevation: 5,
@@ -535,8 +537,8 @@ class _HomePageState extends State<HomePage> {
                                               true) {
                                             _upgrade(context);
                                           } else {
-                                            if (userDashboard!.data.modules[i]
-                                                    .menuName ==
+                                            if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'call_management') {
                                               Navigator.push(
                                                 context,
@@ -545,8 +547,8 @@ class _HomePageState extends State<HomePage> {
                                                         Dashboard(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'Staff_management') {
                                               Navigator.push(
                                                 context,
@@ -706,8 +708,8 @@ class _HomePageState extends State<HomePage> {
                                             //       );
                                             //     });
                                             // }
-                                            else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'Settings') {
                                               Navigator.push(
                                                 context,
@@ -717,7 +719,19 @@ class _HomePageState extends State<HomePage> {
                                                             widget.token)),
                                               );
                                             } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                                        .modules[i].menuName ==
+                                                    'Work' &&
+                                                viewWorkReportPermission ==
+                                                    "true") {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ViewWorkPage(staffId: ''),
+                                                ),
+                                              );
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'file_manager') {
                                               Navigator.push(
                                                 context,
@@ -726,8 +740,8 @@ class _HomePageState extends State<HomePage> {
                                                         FileMangerList(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'customers') {
                                               Navigator.push(
                                                 context,
@@ -736,8 +750,8 @@ class _HomePageState extends State<HomePage> {
                                                         ClientList(
                                                             widget.token!)),
                                               );
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'invoices') {
                                               Navigator.push(
                                                   context,
@@ -748,8 +762,8 @@ class _HomePageState extends State<HomePage> {
                                                           .toString(),
                                                     ),
                                                   ));
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'reports') {
                                               showDialog(
                                                   barrierColor: Colors.white
@@ -940,24 +954,24 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                     );
                                                   });
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'complaints') {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const ComplaintListScreen()));
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'renewal') {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const RenewalDashboard()));
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'products') {
                                               Navigator.push(
                                                   context,
@@ -970,8 +984,8 @@ class _HomePageState extends State<HomePage> {
                                                       subCat: " widget.title",
                                                     ),
                                                   ));
-                                            } else if (userDashboard!.data
-                                                    .modules[i].menuName ==
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'whatsapp') {
                                               Navigator.push(
                                                 context,

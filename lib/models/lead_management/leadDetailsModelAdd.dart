@@ -60,13 +60,13 @@ class Data {
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
-        voiceListerningPermission: json["voiceListerningPermission"],
-        voiceUploadPermission: json["voiceUploadPermission"],
-        createCustomerInvoice: json["createCustomerInvoice"],
-        createRenewal: json["createRenewal"],
-        createInstallment: json["createInstallment"],
-        isCreateOrder: json["isCreateOrder"],
-        customerId: json["customer_id"],
+        voiceListerningPermission: json["voiceListerningPermission"]??"",
+        voiceUploadPermission: json["voiceUploadPermission"]??"",
+        createCustomerInvoice: json["createCustomerInvoice"]??"",
+        createRenewal: json["createRenewal"]??"",
+        createInstallment: json["createInstallment"]??"",
+        isCreateOrder: json["isCreateOrder"]??"",
+        customerId: json["customer_id"]??"",
         // followUpData: List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
         // callHistory: List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x))),
         // activities: List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x))),
@@ -115,10 +115,10 @@ class Activity {
     });
 
     factory Activity.fromJson(Map<String, dynamic> json) => Activity(
-        remark: json["remark"],
-        createdTime: json["created_time"],
-        staffName: json["staff_name"],
-        proPicThumb: json["pro_pic_thumb"],
+        remark: json["remark"]??"",
+        createdTime: json["created_time"]??"",
+        staffName: json["staff_name"]??"",
+        proPicThumb: json["pro_pic_thumb"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -140,9 +140,9 @@ class AdditionalField {
     });
 
     factory AdditionalField.fromJson(Map<String, dynamic> json) => AdditionalField(
-        id: json["id"],
-        name: json["name"],
-        value: json["value"],
+        id: json["id"]??"",
+        name: json["name"]??"",
+        value: json["value"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -198,26 +198,26 @@ class CallHistory {
     });
 
     factory CallHistory.fromJson(Map<String, dynamic> json) => CallHistory(
-        id: json["id"],
-        staffName: json["staffName"],
-        callHistoryImage: json["callHistoryImage"],
-        sourceNumber: json["SourceNumber"],
-        destinationNumber: json["DestinationNumber"],
-        date: json["date"],
-        startTime: json["StartTime"],
-        endTime: json["EndTime"],
-        time: json["time"],
-        callDuration: json["CallDuration"],
-        callDurationHr: json["CallDurationHr"],
-        resourceUrl: json["ResourceURL"],
-        status: json["Status"],
-        isAttended: json["isAttended"],
-        direction: json["Direction"],
-        isTransfered: json["isTransfered"],
-        isplayed: json["isplayed"],
-        audioplayed: json["audioplayed"],
-        currentpos: json["currentpos"],
-        currentpostlabel: json["currentpostlabel"],
+        id: json["id"]??"",
+        staffName: json["staffName"]??"",
+        callHistoryImage: json["callHistoryImage"]??"",
+        sourceNumber: json["SourceNumber"]??"",
+        destinationNumber: json["DestinationNumber"]??"",
+        date: json["date"]??"",
+        startTime: json["StartTime"]??"",
+        endTime: json["EndTime"]??"",
+        time: json["time"]??"",
+        callDuration: json["CallDuration"]??"",
+        callDurationHr: json["CallDurationHr"]??"",
+        resourceUrl: json["ResourceURL"]??"",
+        status: json["Status"]??"",
+        isAttended: json["isAttended"]??"",
+        direction: json["Direction"]??"",
+        isTransfered: json["isTransfered"]??"",
+        isplayed: json["isplayed"]??"",
+        audioplayed: json["audioplayed"]??"",
+        currentpos: json["currentpos"]??"",
+        currentpostlabel: json["currentpostlabel"]??"",
     );
 
     Map<String, dynamic> toJson() => {

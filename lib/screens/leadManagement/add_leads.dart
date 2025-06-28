@@ -2,6 +2,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:login2/widgets/AddLeadSourceDialog.dart';
+import 'package:login2/widgets/addLeadCateoryPopup.dart';
 // import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -588,106 +590,312 @@ class _AddLeadsState extends State<AddLeads> {
                                 const SizedBox(
                                   height: 15,
                                 ),
+                                //already working without quick add
+
+                                // Padding(
+                                //   padding: const EdgeInsets.only(
+                                //       left: 10, right: 10),
+                                //   child: TextFormField(
+                                //     controller: leadTypeVal,
+                                //     onTap: () {
+                                //       showDialog(
+                                //           context: context,
+                                //           builder: (BuildContext context) {
+                                //             return AlertDialog(
+                                //               scrollable: true,
+                                //               title:
+                                //                   const Text('Lead Category'),
+                                //               content: SizedBox(
+                                //                 width: MediaQuery.of(context)
+                                //                         .size
+                                //                         .width *
+                                //                     .8,
+                                //                 height: MediaQuery.of(context)
+                                //                         .size
+                                //                         .height *
+                                //                     .46,
+                                //                 child: ListView.builder(
+                                //                   shrinkWrap: true,
+                                //                   itemCount: commonDetails!
+                                //                       .data.leadCategory.length,
+                                //                   itemBuilder: (context, ind) {
+                                //                     return InkWell(
+                                //                       onTap: () async {
+                                //                         leadSubTypeList =
+                                //                             await HttpService.leadSubType(
+                                //                                 commonDetails!
+                                //                                     .data
+                                //                                     .leadCategory[
+                                //                                         ind]
+                                //                                     .leadCategoryId
+                                //                                     .toString());
+                                //                         setState(() {
+                                //                           leadSubType =
+                                //                               'Lead Sub Category';
+                                //                           leadSubTypeId = '';
+                                //                           leadType =
+                                //                               commonDetails!
+                                //                                   .data
+                                //                                   .leadCategory[
+                                //                                       ind]
+                                //                                   .leadCategory
+                                //                                   .toString();
+                                //                           leadTypeId =
+                                //                               commonDetails!
+                                //                                   .data
+                                //                                   .leadCategory[
+                                //                                       ind]
+                                //                                   .leadCategoryId
+                                //                                   .toString();
+                                //                           Navigator.pop(
+                                //                               context, true);
+                                //                         });
+                                //                       },
+                                //                       child: SizedBox(
+                                //                         height: 50,
+                                //                         child: Text(
+                                //                           commonDetails!
+                                //                               .data
+                                //                               .leadCategory[ind]
+                                //                               .leadCategory
+                                //                               .toString(),
+                                //                           style:
+                                //                               const TextStyle(
+                                //                                   fontSize: 18),
+                                //                         ),
+                                //                       ),
+                                //                     );
+                                //                   },
+                                //                 ),
+                                //               ),
+                                //             );
+                                //           });
+                                //     },
+                                //     maxLines: 1,
+                                //     readOnly: true,
+                                //     decoration: const InputDecoration(
+                                //         contentPadding: EdgeInsets.only(
+                                //             left: 10, top: 2, bottom: 2),
+                                //         labelText: 'Lead Category',
+                                //         fillColor: Colors.white,
+                                //         filled: true,
+                                //         prefixIcon: Icon(
+                                //             Icons
+                                //                 .arrow_drop_down_circle_outlined,
+                                //             color: Colors.grey),
+                                //         border: OutlineInputBorder(),
+                                //         focusedBorder: OutlineInputBorder(
+                                //           borderSide:
+                                //               BorderSide(color: Colors.grey),
+                                //         ),
+                                //         labelStyle:
+                                //             TextStyle(color: Colors.grey)),
+                                //   ),
+                                // ),
+
+                                //already working without quick add
+
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 10, right: 10),
-                                  child: TextFormField(
-                                    controller: leadTypeVal,
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title:
-                                                  const Text('Lead Category'),
-                                              content: SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .8,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .46,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: commonDetails!
-                                                      .data.leadCategory.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () async {
-                                                        leadSubTypeList =
-                                                            await HttpService.leadSubType(
-                                                                commonDetails!
-                                                                    .data
-                                                                    .leadCategory[
-                                                                        ind]
-                                                                    .leadCategoryId
-                                                                    .toString());
-                                                        setState(() {
-                                                          leadSubType =
-                                                              'Lead Sub Category';
-                                                          leadSubTypeId = '';
-                                                          leadType =
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategory
-                                                                  .toString();
-                                                          leadTypeId =
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: leadTypeVal,
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  scrollable: true,
+                                                  title: const Text(
+                                                      'Lead Category'),
+                                                  content: SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .8,
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            .46,
+                                                    child: ListView.builder(
+                                                      shrinkWrap: true,
+                                                      itemCount: commonDetails!
+                                                          .data
+                                                          .leadCategory
+                                                          .length,
+                                                      itemBuilder:
+                                                          (context, ind) {
+                                                        return InkWell(
+                                                          onTap: () async {
+                                                            leadSubTypeList =
+                                                                await HttpService
+                                                                    .leadSubType(
                                                               commonDetails!
                                                                   .data
                                                                   .leadCategory[
                                                                       ind]
                                                                   .leadCategoryId
+                                                                  .toString(),
+                                                            );
+                                                            setState(() {
+                                                              leadSubType =
+                                                                  'Lead Sub Category';
+                                                              leadSubTypeId =
+                                                                  '';
+                                                              leadType = commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategory
                                                                   .toString();
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
+                                                              leadTypeId = commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategoryId
+                                                                  .toString();
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  true);
+                                                            });
+                                                          },
+                                                          child: SizedBox(
+                                                            height: 50,
+                                                            child: Text(
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategory
+                                                                  .toString(),
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          18),
+                                                            ),
+                                                          ),
+                                                        );
                                                       },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Text(
-                                                          commonDetails!
-                                                              .data
-                                                              .leadCategory[ind]
-                                                              .leadCategory
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                             );
-                                          });
-                                    },
-                                    maxLines: 1,
-                                    readOnly: true,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.only(
-                                            left: 10, top: 2, bottom: 2),
-                                        labelText: 'Lead Category',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        prefixIcon: Icon(
-                                            Icons
-                                                .arrow_drop_down_circle_outlined,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
+                                          },
+                                          maxLines: 1,
+                                          readOnly: true,
+                                          decoration: InputDecoration(
+                                            contentPadding:
+                                                const EdgeInsets.only(
+                                                    left: 10,
+                                                    top: 2,
+                                                    bottom: 2),
+                                            labelText: 'Lead Category',
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            prefixIcon: const Icon(
+                                                Icons
+                                                    .arrow_drop_down_circle_outlined,
+                                                color: Colors.grey),
+                                            suffixIcon: IconButton(
+                                              icon: const Icon(Icons.add_circle,
+                                                  color: Colors.green),
+                                              onPressed: () {
+                                                final scaffoldContext = context;
+
+                                                showDialog(
+                                                  context: scaffoldContext,
+                                                  builder: (BuildContext
+                                                          dialogContext) =>
+                                                      AddLeadCategoryDialog(
+                                                    onSubmit: (leadName, cost,
+                                                        subcategory) async {
+                                                      final token = await Common
+                                                          .getSharedPref(
+                                                              'token');
+                                                      final response =
+                                                          await HttpService
+                                                              .postLeadCategory(
+                                                        leadName,
+                                                        cost,
+                                                        subcategory,
+                                                      );
+
+                                                      if (response != null &&
+                                                          response.status) {
+                                                        final refreshed =
+                                                            await HttpService
+                                                                .addLeadCommonData(
+                                                                    token);
+
+                                                        setState(() {
+                                                          commonDetails =
+                                                              refreshed;
+                                                          final last = refreshed
+                                                              .data
+                                                              .leadCategory
+                                                              .last;
+                                                          leadType =
+                                                              last.leadCategory;
+                                                          leadTypeId = last
+                                                              .leadCategoryId
+                                                              .toString();
+                                                          leadTypeVal.text =
+                                                              last.leadCategory;
+                                                          leadSubType =
+                                                              'Lead Sub Category';
+                                                          leadSubTypeId = '';
+                                                        });
+
+                                                        Navigator.pop(
+                                                            dialogContext); 
+                                                        ScaffoldMessenger.of(
+                                                                scaffoldContext)
+                                                            .showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                                "Lead category added successfully"),
+                                                            backgroundColor:
+                                                                Colors.green,
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        ScaffoldMessenger.of(
+                                                                scaffoldContext)
+                                                            .showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                                "Failed to add lead category"),
+                                                            backgroundColor:
+                                                                Colors.red,
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            border: const OutlineInputBorder(),
+                                            focusedBorder:
+                                                const OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey),
+                                            ),
+                                            labelStyle: const TextStyle(
+                                                color: Colors.grey),
+                                          ),
                                         ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
+                                      ),
+                                    ],
                                   ),
                                 ),
+
                                 const SizedBox(
                                   height: 15,
                                 ),
@@ -787,101 +995,245 @@ class _AddLeadsState extends State<AddLeads> {
                                         ),
                                       )
                                     : const SizedBox(),
+                                //already working without quick add
+
+                                // Padding(
+                                //   padding: const EdgeInsets.only(
+                                //       left: 10, right: 10),
+                                //   child: TextFormField(
+                                //     controller: leadSourceVal,
+                                //     onTap: () {
+                                //       showDialog(
+                                //           context: context,
+                                //           builder: (BuildContext context) {
+                                //             return AlertDialog(
+                                //               scrollable: true,
+                                //               title: const Text('Lead Source'),
+                                //               content: SizedBox(
+                                //                 width: MediaQuery.of(context)
+                                //                         .size
+                                //                         .width *
+                                //                     .8,
+                                //                 height: MediaQuery.of(context)
+                                //                         .size
+                                //                         .height *
+                                //                     .46,
+                                //                 child: ListView.builder(
+                                //                   shrinkWrap: true,
+                                //                   itemCount: commonDetails!
+                                //                       .data.leadSource.length,
+                                //                   itemBuilder: (context, ind) {
+                                //                     return InkWell(
+                                //                       onTap: () async {
+                                //                         setState(() {
+                                //                           leadSource =
+                                //                               commonDetails!
+                                //                                   .data
+                                //                                   .leadSource[
+                                //                                       ind]
+                                //                                   .leadSource
+                                //                                   .toString();
+                                //                           leadSourceId =
+                                //                               commonDetails!
+                                //                                   .data
+                                //                                   .leadSource[
+                                //                                       ind]
+                                //                                   .leadSourceId
+                                //                                   .toString();
+                                //                           leadSourceVal.text =
+                                //                               commonDetails!
+                                //                                   .data
+                                //                                   .leadSource[
+                                //                                       ind]
+                                //                                   .leadSource
+                                //                                   .toString();
+                                //                           Navigator.pop(
+                                //                               context, true);
+                                //                         });
+                                //                       },
+                                //                       child: SizedBox(
+                                //                         height: 50,
+                                //                         child: Text(
+                                //                           commonDetails!
+                                //                               .data
+                                //                               .leadSource[ind]
+                                //                               .leadSource
+                                //                               .toString(),
+                                //                           style:
+                                //                               const TextStyle(
+                                //                                   fontSize: 18),
+                                //                         ),
+                                //                       ),
+                                //                     );
+                                //                   },
+                                //                 ),
+                                //               ),
+                                //             );
+                                //           });
+                                //     },
+                                //     maxLines: 1,
+                                //     readOnly: true,
+                                //     decoration: const InputDecoration(
+                                //         contentPadding: EdgeInsets.only(
+                                //             left: 10, top: 2, bottom: 2),
+                                //         labelText: 'Lead Source',
+                                //         fillColor: Colors.white,
+                                //         filled: true,
+                                //         prefixIcon: Icon(
+                                //             Icons
+                                //                 .arrow_drop_down_circle_outlined,
+                                //             color: Colors.grey),
+                                //         border: OutlineInputBorder(),
+                                //         focusedBorder: OutlineInputBorder(
+                                //           borderSide:
+                                //               BorderSide(color: Colors.grey),
+                                //         ),
+                                //         labelStyle:
+                                //             TextStyle(color: Colors.grey)),
+                                //   ),
+                                // ),
+
+                                //already working without quick add
+
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 10, right: 10),
-                                  child: TextFormField(
-                                    controller: leadSourceVal,
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text('Lead Source'),
-                                              content: SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .8,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .46,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: commonDetails!
-                                                      .data.leadSource.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () async {
-                                                        setState(() {
-                                                          leadSource =
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadSource[
-                                                                      ind]
-                                                                  .leadSource
-                                                                  .toString();
-                                                          leadSourceId =
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadSource[
-                                                                      ind]
-                                                                  .leadSourceId
-                                                                  .toString();
-                                                          leadSourceVal.text =
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadSource[
-                                                                      ind]
-                                                                  .leadSource
-                                                                  .toString();
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Stack(
+                                    alignment: Alignment.centerRight,
+                                    children: [
+                                      TextFormField(
+                                        controller: leadSourceVal,
+                                        readOnly: true,
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) {
+                                              return AlertDialog(
+                                                title:
+                                                    const Text('Lead Source'),
+                                                content: SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.8,
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      0.46,
+                                                  child: ListView.builder(
+                                                    itemCount: commonDetails!
+                                                        .data.leadSource.length,
+                                                    itemBuilder:
+                                                        (context, ind) {
+                                                      return InkWell(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            leadSource =
+                                                                commonDetails!
+                                                                    .data
+                                                                    .leadSource[
+                                                                        ind]
+                                                                    .leadSource;
+                                                            leadSourceId =
+                                                                commonDetails!
+                                                                    .data
+                                                                    .leadSource[
+                                                                        ind]
+                                                                    .leadSourceId;
+                                                            leadSourceVal.text =
+                                                                commonDetails!
+                                                                    .data
+                                                                    .leadSource[
+                                                                        ind]
+                                                                    .leadSource;
+                                                          });
                                                           Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Text(
-                                                          commonDetails!
-                                                              .data
-                                                              .leadSource[ind]
-                                                              .leadSource
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
+                                                              context);
+                                                        },
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 10),
+                                                          child: Text(
+                                                            commonDetails!
+                                                                .data
+                                                                .leadSource[ind]
+                                                                .leadSource,
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        18),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
+                                                      );
+                                                    },
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          });
-                                    },
-                                    maxLines: 1,
-                                    readOnly: true,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.only(
-                                            left: 10, top: 2, bottom: 2),
-                                        labelText: 'Lead Source',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        prefixIcon: Icon(
+                                              );
+                                            },
+                                          );
+                                        },
+                                        decoration: const InputDecoration(
+                                          labelText: 'Lead Source',
+                                          prefixIcon: Icon(
                                             Icons
                                                 .arrow_drop_down_circle_outlined,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
+                                            color: Colors.grey,
+                                          ),
+                                          border: OutlineInputBorder(),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 12),
                                         ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
+                                      ),
+                                      Positioned(
+                                        right: 5,
+                                        child: IconButton(
+                                          icon: const Icon(Icons.add_circle,
+                                              color: Colors.green),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) =>
+                                                  AddLeadSourceDialog(
+                                                onSubmit:
+                                                    (leadSourceName) async {
+                                                  final token = await Common
+                                                      .getSharedPref('token');
+                                                  final response =
+                                                      await HttpService
+                                                          .postLeadSource(
+                                                              leadSourceName);
+
+                                                  if (response != null &&
+                                                      response.status) {
+                                                    final refreshed =
+                                                        await HttpService
+                                                            .addLeadCommonData(
+                                                                token);
+                                                    setState(() {
+                                                      commonDetails = refreshed;
+                                                    });
+                                                    Navigator.pop(context);
+                                                  } else {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                          content: Text(
+                                                              "Failed to add lead source")),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+
                                 const SizedBox(
                                   height: 15,
                                 ),
@@ -1867,25 +2219,25 @@ class _AddLeadsState extends State<AddLeads> {
   //         "Permission denied! Please enable contacts access.", Colors.red);
   //   }
   // }
-      Future<void> selectContact() async {
-        if (await FlutterContacts.requestPermission()) {
-          final Contact? contact = await FlutterContacts.openExternalPick();
-          if (contact != null && contact.phones.isNotEmpty) {
-            String number = contact.phones.first.number;
-            String name = contact.displayName;
-            number = number.replaceAll(RegExp(r'[^\d+]'), '');
-            if (number.startsWith('+') && number.length > 10) {
-              number = number.substring(number.length - 10);
-            } else if (number.length > 10) {
-              number = number.substring(number.length - 10);
-            }
-            contactNo.text = number;
-            clientName.text = name;
-            setState(() {});
-          }
-        } else {
-          Common.toastMessaage(
-              "Permission denied! Please enable contacts access.", Colors.red);
+  Future<void> selectContact() async {
+    if (await FlutterContacts.requestPermission()) {
+      final Contact? contact = await FlutterContacts.openExternalPick();
+      if (contact != null && contact.phones.isNotEmpty) {
+        String number = contact.phones.first.number;
+        String name = contact.displayName;
+        number = number.replaceAll(RegExp(r'[^\d+]'), '');
+        if (number.startsWith('+') && number.length > 10) {
+          number = number.substring(number.length - 10);
+        } else if (number.length > 10) {
+          number = number.substring(number.length - 10);
         }
+        contactNo.text = number;
+        clientName.text = name;
+        setState(() {});
       }
+    } else {
+      Common.toastMessaage(
+          "Permission denied! Please enable contacts access.", Colors.red);
+    }
+  }
 }

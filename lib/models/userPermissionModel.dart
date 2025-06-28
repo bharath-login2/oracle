@@ -23,6 +23,7 @@ class UserPermissionModel {
 }
 
 class Data {
+  String? adminCheck;
   String? createStaff;
   String? viewStaff;
   String? updateStaff;
@@ -65,52 +66,69 @@ class Data {
   String? readRenewal;
   String? readAccount;
   bool? uploadCallLog;
+  String? multipleUsers;
+    String? multipleWorks;
+  String? hasPhonecallAccess;
+  String? addWorks;
+  String? viewAllWorks;
+  String? viewWorkReport;
+  String? startAndStopWork;
 
-  Data(
-      {this.createStaff,
-      this.viewStaff,
-      this.updateStaff,
-      this.deleteStaff,
-      this.viewStaffReport,
-      this.createStaffDesignation,
-      this.viewStaffDesignation,
-      this.updateStaffDesignation,
-      this.deleteStaffDesignation,
-      this.updateStaffPassword,
-      this.updateStaffPermission,
-      this.createLead,
-      this.viewLead,
-      this.updateLead,
-      this.deleteLead,
-      this.createLeadCategory,
-      this.viewLeadCategory,
-      this.updateLeadCategory,
-      this.deleteLeadCategory,
-      this.viewLeadReport,
-      this.viewWhatsappSettings,
-      this.updateWhatsappSettings,
-      this.createFacebookSettings,
-      this.updateFacebookSettings,
-      this.deleteFacebookSettings,
-      this.createLeadImports,
-      this.cloudCall,
-      this.accessCallHistory,
-      this.accessCallRecording,
-      this.fileManager,
-      this.phoneCallLog,
-      this.createFile,
-      this.openFile,
-      this.renameFile,
-      this.deleteFile,
-      this.downloadFile,
-      this.whatsappUnofficial,
-      this.whatsappOfficial,
-      this.transferLead,
-      this.uploadCallLog,
-      this.readRenewal,
-      this.readAccount});
+  Data({
+        this.adminCheck,
+    this.createStaff,
+    this.viewStaff,
+    this.updateStaff,
+    this.deleteStaff,
+    this.viewStaffReport,
+    this.createStaffDesignation,
+    this.viewStaffDesignation,
+    this.updateStaffDesignation,
+    this.deleteStaffDesignation,
+    this.updateStaffPassword,
+    this.updateStaffPermission,
+    this.createLead,
+    this.viewLead,
+    this.updateLead,
+    this.deleteLead,
+    this.createLeadCategory,
+    this.viewLeadCategory,
+    this.updateLeadCategory,
+    this.deleteLeadCategory,
+    this.viewLeadReport,
+    this.viewWhatsappSettings,
+    this.updateWhatsappSettings,
+    this.createFacebookSettings,
+    this.updateFacebookSettings,
+    this.deleteFacebookSettings,
+    this.createLeadImports,
+    this.cloudCall,
+    this.accessCallHistory,
+    this.accessCallRecording,
+    this.fileManager,
+    this.phoneCallLog,
+    this.createFile,
+    this.openFile,
+    this.renameFile,
+    this.deleteFile,
+    this.downloadFile,
+    this.whatsappUnofficial,
+    this.whatsappOfficial,
+    this.transferLead,
+    this.readRenewal,
+    this.readAccount,
+    this.uploadCallLog,
+    this.multipleUsers,
+        this.multipleWorks,
+    this.hasPhonecallAccess,
+    this.addWorks,
+    this.viewAllWorks,
+    this.viewWorkReport,
+    this.startAndStopWork,
+  });
 
   Data.fromJson(Map<String, dynamic> json) {
+        adminCheck = json['admins_check'];
     createStaff = json['create_staff'];
     viewStaff = json['view_staff'];
     updateStaff = json['update_staff'];
@@ -150,13 +168,22 @@ class Data {
     whatsappUnofficial = json['whatsapp_unofficial'];
     whatsappOfficial = json['whatsapp_official'];
     transferLead = json['transfer_lead'];
-    uploadCallLog = json['upload_call_log'];
     readRenewal = json['read_renewal'];
     readAccount = json['read_account'];
+    uploadCallLog = json['upload_call_log'];
+        multipleUsers = json['multiple_users'];
+                multipleWorks = json['multiple_works'];
+    hasPhonecallAccess = json['has_phone_call_access'];
+    addWorks = json['add_work'];
+    viewAllWorks = json['view_all_works'];
+    viewWorkReport = json['View_Work_Report'];
+    startAndStopWork = json['start_and_stop_work'];
+
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
     data['update_staff'] = updateStaff;
@@ -193,8 +220,14 @@ class Data {
     data['rename_file'] = renameFile;
     data['delete_file'] = deleteFile;
     data['download_file'] = downloadFile;
+        data['multiple_users'] = multipleUsers;
+                data['multiple_works'] = multipleWorks;
     data['whatsapp_unofficial'] = whatsappUnofficial;
     data['whatsapp_official'] = whatsappOfficial;
+    data['add_work'] = addWorks;
+    data['view_all_works'] = viewAllWorks;
+    data['View_Work_Report'] = viewWorkReport;
+    data['start_and_stop_work'] = startAndStopWork;
     return data;
   }
 }

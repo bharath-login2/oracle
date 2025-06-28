@@ -1812,7 +1812,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.end,
                                               children: [
-                                                const Text('Collected By * :'),
+                                                const Text('Account Head * :'),
                                                 const SizedBox(
                                                   width: 10,
                                                 ),

@@ -49,6 +49,7 @@ class Data {
   String scrollingText;
   List<Slide> slides;
   List<Module> modules;
+  bool loginCheck;
   bool viewAccDashboard;
   bool viewRenewalDashboard;
   bool isWhatsappConfigured;
@@ -69,31 +70,36 @@ class Data {
     required this.scrollingText,
     required this.slides,
     required this.modules,
+    required this.loginCheck,
     required this.viewAccDashboard,
     required this.viewRenewalDashboard,
     required this.isWhatsappConfigured,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        packageName: json["package_name"],
-        startDate: json["start_date"],
-        endDate: json["end_date"],
-        staffCount: json["staff_count"],
-        fileStorageSize: json["file_storage_size"],
-        maxFileSize: json["max_file_size"],
-        expireSoon: json["expire_soon"],
-        expireSoonContent: json["expire_soon_content"],
-        isExpired: json["is_expired"],
-        currentStaff: json["current_staff"],
-        image1: json["image1"],
-        profilePic: json["profile_pic"],
-        scrollingText: json["scrolling_text"],
-        slides: List<Slide>.from(json["slides"].map((x) => Slide.fromJson(x))),
-        modules:
-            List<Module>.from(json["modules"].map((x) => Module.fromJson(x))),
-        viewAccDashboard: json["view_acc_dashboard"],
-        viewRenewalDashboard: json["view_renewal_dashboard"],
-        isWhatsappConfigured: json["is_whatsapp_configured"],
+        packageName: json["package_name"]??"",
+        startDate: json["start_date"]??"",
+        endDate: json["end_date"]??"",
+        staffCount: json["staff_count"]??"",
+        fileStorageSize: json["file_storage_size"]??"",
+        maxFileSize: json["max_file_size"]??"",
+        expireSoon: json["expire_soon"]??"",
+        expireSoonContent: json["expire_soon_content"]??"",
+        isExpired: json["is_expired"]??"",
+        currentStaff: json["current_staff"]??"",
+        image1: json["image1"]??"",
+        profilePic: json["profile_pic"]??"",
+        scrollingText: json["scrolling_text"]??"",
+       slides: json["slides"] != null
+            ? List<Slide>.from(json["slides"].map((x) => Slide.fromJson(x)))
+            : [],
+        modules: json["modules"] != null
+            ? List<Module>.from(json["modules"].map((x) => Module.fromJson(x)))
+            : [],
+        loginCheck: json["logincheck"] == true,
+        viewAccDashboard: json["view_acc_dashboard"] == true,
+        viewRenewalDashboard: json["view_renewal_dashboard"] == true,
+        isWhatsappConfigured: json["is_whatsapp_configured"] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -112,6 +118,7 @@ class Data {
         "scrolling_text": scrollingText,
         "slides": List<dynamic>.from(slides.map((x) => x.toJson())),
         "modules": List<dynamic>.from(modules.map((x) => x.toJson())),
+          "logincheck": loginCheck,
         "view_acc_dashboard": viewAccDashboard,
         "view_renewal_dashboard": viewRenewalDashboard,
       };

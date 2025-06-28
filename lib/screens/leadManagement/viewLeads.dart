@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -143,6 +144,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   String staffName = "Staff";
   String name = '';
   String userId = '';
+  CommonResponse? loginOrNot;
 
   @override
   void initState() {
@@ -309,6 +311,7 @@ class _ViewLeadsState extends State<ViewLeads> {
     }
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+
   }
 
   @override

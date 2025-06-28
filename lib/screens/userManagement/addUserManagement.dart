@@ -49,6 +49,8 @@ class _AddUserState extends State<AddUser> {
   String? branch;
   String roleId = '';
   String multiBranch = '';
+  bool accessWhatsapp = false;
+  bool accessCallLog = false;
 
   Future<void> retriveLostData() async {
     final LostData response = (await _picker.retrieveLostData()) as LostData;
@@ -515,14 +517,45 @@ class _AddUserState extends State<AddUser> {
                         const SizedBox(
                           height: 15,
                         ),
-                        InputTextField(
-                          hintText: 'Opening Balance',
-                          hintTextColor: Colors.white,
-                          backgroundColor: Colors.white,
-                          controller: openingBalance,
-                          width: 0.9,
-                          iconData: Icons.currency_rupee,
-                          obscureText: true,
+                        // InputTextField(
+                        //   hintText: 'Opening Balance',
+                        //   hintTextColor: Colors.white,
+                        //   backgroundColor: Colors.white,
+                        //   controller: openingBalance,
+                        //   width: 0.9,
+                        //   iconData: Icons.currency_rupee,
+                        //   obscureText: true,
+                        // ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 15),
+                              CheckboxListTile(
+                                title: const Text('Access Official Whatsapp'),
+                                value: accessWhatsapp,
+                                onChanged: (value) {
+                                  setState(() {
+                                    accessWhatsapp = value!;
+                                  });
+                                },
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              CheckboxListTile(
+                                title: const Text('Access Phone Call Log'),
+                                value: accessCallLog,
+                                onChanged: (value) {
+                                  setState(() {
+                                    accessCallLog = value!;
+                                  });
+                                },
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ],
+                          ),
                         ),
                         _imageFile == null
                             ? GestureDetector(
@@ -627,6 +660,8 @@ class _AddUserState extends State<AddUser> {
                                 'name': name.text,
                                 'email': emailId.text,
                                 'opening_balance': openingBalance.text,
+                                  "officialWhatsAppAccess": accessWhatsapp,
+                                  "callLogAccess": accessCallLog,
                                 "user_list": checkedItems,
                                 "branchId": branch
                               };
@@ -787,7 +822,7 @@ class _AddUserState extends State<AddUser> {
       // Navigator.pop(context);
       return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, 
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),

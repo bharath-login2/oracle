@@ -48,6 +48,7 @@ class _CallLogsState extends State<CallLogs> {
   CallLogHistoryModel? logHistory;
   String? permissionAccess = '';
   String? uploadPermission = '';
+  String? permissionValue = '';
   late bool deleteAccess;
   List deleteHistoryIds = [];
   bool onLongPressHistory = false;
@@ -174,13 +175,16 @@ class _CallLogsState extends State<CallLogs> {
     });
   }
 
-  void askUserNeeds(BuildContext context, bool showPopUp) async {
+
+
+    void askUserNeedsOld(BuildContext context, bool showPopUp) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     List<String> callTypes = prefs.getStringList('callTypes') ?? [];
     // List<String> simOptions = prefs.getStringList('simOptions') ?? [];
 
     if (callTypes.isEmpty || showPopUp) {
+      // working dialog starts 31/05/2025
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -363,6 +367,408 @@ class _CallLogsState extends State<CallLogs> {
           );
         },
       );
+
+     
+    }
+  }
+
+  void askUserNeeds(BuildContext context, bool showPopUp) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    List<String> callTypes = prefs.getStringList('callTypes') ?? [];
+    // List<String> simOptions = prefs.getStringList('simOptions') ?? [];
+
+    if (callTypes.isEmpty || showPopUp) {
+      // working dialog starts 31/05/2025
+      // showDialog(
+      //   context: context,
+      //   barrierDismissible: false,
+      //   builder: (context) {
+      //     return WillPopScope(
+      //       onWillPop: () async => false, // Prevent back button dismiss
+      //       child: StatefulBuilder(
+      //         builder: (context, setState) {
+      //           return AlertDialog(
+      //             title: const Center(child: Text('Permission Required')),
+      //             content: Column(
+      //               mainAxisSize: MainAxisSize.min,
+      //               children: [
+      //                 const Center(
+      //                     child: Text(
+      //                   'Please allow permission to access call logs.',
+      //                   textAlign: TextAlign.center,
+      //                 )),
+      //                 const SizedBox(height: 10),
+
+      //                 //! Call Type Selection
+      //                 const Text('Select Call Type'),
+      //                 const SizedBox(height: 5),
+      //                 Row(
+      //                   mainAxisAlignment: MainAxisAlignment.center,
+      //                   children: [
+      //                     GestureDetector(
+      //                       onTap: () {
+      //                         setState(() {
+      //                           if (callTypes.contains('Incoming')) {
+      //                             callTypes.remove('Incoming');
+      //                           } else {
+      //                             callTypes.add('Incoming');
+      //                           }
+      //                         });
+      //                       },
+      //                       child: Container(
+      //                         padding: const EdgeInsets.symmetric(
+      //                             vertical: 10, horizontal: 15),
+      //                         decoration: BoxDecoration(
+      //                           color: callTypes.contains('Incoming')
+      //                               ? Colors.green
+      //                               : Colors.grey[300],
+      //                           borderRadius: BorderRadius.circular(10),
+      //                         ),
+      //                         child: Row(
+      //                           children: [
+      //                             const Icon(Icons.call_received,
+      //                                 color: Colors.red),
+      //                             const SizedBox(width: 5),
+      //                             Text(
+      //                               'Incoming',
+      //                               style: TextStyle(
+      //                                 color: callTypes.contains('Incoming')
+      //                                     ? Colors.white
+      //                                     : Colors.black,
+      //                               ),
+      //                             ),
+      //                           ],
+      //                         ),
+      //                       ),
+      //                     ),
+      //                     const SizedBox(width: 10),
+      //                     GestureDetector(
+      //                       onTap: () {
+      //                         setState(() {
+      //                           if (callTypes.contains('Outgoing')) {
+      //                             callTypes.remove('Outgoing');
+      //                           } else {
+      //                             callTypes.add('Outgoing');
+      //                           }
+      //                         });
+      //                       },
+      //                       child: Container(
+      //                         padding: const EdgeInsets.symmetric(
+      //                             vertical: 10, horizontal: 15),
+      //                         decoration: BoxDecoration(
+      //                           color: callTypes.contains('Outgoing')
+      //                               ? Colors.green
+      //                               : Colors.grey[300],
+      //                           borderRadius: BorderRadius.circular(10),
+      //                         ),
+      //                         child: Row(
+      //                           children: [
+      //                             const Icon(Icons.call_made,
+      //                                 color: Colors.blue),
+      //                             const SizedBox(width: 5),
+      //                             Text(
+      //                               'Outgoing',
+      //                               style: TextStyle(
+      //                                 color: callTypes.contains('Outgoing')
+      //                                     ? Colors.white
+      //                                     : Colors.black,
+      //                               ),
+      //                             ),
+      //                           ],
+      //                         ),
+      //                       ),
+      //                     ),
+      //                   ],
+      //                 ),
+      //                 const SizedBox(height: 15),
+      //               ],
+      //             ),
+      //             actions: [
+      //               SizedBox(
+      //                 width: double.infinity,
+      //                 child: ElevatedButton(
+      //                   onPressed: () async {
+      //                     // if (callTypes.isEmpty) {
+      //                     //   ScaffoldMessenger.of(context).showSnackBar(
+      //                     //     const SnackBar(
+      //                     //       content: Text(
+      //                     //           'Please select at least one Call Type'),
+      //                     //     ),
+      //                     //   );
+      //                     //   return;
+      //                     // }
+
+      //                     await prefs.setStringList('callTypes', callTypes);
+      //                     // await prefs.setStringList('simOptions', simOptions);
+      //                     await prefs.setString('callLogsStartingTime',
+      //                         DateTime.now().toString());
+      //                     //!
+      //                     // 🔄 Save toggle history for incoming/outgoing
+      //                     // if (callTypes.contains("Incoming")) {
+      //                     //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+      //                     //     type: "Incoming",
+      //                     //     isEnabled: true,
+      //                     //     timestamp: DateTime.now().millisecondsSinceEpoch,
+      //                     //   ));
+      //                     // } else {
+      //                     //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+      //                     //     type: "Incoming",
+      //                     //     isEnabled: false,
+      //                     //     timestamp: DateTime.now().millisecondsSinceEpoch,
+      //                     //   ));
+      //                     // }
+
+      //                     // if (callTypes.contains("Outgoing")) {
+      //                     //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+      //                     //     type: "Outgoing",
+      //                     //     isEnabled: true,
+      //                     //     timestamp: DateTime.now().millisecondsSinceEpoch,
+      //                     //   ));
+      //                     // } else {
+      //                     //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+      //                     //     type: "Outgoing",
+      //                     //     isEnabled: false,
+      //                     //     timestamp: DateTime.now().millisecondsSinceEpoch,
+      //                     //   ));
+      //                     // }
+      //                     List<String> callTypesQ =
+      //                         prefs.getStringList('callTypes') ?? [];
+      //                     log('callTypes : $callTypesQ');
+
+      //                     Navigator.of(context).pop();
+      //                   },
+      //                   style: ElevatedButton.styleFrom(
+      //                     backgroundColor: Colors.blue,
+      //                     shape: RoundedRectangleBorder(
+      //                       borderRadius: BorderRadius.circular(10),
+      //                     ),
+      //                     padding: const EdgeInsets.symmetric(vertical: 15),
+      //                   ),
+      //                   child: const Text(
+      //                     'Submit',
+      //                     style: TextStyle(
+      //                       fontSize: 16,
+      //                       fontWeight: FontWeight.bold,
+      //                       color: Colors.white,
+      //                     ),
+      //                   ),
+      //                 ),
+      //               ),
+      //             ],
+      //           );
+      //         },
+      //       ),
+      //     );
+      //   },
+      // );
+
+      // working dialog ends 31/05/2025
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: const Center(child: Text('Permission Required')),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // const Center(
+                        //   child: Text(
+                        //     'Please allow permission to access call logs.',
+                        //     textAlign: TextAlign.center,
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 10),
+
+                        //! Call Type Selection
+                        const Text('Select Call Type'),
+                        const SizedBox(height: 5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (callTypes.contains('Incoming')) {
+                                    callTypes.remove('Incoming');
+                                  } else {
+                                    callTypes.add('Incoming');
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                decoration: BoxDecoration(
+                                  color: callTypes.contains('Incoming')
+                                      ? Colors.green
+                                      : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.call_received,
+                                        color: Colors.red),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      'Incoming',
+                                      style: TextStyle(
+                                        color: callTypes.contains('Incoming')
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (callTypes.contains('Outgoing')) {
+                                    callTypes.remove('Outgoing');
+                                  } else {
+                                    callTypes.add('Outgoing');
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                decoration: BoxDecoration(
+                                  color: callTypes.contains('Outgoing')
+                                      ? Colors.green
+                                      : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.call_made,
+                                        color: Colors.blue),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      'Outgoing',
+                                      style: TextStyle(
+                                        color: callTypes.contains('Outgoing')
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        //! Privacy Disclaimer
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'We collect and upload your call logs (duration & timestamps) to secure servers. '
+                            'This helps your company’s admin track activities. Your data is encrypted and handled securely under our privacy policy.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                            textAlign: TextAlign.justify,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    Row(
+                      children: [
+                           Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        Dashboard(widget.token)),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: const Text(
+                              'Deny',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                         const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await prefs.setStringList('callTypes', callTypes);
+                              await prefs.setString('callLogsStartingTime',
+                                  DateTime.now().toString());
+                              await Permission.phone.request();
+                              await Common.saveSharedPref(
+                                  "callLogPermission", 'true');
+                                    Navigator.of(context).pop();
+                              setState(() {
+                                refresh = true;
+                              });
+                              getSharedData();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: const Text(
+                              'Submit & Allow',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                     
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -373,8 +779,12 @@ class _CallLogsState extends State<CallLogs> {
     try {
       refresh = true;
       permissionAccess = await Common.getSharedPref("callLogPermission");
+      final isAllowed = permissionAccess == 'true';
+      debugPrint("callLogPermission now: $isAllowed");
       uploadPermission = await Common.getSharedPref("uploadCallLog");
-        String? deleteAccessStr = await Common.getSharedPref("accessCallHistoryPermission");
+
+      String? deleteAccessStr =
+          await Common.getSharedPref("accessCallHistoryPermission");
       roleId = await Common.getSharedPref("roleId");
       // var sim = await Common.getSharedPref("simName");
       // if (sim != null) {
@@ -388,7 +798,7 @@ class _CallLogsState extends State<CallLogs> {
         selectedIndex = -1;
       }
       setState(() {
-         deleteAccess = deleteAccessStr == "true";
+        deleteAccess = deleteAccessStr == "true";
       });
       if (permissionAccess == 'true') {
         if (await Permission.phone.request().isGranted) {
@@ -918,8 +1328,7 @@ class _CallLogsState extends State<CallLogs> {
                               onTap: () {
                                 if (deleteAccess) {
                                   deleteDialog(context);
-                                } 
-                                else {
+                                } else {
                                   Common.toastMessaage(
                                       "Permission required to delete call history",
                                       Colors.red);
@@ -973,16 +1382,14 @@ class _CallLogsState extends State<CallLogs> {
                                         } else if (value == '3') {
                                           if (await Permission
                                               .systemAlertWindow.isGranted) {
-                                            // Permission is already granted, show the overlay
                                             openAppSettings();
                                           } else {
-                                            // Permission has not been granted, request it
                                             Config.requestPermission();
                                           }
                                         } else if (value == '4') {
                                           selectSim(context);
                                         } else if (value == '6') {
-                                          askUserNeeds(context, true);
+                                          askUserNeedsOld(context, true);
                                         }
                                       }
                                     });
@@ -2356,115 +2763,126 @@ class _CallLogsState extends State<CallLogs> {
                           )
                   ],
                 ),
-              )
-            : Material(
-                type: MaterialType.transparency,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 50),
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey,
-                      ),
-                      width: MediaQuery.of(context).size.width * 0.9,
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Permission",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black,
-                                // decoration: TextDecoration.none,
-                                //fontFamily: Theme.of(context).textTheme,
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 10,
-                            ),
-                            const Text(
-                              "We want to inform you that our app collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              Dashboard(widget.token)),
-                                    );
-                                  },
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.35,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: const Color(0xffe94040)),
-                                    child: const Center(
-                                      child: Text("Deny",
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w700,
-                                              decoration: TextDecoration.none,
-                                              color: Colors.white)),
-                                    ),
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () async {
-                                    await Permission.phone.request();
-                                    setState(() {
-                                      Common.saveSharedPref(
-                                          "callLogPermission", 'true');
-                                      refresh = true;
-                                      getSharedData();
-                                    });
-                                  },
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.35,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Colors.green),
-                                    child: const Center(
-                                      child: Text("Allow",
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w700,
-                                              decoration: TextDecoration.none,
-                                              color: Colors.white)),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              ):SizedBox(),
+            // : Material(
+            //     type: MaterialType.transparency,
+            //     child: Padding(
+            //       padding: const EdgeInsets.only(bottom: 50),
+            //       child: Center(
+            //         child: Container(
+            //           decoration: BoxDecoration(
+            //             borderRadius: BorderRadius.circular(10),
+            //             color: Colors.grey,
+            //           ),
+            //           width: MediaQuery.of(context).size.width * 0.9,
+            //           height: MediaQuery.of(context).size.height * 0.5,
+            //           child: Padding(
+            //             padding: const EdgeInsets.only(left: 20, right: 20),
+            //             child: Column(
+            //               mainAxisAlignment: MainAxisAlignment.center,
+            //               crossAxisAlignment: CrossAxisAlignment.center,
+            //               children: [
+            //                 const Text(
+            //                   "Permission",
+            //                   style: TextStyle(
+            //                     fontSize: 18,
+            //                     fontWeight: FontWeight.w700,
+            //                     color: Colors.black,
+            //                     // decoration: TextDecoration.none,
+            //                     //fontFamily: Theme.of(context).textTheme,
+            //                   ),
+            //                 ),
+            //                 const SizedBox(
+            //                   height: 10,
+            //                 ),
+            //                 const Text(
+            //                   "We want to inform you that our app collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
+            //                   style: TextStyle(
+            //                     fontSize: 14,
+            //                     fontWeight: FontWeight.w500,
+            //                     color: Colors.black,
+            //                     decoration: TextDecoration.none,
+            //                   ),
+            //                 ),
+            //                 const SizedBox(
+            //                   height: 20,
+            //                 ),
+            //                 Row(
+            //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                   children: [
+            //                     InkWell(
+            //                       onTap: () {
+            //                         Navigator.push(
+            //                           context,
+            //                           MaterialPageRoute(
+            //                               builder: (context) =>
+            //                                   Dashboard(widget.token)),
+            //                         );
+            //                       },
+            //                       child: Container(
+            //                         width: MediaQuery.of(context).size.width *
+            //                             0.35,
+            //                         height: 30,
+            //                         decoration: BoxDecoration(
+            //                             borderRadius: BorderRadius.circular(5),
+            //                             color: const Color(0xffe94040)),
+            //                         child: const Center(
+            //                           child: Text("Deny",
+            //                               style: TextStyle(
+            //                                   fontSize: 18,
+            //                                   fontWeight: FontWeight.w700,
+            //                                   decoration: TextDecoration.none,
+            //                                   color: Colors.white)),
+            //                         ),
+            //                       ),
+            //                     ),
+            //                     InkWell(
+            //                       // onTap: () async {
+            //                       //   await Permission.phone.request();
+            //                       //   setState(() {
+            //                       //     Common.saveSharedPref(
+            //                       //         "callLogPermission", 'true');
+            //                       //     refresh = true;
+            //                       //     getSharedData();
+            //                       //   });
+            //                       // },
+            //                       onTap: () async {
+            //                         await Permission.phone.request();
+            //                         await Common.saveSharedPref(
+            //                             "callLogPermission", 'true');
+            //                         Navigator.pop(context);
+            //                         setState(() {
+            //                           refresh = true;
+            //                         });
+            //                         getSharedData();
+            //                       },
+
+            //                       child: Container(
+            //                         width: MediaQuery.of(context).size.width *
+            //                             0.35,
+            //                         height: 30,
+            //                         decoration: BoxDecoration(
+            //                             borderRadius: BorderRadius.circular(5),
+            //                             color: Colors.green),
+            //                         child: const Center(
+            //                           child: Text("Allow",
+            //                               style: TextStyle(
+            //                                   fontSize: 18,
+            //                                   fontWeight: FontWeight.w700,
+            //                                   decoration: TextDecoration.none,
+            //                                   color: Colors.white)),
+            //                         ),
+            //                       ),
+            //                     ),
+            //                   ],
+            //                 )
+            //               ],
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.green,
           onPressed: () {

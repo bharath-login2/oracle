@@ -63,12 +63,14 @@ class Data {
 }
 
 class StaffCallTarget {
+   String groupId;
   String groupName;
   String targetCall;
   String achieved;
   String progressPercentage;
 
   StaffCallTarget({
+      required this.groupId,
     required this.groupName,
     required this.targetCall,
     required this.achieved,
@@ -77,6 +79,7 @@ class StaffCallTarget {
 
   factory StaffCallTarget.fromJson(Map<String, dynamic> json) =>
       StaffCallTarget(
+         groupId: json["group_id"] ?? "",
         groupName: json["group_name"] ?? "",
         targetCall: json["target_call"] ?? "",
         achieved: json["achieved"] ?? "",
@@ -84,6 +87,7 @@ class StaffCallTarget {
       );
 
   Map<String, dynamic> toJson() => {
+     "group_id": groupId,
         "group_name": groupName,
         "target_call": targetCall,
         "achieved": achieved,
@@ -136,12 +140,14 @@ class UserData {
 }
 
 class UserTarget {
+  String groupId;
   String groupName;
   String targetAmount;
   String achieved;
   String progressPercentage;
 
   UserTarget({
+      required this.groupId,
     required this.groupName,
     required this.targetAmount,
     required this.achieved,
@@ -149,13 +155,15 @@ class UserTarget {
   });
 
   factory UserTarget.fromJson(Map<String, dynamic> json) => UserTarget(
+        groupId: json["group_id"] ?? "",
         groupName: json["group_name"] ?? "",
-        targetAmount: json["target_amount"] ?? "",
+        targetAmount: json["target_amount"] ?? "", 
         achieved: json["achieved"] ?? "",
         progressPercentage: json["progress_percentage"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
+        "group_id": groupId,
         "group_name": groupName,
         "target_amount": targetAmount,
         "achieved": achieved,

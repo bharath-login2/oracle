@@ -403,7 +403,7 @@
 //                                         const SizedBox(height: 4,),
 //                                         Text('Date : ${receiptList!.data![ind].receiptDate}',style: const TextStyle(fontSize: 14,fontWeight: FontWeight.normal,color: Colors.grey),),
 //                                         const SizedBox(height: 4,),
-//                                         Text('Collected By : ${receiptList!.data![ind].collectedStaff}',style: const TextStyle(fontSize: 14,fontWeight: FontWeight.normal,color: Colors.grey),),
+//                                         Text('Account Head : ${receiptList!.data![ind].collectedStaff}',style: const TextStyle(fontSize: 14,fontWeight: FontWeight.normal,color: Colors.grey),),
 //                                       ],
 //                                     ),
 //                                     Container(

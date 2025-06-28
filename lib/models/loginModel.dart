@@ -43,14 +43,14 @@ class Data {
       this.isMultiBranch});
 
   Data.fromJson(Map<String, dynamic> json) {
-    token = json['token'];
-    userId = json['user_id'];
-    name = json['name'];
-    accountName = json['account_name'];
-    accountId = json['account_id'];
-    role = json['role'];
-    roleId = json['role_id'];
-    isMultiBranch = json['is_multi_branch'];
+    token = json['token']??"";
+    userId = json['user_id']??"";
+    name = json['name']??"";
+    accountName = json['account_name']??"";
+    accountId = json['account_id']??"";
+    role = json['role']??"";
+    roleId = json['role_id']??"";
+    isMultiBranch = json['is_multi_branch']??"";
   }
 
   Map<String, dynamic> toJson() {

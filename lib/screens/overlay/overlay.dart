@@ -3,10 +3,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
-import 'package:login2/core/common.dart';
-import 'package:login2/service/service.dart';
 import 'package:phone_state/phone_state.dart';
-import '../../models/backgroundModel.dart';
 
 class TrueCallerOverlay extends StatefulWidget {
   String number;
@@ -44,24 +41,24 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
       status1 = event;
       if (status1.number != null) {
         number1 = status1.number.toString();
-        getOverlayDetails(number1);
+      //  getOverlayDetails(number1);
       }
         });
   }
 
-  getOverlayDetails(number) async {
-    Map<String, dynamic> body1 = {
-      "token": await Common.getSharedPref("token"),
-      'phoneNumber': number,
-    };
+  // getOverlayDetails(number) async {
+  //   Map<String, dynamic> body1 = {
+  //     "token": await Common.getSharedPref("token"),
+  //     'phoneNumber': number,
+  //   };
 
-    BackgroundModel object = await HttpService.backgroundData(body1);
-    name = object.data.clientName;
-    category = object.data.leadCategory;
-    lastcall = object.data.lastCalledDate;
-    number1 = number;
-    setState(() {});
-  }
+  //   BackgroundModel object = await HttpService.backgroundData(body1);
+  //   name = object.data.clientName;
+  //   category = object.data.leadCategory;
+  //   lastcall = object.data.lastCalledDate;
+  //   number1 = number;
+  //   setState(() {});
+  // }
 
   @override
   void dispose() {

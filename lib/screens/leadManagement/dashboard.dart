@@ -5,6 +5,7 @@ import 'package:call_e_log/call_log.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/models/callLogs/callLogUploadModel.dart';
@@ -36,6 +37,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
+import '../../models/expense/expense_post.dart';
 import '../../models/lead_management/leadDashboardModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
 import '../../models/lead_management/projectList_model.dart';
@@ -43,8 +45,10 @@ import '../../models/lead_management/workstatus_model.dart';
 import '../../models/loginCheckModel.dart';
 import '../../screens/authentication/login.dart';
 import '../../widgets/renewal_grid_widget.dart';
+import '../../widgets/togglebutton_start.dart';
 import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
+import '../staff_reports/timeline_page.dart';
 import 'add_leads.dart';
 import '../../screens/leadManagement/callHistoryPage.dart';
 import '../../screens/leadManagement/viewLeadCategory.dart';
@@ -58,7 +62,6 @@ import 'package:flutter/material.dart';
 // import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:pie_chart/pie_chart.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../callLogs/callLogs.dart';
 import '../accounts/clients/clientList.dart';
@@ -67,15 +70,14 @@ import '../accounts/clients/pendingInvoice.dart';
 import '../accounts/clients/receiptList.dart';
 import '../fileManager/fileManagerList.dart';
 import '../officialWhatsapp/chat_home_screen.dart';
-import '../userManagement/staffDashboard.dart';
 import '../userManagement/viewUsers.dart';
 import 'notification_page.dart';
 
 // ignore: must_be_immutable
 class Dashboard extends StatefulWidget {
   String? token;
-
-  Dashboard(this.token, {super.key});
+  final GlobalKey<_DashboardState>? dashboardKey;
+  Dashboard(this.token, {super.key, this.dashboardKey});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -100,10 +102,14 @@ class _DashboardState extends State<Dashboard> {
   RenewalDashboardModel? renewalDashboard;
   ProjectList? projectList;
   WorkStatusModel? workStatus;
+  CommonResponse? loginOrNot;
   DateTime? createdAt;
   bool isExpired = false;
   String accPermission = "";
   String renewalPermission = "true";
+  bool isWorkStarted = false;
+  String startOrStop = "";
+  String loggedinOnce = "";
 
   var fromdate = DateTime.now();
   var todate = DateTime.now();
@@ -120,6 +126,14 @@ class _DashboardState extends State<Dashboard> {
   String navigationActionId = 'id_3';
   String createLeadPermission = '';
   String viewLeadPermission = '';
+  String viewAllWorkPermission = '';
+  String addWorkPermission = '';
+  String startAndStopWorkPermission = '';
+  String adminCheckPermission = '';
+  String multipleUsersCheck = '';
+  String multipleWorksCheck = '';
+  String viewWorkReportPermission = '';
+  String hasPhonecallAccess = '';
   String updateLeadPermission = '';
   String deleteLeadPermission = '';
   String phoneCallLogPermission = '';
@@ -335,6 +349,14 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
 
     getData(widget.token, fromdate, todate);
+    _loadWorkStatus();
+  }
+
+  void _loadWorkStatus() async {
+    String? status = await Common.getSharedPref("is_work_started");
+    setState(() {
+      isWorkStarted = status == "true";
+    });
   }
 
   getLeadProgressbar(token, fromDate, toDate, callStatus) async {
@@ -351,6 +373,18 @@ class _DashboardState extends State<Dashboard> {
       timeOut = false;
     });
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final dismissedDate = prefs.getString('loginPromptDismissedDate');
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+
+      if (dismissedDate != today) {
+        loginOrNot = await HttpService.getLoginorNot(widget.token);
+        if (loginOrNot?.data != true) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showLoginPrompt(context);
+          });
+        }
+      }
       await Permission.notification.request();
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
@@ -371,6 +405,17 @@ class _DashboardState extends State<Dashboard> {
       unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
       createLeadPermission = await Common.getSharedPref("createLeadPermission");
       viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
+      viewAllWorkPermission =
+          await Common.getSharedPref("viewAllWorkPermission");
+      addWorkPermission = await Common.getSharedPref("addWorkPermission");
+      viewWorkReportPermission =
+          await Common.getSharedPref("viewWorkReportPermission");
+      startAndStopWorkPermission =
+          await Common.getSharedPref("startAndStopWorkPermission");
+      adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
+      multipleUsersCheck = await Common.getSharedPref("multipleUsers");
+      multipleWorksCheck = await Common.getSharedPref("multipleWorks");
+      hasPhonecallAccess = await Common.getSharedPref("hasPhonecallAccess");
       updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
       deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
       phoneCallLogPermission =
@@ -442,6 +487,16 @@ class _DashboardState extends State<Dashboard> {
         } else {
           print("No work status data available.");
         }
+
+        // loginOrNot = await HttpService.getLoginorNot(widget.token);
+        // if (loginOrNot?.data == true) {
+        //   print("Logged in Today.");
+        // } else {
+        //   Future.delayed(Duration.zero, () {
+        //     showLoginPrompt(context);
+        //   });
+        // }
+
         userDashboard = await HttpService.mainDashboard(widget.token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
         setState(() {
@@ -459,6 +514,7 @@ class _DashboardState extends State<Dashboard> {
       log("error: $e");
       setState(() {
         timeOut = true;
+        // timeOut = false;
       });
     }
   }
@@ -470,6 +526,170 @@ class _DashboardState extends State<Dashboard> {
     } else {
       setState(() {});
     }
+  }
+
+  void showLoginPrompt(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Not logged in today"),
+          content: const Text("Do you want to log in now?"),
+          actions: [
+            TextButton(
+              child: const Text("Not now"),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final today = DateTime.now().toIso8601String().substring(0, 10);
+                await prefs.setString('loginPromptDismissedDate', today);
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+                child: const Text("Yes"),
+                // onPressed: () async {
+                //   Navigator.of(dialogContext).pop();
+                //   final now = DateTime.now();
+                //   final res = await HttpService.startWork(now);
+
+                //   if (res != null && res.status == true) {
+                //     if (!context.mounted) return;
+                //       Navigator.push(
+                //         context,
+                //         MaterialPageRoute(
+                //           builder: (_) =>  Dashboard(widget.token),
+                //         ),
+                //       );
+                //   } else {
+                //     if (!context.mounted) return;
+
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       const SnackBar(content: Text("Failed to start work.")),
+                //     );
+                //   }
+                // },
+
+                // onPressed: () async {
+                //   Navigator.of(dialogContext).pop();
+
+                //   try {
+
+                //     final position = await Geolocator.getCurrentPosition(
+                //       desiredAccuracy: LocationAccuracy.high,
+                //     );
+
+                //     final now = DateTime.now();
+
+                //     final res = await HttpService.startWork(
+                //       now,
+                //       latitude: position.latitude,
+                //       longitude: position.longitude,
+                //     );
+
+                //     if (res != null && res.status == true) {
+                //       if (!context.mounted) return;
+                //       Navigator.push(
+                //         context,
+                //         MaterialPageRoute(
+                //           builder: (_) => Dashboard(widget.token),
+                //         ),
+                //       );
+                //     } else {
+                //       if (!context.mounted) return;
+                //       ScaffoldMessenger.of(context).showSnackBar(
+                //         const SnackBar(content: Text("Failed to start work.")),
+                //       );
+                //     }
+                //   } catch (e) {
+                //     if (!context.mounted) return;
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       SnackBar(content: Text("Location error: $e")),
+                //     );
+                //   }
+                // },
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const AlertDialog(
+                      content: Row(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 16),
+                          Text("Fetching Location..."),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  try {
+                    LocationPermission permission =
+                        await Geolocator.checkPermission();
+                    if (permission == LocationPermission.denied) {
+                      permission = await Geolocator.requestPermission();
+                      if (permission == LocationPermission.denied) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Location permission denied.")),
+                        );
+                        return;
+                      }
+                    }
+
+                    if (permission == LocationPermission.deniedForever) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                "Location permission permanently denied. Please enable it from settings.")),
+                      );
+                      return;
+                    }
+                    final position = await Geolocator.getCurrentPosition(
+                      desiredAccuracy: LocationAccuracy.high,
+                    );
+
+                    final now = DateTime.now();
+                    final res = await HttpService.startWork(
+                      now,
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                    );
+
+                    Navigator.of(context).pop();
+
+                    if (res != null && res.status == true) {
+                      if (!context.mounted) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Dashboard(widget.token),
+                        ),
+                      );
+                    } else {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Failed to start work.")),
+                      );
+                    }
+                  } catch (e) {
+                    Navigator.of(context).pop();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Location error: $e")),
+                    );
+                  }
+                }),
+          ],
+        );
+      },
+    );
   }
 
   getRenewalDashboard() async {
@@ -943,6 +1163,15 @@ class _DashboardState extends State<Dashboard> {
     setState(() {});
   }
 
+  void start_work(DateTime startTime, double latitude, double longitude) {
+    print("Work started at: $startTime");
+    HttpService.startWork(
+      startTime,
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
+
   Future<void> uploadMissingLogsToServer(
       List<HiveCaallHistoryModel> callLogData) async {
     log("uploadMissingLogsToServer function called");
@@ -1042,8 +1271,7 @@ class _DashboardState extends State<Dashboard> {
                               builder: (context) => Dashboard(widget.token)),
                         );
                       },
-                      child: Image.asset("assets/icons/menu.png",
-                          width: 25), //icon inside button
+                      child: Image.asset("assets/icons/menu.png", width: 25),
                     ),
                     bottomNavigationBar: configure != null
                         ? BottomNavigation(widget.token!,
@@ -2196,8 +2424,7 @@ class _DashboardState extends State<Dashboard> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => AddWorkPage(
-                                            existingWork:
-                                                existingWork, 
+                                            existingWork: existingWork,
                                             onSuccess: () {
                                               setState(() {
                                                 getData(widget.token, fromdate,
@@ -2222,6 +2449,112 @@ class _DashboardState extends State<Dashboard> {
                               ))
                           : SizedBox(),
                       SizedBox(width: 10),
+                      // startAndStopWorkPermission =="true" && userDashboard != null
+                      //     ? InkWell(
+                      //         onTap: () async {
+                      //           final now = DateTime.now();
+
+                      //           if (userDashboard!.data.loginCheck == false) {
+                      //             // Start Work
+                      //             final response =
+                      //                 await HttpService.startWork(now);
+                      //             if (response != null &&
+                      //                 response.status == true) {
+                      //               setState(() {
+                      //                 userDashboard!.data.loginCheck = true;
+                      //               });
+                      //               await Common.saveSharedPref(
+                      //                   "is_work_started", "true");
+                      //               ScaffoldMessenger.of(context).showSnackBar(
+                      //                 SnackBar(
+                      //                   content: Text(
+                      //                     "Work started at ${now.toLocal()}",
+                      //                     style: TextStyle(color: Colors.white),
+                      //                   ),
+                      //                   backgroundColor: Colors.green,
+                      //                 ),
+                      //               );
+                      //             } else {
+                      //               ScaffoldMessenger.of(context).showSnackBar(
+                      //                 SnackBar(
+                      //                   content: Text(response?.message ??
+                      //                       "Failed to start work"),
+                      //                   backgroundColor: Colors.red,
+                      //                 ),
+                      //               );
+                      //             }
+                      //           } else {
+                      //             final response =
+                      //                 await HttpService.stopWork(now);
+                      //             if (response != null &&
+                      //                 response.status == true) {
+                      //               setState(() {
+                      //                 userDashboard!.data.loginCheck = false;
+                      //               });
+                      //               await Common.saveSharedPref(
+                      //                   "is_work_started", "false");
+                      //               ScaffoldMessenger.of(context).showSnackBar(
+                      //                 SnackBar(
+                      //                   content: Text(
+                      //                     "Work stopped at ${now.toLocal()}",
+                      //                     style: TextStyle(color: Colors.white),
+                      //                   ),
+                      //                   backgroundColor: Colors.green,
+                      //                 ),
+                      //               );
+                      //             } else {
+                      //               ScaffoldMessenger.of(context).showSnackBar(
+                      //                 SnackBar(
+                      //                   content: Text("Failed to stop work"),
+                      //                   backgroundColor: Colors.red,
+                      //                 ),
+                      //               );
+                      //             }
+                      //           }
+                      //         },
+                      //         child: Container(
+                      //           width: 50,
+                      //           height: 32,
+                      //           padding: EdgeInsets.symmetric(
+                      //               horizontal: 15, vertical: 5),
+                      //           decoration: BoxDecoration(
+                      //             border:
+                      //                 Border.all(color: Colors.white, width: 0),
+                      //             boxShadow: [
+                      //               BoxShadow(
+                      //                 color: Colors.grey,
+                      //                 blurRadius: 5,
+                      //                 offset: Offset(1, 1),
+                      //               ),
+                      //             ],
+                      //             color: userDashboard!.data.loginCheck
+                      //                 ? Colors.red
+                      //                 : const Color.fromARGB(255, 24, 158, 64),
+                      //             borderRadius:
+                      //                 BorderRadius.all(Radius.circular(5)),
+                      //           ),
+                      //           child: Icon(
+                      //             userDashboard!.data.loginCheck
+                      //                 ? Icons.stop
+                      //                 : Icons.play_arrow,
+                      //             color: Colors.white,
+                      //           ),
+                      //         ),
+                      //       )
+                      //     : const SizedBox(),
+                      // startAndStopWorkPermission == "true" &&
+                      //         userDashboard != null
+                      //     ? StartStopToggle(
+                      //         initialStatus: userDashboard!.data.loginCheck,
+                      //         onToggle: (bool started) {
+                      //           setState(() {
+                      //             userDashboard!.data.loginCheck = started;
+                      //           });
+                      //         },
+                      //       )
+                      //     : SizedBox(),
+
+                      SizedBox(width: 10),
                       InkWell(
                         onTap: () {
                           if (isVisible == true) {
@@ -2235,7 +2568,7 @@ class _DashboardState extends State<Dashboard> {
                         },
                         child: Container(
                           width: 50,
-                          height: 32,
+                          height: 39,
                           padding:
                               EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                           decoration: BoxDecoration(
@@ -2372,6 +2705,38 @@ class _DashboardState extends State<Dashboard> {
                                             MaterialPageRoute(
                                                 builder: (context) =>
                                                     const RenewalDashboard()));
+                                      } else if (userDashboard!
+                                                  .data.modules[i].menuName ==
+                                              'Work' &&
+                                          adminCheckPermission == "true") {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ViewCompanyWorkPage(),
+                                            settings: RouteSettings(
+                                              arguments: {
+                                                //  "staffId": staffId
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      } else if (userDashboard!
+                                                  .data.modules[i].menuName ==
+                                              'Work' &&
+                                          adminCheckPermission == "false") {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ViewWorkPage(
+                                              staffId: '',
+                                            ),
+                                            settings: RouteSettings(
+                                              arguments: {"staffId": staffId},
+                                            ),
+                                          ),
+                                        );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
                                           'complaints') {
@@ -2729,6 +3094,7 @@ class _DashboardState extends State<Dashboard> {
                                                             deleteLeadPermission1,
                                                         cloudCall:
                                                             cloudCallPermission1,
+                                                        leadType: '',
                                                       )),
                                             ).then((r) {
                                               getData(widget.token, fromdate,
@@ -3356,105 +3722,275 @@ class _DashboardState extends State<Dashboard> {
                                                   //     ],
                                                   //   ),
                                                   // ),
+                                                  adminCheckPermission == "true"
+                                                      ? PopupMenuItem<int>(
+                                                          // value: 6,
+                                                          // onTap: () {
+                                                          //   Future.delayed(
+                                                          //       Duration.zero, () {
+                                                          //     showAddWorkDialog(
+                                                          //         context);
+                                                          //   });
+                                                          // },
+                                                          onTap: () async {
+                                                            final workStatusModel =
+                                                                await HttpService
+                                                                    .getWorkStatus();
 
-                                                  PopupMenuItem<int>(
-                                                    // value: 6,
-                                                    // onTap: () {
-                                                    //   Future.delayed(
-                                                    //       Duration.zero, () {
-                                                    //     showAddWorkDialog(
-                                                    //         context);
-                                                    //   });
-                                                    // },
-                                                    onTap: () async {
-                                                      final workStatusModel =
-                                                          await HttpService
-                                                              .getWorkStatus();
+                                                            WorkStatus?
+                                                                existingWork;
+                                                            if (workStatusModel !=
+                                                                    null &&
+                                                                workStatusModel
+                                                                    .data
+                                                                    .isNotEmpty) {
+                                                              existingWork =
+                                                                  workStatusModel
+                                                                      .data
+                                                                      .first;
+                                                            }
 
-                                                      WorkStatus? existingWork;
-                                                      if (workStatusModel !=
-                                                              null &&
-                                                          workStatusModel.data
-                                                              .isNotEmpty) {
-                                                        existingWork =
-                                                            workStatusModel
-                                                                .data.first;
-                                                      }
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        const ViewCompanyWorkPage(),
+                                                                settings:
+                                                                    RouteSettings(
+                                                                  arguments: {
+                                                                    //  "staffId": staffId
+                                                                  },
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
 
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const ViewWorkPage(
-                                                            staffId: '',
+                                                          child: Row(
+                                                            children: const [
+                                                              Icon(
+                                                                  Icons
+                                                                      .view_agenda,
+                                                                  size: 20),
+                                                              SizedBox(
+                                                                  width: 10),
+                                                              Text(
+                                                                  'View Works'),
+                                                            ],
                                                           ),
-                                                          settings:
-                                                              RouteSettings(
-                                                            arguments: {
-                                                              "staffId": staffId
-                                                            },
-                                                          ),
+                                                        )
+                                                      : const PopupMenuItem<
+                                                          int>(
+                                                          enabled: false,
+                                                          height: 0,
+                                                          child:
+                                                              SizedBox.shrink(),
                                                         ),
-                                                      );
-                                                    },
+                                                  adminCheckPermission ==
+                                                          "false"
+                                                      ? PopupMenuItem<int>(
+                                                          // onTap: () async {
+                                                          //   final workStatusModel =
+                                                          //       await HttpService
+                                                          //           .getWorkStatus();
+                                                          //   WorkStatus?
+                                                          //       existingWork;
+                                                          //   if (workStatusModel !=
+                                                          //           null &&
+                                                          //       workStatusModel
+                                                          //           .data
+                                                          //           .isNotEmpty) {
+                                                          //     existingWork =
+                                                          //         workStatusModel
+                                                          //             .data
+                                                          //             .first;
+                                                          //   }
+                                                          //   Navigator.push(
+                                                          //     context,
+                                                          //     MaterialPageRoute(
+                                                          //       builder:
+                                                          //           (context) =>
+                                                          //               const ViewWorkPage(
+                                                          //         staffId: '',
+                                                          //       ),
+                                                          //       settings:
+                                                          //           RouteSettings(
+                                                          //         arguments: {
+                                                          //           "staffId":
+                                                          //               staffId
+                                                          //         },
+                                                          //       ),
+                                                          //     ),
+                                                          //   );
+                                                          // },
+                                                          onTap: () async {
+                                                            final workStatusModel =
+                                                                await HttpService
+                                                                    .getWorkStatus();
+                                                            WorkStatus?
+                                                                existingWork;
+                                                            if (workStatusModel !=
+                                                                    null &&
+                                                                workStatusModel
+                                                                    .data
+                                                                    .isNotEmpty) {
+                                                              existingWork =
+                                                                  workStatusModel
+                                                                      .data
+                                                                      .first;
+                                                            }
 
-                                                    child: Row(
-                                                      children: const [
-                                                        Icon(Icons.view_agenda,
-                                                            size: 20),
-                                                        SizedBox(width: 10),
-                                                        Text('View Work'),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  PopupMenuItem<int>(
-                                                    // value: 6,
-                                                    // onTap: () {
-                                                    //   Future.delayed(
-                                                    //       Duration.zero, () {
-                                                    //     showAddWorkDialog(
-                                                    //         context);
-                                                    //   });
-                                                    // },
-                                                    onTap: () async {
-                                                      final workStatusModel =
-                                                          await HttpService
-                                                              .getWorkStatus();
+                                                            if (multipleWorksCheck ==
+                                                                "true") {
+                                                              showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (context) {
+                                                                  return AlertDialog(
+                                                                    title: const Text(
+                                                                        "Phone Call Log"),
+                                                                    content:
+                                                                        const Text(
+                                                                            "Choose an action below"),
+                                                                    actions: [
+                                                                      TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                          Navigator
+                                                                              .push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                              builder: (_) => ViewWorkPage(staffId: staffId),
+                                                                            ),
+                                                                          );
+                                                                        },
+                                                                        child: const Text(
+                                                                            "Works"),
+                                                                      ),
+                                                                      TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                          Navigator
+                                                                              .push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                              builder: (_) => const TimelinePage(),
+                                                                              settings: RouteSettings(
+                                                                                arguments: {
+                                                                                  "staffId": userId
+                                                                                },
+                                                                              ),
+                                                                            ),
+                                                                          );
+                                                                        },
+                                                                        child: const Text(
+                                                                            "Call Log"),
+                                                                      ),
+                                                                    ],
+                                                                  );
+                                                                },
+                                                              );
+                                                            } else if (multipleWorksCheck ==
+                                                                "phone") {
+                                                              // case: "phone"
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (_) =>
+                                                                      const TimelinePage(),
+                                                                  settings:
+                                                                      RouteSettings(
+                                                                          arguments: {
+                                                                        "staffId":
+                                                                            staffId
+                                                                      }),
+                                                                ),
+                                                              );
+                                                            } else {
+                                                              // case: "work"
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (_) =>
+                                                                      ViewWorkPage(
+                                                                          staffId:
+                                                                              staffId),
+                                                                ),
+                                                              );
+                                                            }
+                                                          },
 
-                                                      WorkStatus? existingWork;
-                                                      if (workStatusModel !=
-                                                              null &&
-                                                          workStatusModel.data
-                                                              .isNotEmpty) {
-                                                        existingWork =
-                                                            workStatusModel
-                                                                .data.first;
-                                                      }
-
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const ViewCompanyWorkPage(),
-                                                          settings:
-                                                              RouteSettings(
-                                                            arguments: {
-                                                              //  "staffId": staffId
-                                                            },
+                                                          child: Row(
+                                                            children: const [
+                                                              Icon(
+                                                                  Icons
+                                                                      .view_agenda,
+                                                                  size: 20),
+                                                              SizedBox(
+                                                                  width: 10),
+                                                              Text('View Work'),
+                                                            ],
                                                           ),
+                                                        )
+                                                      : const PopupMenuItem<
+                                                          int>(
+                                                          enabled: false,
+                                                          height: 0,
+                                                          child:
+                                                              SizedBox.shrink(),
                                                         ),
-                                                      );
-                                                    },
 
-                                                    child: Row(
-                                                      children: const [
-                                                        Icon(Icons.view_agenda,
-                                                            size: 20),
-                                                        SizedBox(width: 10),
-                                                        Text('View All Works'),
-                                                      ],
-                                                    ),
-                                                  ),
+                                                  // viewWorkReportPermission ==
+                                                  //             "true" &&
+                                                  //         adminCheckPermission !=
+                                                  //             "true"
+                                                  //     ? PopupMenuItem<int>(
+                                                  //         onTap: () {
+                                                  //           Future.delayed(
+                                                  //               Duration.zero,
+                                                  //               () {
+                                                  //             print(
+                                                  //                 "Navigating with staffId: $userId");
+                                                  //             Navigator.push(
+                                                  //               context,
+                                                  //               MaterialPageRoute(
+                                                  //                 builder:
+                                                  //                     (context) =>
+                                                  //                         const TimelinePage(),
+                                                  //                 settings:
+                                                  //                     RouteSettings(
+                                                  //                   arguments: {
+                                                  //                     "staffId":
+                                                  //                         userId,
+                                                  //                   },
+                                                  //                 ),
+                                                  //               ),
+                                                  //             );
+                                                  //           });
+                                                  //         },
+                                                  //         child: Row(
+                                                  //           children: const [
+                                                  //             Icon(Icons.report,
+                                                  //                 size: 20),
+                                                  //             SizedBox(
+                                                  //                 width: 10),
+                                                  //             Text(
+                                                  //                 'View Work Report'),
+                                                  //           ],
+                                                  //         ),
+                                                  //       )
+                                                  //     : const PopupMenuItem<
+                                                  //         int>(
+                                                  //         enabled: false,
+                                                  //         height: 0,
+                                                  //         child:
+                                                  //             SizedBox.shrink(),
+                                                  //       ),
                                                 ];
                                               },
                                               onSelected: (value) async {
@@ -4940,2484 +5476,2483 @@ class _DashboardState extends State<Dashboard> {
                         ),
                       ),
                     ),
-                    loadmore == false
-                        ? const SizedBox()
-                        : Padding(
-                            padding: const EdgeInsets.only(left: 20, right: 20),
-                            child: Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.grey,
-                                        offset: Offset(0, 2.0),
-                                      )
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 20, right: 20),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Text(
-                                                    'Category Wise Report',
-                                                    style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 15,
-                                                  ),
-                                                  viewLeadCategoryPermission ==
-                                                          'true'
-                                                      ? InkWell(
-                                                          onTap: () {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) => ViewLeadCategory(
-                                                                      widget
-                                                                          .token!,
-                                                                      createLeadCategory1,
-                                                                      updateLeadCategory1,
-                                                                      deleteLeadCategory1)),
-                                                            );
-                                                          },
-                                                          child: Icon(
-                                                            Icons.settings,
-                                                            color: Colors
-                                                                .blue.shade800,
-                                                            size: 15,
-                                                          ),
-                                                        )
-                                                      : const SizedBox()
-                                                ],
-                                              ),
-                                              InkWell(
-                                                onTap: () {
-                                                  showGeneralDialog(
-                                                    barrierLabel:
-                                                        "showGeneralDialog",
-                                                    barrierDismissible: true,
-                                                    barrierColor: Colors.black
-                                                        .withOpacity(0.6),
-                                                    transitionDuration:
-                                                        const Duration(
-                                                            milliseconds: 400),
-                                                    context: context,
-                                                    pageBuilder:
-                                                        (context, _, __) {
-                                                      return Align(
-                                                        alignment: Alignment
-                                                            .bottomCenter,
-                                                        child: IntrinsicHeight(
-                                                          child: Container(
-                                                            width: double
-                                                                .maxFinite,
-                                                            clipBehavior:
-                                                                Clip.antiAlias,
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(16),
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color:
-                                                                  Colors.white,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .only(
-                                                                topLeft: Radius
-                                                                    .circular(
-                                                                        16),
-                                                                topRight: Radius
-                                                                    .circular(
-                                                                        16),
-                                                              ),
-                                                            ),
-                                                            child: Material(
-                                                              child:
-                                                                  SingleChildScrollView(
-                                                                child: Column(
-                                                                  children: [
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                    const Text(
-                                                                      'Filter By Date Range',
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            18,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                    Row(
-                                                                      children: [
-                                                                        SizedBox(
-                                                                            width: MediaQuery.of(context).size.width *
-                                                                                0.25,
-                                                                            child:
-                                                                                const Text(
-                                                                              'From Date',
-                                                                              style: TextStyle(
-                                                                                fontSize: 15,
-                                                                                fontWeight: FontWeight.w500,
-                                                                              ),
-                                                                            )),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        SizedBox(
-                                                                          height:
-                                                                              50,
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * 0.6,
-                                                                          child:
-                                                                              Center(
-                                                                            child:
-                                                                                DateTimePicker(
-                                                                              decoration: InputDecoration(
-                                                                                  filled: true,
-                                                                                  //<-- SEE HERE
-                                                                                  fillColor: Colors.white,
-                                                                                  prefixIcon: const Icon(
-                                                                                    Icons.arrow_right,
-                                                                                    color: Colors.grey,
-                                                                                  ),
-                                                                                  counterText: "",
-                                                                                  hintText: 'From Date',
-                                                                                  isDense: true,
-                                                                                  border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                              initialValue: fromdate1.toString(),
-                                                                              type: DateTimePickerType.date,
+                    loadmore == false ? const SizedBox() : SizedBox()
+                    //  Padding(
+                    //     padding: const EdgeInsets.only(left: 20, right: 20),
+                    //     child: Column(
+                    //       children: [
+                    //         Container(
+                    //           decoration: BoxDecoration(
+                    //             color: Colors.grey.shade100,
+                    //             borderRadius: BorderRadius.circular(15),
+                    //             boxShadow: const [
+                    //               BoxShadow(
+                    //                 color: Colors.grey,
+                    //                 offset: Offset(0, 2.0),
+                    //               )
+                    //             ],
+                    //           ),
+                    //           child: Center(
+                    //             child: Column(
+                    //               mainAxisAlignment:
+                    //                   MainAxisAlignment.start,
+                    //               crossAxisAlignment:
+                    //                   CrossAxisAlignment.start,
+                    //               children: <Widget>[
+                    //                 const SizedBox(
+                    //                   height: 20,
+                    //                 ),
+                    //                 Padding(
+                    //                   padding: const EdgeInsets.only(
+                    //                       left: 20, right: 20),
+                    //                   child: Row(
+                    //                     mainAxisAlignment:
+                    //                         MainAxisAlignment.spaceBetween,
+                    //                     crossAxisAlignment:
+                    //                         CrossAxisAlignment.center,
+                    //                     children: [
+                    //                       Row(
+                    //                         children: [
+                    //                           const Text(
+                    //                             'Category Wise Report',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 15,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           ),
+                    //                           const SizedBox(
+                    //                             width: 15,
+                    //                           ),
+                    //                           viewLeadCategoryPermission ==
+                    //                                   'true'
+                    //                               ? InkWell(
+                    //                                   onTap: () {
+                    //                                     Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder: (context) => ViewLeadCategory(
+                    //                                               widget
+                    //                                                   .token!,
+                    //                                               createLeadCategory1,
+                    //                                               updateLeadCategory1,
+                    //                                               deleteLeadCategory1)),
+                    //                                     );
+                    //                                   },
+                    //                                   child: Icon(
+                    //                                     Icons.settings,
+                    //                                     color: Colors
+                    //                                         .blue.shade800,
+                    //                                     size: 15,
+                    //                                   ),
+                    //                                 )
+                    //                               : const SizedBox()
+                    //                         ],
+                    //                       ),
+                    //                       InkWell(
+                    //                         onTap: () {
+                    //                           showGeneralDialog(
+                    //                             barrierLabel:
+                    //                                 "showGeneralDialog",
+                    //                             barrierDismissible: true,
+                    //                             barrierColor: Colors.black
+                    //                                 .withOpacity(0.6),
+                    //                             transitionDuration:
+                    //                                 const Duration(
+                    //                                     milliseconds: 400),
+                    //                             context: context,
+                    //                             pageBuilder:
+                    //                                 (context, _, __) {
+                    //                               return Align(
+                    //                                 alignment: Alignment
+                    //                                     .bottomCenter,
+                    //                                 child: IntrinsicHeight(
+                    //                                   child: Container(
+                    //                                     width: double
+                    //                                         .maxFinite,
+                    //                                     clipBehavior:
+                    //                                         Clip.antiAlias,
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .all(16),
+                    //                                     decoration:
+                    //                                         const BoxDecoration(
+                    //                                       color:
+                    //                                           Colors.white,
+                    //                                       borderRadius:
+                    //                                           BorderRadius
+                    //                                               .only(
+                    //                                         topLeft: Radius
+                    //                                             .circular(
+                    //                                                 16),
+                    //                                         topRight: Radius
+                    //                                             .circular(
+                    //                                                 16),
+                    //                                       ),
+                    //                                     ),
+                    //                                     child: Material(
+                    //                                       child:
+                    //                                           SingleChildScrollView(
+                    //                                         child: Column(
+                    //                                           children: [
+                    //                                             const SizedBox(
+                    //                                                 height:
+                    //                                                     20),
+                    //                                             const Text(
+                    //                                               'Filter By Date Range',
+                    //                                               style:
+                    //                                                   TextStyle(
+                    //                                                 fontSize:
+                    //                                                     18,
+                    //                                                 fontWeight:
+                    //                                                     FontWeight.w500,
+                    //                                               ),
+                    //                                             ),
+                    //                                             const SizedBox(
+                    //                                                 height:
+                    //                                                     20),
+                    //                                             Row(
+                    //                                               children: [
+                    //                                                 SizedBox(
+                    //                                                     width: MediaQuery.of(context).size.width *
+                    //                                                         0.25,
+                    //                                                     child:
+                    //                                                         const Text(
+                    //                                                       'From Date',
+                    //                                                       style: TextStyle(
+                    //                                                         fontSize: 15,
+                    //                                                         fontWeight: FontWeight.w500,
+                    //                                                       ),
+                    //                                                     )),
+                    //                                                 const SizedBox(
+                    //                                                   width:
+                    //                                                       10,
+                    //                                                 ),
+                    //                                                 SizedBox(
+                    //                                                   height:
+                    //                                                       50,
+                    //                                                   width:
+                    //                                                       MediaQuery.of(context).size.width * 0.6,
+                    //                                                   child:
+                    //                                                       Center(
+                    //                                                     child:
+                    //                                                         DateTimePicker(
+                    //                                                       decoration: InputDecoration(
+                    //                                                           filled: true,
+                    //                                                           //<-- SEE HERE
+                    //                                                           fillColor: Colors.white,
+                    //                                                           prefixIcon: const Icon(
+                    //                                                             Icons.arrow_right,
+                    //                                                             color: Colors.grey,
+                    //                                                           ),
+                    //                                                           counterText: "",
+                    //                                                           hintText: 'From Date',
+                    //                                                           isDense: true,
+                    //                                                           border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                    //                                                       initialValue: fromdate1.toString(),
+                    //                                                       type: DateTimePickerType.date,
 
-                                                                              //controller: fromDate,
-                                                                              firstDate: DateTime(1995),
-                                                                              lastDate: DateTime.now().add(const Duration(days: 365)),
-                                                                              // This will add one year from current date
-                                                                              validator: (value) {
-                                                                                return null;
-                                                                              },
-                                                                              onChanged: (value) {
-                                                                                if (value.isNotEmpty) {
-                                                                                  setState(() {
-                                                                                    fromdate1 = DateTime.parse(value).toString();
-                                                                                  });
-                                                                                }
-                                                                              },
-                                                                              // We can also use onSaved
-                                                                              onSaved: (value) {
-                                                                                if (value!.isNotEmpty) {
-                                                                                  fromdate1 = DateTime.parse(value).toString();
-                                                                                }
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        SizedBox(
-                                                                            width: MediaQuery.of(context).size.width *
-                                                                                0.25,
-                                                                            child:
-                                                                                const Text(
-                                                                              'To Date',
-                                                                              style: TextStyle(
-                                                                                fontSize: 15,
-                                                                                fontWeight: FontWeight.w500,
-                                                                              ),
-                                                                            )),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        SizedBox(
-                                                                          height:
-                                                                              50,
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * 0.6,
-                                                                          child:
-                                                                              Center(
-                                                                            child:
-                                                                                DateTimePicker(
-                                                                              decoration: InputDecoration(
-                                                                                  filled: true,
-                                                                                  //<-- SEE HERE
-                                                                                  fillColor: Colors.white,
-                                                                                  prefixIcon: const Icon(
-                                                                                    Icons.arrow_right,
-                                                                                    color: Colors.grey,
-                                                                                  ),
-                                                                                  counterText: "",
-                                                                                  hintText: 'To date',
-                                                                                  isDense: true,
-                                                                                  border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                              initialValue: todate1.toString(),
-                                                                              type: DateTimePickerType.date,
+                    //                                                       //controller: fromDate,
+                    //                                                       firstDate: DateTime(1995),
+                    //                                                       lastDate: DateTime.now().add(const Duration(days: 365)),
+                    //                                                       // This will add one year from current date
+                    //                                                       validator: (value) {
+                    //                                                         return null;
+                    //                                                       },
+                    //                                                       onChanged: (value) {
+                    //                                                         if (value.isNotEmpty) {
+                    //                                                           setState(() {
+                    //                                                             fromdate1 = DateTime.parse(value).toString();
+                    //                                                           });
+                    //                                                         }
+                    //                                                       },
+                    //                                                       // We can also use onSaved
+                    //                                                       onSaved: (value) {
+                    //                                                         if (value!.isNotEmpty) {
+                    //                                                           fromdate1 = DateTime.parse(value).toString();
+                    //                                                         }
+                    //                                                       },
+                    //                                                     ),
+                    //                                                   ),
+                    //                                                 ),
+                    //                                               ],
+                    //                                             ),
+                    //                                             const SizedBox(
+                    //                                               height:
+                    //                                                   10,
+                    //                                             ),
+                    //                                             Row(
+                    //                                               children: [
+                    //                                                 SizedBox(
+                    //                                                     width: MediaQuery.of(context).size.width *
+                    //                                                         0.25,
+                    //                                                     child:
+                    //                                                         const Text(
+                    //                                                       'To Date',
+                    //                                                       style: TextStyle(
+                    //                                                         fontSize: 15,
+                    //                                                         fontWeight: FontWeight.w500,
+                    //                                                       ),
+                    //                                                     )),
+                    //                                                 const SizedBox(
+                    //                                                   width:
+                    //                                                       10,
+                    //                                                 ),
+                    //                                                 SizedBox(
+                    //                                                   height:
+                    //                                                       50,
+                    //                                                   width:
+                    //                                                       MediaQuery.of(context).size.width * 0.6,
+                    //                                                   child:
+                    //                                                       Center(
+                    //                                                     child:
+                    //                                                         DateTimePicker(
+                    //                                                       decoration: InputDecoration(
+                    //                                                           filled: true,
+                    //                                                           //<-- SEE HERE
+                    //                                                           fillColor: Colors.white,
+                    //                                                           prefixIcon: const Icon(
+                    //                                                             Icons.arrow_right,
+                    //                                                             color: Colors.grey,
+                    //                                                           ),
+                    //                                                           counterText: "",
+                    //                                                           hintText: 'To date',
+                    //                                                           isDense: true,
+                    //                                                           border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                    //                                                       initialValue: todate1.toString(),
+                    //                                                       type: DateTimePickerType.date,
 
-                                                                              //controller: fromDate,
-                                                                              firstDate: DateTime(1995),
-                                                                              lastDate: DateTime.now().add(const Duration(days: 365)),
-                                                                              // This will add one year from current date
-                                                                              validator: (value) {
-                                                                                return null;
-                                                                              },
-                                                                              onChanged: (value) {
-                                                                                if (value.isNotEmpty) {
-                                                                                  setState(() {
-                                                                                    todate1 = DateTime.parse(value);
-                                                                                  });
-                                                                                }
-                                                                              },
-                                                                              // We can also use onSaved
-                                                                              onSaved: (value) {
-                                                                                if (value!.isNotEmpty) {
-                                                                                  todate1 = DateTime.parse(value);
-                                                                                }
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            16),
-                                                                    Container(
-                                                                      height:
-                                                                          40,
-                                                                      width: double
-                                                                          .maxFinite,
-                                                                      decoration:
-                                                                          const BoxDecoration(
-                                                                        color: Color(
-                                                                            0xFF3375e0),
-                                                                        borderRadius:
-                                                                            BorderRadius.all(Radius.circular(8)),
-                                                                      ),
-                                                                      child:
-                                                                          RawMaterialButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          setState(
-                                                                              () {
-                                                                            data.remove(data);
-                                                                          });
-                                                                          getStaffwise();
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          Navigator.of(context, rootNavigator: true)
-                                                                              .pop();
-                                                                        },
-                                                                        child:
-                                                                            const Center(
-                                                                          child:
-                                                                              Text(
-                                                                            'Continue',
-                                                                            style:
-                                                                                TextStyle(
-                                                                              color: Colors.white,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                    transitionBuilder: (_,
-                                                        animation1, __, child) {
-                                                      return SlideTransition(
-                                                        position: Tween(
-                                                          begin: const Offset(
-                                                              0, 1),
-                                                          end: const Offset(
-                                                              0, 0),
-                                                        ).animate(animation1),
-                                                        child: child,
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                                child: Container(
-                                                  width: 30,
-                                                  height: 30,
-                                                  decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade100,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5)),
-                                                  child: Center(
-                                                    child: Center(
-                                                        child: Image.asset(
-                                                            "assets/icons/calendar.png",
-                                                            width: 25)),
-                                                  ),
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 20),
-                                          child: Text(
-                                              'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Divider(
-                                          color: Colors.grey.shade300,
-                                          thickness: 1.0,
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        if (leadDashboard != null)
-                                          data.isNotEmpty
-                                              ? Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 10),
-                                                  child: PieChart(
-                                                    dataMap: data,
-                                                    animationDuration:
-                                                        const Duration(
-                                                            milliseconds: 800),
-                                                    chartLegendSpacing: 20,
-                                                    chartRadius:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width /
-                                                            2.5,
-                                                    colorList: _colors,
-                                                    initialAngleInDegree: 0,
-                                                    chartType: ChartType.ring,
-                                                    ringStrokeWidth: 25,
-                                                    centerText: leadDashboard!
-                                                        .data
-                                                        .currentLeadsCount
-                                                        .total,
-                                                    centerTextStyle:
-                                                        const TextStyle(
-                                                            fontSize: 20,
-                                                            color:
-                                                                Colors.black),
-                                                    legendOptions:
-                                                        const LegendOptions(
-                                                      legendShape:
-                                                          BoxShape.rectangle,
-                                                      showLegendsInRow: false,
-                                                      legendPosition:
-                                                          LegendPosition.right,
-                                                      showLegends: true,
-                                                      legendTextStyle:
-                                                          TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                    chartValuesOptions:
-                                                        const ChartValuesOptions(
-                                                      showChartValueBackground:
-                                                          false,
-                                                      showChartValues: false,
-                                                      showChartValuesInPercentage:
-                                                          false,
-                                                      showChartValuesOutside:
-                                                          true,
-                                                      decimalPlaces: 1,
-                                                    ),
-                                                    // gradientList: ---To add gradient colors---
-                                                    // emptyColorGradient: ---Empty Color gradient---
-                                                  ),
-                                                )
-                                              : Column(
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Image.asset(
-                                                          'assets/icons/nodatafound.png',
-                                                          width: 100,
-                                                          height: 100,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const Text(
-                                                      'Result Not Found',
-                                                      style: TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    const Text(
-                                                      'Whoops... this information is \n not available for a moment',
-                                                      style: TextStyle(
-                                                          fontSize: 13),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 15,
-                                                    ),
-                                                  ],
-                                                ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        const Divider(),
-                                        data.isNotEmpty
-                                            ? Column(
-                                                children: [
-                                                  Table(columnWidths: const {
-                                                    0: FlexColumnWidth(10),
-                                                    1: FlexColumnWidth(5),
-                                                    2: FlexColumnWidth(5),
-                                                    3: FlexColumnWidth(5),
-                                                    4: FlexColumnWidth(5),
-                                                    5: FlexColumnWidth(5),
-                                                  }, children: [
-                                                    const TableRow(
-                                                        // decoration: new BoxDecoration(
-                                                        //     color: Colors.greenAccent),
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              "",
-                                                              style: TextStyle(
-                                                                  fontSize: 17,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              'New',
-                                                              style: TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              'Pending',
-                                                              style: TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              'Followup',
-                                                              style: TextStyle(
-                                                                  fontSize: 10,
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              'Rejected',
-                                                              style: TextStyle(
-                                                                  fontSize: 10,
-                                                                  color: Colors
-                                                                      .red,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              'Closed',
-                                                              style: TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ]),
-                                                    for (int i = 0;
-                                                        i <
-                                                            staffWise!
-                                                                .data!
-                                                                .categoryLeads!
-                                                                .length;
-                                                        i++)
-                                                      TableRow(children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10,
-                                                                  left: 10),
-                                                          child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .categoryLeads![
-                                                                    i]
-                                                                .categoryName
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color:
-                                                                    _colors[i]),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "statusWise",
-                                                                    'yes');
-                                                            Common.saveSharedPref(
-                                                                "statusWisId",
-                                                                '1');
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "type",
-                                                                    'category');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                staffWise!
-                                                                    .data!
-                                                                    .categoryLeads![
-                                                                        i]
-                                                                    .categoryid
-                                                                    .toString());
-                                                            viewLeadPermission ==
-                                                                    'true'
-                                                                ? Navigator
-                                                                    .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'New Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                                  ).then((r) {
-                                                                    getData(
-                                                                        widget
-                                                                            .token,
-                                                                        fromdate,
-                                                                        todate);
-                                                                    if (loadmore ==
-                                                                        true) {
-                                                                      getStaffwise();
-                                                                    }
-                                                                  })
-                                                                : _dialogue(
-                                                                    context,
-                                                                    'View Leads');
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 0,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              staffWise!
-                                                                  .data!
-                                                                  .categoryLeads![
-                                                                      i]
-                                                                  .newCount
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "statusWise",
-                                                                    'yes');
-                                                            Common.saveSharedPref(
-                                                                "statusWisId",
-                                                                '2');
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "type",
-                                                                    'category');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                staffWise!
-                                                                    .data!
-                                                                    .categoryLeads![
-                                                                        i]
-                                                                    .categoryid
-                                                                    .toString());
-                                                            viewLeadPermission ==
-                                                                    'true'
-                                                                ? Navigator
-                                                                    .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Pending Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                                  ).then((r) {
-                                                                    getData(
-                                                                        widget
-                                                                            .token,
-                                                                        fromdate,
-                                                                        todate);
-                                                                    if (loadmore ==
-                                                                        true) {
-                                                                      getStaffwise();
-                                                                    }
-                                                                  })
-                                                                : _dialogue(
-                                                                    context,
-                                                                    'View Leads');
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 0,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              staffWise!
-                                                                  .data!
-                                                                  .categoryLeads![
-                                                                      i]
-                                                                  .pendingCount
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "statusWise",
-                                                                    'yes');
-                                                            Common.saveSharedPref(
-                                                                "statusWisId",
-                                                                '3');
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "type",
-                                                                    'category');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                staffWise!
-                                                                    .data!
-                                                                    .categoryLeads![
-                                                                        i]
-                                                                    .categoryid
-                                                                    .toString());
-                                                            viewLeadPermission ==
-                                                                    'true'
-                                                                ? Navigator
-                                                                    .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Followup Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                                  ).then((r) {
-                                                                    getData(
-                                                                        widget
-                                                                            .token,
-                                                                        fromdate,
-                                                                        todate);
-                                                                    if (loadmore ==
-                                                                        true) {
-                                                                      getStaffwise();
-                                                                    }
-                                                                  })
-                                                                : _dialogue(
-                                                                    context,
-                                                                    'View Leads');
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 0,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              staffWise!
-                                                                  .data!
-                                                                  .categoryLeads![
-                                                                      i]
-                                                                  .followupCount
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "statusWise",
-                                                                    'yes');
-                                                            Common.saveSharedPref(
-                                                                "statusWisId",
-                                                                '4');
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "type",
-                                                                    'category');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                staffWise!
-                                                                    .data!
-                                                                    .categoryLeads![
-                                                                        i]
-                                                                    .categoryid
-                                                                    .toString());
-                                                            viewLeadPermission ==
-                                                                    'true'
-                                                                ? Navigator
-                                                                    .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              updateLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Rejected Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                                  ).then((r) {
-                                                                    getData(
-                                                                        widget
-                                                                            .token,
-                                                                        fromdate,
-                                                                        todate);
-                                                                    if (loadmore ==
-                                                                        true) {
-                                                                      getStaffwise();
-                                                                    }
-                                                                  })
-                                                                : _dialogue(
-                                                                    context,
-                                                                    'View Leads');
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 0,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              staffWise!
-                                                                  .data!
-                                                                  .categoryLeads![
-                                                                      i]
-                                                                  .rejectedCount
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  color: Colors
-                                                                      .red,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "statusWise",
-                                                                    'yes');
-                                                            Common
-                                                                .saveSharedPref(
-                                                                    "type",
-                                                                    'category');
-                                                            Common.saveSharedPref(
-                                                                "statusWisId",
-                                                                '5');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                staffWise!
-                                                                    .data!
-                                                                    .categoryLeads![
-                                                                        i]
-                                                                    .categoryid
-                                                                    .toString());
-                                                            viewLeadPermission ==
-                                                                    'true'
-                                                                ? Navigator
-                                                                    .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Closed Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                                  ).then((r) {
-                                                                    getData(
-                                                                        widget
-                                                                            .token,
-                                                                        fromdate,
-                                                                        todate);
-                                                                    if (loadmore ==
-                                                                        true) {
-                                                                      getStaffwise();
-                                                                    }
-                                                                  })
-                                                                : _dialogue(
-                                                                    context,
-                                                                    'View Leads');
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 0,
-                                                                    bottom: 10),
-                                                            child: Center(
-                                                                child: Text(
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              staffWise!
-                                                                  .data!
-                                                                  .categoryLeads![
-                                                                      i]
-                                                                  .confirmedCount
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            )),
-                                                          ),
-                                                        ),
-                                                      ]),
-                                                  ]),
-                                                  const Divider(
-                                                    endIndent: 8,
-                                                    indent: 8,
-                                                  ),
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 8.0,
-                                                            bottom: 12.0),
-                                                    child: Table(
-                                                      columnWidths: const {
-                                                        0: FlexColumnWidth(10),
-                                                        1: FlexColumnWidth(5),
-                                                        2: FlexColumnWidth(5),
-                                                        3: FlexColumnWidth(5),
-                                                        4: FlexColumnWidth(5),
-                                                        5: FlexColumnWidth(5),
-                                                      },
-                                                      children: [
-                                                        TableRow(
-                                                            // decoration: new BoxDecoration(
-                                                            //     color: Colors.greenAccent),
-                                                            children: [
-                                                              const Center(
-                                                                  child: Text(
-                                                                "Total Leads",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        11,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold),
-                                                              )),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Common.saveSharedPref(
-                                                                      "statusWise",
-                                                                      'yes');
-                                                                  Common.saveSharedPref(
-                                                                      "statusWisId",
-                                                                      '1');
-                                                                  Common.saveSharedPref(
-                                                                      "type",
-                                                                      'category');
-                                                                  Common.saveSharedPref(
-                                                                      "statusCatId",
-                                                                      "-1");
-                                                                  viewLeadPermission ==
-                                                                          'true'
-                                                                      ? Navigator
-                                                                          .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ViewLeads(
-                                                                                    widget.token,
-                                                                                    updateLeadPermission1,
-                                                                                    deleteLeadPermission1,
-                                                                                    cloudCallPermission1,
-                                                                                    pageName: 'New Leads',
-                                                                                    // fromDate: fromdate1.toString(),
-                                                                                    // toDate: todate1.toString(),
-                                                                                  )),
-                                                                        ).then(
-                                                                          (r) {
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          if (loadmore ==
-                                                                              true) {
-                                                                            getStaffwise();
-                                                                          }
-                                                                        })
-                                                                      : _dialogue(
-                                                                          context,
-                                                                          'View Leads');
-                                                                },
-                                                                child: Center(
-                                                                    child: Text(
-                                                                  catNew
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                              ),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Common.saveSharedPref(
-                                                                      "statusWise",
-                                                                      'yes');
-                                                                  Common.saveSharedPref(
-                                                                      "statusWisId",
-                                                                      '2');
-                                                                  Common.saveSharedPref(
-                                                                      "type",
-                                                                      'category');
-                                                                  Common.saveSharedPref(
-                                                                      "statusCatId",
-                                                                      "-1");
-                                                                  viewLeadPermission ==
-                                                                          'true'
-                                                                      ? Navigator
-                                                                          .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ViewLeads(
-                                                                                    widget.token,
-                                                                                    updateLeadPermission1,
-                                                                                    deleteLeadPermission1,
-                                                                                    cloudCallPermission1,
-                                                                                    pageName: 'Pending Leads',
-                                                                                    fromDate: fromdate1.toString(),
-                                                                                    toDate: todate1.toString(),
-                                                                                  )),
-                                                                        ).then(
-                                                                          (r) {
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          if (loadmore ==
-                                                                              true) {
-                                                                            getStaffwise();
-                                                                          }
-                                                                        })
-                                                                      : _dialogue(
-                                                                          context,
-                                                                          'View Leads');
-                                                                },
-                                                                child: Center(
-                                                                    child: Text(
-                                                                  catPending
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                              ),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Common.saveSharedPref(
-                                                                      "statusWise",
-                                                                      'yes');
-                                                                  Common.saveSharedPref(
-                                                                      "statusWisId",
-                                                                      '3');
-                                                                  Common.saveSharedPref(
-                                                                      "type",
-                                                                      'category');
-                                                                  Common.saveSharedPref(
-                                                                      "statusCatId",
-                                                                      "-1");
-                                                                  viewLeadPermission ==
-                                                                          'true'
-                                                                      ? Navigator
-                                                                          .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ViewLeads(
-                                                                                    widget.token,
-                                                                                    updateLeadPermission1,
-                                                                                    deleteLeadPermission1,
-                                                                                    cloudCallPermission1,
-                                                                                    pageName: 'Followup Leads',
-                                                                                    fromDate: fromdate1.toString(),
-                                                                                    toDate: todate1.toString(),
-                                                                                  )),
-                                                                        ).then(
-                                                                          (r) {
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          if (loadmore ==
-                                                                              true) {
-                                                                            getStaffwise();
-                                                                          }
-                                                                        })
-                                                                      : _dialogue(
-                                                                          context,
-                                                                          'View Leads');
-                                                                },
-                                                                child: Center(
-                                                                    child: Text(
-                                                                  catFollowup
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: Colors
-                                                                          .black,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                              ),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Common.saveSharedPref(
-                                                                      "statusWise",
-                                                                      'yes');
-                                                                  Common.saveSharedPref(
-                                                                      "statusWisId",
-                                                                      '4');
-                                                                  Common.saveSharedPref(
-                                                                      "type",
-                                                                      'category');
-                                                                  Common.saveSharedPref(
-                                                                      "statusCatId",
-                                                                      "-1");
-                                                                  viewLeadPermission ==
-                                                                          'true'
-                                                                      ? Navigator
-                                                                          .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ViewLeads(
-                                                                                    widget.token,
-                                                                                    updateLeadPermission1,
-                                                                                    updateLeadPermission1,
-                                                                                    cloudCallPermission1,
-                                                                                    pageName: 'Rejected Leads',
-                                                                                    fromDate: fromdate1.toString(),
-                                                                                    toDate: todate1.toString(),
-                                                                                  )),
-                                                                        ).then(
-                                                                          (r) {
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          if (loadmore ==
-                                                                              true) {
-                                                                            getStaffwise();
-                                                                          }
-                                                                        })
-                                                                      : _dialogue(
-                                                                          context,
-                                                                          'View Leads');
-                                                                },
-                                                                child: Center(
-                                                                    child: Text(
-                                                                  catRejected
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: Colors
-                                                                          .red,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                              ),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Common.saveSharedPref(
-                                                                      "statusWise",
-                                                                      'yes');
-                                                                  Common.saveSharedPref(
-                                                                      "type",
-                                                                      'category');
-                                                                  Common.saveSharedPref(
-                                                                      "statusCatId",
-                                                                      "-1");
-                                                                  Common.saveSharedPref(
-                                                                      "statusWisId",
-                                                                      '5');
-                                                                  viewLeadPermission ==
-                                                                          'true'
-                                                                      ? Navigator
-                                                                          .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ViewLeads(
-                                                                                    widget.token,
-                                                                                    updateLeadPermission1,
-                                                                                    deleteLeadPermission1,
-                                                                                    cloudCallPermission1,
-                                                                                    pageName: 'Closed Leads',
-                                                                                    fromDate: fromdate1.toString(),
-                                                                                    toDate: todate1.toString(),
-                                                                                  )),
-                                                                        ).then(
-                                                                          (r) {
-                                                                          getData(
-                                                                              widget.token,
-                                                                              fromdate,
-                                                                              todate);
-                                                                          if (loadmore ==
-                                                                              true) {
-                                                                            getStaffwise();
-                                                                          }
-                                                                        })
-                                                                      : _dialogue(
-                                                                          context,
-                                                                          'View Leads');
-                                                                },
-                                                                child: Center(
-                                                                    child: Text(
-                                                                  catClosed
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                              ),
-                                                            ]),
-                                                      ],
-                                                    ),
-                                                  )
-                                                ],
-                                              )
-                                            : const SizedBox(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Colors.grey,
-                                          offset: Offset(0, 2.0),
-                                        )
-                                      ],
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        const Padding(
-                                          padding: EdgeInsets.only(left: 20),
-                                          child: Row(
-                                            children: [
-                                              Text(
-                                                'Staff Wise Report',
-                                                style: TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 20),
-                                          child: Text(
-                                              'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
-                                        ),
-                                        Divider(
-                                          color: Colors.grey.shade300,
-                                          thickness: 1.0,
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 20),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                ' Total Leads ',
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black,
-                                                    fontSize: 16),
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            .25,
-                                                    decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        color: Colors.lightBlue
-                                                            .shade100),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          // const Text(
-                                                          //   ' Current \nMonth',
-                                                          //   textAlign:
-                                                          //       TextAlign.center,
-                                                          //   style: TextStyle(
-                                                          //       fontWeight: FontWeight.bold,
-                                                          //       color: Colors.black,
-                                                          //       fontSize: 14),
-                                                          // ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .currentLeadsCount
-                                                                  .month,
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontSize: 14),
-                                                            ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .currentLeadsCount
-                                                                  .date,
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .normal,
-                                                                  color: Colors
-                                                                      .black87,
-                                                                  fontSize: 9),
-                                                            ),
-                                                          const SizedBox(
-                                                            height: 5,
-                                                          ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .currentLeadsCount
-                                                                  .total
-                                                                  .toString(),
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade900,
-                                                                  fontSize: 16),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            .25,
-                                                    decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        color: Colors
-                                                            .orange.shade100),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          // const Text(
-                                                          //   ' Previous \nMonth ',
-                                                          //   textAlign:
-                                                          //       TextAlign.center,
-                                                          //   style: TextStyle(
-                                                          //       fontWeight: FontWeight.bold,
-                                                          //       color: Colors.black,
-                                                          //       fontSize: 14),
-                                                          // ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .previousLeadsCount
-                                                                  .month,
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontSize: 14),
-                                                            ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .previousLeadsCount
-                                                                  .date,
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .normal,
-                                                                  color: Colors
-                                                                      .black87,
-                                                                  fontSize: 9),
-                                                            ),
-                                                          const SizedBox(
-                                                            height: 5,
-                                                          ),
-                                                          if (leadDashboard !=
-                                                              null)
-                                                            Text(
-                                                              leadDashboard!
-                                                                  .data
-                                                                  .previousLeadsCount
-                                                                  .total
-                                                                  .toString(),
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade900,
-                                                                  fontSize: 16),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Container(
-                                                    height: 90,
-                                                    width: 100,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      image: DecorationImage(
-                                                        image: AssetImage(
-                                                            'assets/main/lead.png'),
-                                                        fit: BoxFit.fill,
-                                                      ),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
-                                          child: Align(
-                                              alignment: Alignment.center,
-                                              child: Container(
-                                                height: 15,
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
-                                                child: Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .stretch,
-                                                  children: [
-                                                    for (var i = 0;
-                                                        i <
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads!
-                                                                .length;
-                                                        i++)
-                                                      Expanded(
-                                                          flex: staffWise!
-                                                              .data!
-                                                              .staffLeads![i]
-                                                              .staffPercentage!,
-                                                          child: Container(
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              borderRadius: staffWise!
-                                                                          .data!
-                                                                          .staffLeads!
-                                                                          .length ==
-                                                                      1
-                                                                  ? const BorderRadius
-                                                                      .only(
-                                                                      topLeft:
-                                                                          Radius.circular(
-                                                                              5),
-                                                                      bottomLeft:
-                                                                          Radius.circular(
-                                                                              5),
-                                                                      topRight:
-                                                                          Radius.circular(
-                                                                              5),
-                                                                      bottomRight:
-                                                                          Radius.circular(
-                                                                              5))
-                                                                  : i == 0
-                                                                      ? const BorderRadius
-                                                                          .only(
-                                                                          topLeft:
-                                                                              Radius.circular(5),
-                                                                          bottomLeft:
-                                                                              Radius.circular(5),
-                                                                        )
-                                                                      : i ==
-                                                                              staffWise!.data!.staffLeads!.length -
-                                                                                  1
-                                                                          ? const BorderRadius.only(
-                                                                              topRight: Radius.circular(5),
-                                                                              bottomRight: Radius.circular(5))
-                                                                          : BorderRadius.circular(0),
-                                                              color: staffWise!
-                                                                          .data!
-                                                                          .staffLeads!
-                                                                          .length >
-                                                                      _colors
-                                                                          .length
-                                                                  ? Colors.red
-                                                                  : _colors[i],
-                                                            ),
-                                                            child: const Align(
-                                                                alignment:
-                                                                    Alignment
-                                                                        .center,
-                                                                child: Text('',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            10,
-                                                                        color: Colors
-                                                                            .white))),
-                                                          )),
-                                                  ],
-                                                ),
-                                              )),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Table(columnWidths: const {
-                                          0: FlexColumnWidth(10),
-                                          1: FlexColumnWidth(5),
-                                          2: FlexColumnWidth(5),
-                                          3: FlexColumnWidth(5),
-                                          4: FlexColumnWidth(5),
-                                          5: FlexColumnWidth(5),
-                                        }, children: [
-                                          const TableRow(
-                                              // decoration: new BoxDecoration(
-                                              //     color: Colors.greenAccent),
-                                              children: [
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    "",
-                                                    style: TextStyle(
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    'New',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    'Pending',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    'Followup',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    'Rejected',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.red,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    'Closed',
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                ),
-                                              ]),
-                                          for (int j = 0;
-                                              j <
-                                                  staffWise!
-                                                      .data!.staffLeads!.length;
-                                              j++)
-                                            TableRow(
-                                                // decoration: new BoxDecoration(
-                                                //     color: Colors.greenAccent),
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Navigator.of(context).push(MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              StaffDashboard(
-                                                                  widget.token,
-                                                                  staffWise!
-                                                                      .data!
-                                                                      .staffLeads![
-                                                                          j]
-                                                                      .staffId
-                                                                      .toString(),
-                                                                  staffWise!
-                                                                      .data!
-                                                                      .staffLeads![
-                                                                          j]
-                                                                      .staffName
-                                                                      .toString())));
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10,
-                                                              left: 15),
-                                                      child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .staffName
-                                                            .toString(),
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: staffWise!
-                                                                        .data!
-                                                                        .staffLeads!
-                                                                        .length >
-                                                                    _colors
-                                                                        .length
-                                                                ? Colors.red
-                                                                : _colors[j]),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Common.saveSharedPref(
-                                                          "statusWise", 'yes');
-                                                      Common.saveSharedPref(
-                                                          "statusWisId", '1');
-                                                      Common.saveSharedPref(
-                                                          "type", 'staff');
-                                                      Common.saveSharedPref(
-                                                          "statusCatId",
-                                                          staffWise!
-                                                              .data!
-                                                              .staffLeads![j]
-                                                              .staffId
-                                                              .toString());
-                                                      viewLeadPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewLeads(
-                                                                            widget.token,
-                                                                            updateLeadPermission1,
-                                                                            deleteLeadPermission1,
-                                                                            cloudCallPermission1,
-                                                                            pageName:
-                                                                                'New Leads',
-                                                                            fromDate:
-                                                                                fromdate1.toString(),
-                                                                            toDate:
-                                                                                todate1.toString(),
-                                                                          )),
-                                                            ).then((r) {
-                                                              getData(
-                                                                  widget.token,
-                                                                  fromdate,
-                                                                  todate);
-                                                              if (loadmore ==
-                                                                  true) {
-                                                                getStaffwise();
-                                                              }
-                                                            })
-                                                          : _dialogue(context,
-                                                              'View Leads');
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .newCount
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Common.saveSharedPref(
-                                                          "statusWise", 'yes');
-                                                      Common.saveSharedPref(
-                                                          "statusWisId", '2');
-                                                      Common.saveSharedPref(
-                                                          "type", 'staff');
-                                                      Common.saveSharedPref(
-                                                          "statusCatId",
-                                                          staffWise!
-                                                              .data!
-                                                              .staffLeads![j]
-                                                              .staffId
-                                                              .toString());
-                                                      viewLeadPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewLeads(
-                                                                            widget.token,
-                                                                            updateLeadPermission1,
-                                                                            deleteLeadPermission1,
-                                                                            cloudCallPermission1,
-                                                                            pageName:
-                                                                                'Pending Leads',
-                                                                            fromDate:
-                                                                                fromdate1.toString(),
-                                                                            toDate:
-                                                                                todate1.toString(),
-                                                                          )),
-                                                            ).then((r) {
-                                                              getData(
-                                                                  widget.token,
-                                                                  fromdate,
-                                                                  todate);
-                                                              if (loadmore ==
-                                                                  true) {
-                                                                getStaffwise();
-                                                              }
-                                                            })
-                                                          : _dialogue(context,
-                                                              'View Leads');
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .pendingCount
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Common.saveSharedPref(
-                                                          "statusWise", 'yes');
-                                                      Common.saveSharedPref(
-                                                          "statusWisId", '3');
-                                                      Common.saveSharedPref(
-                                                          "type", 'staff');
-                                                      Common.saveSharedPref(
-                                                          "statusCatId",
-                                                          staffWise!
-                                                              .data!
-                                                              .staffLeads![j]
-                                                              .staffId
-                                                              .toString());
-                                                      viewLeadPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewLeads(
-                                                                            widget.token,
-                                                                            updateLeadPermission1,
-                                                                            deleteLeadPermission1,
-                                                                            cloudCallPermission1,
-                                                                            pageName:
-                                                                                'Followup Leads',
-                                                                            fromDate:
-                                                                                fromdate1.toString(),
-                                                                            toDate:
-                                                                                todate1.toString(),
-                                                                          )),
-                                                            ).then((r) {
-                                                              getData(
-                                                                  widget.token,
-                                                                  fromdate,
-                                                                  todate);
-                                                              if (loadmore ==
-                                                                  true) {
-                                                                getStaffwise();
-                                                              }
-                                                            })
-                                                          : _dialogue(context,
-                                                              'View Leads');
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .followupCount
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Common.saveSharedPref(
-                                                          "statusWise", 'yes');
-                                                      Common.saveSharedPref(
-                                                          "statusWisId", '4');
-                                                      Common.saveSharedPref(
-                                                          "type", 'staff');
-                                                      Common.saveSharedPref(
-                                                          "statusCatId",
-                                                          staffWise!
-                                                              .data!
-                                                              .staffLeads![j]
-                                                              .staffId
-                                                              .toString());
-                                                      viewLeadPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewLeads(
-                                                                            widget.token,
-                                                                            updateLeadPermission1,
-                                                                            deleteLeadPermission1,
-                                                                            cloudCallPermission1,
-                                                                            pageName:
-                                                                                'Rejected Leads',
-                                                                            fromDate:
-                                                                                fromdate1.toString(),
-                                                                            toDate:
-                                                                                todate1.toString(),
-                                                                          )),
-                                                            ).then((r) {
-                                                              getData(
-                                                                  widget.token,
-                                                                  fromdate,
-                                                                  todate);
-                                                              if (loadmore ==
-                                                                  true) {
-                                                                getStaffwise();
-                                                              }
-                                                            })
-                                                          : _dialogue(context,
-                                                              'View Leads');
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .rejectedCount
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.red,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Common.saveSharedPref(
-                                                          "statusWise", 'yes');
-                                                      Common.saveSharedPref(
-                                                          "statusWisId", '5');
-                                                      Common.saveSharedPref(
-                                                          "type", 'staff');
-                                                      Common.saveSharedPref(
-                                                          "statusCatId",
-                                                          staffWise!
-                                                              .data!
-                                                              .staffLeads![j]
-                                                              .staffId
-                                                              .toString());
-                                                      viewLeadPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewLeads(
-                                                                            widget.token,
-                                                                            updateLeadPermission1,
-                                                                            deleteLeadPermission1,
-                                                                            cloudCallPermission1,
-                                                                            pageName:
-                                                                                'Closed Leads',
-                                                                            fromDate:
-                                                                                fromdate1.toString(),
-                                                                            toDate:
-                                                                                todate1.toString(),
-                                                                          )),
-                                                            ).then((r) {
-                                                              getData(
-                                                                  widget.token,
-                                                                  fromdate,
-                                                                  todate);
-                                                              if (loadmore ==
-                                                                  true) {
-                                                                getStaffwise();
-                                                              }
-                                                            })
-                                                          : _dialogue(context,
-                                                              'View Leads');
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 0,
-                                                              bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        staffWise!
-                                                            .data!
-                                                            .staffLeads![j]
-                                                            .confirmedCount
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ),
-                                                ]),
-                                        ]),
-                                        const Divider(
-                                          endIndent: 8,
-                                          indent: 8,
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 5.0, bottom: 12.0),
-                                          child: Table(
-                                            columnWidths: const {
-                                              0: FlexColumnWidth(10),
-                                              1: FlexColumnWidth(5),
-                                              2: FlexColumnWidth(5),
-                                              3: FlexColumnWidth(5),
-                                              4: FlexColumnWidth(5),
-                                              5: FlexColumnWidth(5),
-                                            },
-                                            children: [
-                                              TableRow(
-                                                  // decoration: new BoxDecoration(
-                                                  //     color: Colors.greenAccent),
-                                                  children: [
-                                                    const Center(
-                                                        child: Text(
-                                                      "Total Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 11,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    )),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        Common.saveSharedPref(
-                                                            "statusWise",
-                                                            'yes');
-                                                        Common.saveSharedPref(
-                                                            "statusWisId", '1');
-                                                        Common.saveSharedPref(
-                                                            "type", 'staff');
-                                                        Common.saveSharedPref(
-                                                            "statusCatId",
-                                                            "-1");
-                                                        viewLeadPermission ==
-                                                                'true'
-                                                            ? Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'New Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                              ).then((r) {
-                                                                getData(
-                                                                    widget
-                                                                        .token,
-                                                                    fromdate,
-                                                                    todate);
-                                                                if (loadmore ==
-                                                                    true) {
-                                                                  getStaffwise();
-                                                                }
-                                                              })
-                                                            : _dialogue(context,
-                                                                'View Leads');
-                                                      },
-                                                      child: Center(
-                                                          child: Text(
-                                                        stfNew.toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        Common.saveSharedPref(
-                                                            "statusWise",
-                                                            'yes');
-                                                        Common.saveSharedPref(
-                                                            "statusWisId", '2');
-                                                        Common.saveSharedPref(
-                                                            "type", 'staff');
-                                                        Common.saveSharedPref(
-                                                            "statusCatId",
-                                                            "-1");
-                                                        viewLeadPermission ==
-                                                                'true'
-                                                            ? Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Pending Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                              ).then((r) {
-                                                                getData(
-                                                                    widget
-                                                                        .token,
-                                                                    fromdate,
-                                                                    todate);
-                                                                if (loadmore ==
-                                                                    true) {
-                                                                  getStaffwise();
-                                                                }
-                                                              })
-                                                            : _dialogue(context,
-                                                                'View Leads');
-                                                      },
-                                                      child: Center(
-                                                          child: Text(
-                                                        stfPending.toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        Common.saveSharedPref(
-                                                            "statusWise",
-                                                            'yes');
-                                                        Common.saveSharedPref(
-                                                            "statusWisId", '3');
-                                                        Common.saveSharedPref(
-                                                            "type", 'staff');
-                                                        Common.saveSharedPref(
-                                                            "statusCatId",
-                                                            "-1");
-                                                        viewLeadPermission ==
-                                                                'true'
-                                                            ? Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Followup Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                              ).then((r) {
-                                                                getData(
-                                                                    widget
-                                                                        .token,
-                                                                    fromdate,
-                                                                    todate);
-                                                                if (loadmore ==
-                                                                    true) {
-                                                                  getStaffwise();
-                                                                }
-                                                              })
-                                                            : _dialogue(context,
-                                                                'View Leads');
-                                                      },
-                                                      child: Center(
-                                                          child: Text(
-                                                        stfFollowup.toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.black,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        Common.saveSharedPref(
-                                                            "statusWise",
-                                                            'yes');
-                                                        Common.saveSharedPref(
-                                                            "statusWisId", '4');
-                                                        Common.saveSharedPref(
-                                                            "type", 'staff');
-                                                        Common.saveSharedPref(
-                                                            "statusCatId",
-                                                            "-1");
-                                                        viewLeadPermission ==
-                                                                'true'
-                                                            ? Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              updateLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Rejected Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                              ).then((r) {
-                                                                getData(
-                                                                    widget
-                                                                        .token,
-                                                                    fromdate,
-                                                                    todate);
-                                                                if (loadmore ==
-                                                                    true) {
-                                                                  getStaffwise();
-                                                                }
-                                                              })
-                                                            : _dialogue(context,
-                                                                'View Leads');
-                                                      },
-                                                      child: Center(
-                                                          child: Text(
-                                                        stfRejected.toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.red,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () {
-                                                        Common.saveSharedPref(
-                                                            "statusWise",
-                                                            'yes');
-                                                        Common.saveSharedPref(
-                                                            "type", 'staff');
-                                                        Common.saveSharedPref(
-                                                            "statusCatId",
-                                                            "-1");
-                                                        Common.saveSharedPref(
-                                                            "statusWisId", '5');
-                                                        viewLeadPermission ==
-                                                                'true'
-                                                            ? Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token,
-                                                                              updateLeadPermission1,
-                                                                              deleteLeadPermission1,
-                                                                              cloudCallPermission1,
-                                                                              pageName: 'Closed Leads',
-                                                                              fromDate: fromdate1.toString(),
-                                                                              toDate: todate1.toString(),
-                                                                            )),
-                                                              ).then((r) {
-                                                                getData(
-                                                                    widget
-                                                                        .token,
-                                                                    fromdate,
-                                                                    todate);
-                                                                if (loadmore ==
-                                                                    true) {
-                                                                  getStaffwise();
-                                                                }
-                                                              })
-                                                            : _dialogue(context,
-                                                                'View Leads');
-                                                      },
-                                                      child: Center(
-                                                          child: Text(
-                                                        stfClosed.toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ]),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    )),
-                              ],
-                            ),
-                          )
+                    //                                                       //controller: fromDate,
+                    //                                                       firstDate: DateTime(1995),
+                    //                                                       lastDate: DateTime.now().add(const Duration(days: 365)),
+                    //                                                       // This will add one year from current date
+                    //                                                       validator: (value) {
+                    //                                                         return null;
+                    //                                                       },
+                    //                                                       onChanged: (value) {
+                    //                                                         if (value.isNotEmpty) {
+                    //                                                           setState(() {
+                    //                                                             todate1 = DateTime.parse(value);
+                    //                                                           });
+                    //                                                         }
+                    //                                                       },
+                    //                                                       // We can also use onSaved
+                    //                                                       onSaved: (value) {
+                    //                                                         if (value!.isNotEmpty) {
+                    //                                                           todate1 = DateTime.parse(value);
+                    //                                                         }
+                    //                                                       },
+                    //                                                     ),
+                    //                                                   ),
+                    //                                                 ),
+                    //                                               ],
+                    //                                             ),
+                    //                                             const SizedBox(
+                    //                                                 height:
+                    //                                                     16),
+                    //                                             Container(
+                    //                                               height:
+                    //                                                   40,
+                    //                                               width: double
+                    //                                                   .maxFinite,
+                    //                                               decoration:
+                    //                                                   const BoxDecoration(
+                    //                                                 color: Color(
+                    //                                                     0xFF3375e0),
+                    //                                                 borderRadius:
+                    //                                                     BorderRadius.all(Radius.circular(8)),
+                    //                                               ),
+                    //                                               child:
+                    //                                                   RawMaterialButton(
+                    //                                                 onPressed:
+                    //                                                     () {
+                    //                                                   setState(
+                    //                                                       () {
+                    //                                                     data.remove(data);
+                    //                                                   });
+                    //                                                   getStaffwise();
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   Navigator.of(context, rootNavigator: true)
+                    //                                                       .pop();
+                    //                                                 },
+                    //                                                 child:
+                    //                                                     const Center(
+                    //                                                   child:
+                    //                                                       Text(
+                    //                                                     'Continue',
+                    //                                                     style:
+                    //                                                         TextStyle(
+                    //                                                       color: Colors.white,
+                    //                                                       fontWeight: FontWeight.w500,
+                    //                                                     ),
+                    //                                                   ),
+                    //                                                 ),
+                    //                                               ),
+                    //                                             ),
+                    //                                           ],
+                    //                                         ),
+                    //                                       ),
+                    //                                     ),
+                    //                                   ),
+                    //                                 ),
+                    //                               );
+                    //                             },
+                    //                             transitionBuilder: (_,
+                    //                                 animation1, __, child) {
+                    //                               return SlideTransition(
+                    //                                 position: Tween(
+                    //                                   begin: const Offset(
+                    //                                       0, 1),
+                    //                                   end: const Offset(
+                    //                                       0, 0),
+                    //                                 ).animate(animation1),
+                    //                                 child: child,
+                    //                               );
+                    //                             },
+                    //                           );
+                    //                         },
+                    //                         child: Container(
+                    //                           width: 30,
+                    //                           height: 30,
+                    //                           decoration: BoxDecoration(
+                    //                               color:
+                    //                                   Colors.grey.shade100,
+                    //                               borderRadius:
+                    //                                   BorderRadius.circular(
+                    //                                       5)),
+                    //                           child: Center(
+                    //                             child: Center(
+                    //                                 child: Image.asset(
+                    //                                     "assets/icons/calendar.png",
+                    //                                     width: 25)),
+                    //                           ),
+                    //                         ),
+                    //                       )
+                    //                     ],
+                    //                   ),
+                    //                 ),
+                    //                 Padding(
+                    //                   padding:
+                    //                       const EdgeInsets.only(left: 20),
+                    //                   child: Text(
+                    //                       'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 Divider(
+                    //                   color: Colors.grey.shade300,
+                    //                   thickness: 1.0,
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 if (leadDashboard != null)
+                    //                   data.isNotEmpty
+                    //                       ? Padding(
+                    //                           padding:
+                    //                               const EdgeInsets.only(
+                    //                                   left: 10),
+                    //                           child: PieChart(
+                    //                             dataMap: data,
+                    //                             animationDuration:
+                    //                                 const Duration(
+                    //                                     milliseconds: 800),
+                    //                             chartLegendSpacing: 20,
+                    //                             chartRadius:
+                    //                                 MediaQuery.of(context)
+                    //                                         .size
+                    //                                         .width /
+                    //                                     2.5,
+                    //                             colorList: _colors,
+                    //                             initialAngleInDegree: 0,
+                    //                             chartType: ChartType.ring,
+                    //                             ringStrokeWidth: 25,
+                    //                             centerText: leadDashboard!
+                    //                                 .data
+                    //                                 .currentLeadsCount
+                    //                                 .total,
+                    //                             centerTextStyle:
+                    //                                 const TextStyle(
+                    //                                     fontSize: 20,
+                    //                                     color:
+                    //                                         Colors.black),
+                    //                             legendOptions:
+                    //                                 const LegendOptions(
+                    //                               legendShape:
+                    //                                   BoxShape.rectangle,
+                    //                               showLegendsInRow: false,
+                    //                               legendPosition:
+                    //                                   LegendPosition.right,
+                    //                               showLegends: true,
+                    //                               legendTextStyle:
+                    //                                   TextStyle(
+                    //                                 fontWeight:
+                    //                                     FontWeight.w500,
+                    //                               ),
+                    //                             ),
+                    //                             chartValuesOptions:
+                    //                                 const ChartValuesOptions(
+                    //                               showChartValueBackground:
+                    //                                   false,
+                    //                               showChartValues: false,
+                    //                               showChartValuesInPercentage:
+                    //                                   false,
+                    //                               showChartValuesOutside:
+                    //                                   true,
+                    //                               decimalPlaces: 1,
+                    //                             ),
+                    //                             // gradientList: ---To add gradient colors---
+                    //                             // emptyColorGradient: ---Empty Color gradient---
+                    //                           ),
+                    //                         )
+                    //                       : Column(
+                    //                           children: [
+                    //                             Row(
+                    //                               mainAxisAlignment:
+                    //                                   MainAxisAlignment
+                    //                                       .center,
+                    //                               crossAxisAlignment:
+                    //                                   CrossAxisAlignment
+                    //                                       .center,
+                    //                               children: [
+                    //                                 Image.asset(
+                    //                                   'assets/icons/nodatafound.png',
+                    //                                   width: 100,
+                    //                                   height: 100,
+                    //                                 ),
+                    //                               ],
+                    //                             ),
+                    //                             const Text(
+                    //                               'Result Not Found',
+                    //                               style: TextStyle(
+                    //                                   fontSize: 15,
+                    //                                   fontWeight:
+                    //                                       FontWeight.bold),
+                    //                             ),
+                    //                             const SizedBox(
+                    //                               height: 10,
+                    //                             ),
+                    //                             const Text(
+                    //                               'Whoops... this information is \n not available for a moment',
+                    //                               style: TextStyle(
+                    //                                   fontSize: 13),
+                    //                             ),
+                    //                             const SizedBox(
+                    //                               height: 15,
+                    //                             ),
+                    //                           ],
+                    //                         ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 const Divider(),
+                    //                 data.isNotEmpty
+                    //                     ? Column(
+                    //                         children: [
+                    //                           Table(columnWidths: const {
+                    //                             0: FlexColumnWidth(10),
+                    //                             1: FlexColumnWidth(5),
+                    //                             2: FlexColumnWidth(5),
+                    //                             3: FlexColumnWidth(5),
+                    //                             4: FlexColumnWidth(5),
+                    //                             5: FlexColumnWidth(5),
+                    //                           }, children: [
+                    //                             const TableRow(
+                    //                                 // decoration: new BoxDecoration(
+                    //                                 //     color: Colors.greenAccent),
+                    //                                 children: [
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       "",
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 17,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       'New',
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       'Pending',
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       'Followup',
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           color: Colors
+                    //                                               .black,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       'Rejected',
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           color: Colors
+                    //                                               .red,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                   Padding(
+                    //                                     padding:
+                    //                                         EdgeInsets.only(
+                    //                                             top: 10,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       'Closed',
+                    //                                       style: TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ]),
+                    //                             for (int i = 0;
+                    //                                 i <
+                    //                                     staffWise!
+                    //                                         .data!
+                    //                                         .categoryLeads!
+                    //                                         .length;
+                    //                                 i++)
+                    //                               TableRow(children: [
+                    //                                 Padding(
+                    //                                   padding:
+                    //                                       const EdgeInsets
+                    //                                           .only(
+                    //                                           top: 0,
+                    //                                           bottom: 10,
+                    //                                           left: 10),
+                    //                                   child: Text(
+                    //                                     staffWise!
+                    //                                         .data!
+                    //                                         .categoryLeads![
+                    //                                             i]
+                    //                                         .categoryName
+                    //                                         .toString(),
+                    //                                     style: TextStyle(
+                    //                                         fontSize: 10,
+                    //                                         fontWeight:
+                    //                                             FontWeight
+                    //                                                 .bold,
+                    //                                         color:
+                    //                                             _colors[i]),
+                    //                                   ),
+                    //                                 ),
+                    //                                 InkWell(
+                    //                                   onTap: () {
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "statusWise",
+                    //                                             'yes');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusWisId",
+                    //                                         '1');
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "type",
+                    //                                             'category');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusCatId",
+                    //                                         staffWise!
+                    //                                             .data!
+                    //                                             .categoryLeads![
+                    //                                                 i]
+                    //                                             .categoryid
+                    //                                             .toString());
+                    //                                     viewLeadPermission ==
+                    //                                             'true'
+                    //                                         ? Navigator
+                    //                                             .push(
+                    //                                             context,
+                    //                                             MaterialPageRoute(
+                    //                                                 builder: (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'New Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                           ).then((r) {
+                    //                                             getData(
+                    //                                                 widget
+                    //                                                     .token,
+                    //                                                 fromdate,
+                    //                                                 todate);
+                    //                                             if (loadmore ==
+                    //                                                 true) {
+                    //                                               getStaffwise();
+                    //                                             }
+                    //                                           })
+                    //                                         : _dialogue(
+                    //                                             context,
+                    //                                             'View Leads');
+                    //                                   },
+                    //                                   child: Padding(
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .only(
+                    //                                             top: 0,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       textAlign:
+                    //                                           TextAlign.end,
+                    //                                       staffWise!
+                    //                                           .data!
+                    //                                           .categoryLeads![
+                    //                                               i]
+                    //                                           .newCount
+                    //                                           .toString(),
+                    //                                       style: const TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ),
+                    //                                 InkWell(
+                    //                                   onTap: () {
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "statusWise",
+                    //                                             'yes');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusWisId",
+                    //                                         '2');
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "type",
+                    //                                             'category');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusCatId",
+                    //                                         staffWise!
+                    //                                             .data!
+                    //                                             .categoryLeads![
+                    //                                                 i]
+                    //                                             .categoryid
+                    //                                             .toString());
+                    //                                     viewLeadPermission ==
+                    //                                             'true'
+                    //                                         ? Navigator
+                    //                                             .push(
+                    //                                             context,
+                    //                                             MaterialPageRoute(
+                    //                                                 builder: (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Pending Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                           ).then((r) {
+                    //                                             getData(
+                    //                                                 widget
+                    //                                                     .token,
+                    //                                                 fromdate,
+                    //                                                 todate);
+                    //                                             if (loadmore ==
+                    //                                                 true) {
+                    //                                               getStaffwise();
+                    //                                             }
+                    //                                           })
+                    //                                         : _dialogue(
+                    //                                             context,
+                    //                                             'View Leads');
+                    //                                   },
+                    //                                   child: Padding(
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .only(
+                    //                                             top: 0,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       textAlign:
+                    //                                           TextAlign.end,
+                    //                                       staffWise!
+                    //                                           .data!
+                    //                                           .categoryLeads![
+                    //                                               i]
+                    //                                           .pendingCount
+                    //                                           .toString(),
+                    //                                       style: const TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ),
+                    //                                 InkWell(
+                    //                                   onTap: () {
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "statusWise",
+                    //                                             'yes');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusWisId",
+                    //                                         '3');
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "type",
+                    //                                             'category');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusCatId",
+                    //                                         staffWise!
+                    //                                             .data!
+                    //                                             .categoryLeads![
+                    //                                                 i]
+                    //                                             .categoryid
+                    //                                             .toString());
+                    //                                     viewLeadPermission ==
+                    //                                             'true'
+                    //                                         ? Navigator
+                    //                                             .push(
+                    //                                             context,
+                    //                                             MaterialPageRoute(
+                    //                                                 builder: (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Followup Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                           ).then((r) {
+                    //                                             getData(
+                    //                                                 widget
+                    //                                                     .token,
+                    //                                                 fromdate,
+                    //                                                 todate);
+                    //                                             if (loadmore ==
+                    //                                                 true) {
+                    //                                               getStaffwise();
+                    //                                             }
+                    //                                           })
+                    //                                         : _dialogue(
+                    //                                             context,
+                    //                                             'View Leads');
+                    //                                   },
+                    //                                   child: Padding(
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .only(
+                    //                                             top: 0,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       textAlign:
+                    //                                           TextAlign.end,
+                    //                                       staffWise!
+                    //                                           .data!
+                    //                                           .categoryLeads![
+                    //                                               i]
+                    //                                           .followupCount
+                    //                                           .toString(),
+                    //                                       style: const TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ),
+                    //                                 InkWell(
+                    //                                   onTap: () {
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "statusWise",
+                    //                                             'yes');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusWisId",
+                    //                                         '4');
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "type",
+                    //                                             'category');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusCatId",
+                    //                                         staffWise!
+                    //                                             .data!
+                    //                                             .categoryLeads![
+                    //                                                 i]
+                    //                                             .categoryid
+                    //                                             .toString());
+                    //                                     viewLeadPermission ==
+                    //                                             'true'
+                    //                                         ? Navigator
+                    //                                             .push(
+                    //                                             context,
+                    //                                             MaterialPageRoute(
+                    //                                                 builder: (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       updateLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Rejected Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                           ).then((r) {
+                    //                                             getData(
+                    //                                                 widget
+                    //                                                     .token,
+                    //                                                 fromdate,
+                    //                                                 todate);
+                    //                                             if (loadmore ==
+                    //                                                 true) {
+                    //                                               getStaffwise();
+                    //                                             }
+                    //                                           })
+                    //                                         : _dialogue(
+                    //                                             context,
+                    //                                             'View Leads');
+                    //                                   },
+                    //                                   child: Padding(
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .only(
+                    //                                             top: 0,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       textAlign:
+                    //                                           TextAlign.end,
+                    //                                       staffWise!
+                    //                                           .data!
+                    //                                           .categoryLeads![
+                    //                                               i]
+                    //                                           .rejectedCount
+                    //                                           .toString(),
+                    //                                       style: const TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           color: Colors
+                    //                                               .red,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ),
+                    //                                 InkWell(
+                    //                                   onTap: () {
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "statusWise",
+                    //                                             'yes');
+                    //                                     Common
+                    //                                         .saveSharedPref(
+                    //                                             "type",
+                    //                                             'category');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusWisId",
+                    //                                         '5');
+                    //                                     Common.saveSharedPref(
+                    //                                         "statusCatId",
+                    //                                         staffWise!
+                    //                                             .data!
+                    //                                             .categoryLeads![
+                    //                                                 i]
+                    //                                             .categoryid
+                    //                                             .toString());
+                    //                                     viewLeadPermission ==
+                    //                                             'true'
+                    //                                         ? Navigator
+                    //                                             .push(
+                    //                                             context,
+                    //                                             MaterialPageRoute(
+                    //                                                 builder: (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Closed Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                           ).then((r) {
+                    //                                             getData(
+                    //                                                 widget
+                    //                                                     .token,
+                    //                                                 fromdate,
+                    //                                                 todate);
+                    //                                             if (loadmore ==
+                    //                                                 true) {
+                    //                                               getStaffwise();
+                    //                                             }
+                    //                                           })
+                    //                                         : _dialogue(
+                    //                                             context,
+                    //                                             'View Leads');
+                    //                                   },
+                    //                                   child: Padding(
+                    //                                     padding:
+                    //                                         const EdgeInsets
+                    //                                             .only(
+                    //                                             top: 0,
+                    //                                             bottom: 10),
+                    //                                     child: Center(
+                    //                                         child: Text(
+                    //                                       textAlign:
+                    //                                           TextAlign.end,
+                    //                                       staffWise!
+                    //                                           .data!
+                    //                                           .categoryLeads![
+                    //                                               i]
+                    //                                           .confirmedCount
+                    //                                           .toString(),
+                    //                                       style: const TextStyle(
+                    //                                           fontSize: 10,
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold),
+                    //                                     )),
+                    //                                   ),
+                    //                                 ),
+                    //                               ]),
+                    //                           ]),
+                    //                           const Divider(
+                    //                             endIndent: 8,
+                    //                             indent: 8,
+                    //                           ),
+                    //                           Padding(
+                    //                             padding:
+                    //                                 const EdgeInsets.only(
+                    //                                     top: 8.0,
+                    //                                     bottom: 12.0),
+                    //                             child: Table(
+                    //                               columnWidths: const {
+                    //                                 0: FlexColumnWidth(10),
+                    //                                 1: FlexColumnWidth(5),
+                    //                                 2: FlexColumnWidth(5),
+                    //                                 3: FlexColumnWidth(5),
+                    //                                 4: FlexColumnWidth(5),
+                    //                                 5: FlexColumnWidth(5),
+                    //                               },
+                    //                               children: [
+                    //                                 TableRow(
+                    //                                     // decoration: new BoxDecoration(
+                    //                                     //     color: Colors.greenAccent),
+                    //                                     children: [
+                    //                                       const Center(
+                    //                                           child: Text(
+                    //                                         "Total Leads",
+                    //                                         style: TextStyle(
+                    //                                             fontSize:
+                    //                                                 11,
+                    //                                             fontWeight:
+                    //                                                 FontWeight
+                    //                                                     .bold),
+                    //                                       )),
+                    //                                       InkWell(
+                    //                                         onTap: () {
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWise",
+                    //                                               'yes');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWisId",
+                    //                                               '1');
+                    //                                           Common.saveSharedPref(
+                    //                                               "type",
+                    //                                               'category');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusCatId",
+                    //                                               "-1");
+                    //                                           viewLeadPermission ==
+                    //                                                   'true'
+                    //                                               ? Navigator
+                    //                                                   .push(
+                    //                                                   context,
+                    //                                                   MaterialPageRoute(
+                    //                                                       builder: (context) => ViewLeads(
+                    //                                                             widget.token,
+                    //                                                             updateLeadPermission1,
+                    //                                                             deleteLeadPermission1,
+                    //                                                             cloudCallPermission1,
+                    //                                                             pageName: 'New Leads',
+                    //                                                             // fromDate: fromdate1.toString(),
+                    //                                                             // toDate: todate1.toString(),
+                    //                                                           )),
+                    //                                                 ).then(
+                    //                                                   (r) {
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   if (loadmore ==
+                    //                                                       true) {
+                    //                                                     getStaffwise();
+                    //                                                   }
+                    //                                                 })
+                    //                                               : _dialogue(
+                    //                                                   context,
+                    //                                                   'View Leads');
+                    //                                         },
+                    //                                         child: Center(
+                    //                                             child: Text(
+                    //                                           catNew
+                    //                                               .toString(),
+                    //                                           style: const TextStyle(
+                    //                                               fontSize:
+                    //                                                   10,
+                    //                                               fontWeight:
+                    //                                                   FontWeight
+                    //                                                       .bold),
+                    //                                         )),
+                    //                                       ),
+                    //                                       InkWell(
+                    //                                         onTap: () {
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWise",
+                    //                                               'yes');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWisId",
+                    //                                               '2');
+                    //                                           Common.saveSharedPref(
+                    //                                               "type",
+                    //                                               'category');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusCatId",
+                    //                                               "-1");
+                    //                                           viewLeadPermission ==
+                    //                                                   'true'
+                    //                                               ? Navigator
+                    //                                                   .push(
+                    //                                                   context,
+                    //                                                   MaterialPageRoute(
+                    //                                                       builder: (context) => ViewLeads(
+                    //                                                             widget.token,
+                    //                                                             updateLeadPermission1,
+                    //                                                             deleteLeadPermission1,
+                    //                                                             cloudCallPermission1,
+                    //                                                             pageName: 'Pending Leads',
+                    //                                                             fromDate: fromdate1.toString(),
+                    //                                                             toDate: todate1.toString(),
+                    //                                                           )),
+                    //                                                 ).then(
+                    //                                                   (r) {
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   if (loadmore ==
+                    //                                                       true) {
+                    //                                                     getStaffwise();
+                    //                                                   }
+                    //                                                 })
+                    //                                               : _dialogue(
+                    //                                                   context,
+                    //                                                   'View Leads');
+                    //                                         },
+                    //                                         child: Center(
+                    //                                             child: Text(
+                    //                                           catPending
+                    //                                               .toString(),
+                    //                                           style: const TextStyle(
+                    //                                               fontSize:
+                    //                                                   10,
+                    //                                               fontWeight:
+                    //                                                   FontWeight
+                    //                                                       .bold),
+                    //                                         )),
+                    //                                       ),
+                    //                                       InkWell(
+                    //                                         onTap: () {
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWise",
+                    //                                               'yes');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWisId",
+                    //                                               '3');
+                    //                                           Common.saveSharedPref(
+                    //                                               "type",
+                    //                                               'category');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusCatId",
+                    //                                               "-1");
+                    //                                           viewLeadPermission ==
+                    //                                                   'true'
+                    //                                               ? Navigator
+                    //                                                   .push(
+                    //                                                   context,
+                    //                                                   MaterialPageRoute(
+                    //                                                       builder: (context) => ViewLeads(
+                    //                                                             widget.token,
+                    //                                                             updateLeadPermission1,
+                    //                                                             deleteLeadPermission1,
+                    //                                                             cloudCallPermission1,
+                    //                                                             pageName: 'Followup Leads',
+                    //                                                             fromDate: fromdate1.toString(),
+                    //                                                             toDate: todate1.toString(),
+                    //                                                           )),
+                    //                                                 ).then(
+                    //                                                   (r) {
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   if (loadmore ==
+                    //                                                       true) {
+                    //                                                     getStaffwise();
+                    //                                                   }
+                    //                                                 })
+                    //                                               : _dialogue(
+                    //                                                   context,
+                    //                                                   'View Leads');
+                    //                                         },
+                    //                                         child: Center(
+                    //                                             child: Text(
+                    //                                           catFollowup
+                    //                                               .toString(),
+                    //                                           style: const TextStyle(
+                    //                                               fontSize:
+                    //                                                   10,
+                    //                                               color: Colors
+                    //                                                   .black,
+                    //                                               fontWeight:
+                    //                                                   FontWeight
+                    //                                                       .bold),
+                    //                                         )),
+                    //                                       ),
+                    //                                       InkWell(
+                    //                                         onTap: () {
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWise",
+                    //                                               'yes');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWisId",
+                    //                                               '4');
+                    //                                           Common.saveSharedPref(
+                    //                                               "type",
+                    //                                               'category');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusCatId",
+                    //                                               "-1");
+                    //                                           viewLeadPermission ==
+                    //                                                   'true'
+                    //                                               ? Navigator
+                    //                                                   .push(
+                    //                                                   context,
+                    //                                                   MaterialPageRoute(
+                    //                                                       builder: (context) => ViewLeads(
+                    //                                                             widget.token,
+                    //                                                             updateLeadPermission1,
+                    //                                                             updateLeadPermission1,
+                    //                                                             cloudCallPermission1,
+                    //                                                             pageName: 'Rejected Leads',
+                    //                                                             fromDate: fromdate1.toString(),
+                    //                                                             toDate: todate1.toString(),
+                    //                                                           )),
+                    //                                                 ).then(
+                    //                                                   (r) {
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   if (loadmore ==
+                    //                                                       true) {
+                    //                                                     getStaffwise();
+                    //                                                   }
+                    //                                                 })
+                    //                                               : _dialogue(
+                    //                                                   context,
+                    //                                                   'View Leads');
+                    //                                         },
+                    //                                         child: Center(
+                    //                                             child: Text(
+                    //                                           catRejected
+                    //                                               .toString(),
+                    //                                           style: const TextStyle(
+                    //                                               fontSize:
+                    //                                                   10,
+                    //                                               color: Colors
+                    //                                                   .red,
+                    //                                               fontWeight:
+                    //                                                   FontWeight
+                    //                                                       .bold),
+                    //                                         )),
+                    //                                       ),
+                    //                                       InkWell(
+                    //                                         onTap: () {
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWise",
+                    //                                               'yes');
+                    //                                           Common.saveSharedPref(
+                    //                                               "type",
+                    //                                               'category');
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusCatId",
+                    //                                               "-1");
+                    //                                           Common.saveSharedPref(
+                    //                                               "statusWisId",
+                    //                                               '5');
+                    //                                           viewLeadPermission ==
+                    //                                                   'true'
+                    //                                               ? Navigator
+                    //                                                   .push(
+                    //                                                   context,
+                    //                                                   MaterialPageRoute(
+                    //                                                       builder: (context) => ViewLeads(
+                    //                                                             widget.token,
+                    //                                                             updateLeadPermission1,
+                    //                                                             deleteLeadPermission1,
+                    //                                                             cloudCallPermission1,
+                    //                                                             pageName: 'Closed Leads',
+                    //                                                             fromDate: fromdate1.toString(),
+                    //                                                             toDate: todate1.toString(),
+                    //                                                           )),
+                    //                                                 ).then(
+                    //                                                   (r) {
+                    //                                                   getData(
+                    //                                                       widget.token,
+                    //                                                       fromdate,
+                    //                                                       todate);
+                    //                                                   if (loadmore ==
+                    //                                                       true) {
+                    //                                                     getStaffwise();
+                    //                                                   }
+                    //                                                 })
+                    //                                               : _dialogue(
+                    //                                                   context,
+                    //                                                   'View Leads');
+                    //                                         },
+                    //                                         child: Center(
+                    //                                             child: Text(
+                    //                                           catClosed
+                    //                                               .toString(),
+                    //                                           style: const TextStyle(
+                    //                                               fontSize:
+                    //                                                   10,
+                    //                                               fontWeight:
+                    //                                                   FontWeight
+                    //                                                       .bold),
+                    //                                         )),
+                    //                                       ),
+                    //                                     ]),
+                    //                               ],
+                    //                             ),
+                    //                           )
+                    //                         ],
+                    //                       )
+                    //                     : const SizedBox(),
+                    //               ],
+                    //             ),
+                    //           ),
+                    //         ),
+                    //         const SizedBox(
+                    //           height: 20,
+                    //         ),
+                    //         Container(
+                    //             decoration: BoxDecoration(
+                    //               color: Colors.grey.shade100,
+                    //               borderRadius: BorderRadius.circular(10),
+                    //               boxShadow: const [
+                    //                 BoxShadow(
+                    //                   color: Colors.grey,
+                    //                   offset: Offset(0, 2.0),
+                    //                 )
+                    //               ],
+                    //             ),
+                    //             child: Column(
+                    //               mainAxisAlignment:
+                    //                   MainAxisAlignment.start,
+                    //               crossAxisAlignment:
+                    //                   CrossAxisAlignment.start,
+                    //               children: <Widget>[
+                    //                 const SizedBox(
+                    //                   height: 20,
+                    //                 ),
+                    //                 const Padding(
+                    //                   padding: EdgeInsets.only(left: 20),
+                    //                   child: Row(
+                    //                     children: [
+                    //                       Text(
+                    //                         'Staff Wise Report',
+                    //                         style: TextStyle(
+                    //                             fontSize: 15,
+                    //                             fontWeight:
+                    //                                 FontWeight.bold),
+                    //                       ),
+                    //                     ],
+                    //                   ),
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 Padding(
+                    //                   padding:
+                    //                       const EdgeInsets.only(left: 20),
+                    //                   child: Text(
+                    //                       'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
+                    //                 ),
+                    //                 Divider(
+                    //                   color: Colors.grey.shade300,
+                    //                   thickness: 1.0,
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 Padding(
+                    //                   padding:
+                    //                       const EdgeInsets.only(left: 20),
+                    //                   child: Column(
+                    //                     crossAxisAlignment:
+                    //                         CrossAxisAlignment.start,
+                    //                     children: [
+                    //                       const Text(
+                    //                         ' Total Leads ',
+                    //                         textAlign: TextAlign.center,
+                    //                         style: TextStyle(
+                    //                             fontWeight: FontWeight.bold,
+                    //                             color: Colors.black,
+                    //                             fontSize: 16),
+                    //                       ),
+                    //                       Row(
+                    //                         mainAxisAlignment:
+                    //                             MainAxisAlignment
+                    //                                 .spaceBetween,
+                    //                         children: [
+                    //                           Container(
+                    //                             width:
+                    //                                 MediaQuery.of(context)
+                    //                                         .size
+                    //                                         .width *
+                    //                                     .25,
+                    //                             decoration: BoxDecoration(
+                    //                                 borderRadius:
+                    //                                     BorderRadius
+                    //                                         .circular(8),
+                    //                                 color: Colors.lightBlue
+                    //                                     .shade100),
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.all(
+                    //                                       8.0),
+                    //                               child: Column(
+                    //                                 mainAxisAlignment:
+                    //                                     MainAxisAlignment
+                    //                                         .start,
+                    //                                 crossAxisAlignment:
+                    //                                     CrossAxisAlignment
+                    //                                         .center,
+                    //                                 children: [
+                    //                                   // const Text(
+                    //                                   //   ' Current \nMonth',
+                    //                                   //   textAlign:
+                    //                                   //       TextAlign.center,
+                    //                                   //   style: TextStyle(
+                    //                                   //       fontWeight: FontWeight.bold,
+                    //                                   //       color: Colors.black,
+                    //                                   //       fontSize: 14),
+                    //                                   // ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .currentLeadsCount
+                    //                                           .month,
+                    //                                       textAlign:
+                    //                                           TextAlign
+                    //                                               .center,
+                    //                                       style: const TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold,
+                    //                                           color: Colors
+                    //                                               .black,
+                    //                                           fontSize: 14),
+                    //                                     ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .currentLeadsCount
+                    //                                           .date,
+                    //                                       textAlign:
+                    //                                           TextAlign
+                    //                                               .center,
+                    //                                       style: const TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .normal,
+                    //                                           color: Colors
+                    //                                               .black87,
+                    //                                           fontSize: 9),
+                    //                                     ),
+                    //                                   const SizedBox(
+                    //                                     height: 5,
+                    //                                   ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .currentLeadsCount
+                    //                                           .total
+                    //                                           .toString(),
+                    //                                       style: TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold,
+                    //                                           color: Colors
+                    //                                               .grey
+                    //                                               .shade900,
+                    //                                           fontSize: 16),
+                    //                                     ),
+                    //                                 ],
+                    //                               ),
+                    //                             ),
+                    //                           ),
+                    //                           Container(
+                    //                             width:
+                    //                                 MediaQuery.of(context)
+                    //                                         .size
+                    //                                         .width *
+                    //                                     .25,
+                    //                             decoration: BoxDecoration(
+                    //                                 borderRadius:
+                    //                                     BorderRadius
+                    //                                         .circular(8),
+                    //                                 color: Colors
+                    //                                     .orange.shade100),
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.all(
+                    //                                       8.0),
+                    //                               child: Column(
+                    //                                 mainAxisAlignment:
+                    //                                     MainAxisAlignment
+                    //                                         .start,
+                    //                                 crossAxisAlignment:
+                    //                                     CrossAxisAlignment
+                    //                                         .center,
+                    //                                 children: [
+                    //                                   // const Text(
+                    //                                   //   ' Previous \nMonth ',
+                    //                                   //   textAlign:
+                    //                                   //       TextAlign.center,
+                    //                                   //   style: TextStyle(
+                    //                                   //       fontWeight: FontWeight.bold,
+                    //                                   //       color: Colors.black,
+                    //                                   //       fontSize: 14),
+                    //                                   // ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .previousLeadsCount
+                    //                                           .month,
+                    //                                       textAlign:
+                    //                                           TextAlign
+                    //                                               .center,
+                    //                                       style: const TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold,
+                    //                                           color: Colors
+                    //                                               .black,
+                    //                                           fontSize: 14),
+                    //                                     ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .previousLeadsCount
+                    //                                           .date,
+                    //                                       textAlign:
+                    //                                           TextAlign
+                    //                                               .center,
+                    //                                       style: const TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .normal,
+                    //                                           color: Colors
+                    //                                               .black87,
+                    //                                           fontSize: 9),
+                    //                                     ),
+                    //                                   const SizedBox(
+                    //                                     height: 5,
+                    //                                   ),
+                    //                                   if (leadDashboard !=
+                    //                                       null)
+                    //                                     Text(
+                    //                                       leadDashboard!
+                    //                                           .data
+                    //                                           .previousLeadsCount
+                    //                                           .total
+                    //                                           .toString(),
+                    //                                       style: TextStyle(
+                    //                                           fontWeight:
+                    //                                               FontWeight
+                    //                                                   .bold,
+                    //                                           color: Colors
+                    //                                               .grey
+                    //                                               .shade900,
+                    //                                           fontSize: 16),
+                    //                                     ),
+                    //                                 ],
+                    //                               ),
+                    //                             ),
+                    //                           ),
+                    //                           Container(
+                    //                             height: 90,
+                    //                             width: 100,
+                    //                             decoration:
+                    //                                 const BoxDecoration(
+                    //                               image: DecorationImage(
+                    //                                 image: AssetImage(
+                    //                                     'assets/main/lead.png'),
+                    //                                 fit: BoxFit.fill,
+                    //                               ),
+                    //                             ),
+                    //                           )
+                    //                         ],
+                    //                       ),
+                    //                     ],
+                    //                   ),
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 Padding(
+                    //                   padding: const EdgeInsets.only(
+                    //                       left: 10, right: 10),
+                    //                   child: Align(
+                    //                       alignment: Alignment.center,
+                    //                       child: Container(
+                    //                         height: 15,
+                    //                         decoration: BoxDecoration(
+                    //                             borderRadius:
+                    //                                 BorderRadius.circular(
+                    //                                     10)),
+                    //                         child: Row(
+                    //                           crossAxisAlignment:
+                    //                               CrossAxisAlignment
+                    //                                   .stretch,
+                    //                           children: [
+                    //                             for (var i = 0;
+                    //                                 i <
+                    //                                     staffWise!
+                    //                                         .data!
+                    //                                         .staffLeads!
+                    //                                         .length;
+                    //                                 i++)
+                    //                               Expanded(
+                    //                                   flex: staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![i]
+                    //                                       .staffPercentage!,
+                    //                                   child: Container(
+                    //                                     decoration:
+                    //                                         BoxDecoration(
+                    //                                       borderRadius: staffWise!
+                    //                                                   .data!
+                    //                                                   .staffLeads!
+                    //                                                   .length ==
+                    //                                               1
+                    //                                           ? const BorderRadius
+                    //                                               .only(
+                    //                                               topLeft:
+                    //                                                   Radius.circular(
+                    //                                                       5),
+                    //                                               bottomLeft:
+                    //                                                   Radius.circular(
+                    //                                                       5),
+                    //                                               topRight:
+                    //                                                   Radius.circular(
+                    //                                                       5),
+                    //                                               bottomRight:
+                    //                                                   Radius.circular(
+                    //                                                       5))
+                    //                                           : i == 0
+                    //                                               ? const BorderRadius
+                    //                                                   .only(
+                    //                                                   topLeft:
+                    //                                                       Radius.circular(5),
+                    //                                                   bottomLeft:
+                    //                                                       Radius.circular(5),
+                    //                                                 )
+                    //                                               : i ==
+                    //                                                       staffWise!.data!.staffLeads!.length -
+                    //                                                           1
+                    //                                                   ? const BorderRadius.only(
+                    //                                                       topRight: Radius.circular(5),
+                    //                                                       bottomRight: Radius.circular(5))
+                    //                                                   : BorderRadius.circular(0),
+                    //                                       color: staffWise!
+                    //                                                   .data!
+                    //                                                   .staffLeads!
+                    //                                                   .length >
+                    //                                               _colors
+                    //                                                   .length
+                    //                                           ? Colors.red
+                    //                                           : _colors[i],
+                    //                                     ),
+                    //                                     child: const Align(
+                    //                                         alignment:
+                    //                                             Alignment
+                    //                                                 .center,
+                    //                                         child: Text('',
+                    //                                             style: TextStyle(
+                    //                                                 fontSize:
+                    //                                                     10,
+                    //                                                 color: Colors
+                    //                                                     .white))),
+                    //                                   )),
+                    //                           ],
+                    //                         ),
+                    //                       )),
+                    //                 ),
+                    //                 const SizedBox(
+                    //                   height: 10,
+                    //                 ),
+                    //                 Table(columnWidths: const {
+                    //                   0: FlexColumnWidth(10),
+                    //                   1: FlexColumnWidth(5),
+                    //                   2: FlexColumnWidth(5),
+                    //                   3: FlexColumnWidth(5),
+                    //                   4: FlexColumnWidth(5),
+                    //                   5: FlexColumnWidth(5),
+                    //                 }, children: [
+                    //                   const TableRow(
+                    //                       // decoration: new BoxDecoration(
+                    //                       //     color: Colors.greenAccent),
+                    //                       children: [
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             "",
+                    //                             style: TextStyle(
+                    //                                 fontSize: 17,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             'New',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 10,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             'Pending',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 10,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             'Followup',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 10,
+                    //                                 color: Colors.black,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             'Rejected',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 10,
+                    //                                 color: Colors.red,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                         Padding(
+                    //                           padding: EdgeInsets.only(
+                    //                               top: 10, bottom: 10),
+                    //                           child: Center(
+                    //                               child: Text(
+                    //                             'Closed',
+                    //                             style: TextStyle(
+                    //                                 fontSize: 10,
+                    //                                 fontWeight:
+                    //                                     FontWeight.bold),
+                    //                           )),
+                    //                         ),
+                    //                       ]),
+                    //                   for (int j = 0;
+                    //                       j <
+                    //                           staffWise!
+                    //                               .data!.staffLeads!.length;
+                    //                       j++)
+                    //                     TableRow(
+                    //                         // decoration: new BoxDecoration(
+                    //                         //     color: Colors.greenAccent),
+                    //                         children: [
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Navigator.of(context).push(MaterialPageRoute(
+                    //                                   builder: (context) =>
+                    //                                       StaffDashboard(
+                    //                                           widget.token,
+                    //                                           staffWise!
+                    //                                               .data!
+                    //                                               .staffLeads![
+                    //                                                   j]
+                    //                                               .staffId
+                    //                                               .toString(),
+                    //                                           staffWise!
+                    //                                               .data!
+                    //                                               .staffLeads![
+                    //                                                   j]
+                    //                                               .staffName
+                    //                                               .toString())));
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10,
+                    //                                       left: 15),
+                    //                               child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .staffName
+                    //                                     .toString(),
+                    //                                 style: TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight.bold,
+                    //                                     color: staffWise!
+                    //                                                 .data!
+                    //                                                 .staffLeads!
+                    //                                                 .length >
+                    //                                             _colors
+                    //                                                 .length
+                    //                                         ? Colors.red
+                    //                                         : _colors[j]),
+                    //                               ),
+                    //                             ),
+                    //                           ),
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWise", 'yes');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWisId", '1');
+                    //                               Common.saveSharedPref(
+                    //                                   "type", 'staff');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusCatId",
+                    //                                   staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![j]
+                    //                                       .staffId
+                    //                                       .toString());
+                    //                               viewLeadPermission ==
+                    //                                       'true'
+                    //                                   ? Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder:
+                    //                                               (context) =>
+                    //                                                   ViewLeads(
+                    //                                                     widget.token,
+                    //                                                     updateLeadPermission1,
+                    //                                                     deleteLeadPermission1,
+                    //                                                     cloudCallPermission1,
+                    //                                                     pageName:
+                    //                                                         'New Leads',
+                    //                                                     fromDate:
+                    //                                                         fromdate1.toString(),
+                    //                                                     toDate:
+                    //                                                         todate1.toString(),
+                    //                                                   )),
+                    //                                     ).then((r) {
+                    //                                       getData(
+                    //                                           widget.token,
+                    //                                           fromdate,
+                    //                                           todate);
+                    //                                       if (loadmore ==
+                    //                                           true) {
+                    //                                         getStaffwise();
+                    //                                       }
+                    //                                     })
+                    //                                   : _dialogue(context,
+                    //                                       'View Leads');
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10),
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .newCount
+                    //                                     .toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ),
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWise", 'yes');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWisId", '2');
+                    //                               Common.saveSharedPref(
+                    //                                   "type", 'staff');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusCatId",
+                    //                                   staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![j]
+                    //                                       .staffId
+                    //                                       .toString());
+                    //                               viewLeadPermission ==
+                    //                                       'true'
+                    //                                   ? Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder:
+                    //                                               (context) =>
+                    //                                                   ViewLeads(
+                    //                                                     widget.token,
+                    //                                                     updateLeadPermission1,
+                    //                                                     deleteLeadPermission1,
+                    //                                                     cloudCallPermission1,
+                    //                                                     pageName:
+                    //                                                         'Pending Leads',
+                    //                                                     fromDate:
+                    //                                                         fromdate1.toString(),
+                    //                                                     toDate:
+                    //                                                         todate1.toString(),
+                    //                                                   )),
+                    //                                     ).then((r) {
+                    //                                       getData(
+                    //                                           widget.token,
+                    //                                           fromdate,
+                    //                                           todate);
+                    //                                       if (loadmore ==
+                    //                                           true) {
+                    //                                         getStaffwise();
+                    //                                       }
+                    //                                     })
+                    //                                   : _dialogue(context,
+                    //                                       'View Leads');
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10),
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .pendingCount
+                    //                                     .toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ),
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWise", 'yes');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWisId", '3');
+                    //                               Common.saveSharedPref(
+                    //                                   "type", 'staff');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusCatId",
+                    //                                   staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![j]
+                    //                                       .staffId
+                    //                                       .toString());
+                    //                               viewLeadPermission ==
+                    //                                       'true'
+                    //                                   ? Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder:
+                    //                                               (context) =>
+                    //                                                   ViewLeads(
+                    //                                                     widget.token,
+                    //                                                     updateLeadPermission1,
+                    //                                                     deleteLeadPermission1,
+                    //                                                     cloudCallPermission1,
+                    //                                                     pageName:
+                    //                                                         'Followup Leads',
+                    //                                                     fromDate:
+                    //                                                         fromdate1.toString(),
+                    //                                                     toDate:
+                    //                                                         todate1.toString(),
+                    //                                                   )),
+                    //                                     ).then((r) {
+                    //                                       getData(
+                    //                                           widget.token,
+                    //                                           fromdate,
+                    //                                           todate);
+                    //                                       if (loadmore ==
+                    //                                           true) {
+                    //                                         getStaffwise();
+                    //                                       }
+                    //                                     })
+                    //                                   : _dialogue(context,
+                    //                                       'View Leads');
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10),
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .followupCount
+                    //                                     .toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ),
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWise", 'yes');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWisId", '4');
+                    //                               Common.saveSharedPref(
+                    //                                   "type", 'staff');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusCatId",
+                    //                                   staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![j]
+                    //                                       .staffId
+                    //                                       .toString());
+                    //                               viewLeadPermission ==
+                    //                                       'true'
+                    //                                   ? Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder:
+                    //                                               (context) =>
+                    //                                                   ViewLeads(
+                    //                                                     widget.token,
+                    //                                                     updateLeadPermission1,
+                    //                                                     deleteLeadPermission1,
+                    //                                                     cloudCallPermission1,
+                    //                                                     pageName:
+                    //                                                         'Rejected Leads',
+                    //                                                     fromDate:
+                    //                                                         fromdate1.toString(),
+                    //                                                     toDate:
+                    //                                                         todate1.toString(),
+                    //                                                   )),
+                    //                                     ).then((r) {
+                    //                                       getData(
+                    //                                           widget.token,
+                    //                                           fromdate,
+                    //                                           todate);
+                    //                                       if (loadmore ==
+                    //                                           true) {
+                    //                                         getStaffwise();
+                    //                                       }
+                    //                                     })
+                    //                                   : _dialogue(context,
+                    //                                       'View Leads');
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10),
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .rejectedCount
+                    //                                     .toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     color: Colors.red,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ),
+                    //                           InkWell(
+                    //                             onTap: () {
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWise", 'yes');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusWisId", '5');
+                    //                               Common.saveSharedPref(
+                    //                                   "type", 'staff');
+                    //                               Common.saveSharedPref(
+                    //                                   "statusCatId",
+                    //                                   staffWise!
+                    //                                       .data!
+                    //                                       .staffLeads![j]
+                    //                                       .staffId
+                    //                                       .toString());
+                    //                               viewLeadPermission ==
+                    //                                       'true'
+                    //                                   ? Navigator.push(
+                    //                                       context,
+                    //                                       MaterialPageRoute(
+                    //                                           builder:
+                    //                                               (context) =>
+                    //                                                   ViewLeads(
+                    //                                                     widget.token,
+                    //                                                     updateLeadPermission1,
+                    //                                                     deleteLeadPermission1,
+                    //                                                     cloudCallPermission1,
+                    //                                                     pageName:
+                    //                                                         'Closed Leads',
+                    //                                                     fromDate:
+                    //                                                         fromdate1.toString(),
+                    //                                                     toDate:
+                    //                                                         todate1.toString(),
+                    //                                                   )),
+                    //                                     ).then((r) {
+                    //                                       getData(
+                    //                                           widget.token,
+                    //                                           fromdate,
+                    //                                           todate);
+                    //                                       if (loadmore ==
+                    //                                           true) {
+                    //                                         getStaffwise();
+                    //                                       }
+                    //                                     })
+                    //                                   : _dialogue(context,
+                    //                                       'View Leads');
+                    //                             },
+                    //                             child: Padding(
+                    //                               padding:
+                    //                                   const EdgeInsets.only(
+                    //                                       top: 0,
+                    //                                       bottom: 10),
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 staffWise!
+                    //                                     .data!
+                    //                                     .staffLeads![j]
+                    //                                     .confirmedCount
+                    //                                     .toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ),
+                    //                         ]),
+                    //                 ]),
+                    //                 const Divider(
+                    //                   endIndent: 8,
+                    //                   indent: 8,
+                    //                 ),
+                    //                 Padding(
+                    //                   padding: const EdgeInsets.only(
+                    //                       top: 5.0, bottom: 12.0),
+                    //                   child: Table(
+                    //                     columnWidths: const {
+                    //                       0: FlexColumnWidth(10),
+                    //                       1: FlexColumnWidth(5),
+                    //                       2: FlexColumnWidth(5),
+                    //                       3: FlexColumnWidth(5),
+                    //                       4: FlexColumnWidth(5),
+                    //                       5: FlexColumnWidth(5),
+                    //                     },
+                    //                     children: [
+                    //                       TableRow(
+                    //                           // decoration: new BoxDecoration(
+                    //                           //     color: Colors.greenAccent),
+                    //                           children: [
+                    //                             const Center(
+                    //                                 child: Text(
+                    //                               "Total Leads",
+                    //                               style: TextStyle(
+                    //                                   fontSize: 11,
+                    //                                   fontWeight:
+                    //                                       FontWeight.bold),
+                    //                             )),
+                    //                             InkWell(
+                    //                               onTap: () {
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWise",
+                    //                                     'yes');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWisId", '1');
+                    //                                 Common.saveSharedPref(
+                    //                                     "type", 'staff');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusCatId",
+                    //                                     "-1");
+                    //                                 viewLeadPermission ==
+                    //                                         'true'
+                    //                                     ? Navigator.push(
+                    //                                         context,
+                    //                                         MaterialPageRoute(
+                    //                                             builder:
+                    //                                                 (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'New Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                       ).then((r) {
+                    //                                         getData(
+                    //                                             widget
+                    //                                                 .token,
+                    //                                             fromdate,
+                    //                                             todate);
+                    //                                         if (loadmore ==
+                    //                                             true) {
+                    //                                           getStaffwise();
+                    //                                         }
+                    //                                       })
+                    //                                     : _dialogue(context,
+                    //                                         'View Leads');
+                    //                               },
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 stfNew.toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                             InkWell(
+                    //                               onTap: () {
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWise",
+                    //                                     'yes');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWisId", '2');
+                    //                                 Common.saveSharedPref(
+                    //                                     "type", 'staff');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusCatId",
+                    //                                     "-1");
+                    //                                 viewLeadPermission ==
+                    //                                         'true'
+                    //                                     ? Navigator.push(
+                    //                                         context,
+                    //                                         MaterialPageRoute(
+                    //                                             builder:
+                    //                                                 (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Pending Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                       ).then((r) {
+                    //                                         getData(
+                    //                                             widget
+                    //                                                 .token,
+                    //                                             fromdate,
+                    //                                             todate);
+                    //                                         if (loadmore ==
+                    //                                             true) {
+                    //                                           getStaffwise();
+                    //                                         }
+                    //                                       })
+                    //                                     : _dialogue(context,
+                    //                                         'View Leads');
+                    //                               },
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 stfPending.toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                             InkWell(
+                    //                               onTap: () {
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWise",
+                    //                                     'yes');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWisId", '3');
+                    //                                 Common.saveSharedPref(
+                    //                                     "type", 'staff');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusCatId",
+                    //                                     "-1");
+                    //                                 viewLeadPermission ==
+                    //                                         'true'
+                    //                                     ? Navigator.push(
+                    //                                         context,
+                    //                                         MaterialPageRoute(
+                    //                                             builder:
+                    //                                                 (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Followup Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                       ).then((r) {
+                    //                                         getData(
+                    //                                             widget
+                    //                                                 .token,
+                    //                                             fromdate,
+                    //                                             todate);
+                    //                                         if (loadmore ==
+                    //                                             true) {
+                    //                                           getStaffwise();
+                    //                                         }
+                    //                                       })
+                    //                                     : _dialogue(context,
+                    //                                         'View Leads');
+                    //                               },
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 stfFollowup.toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     color: Colors.black,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                             InkWell(
+                    //                               onTap: () {
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWise",
+                    //                                     'yes');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWisId", '4');
+                    //                                 Common.saveSharedPref(
+                    //                                     "type", 'staff');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusCatId",
+                    //                                     "-1");
+                    //                                 viewLeadPermission ==
+                    //                                         'true'
+                    //                                     ? Navigator.push(
+                    //                                         context,
+                    //                                         MaterialPageRoute(
+                    //                                             builder:
+                    //                                                 (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       updateLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Rejected Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                       ).then((r) {
+                    //                                         getData(
+                    //                                             widget
+                    //                                                 .token,
+                    //                                             fromdate,
+                    //                                             todate);
+                    //                                         if (loadmore ==
+                    //                                             true) {
+                    //                                           getStaffwise();
+                    //                                         }
+                    //                                       })
+                    //                                     : _dialogue(context,
+                    //                                         'View Leads');
+                    //                               },
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 stfRejected.toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     color: Colors.red,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                             InkWell(
+                    //                               onTap: () {
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWise",
+                    //                                     'yes');
+                    //                                 Common.saveSharedPref(
+                    //                                     "type", 'staff');
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusCatId",
+                    //                                     "-1");
+                    //                                 Common.saveSharedPref(
+                    //                                     "statusWisId", '5');
+                    //                                 viewLeadPermission ==
+                    //                                         'true'
+                    //                                     ? Navigator.push(
+                    //                                         context,
+                    //                                         MaterialPageRoute(
+                    //                                             builder:
+                    //                                                 (context) =>
+                    //                                                     ViewLeads(
+                    //                                                       widget.token,
+                    //                                                       updateLeadPermission1,
+                    //                                                       deleteLeadPermission1,
+                    //                                                       cloudCallPermission1,
+                    //                                                       pageName: 'Closed Leads',
+                    //                                                       fromDate: fromdate1.toString(),
+                    //                                                       toDate: todate1.toString(),
+                    //                                                     )),
+                    //                                       ).then((r) {
+                    //                                         getData(
+                    //                                             widget
+                    //                                                 .token,
+                    //                                             fromdate,
+                    //                                             todate);
+                    //                                         if (loadmore ==
+                    //                                             true) {
+                    //                                           getStaffwise();
+                    //                                         }
+                    //                                       })
+                    //                                     : _dialogue(context,
+                    //                                         'View Leads');
+                    //                               },
+                    //                               child: Center(
+                    //                                   child: Text(
+                    //                                 stfClosed.toString(),
+                    //                                 style: const TextStyle(
+                    //                                     fontSize: 10,
+                    //                                     fontWeight:
+                    //                                         FontWeight
+                    //                                             .bold),
+                    //                               )),
+                    //                             ),
+                    //                           ]),
+                    //                     ],
+                    //                   ),
+                    //                 )
+                    //               ],
+                    //             )),
+                    //       ],
+                    //     ),
+                    //   )
                   ],
                 ),
               const SizedBox(
@@ -7650,7 +8185,36 @@ class _DashboardState extends State<Dashboard> {
             Row(
               children: [
                 InkWell(
-                    onTap: () => logout(context),
+                    // onTap: () => logout(context),
+                    onTap: () async {
+                      try {
+                        final result = await HttpService.getWorkStatus();
+                        if (result != null && result.data.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Logout Blocked'),
+                              content: const Text(
+                                  'Work is in progress. Please close all work before logging out.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          logout(context);
+                        }
+                      } catch (e) {
+                        print('Error checking work status: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to check work status')),
+                        );
+                      }
+                    },
                     child: Container(
                       decoration: BoxDecoration(
                           boxShadow: [
@@ -7704,6 +8268,19 @@ class _DashboardState extends State<Dashboard> {
             ),
             Row(
               children: [
+                userDashboard != null
+                    ? StartStopToggle(
+                        initialStatus: userDashboard!.data.loginCheck,
+                        onToggle: (bool started) {
+                          setState(() {
+                            userDashboard!.data.loginCheck = started;
+                          });
+                        },
+                      )
+                    : SizedBox(),
+                SizedBox(
+                  width: 20,
+                ),
                 InkWell(
                   onTap: () {
                     Navigator.push(
@@ -8140,7 +8717,8 @@ class _DashboardState extends State<Dashboard> {
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
                                                   pageName: title,
-                                                  leadType: type,
+                                                  // leadType: type,
+                                                  leadType: '1',
                                                   fromDate: fromdate.toString(),
                                                   toDate: DateTime(
                                                           DateTime.now().year,

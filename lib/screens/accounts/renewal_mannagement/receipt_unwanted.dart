@@ -160,7 +160,7 @@
 //                     return null;
 //                   },
 //                   decoration: const InputDecoration(
-//                       labelText: 'Collected By',
+//                       labelText: 'Account Head',
 //                       prefixIcon: Icon(Icons.person, color: Colors.grey),
 //                       border: OutlineInputBorder(),
 //                       focusedBorder: OutlineInputBorder(

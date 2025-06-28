@@ -39,12 +39,14 @@ class Data {
   String category;
   String expenseDate;
   String amount;
+  String remark;
   List<History> history;
 
   Data({
     required this.category,
     required this.expenseDate,
     required this.amount,
+     required this.remark,
     required this.history,
   });
 
@@ -52,6 +54,7 @@ class Data {
         category: json["category"] ?? "",
         expenseDate: json["expense_date"] ?? "",
         amount: json["amount"] ?? "",
+         remark: json["remark"] ?? "",
         history: json["history"] == null
             ? []
             : List<History>.from(
@@ -62,6 +65,7 @@ class Data {
         "category": category,
         "expense_date": expenseDate,
         "amount": amount,
+        "remark": remark,
         "history": List<dynamic>.from(history.map((x) => x.toJson())),
       };
 }

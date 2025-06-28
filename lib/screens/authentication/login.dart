@@ -129,6 +129,22 @@ class _LoginState extends State<Login> {
                   "createLeadPermission", object1.data!.createLead.toString());
               Common.saveSharedPref(
                   "viewLeadPermission", object1.data!.viewLead.toString());
+                  Common.saveSharedPref(
+                  "addWorkPermission", object1.data!.addWorks.toString());
+                  Common.saveSharedPref(
+                  "viewAllWorkPermission", object1.data!.viewAllWorks.toString());
+                  Common.saveSharedPref(
+                  "viewWorkReportPermission", object1.data!.viewWorkReport.toString());
+                  Common.saveSharedPref(
+                  "startAndStopWorkPermission", object1.data!.startAndStopWork.toString());
+                     Common.saveSharedPref(
+                  "adminCheckPermission", object1.data!.adminCheck.toString());
+                     Common.saveSharedPref(
+                  "multipleUsers", object1.data!.multipleUsers.toString());
+                   Common.saveSharedPref(
+                  "multipleWorks", object1.data!.multipleWorks.toString());
+                   Common.saveSharedPref(
+                  "hasPhonecallAccess", object1.data!.hasPhonecallAccess.toString());
               Common.saveSharedPref(
                   "updateLeadPermission", object1.data!.updateLead.toString());
               Common.saveSharedPref(
@@ -187,7 +203,9 @@ class _LoginState extends State<Login> {
             Common.saveSharedPref("roleId", object.data!.roleId.toString());
             Common.saveSharedPref(
                 "multiBranch", object.data!.isMultiBranch.toString());
-            Common.saveSharedPref("callLogPermission", 'false');
+          // Common.saveSharedPref("callLogPermission", 'false');
+          //  Common.saveSharedPref(
+          //  "callLogPermission", 'true');
 
             if (object.status == true) {
               if (mounted) {

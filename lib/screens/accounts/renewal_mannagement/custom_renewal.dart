@@ -1201,7 +1201,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Text('Collected By * :'),
+                            const Text('Account Head * :'),
                             const SizedBox(
                               width: 10,
                             ),
@@ -2600,7 +2600,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Text('Collected By * :'),
+                            const Text('Account Head * :'),
                             const SizedBox(
                               width: 10,
                             ),

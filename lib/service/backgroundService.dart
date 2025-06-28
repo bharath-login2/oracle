@@ -17,7 +17,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/common.dart';
-import '../models/backgroundModel.dart';
 import '../models/callLogUploadPermissionModel.dart';
 import '../models/callLogs/callLogUploadModel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,18 +25,32 @@ import 'package:login2/main.dart';
 
 PhoneState status11 = PhoneState.nothing();
 
+// Future<void> initService() async {
+//   final service = FlutterBackgroundService();
+//   await service.configure(
+//     iosConfiguration: IosConfiguration(),
+//     androidConfiguration: AndroidConfiguration(
+//       onStart: onStart,
+//       isForegroundMode: true,
+//       autoStart: true,
+//       autoStartOnBoot: true,
+//     ),
+//   );
+// }
+
 Future<void> initService() async {
   final service = FlutterBackgroundService();
   await service.configure(
     iosConfiguration: IosConfiguration(),
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
-      isForegroundMode: true,
+      isForegroundMode: false, 
       autoStart: true,
       autoStartOnBoot: true,
     ),
   );
 }
+
 
 void setStream() {
   try {
@@ -108,28 +121,41 @@ void onStart(ServiceInstance service) async {
   });
 }
 
+// Future<void> requestPermissions() async {
+//   if (await Permission.phone.status.isDenied) {
+//     await Permission.phone.request();
+//   }
+//    if (await Permission.nearbyWifiDevices.isDenied) {
+//     await Permission.nearbyWifiDevices.request();
+//   }
+//   if (await Permission.phone.isGranted) {
+//     log('Phone permission granted');
+//     setStream();
+//   } else {
+//     log('Phone permission denied');
+//   }
+// }
 Future<void> requestPermissions() async {
-  if (await Permission.phone.status.isDenied) {
-    await Permission.phone.request();
-  }
-   if (await Permission.nearbyWifiDevices.isDenied) {
-    await Permission.nearbyWifiDevices.request();
-  }
-  if (await Permission.phone.isGranted) {
-    log('Phone permission granted');
-    setStream();
+  final phoneStatus = await Permission.phone.request();
+  final wifiStatus = await Permission.nearbyWifiDevices.request();
+
+  if (phoneStatus.isGranted && wifiStatus.isGranted) {
+    log('All required permissions granted');
+    setStream(); 
   } else {
-    log('Phone permission denied');
+    if (phoneStatus.isPermanentlyDenied || wifiStatus.isPermanentlyDenied) {
+      log('One or more permissions permanently denied. Please enable them from settings.');
+    } else {
+      log('Permissions denied');
+    }
   }
 }
-
 @pragma('vm:entry-point')
 Future<void> callBack(String tag) async {
   WidgetsFlutterBinding.ensureInitialized();
   log('callBack event called');
   log("callBack event of $tag");
   // const MethodChannel appChannel = MethodChannel('app_channel'); 
-
   switch (tag) {
     case "open_button":
       final intent = AndroidIntent(
@@ -154,7 +180,7 @@ int fromTime = 0;
 int toTime = 0;
 List<Map<String, dynamic>> history = [];
 
-final container = ProviderContainer(); // Create a Riverpod container
+final container = ProviderContainer(); 
 
 void isWindowActive() {
   final status = container.read(phoneStateProvider);
@@ -196,11 +222,11 @@ void showWindow() async {
         };
         log('~~ body1 : $body1 ~~~');
 
-        BackgroundModel object = await HttpService.backgroundData(body1);
-        log('openAppLeadId${object.data.callMasterId}');
-         log('openAppLeadId : ${object.data.callMasterId}');
-        await Common.saveSharedPref(
-            "openAppLeadId", object.data.callMasterId.toString());
+        // BackgroundModel object = await HttpService.backgroundData(body1);
+        // log('openAppLeadId${object.data.callMasterId}');
+        //  log('openAppLeadId : ${object.data.callMasterId}');
+        // await Common.saveSharedPref(
+        //     "openAppLeadId", object.data.callMasterId.toString());
 
         if (await FlutterOverlayWindow.isActive()) return;
         await FlutterOverlayWindow.showOverlay(

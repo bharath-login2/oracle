@@ -1811,7 +1811,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        const Text('Collected By * :'),
+                                        const Text('Account Head * :'),
                                         const SizedBox(
                                           width: 10,
                                         ),

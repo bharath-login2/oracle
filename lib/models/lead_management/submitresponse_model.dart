@@ -10,7 +10,7 @@ String submitResponseToJson(SubmitResponse data) => json.encode(data.toJson());
 
 class SubmitResponse {
   String message;
-  bool data;
+  dynamic data;
   bool status;
 
   SubmitResponse({
@@ -20,8 +20,8 @@ class SubmitResponse {
   });
 
   factory SubmitResponse.fromJson(Map<String, dynamic> json) => SubmitResponse(
-        message: json["message"] ??"",
-        data: json["data"] ?? false,
+        message: json["message"] ?? "",
+        data: json["data"],
         status: json["status"] ?? false,
       );
 
@@ -31,3 +31,4 @@ class SubmitResponse {
         "status": status,
       };
 }
+

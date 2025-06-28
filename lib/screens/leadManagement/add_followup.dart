@@ -6,6 +6,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
+import 'package:login2/widgets/addLeadCateoryPopup.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
@@ -959,98 +960,101 @@ class _AddFollowupState extends State<AddFollowup> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-                                TextFormField(
-                                  controller: leadTypeVal,
-                                  onTap: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            scrollable: true,
-                                            title: const Text('Lead Category'),
-                                            content: SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .8,
-                                              height: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .8,
-                                              child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: commonDetails!
-                                                    .data.leadCategory.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () async {
-                                                      leadSubTypeList =
-                                                          await HttpService.leadSubType(
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategoryId
-                                                                  .toString());
-                                                      setState(() {
-                                                        leadSubType =
-                                                            'Lead Sub Category';
-                                                        leadSubTypeId = '';
-                                                        leadType =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategory
-                                                                .toString();
-                                                        leadTypeId =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategoryId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategory
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          );
-                                        });
-                                  },
-                                  maxLines: 1,
-                                  readOnly: true,
-                                  decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Lead Category',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(Icons.category,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                ),
+                               TextFormField(
+  controller: leadTypeVal,
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          scrollable: true,
+          title: const Text('Lead Category'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * .8,
+            height: MediaQuery.of(context).size.width * .8,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: commonDetails!.data.leadCategory.length,
+              itemBuilder: (context, ind) {
+                return InkWell(
+                  onTap: () async {
+                    leadSubTypeList = await HttpService.leadSubType(
+                      commonDetails!.data.leadCategory[ind].leadCategoryId.toString(),
+                    );
+                    setState(() {
+                      leadSubType = 'Lead Sub Category';
+                      leadSubTypeId = '';
+                      leadType = commonDetails!.data.leadCategory[ind].leadCategory.toString();
+                      leadTypeId = commonDetails!.data.leadCategory[ind].leadCategoryId.toString();
+                    });
+                    Navigator.pop(context, true); // Close the dialog
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Text(
+                      commonDetails!.data.leadCategory[ind].leadCategory.toString(),
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  },
+  maxLines: 1,
+  readOnly: true,
+  decoration: InputDecoration(
+    contentPadding: const EdgeInsets.only(left: 10, top: 2, bottom: 2),
+    labelText: 'Lead Category',
+    fillColor: Colors.white,
+    filled: true,
+    prefixIcon: const Icon(Icons.category, color: Colors.grey),
+    suffixIcon: IconButton(
+      icon: const Icon(Icons.add_circle, color: Colors.green),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) => AddLeadCategoryDialog(
+            onSubmit: (leadName, cost, subcategory) async {
+              final token = await Common.getSharedPref('token');
+              final response = await HttpService.postLeadCategory(
+                leadName,
+                cost,
+                subcategory,
+              );
+
+              if (response != null && response.status) {
+                final refreshed = await HttpService.addLeadCommonData(token);
+                setState(() {
+                  commonDetails = refreshed;
+                });
+
+                Navigator.pop(dialogContext); // Correctly closes the dialog only
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Lead category added successfully")),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to add lead category")),
+                );
+              }
+            },
+          ),
+        );
+      },
+    ),
+    border: const OutlineInputBorder(),
+    focusedBorder: const OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey),
+    ),
+    labelStyle: const TextStyle(color: Colors.grey),
+  ),
+),
+
                                 const SizedBox(
                                   height: 20,
                                 ),
@@ -2335,7 +2339,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.end,
                                               children: [
-                                                const Text('Collected By * :'),
+                                                const Text('Account Head * :'),
                                                 const SizedBox(
                                                   width: 10,
                                                 ),

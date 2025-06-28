@@ -128,6 +128,9 @@ class LeadCategories {
   String? leadCategoryId;
   String? leadCategory;
   String? leadSubCategory;
+   String? createdDate;
+  String? leadStatus;
+  String? staffName;
   bool? isSelected;
 
   LeadCategories(
@@ -135,6 +138,9 @@ class LeadCategories {
       this.leadCategoryId,
       this.leadCategory,
       this.leadSubCategory,
+        this.createdDate,
+        this.leadStatus,
+        this.staffName,
       this.isSelected});
 
   LeadCategories.fromJson(Map<String, dynamic> json) {
@@ -142,6 +148,9 @@ class LeadCategories {
     leadCategoryId = json['lead_category_id'];
     leadCategory = json['lead_category'];
     leadSubCategory = json['lead_sub_category'];
+      createdDate = json['created_date'];
+     leadStatus = json['lead_status'];
+       staffName = json['staff_name'];
     isSelected = json['is_selected'];
   }
 }
