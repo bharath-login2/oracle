@@ -118,7 +118,7 @@ class _TimelinePageState extends State<TimelinePage> {
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           radius: 20,
                           backgroundImage: AssetImage(
                               'assets/icons/profile_placeholder.png'),

@@ -422,7 +422,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const SizedBox(height: 10),
                       timeDetails?.data.totalGapDuration != ""
                           ? Row(
@@ -445,7 +445,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const SizedBox(height: 10),
                       timeDetails?.data.totalWorkDuration == ""
                           ? Column(
@@ -518,7 +518,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const Spacer(),
                       isSyncingCallLogs
                           ? const CircularProgressIndicator()
@@ -580,7 +580,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const SizedBox(height: 10),
                       timeDetails?.data.totalGapDuration != ""
                           ? Row(
@@ -603,7 +603,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const SizedBox(height: 10),
                       timeDetails?.data.totalWorkDuration == ""
                           ? Column(
@@ -676,7 +676,7 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                                 ),
                               ],
                             )
-                          : SizedBox(),
+                          : const SizedBox(),
                       const Spacer(),
                       isSyncingCallLogs
                           ? const CircularProgressIndicator()

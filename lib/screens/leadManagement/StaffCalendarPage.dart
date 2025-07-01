@@ -785,12 +785,12 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                       elevation: 3,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text("Legend",
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                             SizedBox(height: 12),

@@ -22,7 +22,7 @@ class _AddLeadSourceDialogState extends State<AddLeadSourceDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Align(
+          const Align(
               alignment: Alignment.centerLeft,
               child: Text('Lead Source', style: TextStyle(fontSize: 14))),
           const SizedBox(height: 8),

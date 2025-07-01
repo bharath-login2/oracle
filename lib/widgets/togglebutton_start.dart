@@ -110,7 +110,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => InfoCardExample(),
+          builder: (context) => const InfoCardExample(),
           settings: RouteSettings(
             arguments: {
               "logoutTime": now.toIso8601String(),

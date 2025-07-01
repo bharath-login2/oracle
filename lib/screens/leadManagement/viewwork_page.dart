@@ -982,7 +982,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         ),
                                                                       );
                                                                     },
-                                                                    child: Row(
+                                                                    child: const Row(
                                                                       mainAxisSize:
                                                                           MainAxisSize
                                                                               .min,
@@ -992,17 +992,17 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                               .restart_alt,
                                                                           size:
                                                                               20,
-                                                                          color: const Color
+                                                                          color: Color
                                                                               .fromARGB(
                                                                               255,
                                                                               29,
                                                                               183,
                                                                               230),
                                                                         ),
-                                                                        const SizedBox(
+                                                                        SizedBox(
                                                                             width:
                                                                                 4),
-                                                                        const Text(
+                                                                        Text(
                                                                           "Restart",
                                                                           style:
                                                                               TextStyle(
@@ -1078,7 +1078,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         ),
                                                                       );
                                                                     },
-                                                                    child: Row(
+                                                                    child: const Row(
                                                                       mainAxisSize:
                                                                           MainAxisSize
                                                                               .min,
@@ -1088,17 +1088,17 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                               .pause_circle_filled,
                                                                           size:
                                                                               20,
-                                                                          color: const Color
+                                                                          color: Color
                                                                               .fromARGB(
                                                                               255,
                                                                               238,
                                                                               109,
                                                                               4),
                                                                         ),
-                                                                        const SizedBox(
+                                                                        SizedBox(
                                                                             width:
                                                                                 4),
-                                                                        const Text(
+                                                                        Text(
                                                                           "Pause",
                                                                           style:
                                                                               TextStyle(
@@ -1170,13 +1170,13 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                     //   ),
                                                     // ),
                                                     isInProgress
-                                                        ? Row(
+                                                        ? const Row(
                                                             children: [
-                                                              const Text(""),
+                                                              Text(""),
                                                               BlinkingText(
                                                                 text: "Working",
                                                                 style:
-                                                                    const TextStyle(
+                                                                    TextStyle(
                                                                   fontSize: 13,
                                                                   color: Color
                                                                       .fromARGB(
@@ -1213,7 +1213,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                         onTap: () => _launchMap(
                                                             item.latitude,
                                                             item.longitude),
-                                                        child: Text(
+                                                        child: const Text(
                                                           "View Location",
                                                           style: TextStyle(
                                                             fontSize: 14,

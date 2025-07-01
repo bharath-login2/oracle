@@ -11,7 +11,7 @@ String addLeadCommonDataModelToJson(AddLeadCommonDataModel data) => json.encode(
 class AddLeadCommonDataModel {
     Data data;
     bool status;
-    String message;
+   final String? message;
 
     AddLeadCommonDataModel({
         required this.data,
@@ -87,10 +87,10 @@ class Data {
         leadSource: List<LeadSource>.from(json["lead_source"].map((x) => LeadSource.fromJson(x))),
         additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
         countryCode: json["country_code"]??"",
-        customerAddPermission: json["customerAddPermission"],
-        customerAddInvoicePermission: json["customerAddInvoicePermission"],
-        isRenewal: json["isRenewal"],
-        isInstallment: json["isInstallment"],
+        customerAddPermission: json["customerAddPermission"]??"",
+        customerAddInvoicePermission: json["customerAddInvoicePermission"]??"",
+        isRenewal: json["isRenewal"]??"",
+        isInstallment: json["isInstallment"]??"",
         targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
     );
 
@@ -125,8 +125,8 @@ class AdditionalField {
     });
 
     factory AdditionalField.fromJson(Map<String, dynamic> json) => AdditionalField(
-        id: json["id"],
-        fieldName: json["field_name"],
+        id: json["id"]??"",
+        fieldName: json["field_name"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -145,8 +145,8 @@ class CallResponseStatus {
     });
 
     factory CallResponseStatus.fromJson(Map<String, dynamic> json) => CallResponseStatus(
-        callResponseId: json["call_response_id"],
-        callResponse: json["call_response"],
+        callResponseId: json["call_response_id"]??"",
+        callResponse: json["call_response"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -165,8 +165,8 @@ class CallResult {
     });
 
     factory CallResult.fromJson(Map<String, dynamic> json) => CallResult(
-        callResultId: json["call_result_id"],
-        callResult: json["call_result"],
+        callResultId: json["call_result_id"]??"",
+        callResult: json["call_result"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -185,8 +185,8 @@ class CallResultNew {
     });
 
     factory CallResultNew.fromJson(Map<String, dynamic> json) => CallResultNew(
-        callResultIdNew: json["call_result_id_new"],
-        callResultNew: json["call_result_new"],
+        callResultIdNew: json["call_result_id_new"]??"",
+        callResultNew: json["call_result_new"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -205,8 +205,8 @@ class ColloctedStaff {
     });
 
     factory ColloctedStaff.fromJson(Map<String, dynamic> json) => ColloctedStaff(
-        accountId: json["account_id"],
-        accountName: json["account_name"],
+        accountId: json["account_id"]??"",
+        accountName: json["account_name"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -225,8 +225,8 @@ class LeadCategory {
     });
 
     factory LeadCategory.fromJson(Map<String, dynamic> json) => LeadCategory(
-        leadCategoryId: json["lead_category_id"],
-        leadCategory: json["lead_category"],
+        leadCategoryId: json["lead_category_id"]??"",
+        leadCategory: json["lead_category"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -245,8 +245,8 @@ class LeadSource {
     });
 
     factory LeadSource.fromJson(Map<String, dynamic> json) => LeadSource(
-        leadSourceId: json["lead_source_id"],
-        leadSource: json["lead_source"],
+        leadSourceId: json["lead_source_id"]??"",
+        leadSource: json["lead_source"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -265,8 +265,8 @@ class Priority {
     });
 
     factory Priority.fromJson(Map<String, dynamic> json) => Priority(
-        priorityId: json["priority_id"],
-        priority: json["priority"],
+        priorityId: json["priority_id"]??"",
+        priority: json["priority"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -285,8 +285,8 @@ class Staff {
     });
 
     factory Staff.fromJson(Map<String, dynamic> json) => Staff(
-        userId: json["user_id"],
-        staffName: json["staff_name"],
+        userId: json["user_id"]??"",
+        staffName: json["staff_name"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -323,8 +323,8 @@ class TransferStaff {
     });
 
     factory TransferStaff.fromJson(Map<String, dynamic> json) => TransferStaff(
-        tranStaffId: json["tran_staff_id"],
-        tranStaffName: json["tran_staff_name"],
+        tranStaffId: json["tran_staff_id"]??"",
+        tranStaffName: json["tran_staff_name"]??"",
     );
 
     Map<String, dynamic> toJson() => {
@@ -343,8 +343,8 @@ class TargetGroup {
     });
 
     factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
-        id: json["id"],
-        groupName: json["group_name"],
+        id: json["id"]??"",
+        groupName: json["group_name"]??"",
     );
 
     Map<String, dynamic> toJson() => {

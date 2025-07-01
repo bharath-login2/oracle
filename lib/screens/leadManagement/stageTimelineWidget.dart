@@ -69,7 +69,7 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                                   const SizedBox(width: 10),
                                   Text(
                                     call.callType ?? '',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),

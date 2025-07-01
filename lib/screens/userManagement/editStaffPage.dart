@@ -532,7 +532,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                   .designationList!.isEmpty) {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
-                                              SnackBar(
+                                              const SnackBar(
                                                   content: Text(
                                                       "No designations available")),
                                             );
@@ -544,7 +544,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             builder: (BuildContext context) {
                                               return AlertDialog(
                                                 title:
-                                                    Text("Change Designation"),
+                                                    const Text("Change Designation"),
                                                 content: SizedBox(
                                                   width: double.maxFinite,
                                                   child: ListView.builder(
@@ -564,7 +564,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                                                       return ListTile( 
                                                         leading:
-                                                            Icon(Icons.work),
+                                                            const Icon(Icons.work),
                                                         title: Text(designation
                                                                 .designation ??
                                                             "Unknown"),

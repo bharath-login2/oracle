@@ -497,7 +497,7 @@ class _LoginState extends State<Login> {
                                                       1
                                                   ? PopupMenuButton(
                                                       key: popupMenuKey,
-                                                      child: Text(
+                                                      child: const Text(
                                                         "Select Server",
                                                         style: TextStyle(
                                                           fontWeight:

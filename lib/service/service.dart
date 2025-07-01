@@ -6116,5 +6116,98 @@ static Future<bool> deleteProject(String id) async {
   }
 }
 
+ static Future<bool> markHoliday({
+  required String date,
+  required String name,
+  String? description,
+}) async {
+  final token = await Common.getSharedPref('token');
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}mark_holiday",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+        'name': name,
+        'description': description ?? '',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return true;
+    } else {
+      log("❌ Mark holiday failed: ${response.data}");
+      return false;
+    }
+  } catch (e) {
+    log("🔥 Error in markHoliday: $e");
+    return false;
+  }
+}
+
+
+static Future<bool> markLeave({
+  required String date,
+  required List<String> staffIds,
+  required String leaveType,
+  required String reason,
+  required bool isHalfDay,
+}) async {
+  final token = await Common.getSharedPref('token');
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}mark_leave",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+        'staff_ids': staffIds.join(','), 
+        'leave_type': leaveType,
+        'reason': reason,
+        'half_day': isHalfDay ? '1' : '0',
+      }),
+    );
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return true;
+    } else {
+      log("❌ Mark leave failed: ${response.data}");
+      return false;
+    }
+  } catch (e) {
+    log("🔥 Error in markLeave: $e");
+    return false;
+  }
+}
+
+static Future<bool> markAttendance({
+  required String date,
+  required List<String> staffIds,
+  required bool isHalfDay, 
+}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}mark_attendance",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+        'staff_ids': staffIds.join(','),
+        'half_day': isHalfDay ? '1' : '0', 
+      }),
+    );
+    return response.statusCode == 200 && response.data['status'] == true;
+  } catch (e) {
+    log("🔥 Error in markAttendance: $e");
+    return false;
+  }
+}
+
+
+
+
+
+
 
 }

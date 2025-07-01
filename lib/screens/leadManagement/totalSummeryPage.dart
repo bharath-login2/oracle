@@ -209,13 +209,13 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
-                         SizedBox(height: 12,),
+                         //SizedBox(height: 12,),
                       //  Text(
                       //   "Client: ${project.customerName}",
                       //   style: const TextStyle(
                       //       fontSize: 14, fontWeight: FontWeight.w600),
                       // ),
-                      SizedBox(height: 12,),
+                      const SizedBox(height: 12,),
                        Text(
                         "Module: ${project.moduleName}",
                         style: const TextStyle(

@@ -24,6 +24,7 @@ import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
@@ -2334,7 +2335,7 @@ class _DashboardState extends State<Dashboard> {
                     children: [
                       workStatus != null && workStatus!.data.isNotEmpty
                           ? Container(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -2343,7 +2344,7 @@ class _DashboardState extends State<Dashboard> {
                                   BoxShadow(
                                     color: Colors.grey.withOpacity(0.3),
                                     blurRadius: 3,
-                                    offset: Offset(1, 1),
+                                    offset: const Offset(1, 1),
                                   )
                                 ],
                               ),
@@ -2396,11 +2397,11 @@ class _DashboardState extends State<Dashboard> {
                                   //     },
                                   //   )
                                   StreamBuilder<DateTime>(
-                                stream: Stream.periodic(Duration(seconds: 1),
+                                stream: Stream.periodic(const Duration(seconds: 1),
                                     (_) => DateTime.now()),
                                 builder: (context, snapshot) {
                                   if (!snapshot.hasData || createdAt == null) {
-                                    return SizedBox();
+                                    return const SizedBox();
                                   }
 
                                   final now = snapshot.data!;
@@ -2437,18 +2438,18 @@ class _DashboardState extends State<Dashboard> {
                                     },
                                     child: Text(
                                       timeSince,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-                                        color: const Color.fromARGB(
+                                        color: Color.fromARGB(
                                             255, 255, 5, 5),
                                       ),
                                     ),
                                   );
                                 },
                               ))
-                          : SizedBox(),
-                      SizedBox(width: 10),
+                          : const SizedBox(),
+                      const SizedBox(width: 10),
                       // startAndStopWorkPermission =="true" && userDashboard != null
                       //     ? InkWell(
                       //         onTap: () async {
@@ -2554,7 +2555,7 @@ class _DashboardState extends State<Dashboard> {
                       //       )
                       //     : SizedBox(),
 
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       InkWell(
                         onTap: () {
                           if (isVisible == true) {
@@ -2570,10 +2571,10 @@ class _DashboardState extends State<Dashboard> {
                           width: 50,
                           height: 39,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                              const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                           decoration: BoxDecoration(
                               border: Border.all(color: Colors.white, width: 0),
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
                                     color: Colors.grey,
                                     blurRadius: 5,
@@ -2581,7 +2582,7 @@ class _DashboardState extends State<Dashboard> {
                               ],
                               color: Colors.white,
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(5))),
+                                  const BorderRadius.all(Radius.circular(5))),
                           child: Icon(isVisible == true
                               ? Icons.keyboard_arrow_down
                               : Icons.keyboard_arrow_up),
@@ -2714,7 +2715,7 @@ class _DashboardState extends State<Dashboard> {
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 const ViewCompanyWorkPage(),
-                                            settings: RouteSettings(
+                                            settings: const RouteSettings(
                                               arguments: {
                                                 //  "staffId": staffId
                                               },
@@ -3592,7 +3593,7 @@ class _DashboardState extends State<Dashboard> {
                                               ),
                                               itemBuilder: (context) {
                                                 return [
-                                                  PopupMenuItem<int>(
+                                                  const PopupMenuItem<int>(
                                                       value: 11,
                                                       child: Row(
                                                         children: [
@@ -3604,10 +3605,10 @@ class _DashboardState extends State<Dashboard> {
                                                                   .upload_outlined,
                                                             ),
                                                           ),
-                                                          const SizedBox(
+                                                          SizedBox(
                                                             width: 10,
                                                           ),
-                                                          const Text(
+                                                          Text(
                                                               'Upload Logs'),
                                                         ],
                                                       )),
@@ -3757,7 +3758,7 @@ class _DashboardState extends State<Dashboard> {
                                                                     (context) =>
                                                                         const ViewCompanyWorkPage(),
                                                                 settings:
-                                                                    RouteSettings(
+                                                                    const RouteSettings(
                                                                   arguments: {
                                                                     //  "staffId": staffId
                                                                   },
@@ -3766,8 +3767,8 @@ class _DashboardState extends State<Dashboard> {
                                                             );
                                                           },
 
-                                                          child: Row(
-                                                            children: const [
+                                                          child: const Row(
+                                                            children: [
                                                               Icon(
                                                                   Icons
                                                                       .view_agenda,
@@ -3785,6 +3786,32 @@ class _DashboardState extends State<Dashboard> {
                                                           height: 0,
                                                           child:
                                                               SizedBox.shrink(),
+                                                        ),
+
+                                                        PopupMenuItem<int>(
+                                                       
+                                                          onTap: () async {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        const ViewCalendarPage(),
+                                                              ),
+                                                            );
+                                                          },
+                                                          child: const Row(
+                                                            children: [
+                                                              Icon(
+                                                                  Icons
+                                                                      .calendar_month,
+                                                                  size: 20),
+                                                              SizedBox(
+                                                                  width: 10),
+                                                              Text(
+                                                                  'Add Attendance'),
+                                                            ],
+                                                          ),
                                                         ),
                                                   adminCheckPermission ==
                                                           "false"
@@ -3925,8 +3952,8 @@ class _DashboardState extends State<Dashboard> {
                                                             }
                                                           },
 
-                                                          child: Row(
-                                                            children: const [
+                                                          child: const Row(
+                                                            children: [
                                                               Icon(
                                                                   Icons
                                                                       .view_agenda,
@@ -3944,6 +3971,7 @@ class _DashboardState extends State<Dashboard> {
                                                           child:
                                                               SizedBox.shrink(),
                                                         ),
+                                                        
 
                                                   // viewWorkReportPermission ==
                                                   //             "true" &&
@@ -5476,7 +5504,7 @@ class _DashboardState extends State<Dashboard> {
                         ),
                       ),
                     ),
-                    loadmore == false ? const SizedBox() : SizedBox()
+                    loadmore == false ? const SizedBox() : const SizedBox()
                     //  Padding(
                     //     padding: const EdgeInsets.only(left: 20, right: 20),
                     //     child: Column(
@@ -8277,8 +8305,8 @@ class _DashboardState extends State<Dashboard> {
                           });
                         },
                       )
-                    : SizedBox(),
-                SizedBox(
+                    : const SizedBox(),
+                const SizedBox(
                   width: 20,
                 ),
                 InkWell(
@@ -9233,19 +9261,19 @@ class _DashboardState extends State<Dashboard> {
                         children: [
                           Text(
                             initialWork != null ? 'Stop Work' : 'Start Work',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           IconButton(
-                            icon: Icon(Icons.close),
+                            icon: const Icon(Icons.close),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(
@@ -9284,11 +9312,11 @@ class _DashboardState extends State<Dashboard> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
                               controller: titleController,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 labelText: 'Title',
                                 border: OutlineInputBorder(),
                               ),
@@ -9296,13 +9324,13 @@ class _DashboardState extends State<Dashboard> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Column(
                         children: [
                           for (int i = 0; i < tasks.length; i++)
                             Container(
-                              margin: EdgeInsets.only(bottom: 8),
-                              padding: EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey.shade300),
                                 borderRadius: BorderRadius.circular(8),
@@ -9315,13 +9343,13 @@ class _DashboardState extends State<Dashboard> {
                                         flex: 2,
                                         child: TextField(
                                           controller: tasks[i]['controller'],
-                                          decoration: InputDecoration(
+                                          decoration: const InputDecoration(
                                             labelText: 'Task',
                                             border: OutlineInputBorder(),
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      const SizedBox(width: 10),
                                       Expanded(
                                         flex: 4,
                                         child: DropdownButtonFormField<String>(
@@ -9335,7 +9363,7 @@ class _DashboardState extends State<Dashboard> {
                                           onChanged: (value) => setState(() {
                                             tasks[i]['status'] = value;
                                           }),
-                                          decoration: InputDecoration(
+                                          decoration: const InputDecoration(
                                             labelText: 'Status',
                                             border: OutlineInputBorder(),
                                           ),
@@ -9343,7 +9371,7 @@ class _DashboardState extends State<Dashboard> {
                                       ),
                                       if (i == 0)
                                         IconButton(
-                                          icon: Icon(Icons.add),
+                                          icon: const Icon(Icons.add),
                                           onPressed: () => setState(() {
                                             tasks.add({
                                               'controller':
@@ -9354,7 +9382,7 @@ class _DashboardState extends State<Dashboard> {
                                         ),
                                       if (i > 0)
                                         IconButton(
-                                          icon: Icon(Icons.close,
+                                          icon: const Icon(Icons.close,
                                               color: Colors.red),
                                           onPressed: () => setState(() {
                                             tasks.removeAt(i);
@@ -9362,13 +9390,13 @@ class _DashboardState extends State<Dashboard> {
                                         ),
                                     ],
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: Text(
                                       DateFormat('hh:mm a')
                                           .format(DateTime.now()),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey,
                                       ),
@@ -9379,18 +9407,18 @@ class _DashboardState extends State<Dashboard> {
                             ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               initialWork != null ? Colors.red : Colors.green,
                           foregroundColor: Colors.white,
-                          minimumSize: Size(double.infinity, 50),
+                          minimumSize: const Size(double.infinity, 50),
                         ),
                         onPressed: () {
                           if (selectedProjectId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                 content: Text('Please select a project'),
                                 backgroundColor: Colors.red,
                               ),
@@ -9441,7 +9469,7 @@ class _DashboardState extends State<Dashboard> {
               backgroundColor: Colors.green,
             ),
           );
-          Future.delayed(Duration(seconds: 1), () {
+          Future.delayed(const Duration(seconds: 1), () {
             setState(() {
               getData(widget.token, fromdate, todate);
             });

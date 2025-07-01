@@ -787,22 +787,22 @@ class _ViewUsersState extends State<ViewUsers> {
 
                                                                                               if (disableStaff != null && disableStaff.data == true) {
                                                                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  SnackBar(
-                                                                                                    content: const Text("Staff disabled successfully"),
+                                                                                                  const SnackBar(
+                                                                                                    content: Text("Staff disabled successfully"),
                                                                                                     backgroundColor: Colors.green,
                                                                                                     behavior: SnackBarBehavior.floating,
-                                                                                                    margin: const EdgeInsets.only(bottom: 10.0, left: 16.0, right: 16.0),
-                                                                                                    duration: const Duration(seconds: 3),
+                                                                                                    margin: EdgeInsets.only(bottom: 10.0, left: 16.0, right: 16.0),
+                                                                                                    duration: Duration(seconds: 3),
                                                                                                   ),
                                                                                                 );
                                                                                                 getData();
                                                                                               } else {
                                                                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  SnackBar(
-                                                                                                    content: const Text("Failed to disable staff"),
+                                                                                                  const SnackBar(
+                                                                                                    content: Text("Failed to disable staff"),
                                                                                                     backgroundColor: Colors.red,
                                                                                                     behavior: SnackBarBehavior.floating,
-                                                                                                    margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
+                                                                                                    margin: EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
                                                                                                   ),
                                                                                                 );
                                                                                               }

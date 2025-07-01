@@ -2131,7 +2131,7 @@ class _AllReportState extends State<AllReport> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Text('Lead Sub Category'),
+                                                const Text('Lead Sub Category'),
                                                 DropdownButtonFormField<String>(
                                                   value: selectedSubCategories[
                                                       categoryId],

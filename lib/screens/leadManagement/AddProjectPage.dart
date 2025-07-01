@@ -484,7 +484,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                                   fontSize: 14)),
                                          item.fromDate.isEmpty ||
                                                   item.toDate.isEmpty
-                                              ?SizedBox()
+                                              ?const SizedBox()
                                               :
                                           Text(
                                               "${item.fromDate} - ${item.toDate}",

@@ -1033,7 +1033,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 Text(
                                                                               'Staff: ${leadDetails!.data!.leadCategories![i].staffName.toString()}',
                                                                               style:
-                                                                                  TextStyle(
+                                                                                  const TextStyle(
                                                                                 fontSize: 11,
                                                                                 color: Colors.grey,
                                                                               ),
@@ -1049,7 +1049,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 Text(
                                                                               'Created Date: ${leadDetails!.data!.leadCategories![i].createdDate.toString()}',
                                                                               style:
-                                                                                  TextStyle(
+                                                                                  const TextStyle(
                                                                                 fontSize: 11,
                                                                                 color: Colors.grey,
                                                                               ),

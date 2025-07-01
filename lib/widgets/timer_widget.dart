@@ -24,7 +24,7 @@ class _TimeDifferenceWidgetState extends State<TimeDifferenceWidget> {
     _timeDifference = _currentTime.difference(_createdAt);
 
     // Start a timer that updates every second
-    _timer = Timer.periodic(Duration(seconds: 1), _updateTimeDifference);
+    _timer = Timer.periodic(const Duration(seconds: 1), _updateTimeDifference);
   }
 
   void _updateTimeDifference(Timer timer) {
@@ -46,7 +46,7 @@ class _TimeDifferenceWidgetState extends State<TimeDifferenceWidget> {
 
     return Text(
       "Time since creation: $timeString",
-      style: TextStyle(fontSize: 24),
+      style: const TextStyle(fontSize: 24),
     );
   }
 }

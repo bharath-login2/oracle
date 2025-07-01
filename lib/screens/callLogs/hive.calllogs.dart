@@ -1930,7 +1930,7 @@ setState(() {
                                         ]
                                         )
                                  
-                                 :Center(
+                                 :const Center(
                                       child:SizedBox(
                                         height: 100,
                                       )
@@ -2550,9 +2550,9 @@ setState(() {
                                                                               ),
                                                                             ],
                                                                           ),
-                                                                          Spacer(),
+                                                                          const Spacer(),
                                                                           allCallLogData[index].isUploaded?
-                                                                          SizedBox():
+                                                                          const SizedBox():
                                                                           IconButton(
                                                                             onPressed: ()async{
                                                                               log('upload : ${allCallLogData[index].isUploaded}');
@@ -2627,7 +2627,7 @@ setState(() {
                                                                                  getData();
 
                                                                               },
-                                                                           icon: Icon(Icons.upload)
+                                                                           icon: const Icon(Icons.upload)
                                                                           )
                                                                         ],
                                                                       ),

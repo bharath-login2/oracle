@@ -159,7 +159,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TotalSummeryPage(),
+                        builder: (context) => const TotalSummeryPage(),
                       ),
                     );
                   } else if (value == 'add_project') {
@@ -167,7 +167,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            AddProjectPage(), 
+                            const AddProjectPage(), 
                       ),
                     );
                   }
@@ -539,11 +539,11 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
+                                      boxShadow: const [
                                         BoxShadow(
                                           color: Colors.black12,
                                           blurRadius: 4,
-                                          offset: const Offset(0, 2),
+                                          offset: Offset(0, 2),
                                         ),
                                       ],
                                     ),

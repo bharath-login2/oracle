@@ -2763,7 +2763,7 @@ class _CallLogsState extends State<CallLogs> {
                           )
                   ],
                 ),
-              ):SizedBox(),
+              ):const SizedBox(),
             // : Material(
             //     type: MaterialType.transparency,
             //     child: Padding(

@@ -285,7 +285,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   Future<void> _submitWork() async {
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please select a project'),
           backgroundColor: Colors.red,
         ),
@@ -455,7 +455,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   Future<void> _pauseWork() async {
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please select a project'),
           backgroundColor: Colors.red,
         ),
@@ -561,7 +561,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   Future<void> _restartWork() async {
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please select a project'),
           backgroundColor: Colors.red,
         ),
@@ -677,11 +677,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
         title: widget.isPaused != 1 && widget.Restart != 1
             ? Text(widget.existingWork != null ? 'Stop Work' : 'Start Work')
             : widget.Restart != 1
-                ? Text('Pause Work')
-                : Text('Restart Work'),
+                ? const Text('Pause Work')
+                : const Text('Restart Work'),
         actions: [
           IconButton(
-            icon: Icon(Icons.close),
+            icon: const Icon(Icons.close),
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -690,7 +690,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   Row(
@@ -770,11 +770,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   ...List.generate(tasks.length, (taskIndex) {
                     return Container(
-                      margin: EdgeInsets.only(bottom: 12),
-                      padding: EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(8),
@@ -796,7 +796,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Expanded(
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
@@ -825,14 +825,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                   onChanged: (value) => setState(() {
                                     tasks[taskIndex].status = value;
                                   }),
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     labelText: 'Status',
                                     border: OutlineInputBorder(),
                                   ),
-                                  icon: SizedBox.shrink(),
+                                  icon: const SizedBox.shrink(),
                                 ),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Column(
                                 children: [
                                   IconButton(
@@ -865,26 +865,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerRight,
                             child: Text(
                               DateFormat('hh:mm a')
                                   .format(tasks[taskIndex].createdAt),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
                               ),
                             ),
                           ),
 
-                           SizedBox(height: 8),
+                           const SizedBox(height: 8),
                           ...List.generate(
                               tasks[taskIndex].remarksControllers.length,
                               (remarkIndex) {
                             return Container(
-                              margin: EdgeInsets.only(bottom: 8),
-                              padding: EdgeInsets.all(8),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey.shade200),
                                 borderRadius: BorderRadius.circular(4),
@@ -899,11 +899,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                       maxLines: 3,
                                       decoration: InputDecoration(
                                         labelText: 'Remark ${remarkIndex + 1}',
-                                        border: OutlineInputBorder(),
+                                        border: const OutlineInputBorder(),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   IconButton(
                                     icon: Icon(
                                       remarkIndex == 0
@@ -1001,25 +1001,25 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   widget.isPaused != 1 &&
                   widget.Restart != 1
               ? Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: widget.existingWork != null
                           ? Colors.green
                           : Colors.green,
                       foregroundColor: Colors.white,
-                      minimumSize: Size(double.infinity, 50),
+                      minimumSize: const Size(double.infinity, 50),
                     ),
                     onPressed: _savework,
                     child: Text(
                       widget.existingWork != null ? 'SAVE WORK' : '',
-                      style: TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                 )
-              : SizedBox(),
+              : const SizedBox(),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -1027,7 +1027,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         ? Colors.red
                         : Colors.green,
                 foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 50),
               ),
               onPressed: widget.isPaused == 1 && widget.Restart != 1
                   ? _pauseWork
@@ -1035,12 +1035,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       ? _restartWork
                       : _submitWork,
               child: widget.isPaused == 1
-                  ? Text(
+                  ? const Text(
                       "Pause Work",
                       style: TextStyle(fontSize: 16),
                     )
                   : widget.Restart == 1
-                      ? Text(
+                      ? const Text(
                           "Restart Work",
                           style: TextStyle(
                             fontSize: 16,
@@ -1051,7 +1051,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           widget.existingWork != null
                               ? 'STOP WORK'
                               : 'START WORK',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                           ),
                         ),
@@ -1199,7 +1199,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                         filteredTemplates.isEmpty) ||
                                     (title == "Products" &&
                                         filteredProducts.isEmpty)
-                                ? Center(child: Text('No items found'))
+                                ? const Center(child: Text('No items found'))
                                 : ListView.builder(
                                     itemCount: title == "Projects"
                                         ? filteredProjects.length

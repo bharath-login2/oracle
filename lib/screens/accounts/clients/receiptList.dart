@@ -1166,7 +1166,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                         const SizedBox(
                                                             height: 6),
                                                         Row(children: [
-                                                          Icon(
+                                                          const Icon(
                                                               Icons
                                                                   .calendar_month,
                                                               color:
