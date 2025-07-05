@@ -22,9 +22,14 @@ import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/expense/targetGroupModel.dart';
 import 'package:login2/models/lead_management/WorkLoginAndOutModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
+import 'package:login2/models/lead_management/attendanceAllmodel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
+import 'package:login2/models/lead_management/calendarDataModel.dart';
+import 'package:login2/models/lead_management/dailyAllCountModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
+import 'package:login2/models/lead_management/salaryDetailsModel.dart';
+import 'package:login2/models/lead_management/salaryListModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
@@ -5793,7 +5798,7 @@ static Future<ProjectListCustModel?> getProjectsLists() async {
 
 
   static Future<AttendanceDataModel?> getAttendanceData(
-      String staffId, String yearMonth) async {
+      String staffId, String yearMonth, {required String monthYear}) async {
     var token = await Common.getSharedPref('token');
     try {
       FormData formData = FormData.fromMap({
@@ -6168,7 +6173,6 @@ static Future<bool> markLeave({
         'half_day': isHalfDay ? '1' : '0',
       }),
     );
-
     if (response.statusCode == 200 && response.data['status'] == true) {
       return true;
     } else {
@@ -6203,6 +6207,143 @@ static Future<bool> markAttendance({
     return false;
   }
 }
+
+
+static Future<AttendanceDataAllModel?> getAttendanceAllData({required String date}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}get_totalattendance",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return AttendanceDataAllModel.fromJson(response.data);
+    } else {
+      log("❌ Invalid response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    log("🔥 Error fetching attendance data: $e");
+    return null;
+  }
+}
+
+static Future<CalendarDataAllModel?> getMonthyearWork({required String monthyear}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}get_monthly_calendar_data",
+      data: FormData.fromMap({
+        'token': token,
+        'monthyear': monthyear,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return CalendarDataAllModel.fromJson(response.data);
+    } else {
+      log("❌ Invalid response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    log("🔥 Error fetching attendance data: $e");
+    return null;
+  }
+}
+
+
+
+static Future<bool> deleteHoliday({
+  required String date,
+ 
+}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}delete_holiday",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+       
+      }),
+    );
+    return response.statusCode == 200 && response.data['status'] == true;
+  } catch (e) {
+    log("🔥 Error in markAttendance: $e");
+    return false;
+  }
+}
+
+static Future<DailyDataModel?> getDailyCount({required String date}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}get_dailycount",
+      data: FormData.fromMap({
+        'token': token,
+        'date': date,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return DailyDataModel.fromJson(response.data);
+    } else {
+      log("❌ Invalid response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    log("🔥 Error fetching attendance data: $e");
+    return null;
+  }
+}
+
+
+static Future<SalaryList?> getSalaryList({required String monthYear}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}get_salary_report",
+      data: FormData.fromMap({
+        'token': token,
+        'monthyear': monthYear,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return SalaryList.fromJson(response.data);
+    } else {
+      log("❌ Invalid response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    log("🔥 Error fetching salary list: $e");
+    return null;
+  }
+}
+
+
+static Future<SalaryDetailsModel?> getSalaryDetails(String id) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}get_salary_summary",
+      data: FormData.fromMap({
+        "token": token,
+        "id": id,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return SalaryDetailsModel.fromJson(response.data);
+    } else {
+      debugPrint("❌ Failed response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    debugPrint("🔥 Error fetching salary details: $e");
+    return null;
+  }
+}
+
 
 
 

@@ -108,7 +108,8 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   flutter_slidable: ^4.0.0
   table_calendar: ^3.0.8
- 
+  lucide_icons: ^0.257.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -467,8 +467,10 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                         borderRadius:
                                             BorderRadius.circular(10)),
                                     child: ListTile(
-                                      leading: const Icon(Icons.work_outline,
-                                          color: Colors.grey),
+                                      leading: const Icon(
+                                        Icons.work_history_outlined,
+                                        color: Color.fromARGB(255, 15, 15, 15),
+                                      ),
                                       title: Text(item.projectName,
                                           style: const TextStyle(
                                               fontWeight: FontWeight.w600,
@@ -481,16 +483,15 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                           Text("Client: ${item.customerName}",
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
-                                                  fontSize: 14)),
-                                         item.fromDate.isEmpty ||
+                                                  fontSize: 13)),
+                                          item.fromDate.isEmpty ||
                                                   item.toDate.isEmpty
-                                              ?const SizedBox()
-                                              :
-                                          Text(
-                                              "${item.fromDate} - ${item.toDate}",
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                              ? const SizedBox()
+                                              : Text(
+                                                  "${item.fromDate} - ${item.toDate}",
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey)),
                                         ],
                                       ),
                                       trailing: Row(

@@ -625,8 +625,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                 PopupMenuButton<String>(
                                   onSelected: (value) async {
                                     if (value == 'edit') {
-                                      _editProduct(context,
-                                          index); 
+                                      _editProduct(context, index);
                                     } else if (value == 'delete') {
                                       products.removeAt(index);
                                       productName.removeAt(index);
@@ -976,11 +975,26 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                 width: MediaQuery.of(context).size.width * 0.5,
                                 child: TextFormField(
                                   validator: (value) {
+                                    // if (payStat == "partial") {
+                                    //   double val = double.parse(value!);
+                                    //   if (value == "" || val == 0) {
+                                    //     return "Enter Amount";
+                                    //   }
+                                    //   else if (val >= totalProductCost) {
+                                    //     return "Paid amount cannot be greater than or equal to total cost";
+                                    //   }
+                                    //   // else if (val >= totalProductCost) {
+                                    //   //   return "Paid amount cannot be greater than or equal to total cost";
+                                    //   // }
+                                    // }
                                     if (payStat == "partial") {
-                                      double val = double.parse(value!);
-                                      if (value == "" || val == 0) {
+                                      final val = double.tryParse(value ?? "");
+                                      final total =
+                                          double.tryParse(totalAmount.text);
+                                      if (val == null || val == 0) {
                                         return "Enter Amount";
-                                      } else if (val >= totalProductCost) {
+                                      } else if (total != null &&
+                                          val >= total) {
                                         return "Paid amount cannot be greater than or equal to total cost";
                                       }
                                     }
@@ -1707,84 +1721,84 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   }
 
   void _editProduct(BuildContext context, int index) {
-  final TextEditingController rateController =
-      TextEditingController(text: products[index]['product_rate']);
-  final TextEditingController qtyController =
-      TextEditingController(text: products[index]['quantity']);
-  final TextEditingController taxController =
-      TextEditingController(text: products[index]['total_tax_amount']);
+    final TextEditingController rateController =
+        TextEditingController(text: products[index]['product_rate']);
+    final TextEditingController qtyController =
+        TextEditingController(text: products[index]['quantity']);
+    final TextEditingController taxController =
+        TextEditingController(text: products[index]['total_tax_amount']);
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Edit Product'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: rateController,
-              decoration: const InputDecoration(labelText: 'Rate'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: qtyController,
-              decoration: const InputDecoration(labelText: 'Quantity'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: taxController,
-              decoration: const InputDecoration(labelText: 'Tax Amount'),
-              keyboardType: TextInputType.number,
-            ),
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Product'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: rateController,
+                decoration: const InputDecoration(labelText: 'Rate'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: qtyController,
+                decoration: const InputDecoration(labelText: 'Quantity'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: taxController,
+                decoration: const InputDecoration(labelText: 'Tax Amount'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () {
+                  // Update values
+                  double rate = double.tryParse(rateController.text) ?? 0;
+                  double qty = double.tryParse(qtyController.text) ?? 0;
+                  double tax = double.tryParse(taxController.text) ?? 0;
+
+                  products[index]['product_rate'] = rate.toStringAsFixed(2);
+                  products[index]['quantity'] = qty.toStringAsFixed(2);
+                  products[index]['total_tax_amount'] = tax.toStringAsFixed(2);
+                  products[index]['total_amount'] =
+                      (rate * qty + tax).toStringAsFixed(2);
+
+                  // Recalculate totals
+                  totalProductCost = 0;
+                  totalProductTax = 0;
+                  for (int i = 0; i < products.length; i++) {
+                    totalProductCost +=
+                        double.parse(products[i]["total_amount"]);
+                    totalProductTax +=
+                        double.parse(products[i]["total_tax_amount"]);
+                  }
+                  subTotal.text = totalProductCost.toString();
+                  totalTax.text = totalProductTax.toString();
+                  shippingAmt = double.parse(
+                      shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+                  totalAmount.text =
+                      (totalProductCost - discountAmt + shippingAmt).toString();
+                  totalPaidAmount.text = totalAmount.text;
+
+                  setState(() {});
+                  Navigator.pop(context);
+                },
+                child: const Text('Update')),
           ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () {
-                // Update values
-                double rate = double.tryParse(rateController.text) ?? 0;
-                double qty = double.tryParse(qtyController.text) ?? 0;
-                double tax = double.tryParse(taxController.text) ?? 0;
-
-                products[index]['product_rate'] = rate.toStringAsFixed(2);
-                products[index]['quantity'] = qty.toStringAsFixed(2);
-                products[index]['total_tax_amount'] = tax.toStringAsFixed(2);
-                products[index]['total_amount'] =
-                    (rate * qty + tax).toStringAsFixed(2);
-
-                // Recalculate totals
-                totalProductCost = 0;
-                totalProductTax = 0;
-                for (int i = 0; i < products.length; i++) {
-                  totalProductCost +=
-                      double.parse(products[i]["total_amount"]);
-                  totalProductTax +=
-                      double.parse(products[i]["total_tax_amount"]);
-                }
-                subTotal.text = totalProductCost.toString();
-                totalTax.text = totalProductTax.toString();
-                shippingAmt = double.parse(
-                    shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
-                totalAmount.text = (totalProductCost - discountAmt + shippingAmt).toString();
-                totalPaidAmount.text = totalAmount.text;
-
-                setState(() {});
-                Navigator.pop(context);
-              },
-              child: const Text('Update')),
-        ],
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
   Future<dynamic> collectedStaffDialog(BuildContext context) {
-    TextEditingController localSearchController = TextEditingController(); 
+    TextEditingController localSearchController = TextEditingController();
     return showDialog(
       context: context,
       builder: (context) {
@@ -1801,7 +1815,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                     children: [
                       GestureDetector(
                           onTap: () {
-                             localSearchController.clear();
+                            localSearchController.clear();
                             filteredStaff.clear();
                             filteredStaff.addAll(renewalDetails!.data.staff);
                             if (context.mounted) {
@@ -1814,7 +1828,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: TextField(
-                       controller: localSearchController,
+                      controller: localSearchController,
                       autocorrect: false,
                       keyboardType: TextInputType.visiblePassword,
                       autofocus: true,

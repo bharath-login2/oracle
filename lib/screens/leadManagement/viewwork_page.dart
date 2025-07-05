@@ -361,7 +361,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
       //         child: const Icon(Icons.add, color: Colors.white),
       //       ),
 
-      floatingActionButton: userId != null && widget.staffId == userId
+      floatingActionButton:
+      ((widget.staffId != "")
+          ? (userId != null && widget.staffId == userId)
+          : (userId != null))
           ? (existingWork != null
               ? StreamBuilder<DateTime>(
                   stream: Stream.periodic(

@@ -52,7 +52,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
       final String yearMonth =
           "${currentMonth.year.toString().padLeft(4, '0')}-${currentMonth.month.toString().padLeft(2, '0')}";
       final AttendanceDataModel? result =
-          await HttpService.getAttendanceData(widget.staffId, yearMonth);
+          await HttpService.getAttendanceData(widget.staffId, yearMonth, monthYear: '');
       if (result != null) {
         Map<DateTime, Map<String, String>> parsedData = {};
         for (var item in result.data.calendarData) {
