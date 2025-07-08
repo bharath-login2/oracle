@@ -25,6 +25,7 @@ import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
+import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
@@ -3829,6 +3830,25 @@ class _DashboardState extends State<Dashboard> {
                                                       ],
                                                     ),
                                                   ),
+                                                  // PopupMenuItem<int>(
+                                                  //   onTap: () async {
+                                                  //     Navigator.push(
+                                                  //       context,
+                                                  //       MaterialPageRoute(
+                                                  //         builder: (context) =>
+                                                  //             const PendingWorkPage(),
+                                                  //       ),
+                                                  //     );
+                                                  //   },
+                                                  //   child: const Row(
+                                                  //     children: [
+                                                  //       Icon(Icons.attach_money,
+                                                  //           size: 20),
+                                                  //       SizedBox(width: 10),
+                                                  //       Text('Pending Report'),
+                                                  //     ],
+                                                  //   ),
+                                                  // ),
                                                   adminCheckPermission ==
                                                           "false"
                                                       ? PopupMenuItem<int>(

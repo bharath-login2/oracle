@@ -802,7 +802,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                 child: DropdownButtonFormField<String>(
                                   isExpanded: true,
                                   value: tasks[taskIndex].status ?? 'New',
-                                  items: ['New', 'Pending', 'Complete']
+                                  items: ['New', 'Pending', 'Completed']
                                       .map((status) => DropdownMenuItem(
                                             value: status,
                                             child: Text(
@@ -813,7 +813,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                           ))
                                       .toList(),
                                   selectedItemBuilder: (context) {
-                                    return ['New', 'Pending', 'Complete']
+                                    return ['New', 'Pending', 'Completed']
                                         .map((status) {
                                       return Text(
                                         status,

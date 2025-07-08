@@ -28,9 +28,11 @@ import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
+import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryListModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
+import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
@@ -6344,9 +6346,56 @@ static Future<SalaryDetailsModel?> getSalaryDetails(String id) async {
   }
 }
 
+static Future<StaffSummaryReport?> pendingStaffWorks({String? date}) async {
+  final token = await Common.getSharedPref('token');
+  debugPrint("📤 Sending token: $token, date: $date");
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}staffwise_pending_works",
+      data: FormData.fromMap({
+        "token": token,
+        if (date != null) "date": date,
+      }),
+    );
+
+    debugPrint("📥 Raw response: ${response.data}");
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return StaffSummaryReport.fromJson(response.data);
+    } else {
+      debugPrint("❌ API error or status false: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    debugPrint("🔥 Exception in pendingStaffWorks: $e");
+    return null;
+  }
+}
 
 
 
+static Future<ProjectPendingReport?> pendingProjectWorks({String? date}) async {
+  final token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}projectwise_pending",
+      data: FormData.fromMap({
+        "token": token,
+        if (date != null) "date": date,
+      }),
+    );
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return ProjectPendingReport.fromJson(response.data);
+    } else {
+      debugPrint("❌ Project Pending Error: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    debugPrint("🔥 Exception in pendingProjectWorks: $e");
+    return null;
+  }
+}
 
 
 

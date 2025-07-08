@@ -5,6 +5,7 @@ import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
+import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import '../../models/lead_management/workDetailsCompanyModel.dart';
@@ -166,8 +167,14 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const AddProjectPage(), 
+                        builder: (context) => const AddProjectPage(),
+                      ),
+                    );
+                  } else if (value == 'pending_works') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PendingWorkPage(),
                       ),
                     );
                   }
@@ -180,6 +187,10 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                   const PopupMenuItem<String>(
                     value: 'add_project',
                     child: Text('Add Project'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'pending_works',
+                    child: Text('Pending Works'),
                   ),
                 ],
               ),
