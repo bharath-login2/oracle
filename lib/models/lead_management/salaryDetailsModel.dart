@@ -2,7 +2,6 @@
 //
 //     final salaryDetailsModel = salaryDetailsModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 SalaryDetailsModel salaryDetailsModelFromJson(String str) => SalaryDetailsModel.fromJson(json.decode(str));

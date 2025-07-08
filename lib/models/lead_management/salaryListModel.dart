@@ -2,7 +2,6 @@
 //
 //     final salaryList = salaryListFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 SalaryList salaryListFromJson(String str) =>

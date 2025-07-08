@@ -2,7 +2,6 @@
 //
 //     final projectPendingReport = projectPendingReportFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ProjectPendingReport projectPendingReportFromJson(String str) =>

@@ -139,7 +139,7 @@ Future<void> fetchStaffWork() async {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        subtitle!,
+                        subtitle,
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ),
@@ -251,10 +251,10 @@ Future<void> fetchStaffWork() async {
                           ),
                       ],
                     );
-                  }).toList()
+                  })
                 ],
               );
-            }).toList(),
+            }),
           ],
         );
       },
@@ -335,7 +335,7 @@ Future<void> fetchStaffWork() async {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             );
           }).toList(),

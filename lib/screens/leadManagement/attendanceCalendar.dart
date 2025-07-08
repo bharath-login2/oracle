@@ -25,7 +25,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   List<LeaveItem> _leaveList = [];
   CalendarDataAllModel? CalendarDetails;
   List<DailyItem> _dailyList = [];
-  bool _showHolidays = true;
+  final bool _showHolidays = true;
 
   @override
   void initState() {
@@ -749,11 +749,11 @@ class LegendDot extends StatelessWidget {
   final IconData? icon;
 
   const LegendDot({
-    Key? key,
+    super.key,
     required this.color,
     required this.label,
     this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
