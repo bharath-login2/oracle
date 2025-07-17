@@ -6,17 +6,17 @@ import 'package:login2/core/common.dart';
 
 class Config {
   static getUrl() async {
-    // String? url = await Common.getSharedPref("url");
-    // log("SharedPref URL = $url");
+    String? url = await Common.getSharedPref("url");
+    log("SharedPref URL = $url");
      String baseUrl;
-    // String? api = '/v1_1_7/Api/';
-    // if (url != null) {
-    //  baseUrl = url.toString() + api;
+    String? api = '/v1_1_7/Api/';
+    if (url != null) {
+     baseUrl = url.toString() + api;
 
-      baseUrl = 'https://phonetech.login2.co.in/index.php/v1_1_5/Api/';
-  //  } else {
-  //    baseUrl = '';
-  //  }
+    //  baseUrl = 'https://phonetech.login2.co.in/index.php/v1_1_5/Api/';
+   } else {
+     baseUrl = '';
+   }
     return baseUrl;
   }
 

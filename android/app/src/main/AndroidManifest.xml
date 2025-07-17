@@ -21,7 +21,7 @@
 
 
     <application
-        android:label="Phone Tech"
+        android:label="Login2 Pro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true" 

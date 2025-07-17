@@ -103,10 +103,10 @@ class _LoginState extends State<Login> {
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
         }
-        //  else if (serverChoose == false) {
-        //   Common.toastMessaage('Choose a Server', Colors.red);
-        //   openPopupMenu();
-        // } 
+         else if (serverChoose == false) {
+          Common.toastMessaage('Choose a Server', Colors.red);
+          openPopupMenu();
+        } 
         else {
           setState(() {
             _loading = true;
@@ -492,60 +492,60 @@ class _LoginState extends State<Login> {
                                   //         ),
                                   //       ],
                                   //     )),
-                                    //  Container(
-                                    //         child: Align(
-                                    //           child: updatedata!.data!.server!
-                                    //                       .length >
-                                    //                   1
-                                    //               ? PopupMenuButton(
-                                    //                   key: popupMenuKey,
-                                    //                   child: const Text(
-                                    //                     "Select Server",
-                                    //                     style: TextStyle(
-                                    //                       fontWeight:
-                                    //                           FontWeight.bold,
-                                    //                       color: Colors.blue,
-                                    //                     ),
-                                    //                   ),
-                                    //                   itemBuilder: (context) {
-                                    //                     return updatedata!
-                                    //                         .data!.server!
-                                    //                         .map((data) {
-                                    //                       return PopupMenuItem<
-                                    //                           String>(
-                                    //                         value: data.url,
-                                    //                         child: Row(
-                                    //                           mainAxisAlignment:
-                                    //                               MainAxisAlignment
-                                    //                                   .spaceBetween,
-                                    //                           children: [
-                                    //                             Text(data.name
-                                    //                                 .toString()),
-                                    //                             if (selectedUrl ==
-                                    //                                 data.url)
-                                    //                               const Icon(
-                                    //                                 Icons
-                                    //                                     .check_circle,
-                                    //                                 color: Colors
-                                    //                                     .green,
-                                    //                                 size: 20,
-                                    //                               )
-                                    //                           ],
-                                    //                         ),
-                                    //                       );
-                                    //                     }).toList();
-                                    //                   },
-                                    //                   onSelected: (value) {
-                                    //                     Common.saveSharedPref(
-                                    //                         "url", value);
-                                    //                     selectedUrl = value;
-                                    //                     serverChoose = true;
-                                    //                     setState(() {});
-                                    //                   },
-                                    //                 )
-                                    //               : const SizedBox(),
-                                    //         ),
-                                    //       ),
+                                     Container(
+                                            child: Align(
+                                              child: updatedata!.data!.server!
+                                                          .length >
+                                                      1
+                                                  ? PopupMenuButton(
+                                                      key: popupMenuKey,
+                                                      child: const Text(
+                                                        "Select Server",
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.blue,
+                                                        ),
+                                                      ),
+                                                      itemBuilder: (context) {
+                                                        return updatedata!
+                                                            .data!.server!
+                                                            .map((data) {
+                                                          return PopupMenuItem<
+                                                              String>(
+                                                            value: data.url,
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Text(data.name
+                                                                    .toString()),
+                                                                if (selectedUrl ==
+                                                                    data.url)
+                                                                  const Icon(
+                                                                    Icons
+                                                                        .check_circle,
+                                                                    color: Colors
+                                                                        .green,
+                                                                    size: 20,
+                                                                  )
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }).toList();
+                                                      },
+                                                      onSelected: (value) {
+                                                        Common.saveSharedPref(
+                                                            "url", value);
+                                                        selectedUrl = value;
+                                                        serverChoose = true;
+                                                        setState(() {});
+                                                      },
+                                                    )
+                                                  : const SizedBox(),
+                                            ),
+                                          ),
                                        const SizedBox(
                                     height: 10,
                                   ),
