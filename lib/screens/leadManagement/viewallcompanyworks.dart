@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/leadManagement/AddProjectPage.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
+import 'package:login2/screens/leadManagement/assignWorkPage.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
@@ -177,6 +179,30 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                         builder: (context) => const PendingWorkPage(),
                       ),
                     );
+                  } else if (value == 'assign_works') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AssignWorkPage(
+                          // existingWork: '',
+                          onSuccess: () {
+                            setState(() {
+                              getWorkDuration(currentDate);
+                              checkExistingWorkStatus();
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  }else if (value == 'assign_report') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AssignReport(
+                          workId: "",
+                        ),
+                      ),
+                    );
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -191,6 +217,14 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                   const PopupMenuItem<String>(
                     value: 'pending_works',
                     child: Text('Pending Works'),
+                  ),
+                   const PopupMenuItem<String>(
+                    value: 'assign_works',
+                    child: Text('Assign Works'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'assign_report',
+                    child: Text('Assigned Report'),
                   ),
                 ],
               ),
@@ -224,6 +258,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     final paused = await showDialog(
                       context: context,
                       builder: (context) => AddWorkPage(
+                          workId: "",
                         existingWork: newExistingWork,
                         onSuccess: () {
                           setState(() {
@@ -275,6 +310,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddWorkPage(
+                          workId: "",
                         existingWork: newExistingWork,
                         onSuccess: () {
                           setState(() {

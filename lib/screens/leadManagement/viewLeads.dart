@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
@@ -826,8 +827,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                               // String url =
                                               //     'tel:+${items[index].contactNumber1}';
                                               // await launchUrl(Uri.parse(url));
-                                              Common.dialPad(
-                                                  items[index].contactNumber1);
+                                              // Common.dialPad(
+                                              //     items[index].contactNumber1);
+                                                   await FlutterPhoneDirectCaller.callNumber( items[index].contactNumber1);
                                             }
                                           }
                                         }
@@ -1706,7 +1708,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                   //     'tel:+${items[index].contactNumber1}';
                                   // await launchUrl(
                                   //     Uri.parse(url));
-                                  Common.dialPad(items[index].contactNumber1);
+                                 // Common.dialPad(items[index].contactNumber1);
+                                  await FlutterPhoneDirectCaller.callNumber(
+                                      items[index].contactNumber1);
                                 }
                               }
                             },
@@ -3329,7 +3333,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    Common.dialPad(items[index].contactNumber1);
+                   // Common.dialPad(items[index].contactNumber1);
+                    await FlutterPhoneDirectCaller.callNumber(items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

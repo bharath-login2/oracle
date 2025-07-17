@@ -10,6 +10,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -700,9 +701,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       if (widget.cloudCall == true) {
                                         chooseCallDialog(context);
                                       } else {
-                                        Common.dialPad(leadDetails!
-                                            .data!.contactNumber1
-                                            .toString());
+                                        // Common.dialPad(leadDetails!
+                                        //     .data!.contactNumber1
+                                        //     .toString());
+                                        await FlutterPhoneDirectCaller.callNumber(
+                                            leadDetails!.data!.contactNumber1
+                                                .toString());
                                       }
                                     }
                                   } else {
@@ -1292,9 +1296,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                  if (cloudCall.trim().toLowerCase() == "true") {
                                                     chooseCallDialog(context);
                                                   } else {
-                                                    Common.dialPad(leadDetails!
-                                                        .data!.contactNumber1
-                                                        .toString());
+                                                    // Common.dialPad(leadDetails!
+                                                    //     .data!.contactNumber1
+                                                    //     .toString());
+                                                    await FlutterPhoneDirectCaller.callNumber(
+                                                        leadDetails!.data!
+                                                            .contactNumber1
+                                                            .toString());
                                                   }
                                                 }
                                               },
@@ -7568,8 +7576,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);
-                    Common.dialPad(
-                        leadDetails!.data!.contactNumber1.toString());
+                    // Common.dialPad(
+                    //     leadDetails!.data!.contactNumber1.toString());
+                         await FlutterPhoneDirectCaller.callNumber( leadDetails!.data!.contactNumber1.toString());
                   },
                   child: SizedBox(
                       height: 50,

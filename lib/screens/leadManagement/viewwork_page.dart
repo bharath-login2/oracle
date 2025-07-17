@@ -396,6 +396,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         final paused = await showDialog(
                           context: context,
                           builder: (context) => AddWorkPage(
+                              workId: "",
                             existingWork: newExistingWork,
                             onSuccess: () {
                               setState(() {
@@ -447,6 +448,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => AddWorkPage(
+                            workId: "",
                             existingWork: newExistingWork,
                             onSuccess: () {
                               setState(() {
@@ -968,6 +970,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         MaterialPageRoute(
                                                                           builder: (context) =>
                                                                               AddWorkPage(
+                                                                                  workId: "",
                                                                             existingWork:
                                                                                 newExistingWork,
                                                                             isPaused:
@@ -1066,6 +1069,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         MaterialPageRoute(
                                                                           builder: (context) =>
                                                                               AddWorkPage(
+                                                                                  workId: "",
                                                                             existingWork:
                                                                                 newExistingWork,
                                                                             isPaused:
@@ -1738,10 +1742,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
         return Colors.green;
       case 'pending':
         return Colors.orange;
-      case 'new':
+      case 'To Do':
         return Colors.blue;
       default:
-        return Colors.grey;
+        return const Color.fromARGB(255, 42, 188, 251);
     }
   }
 

@@ -13,6 +13,7 @@ import 'package:login2/screens/accounts/expense/expense_categories.dart';
 import 'package:login2/screens/accounts/expense/expense_history.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/expenseListFilterWidget.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../renewal_mannagement/renewal_list.dart';
 
@@ -67,9 +68,22 @@ class _ExpenseListState extends State<ExpenseList> {
   String selectedHeadId = "";
   TextEditingController search = TextEditingController();
   bool _isDetailedView = true;
+  Map<String, dynamic> currentFilters = {};
+  bool get isFiltered => currentFilters.isNotEmpty;
   @override
   void initState() {
     super.initState();
+    if (widget.fdate != null && widget.tdate != null) {
+      currentFilters['created_from'] = widget.fdate;
+      currentFilters['created_to'] = widget.tdate;
+      fDate = widget.fdate!;
+      tDate = widget.tdate!;
+    }
+    if (widget.catId != null) {
+      currentFilters['category_ids'] = [widget.catId!];
+      categoryId = widget.catId!;
+      categoryName = widget.catName ?? "Tap to select";
+    }
     getData();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
   }
@@ -77,8 +91,6 @@ class _ExpenseListState extends State<ExpenseList> {
   getData() async {
     categoryId = widget.catId ?? "";
     categoryName = widget.catName ?? "Tap to select";
-
-
 
     if (widget.fdate != null && widget.tdate != null) {
       fDate = widget.fdate!;
@@ -97,7 +109,6 @@ class _ExpenseListState extends State<ExpenseList> {
     }
     getList();
     getDetails();
-     
   }
 
   void _onLoadMore() {
@@ -109,9 +120,115 @@ class _ExpenseListState extends State<ExpenseList> {
     }
   }
 
+  void _clearFilters() {
+    setState(() {
+      currentFilters.clear();
+      fDate = "Tap to select";
+      tDate = "Tap to select";
+      categoryId = "";
+      categoryName = "Tap to select";
+      headId = "";
+      headName = "Tap to select";
+      staffId = "";
+      staffName = "Tap to select";
+      search.clear();
+      page = 1;
+      items.clear();
+    });
+    getList();
+  }
+
+  void _showFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: ExpenseListFilterWidget(
+                  pageId: 2,
+                  initialFilters: currentFilters, 
+                  onApplyFilters: (filters) {
+                    setState(() {
+                      currentFilters = Map.from(filters);
+                      if (filters['created_from'] != null) {
+                        fDate = DateFormat('dd-MM-yyyy')
+                            .format(DateTime.parse(filters['created_from']));
+                      } else {
+                        fDate = "Tap to select";
+                      }
+
+                      if (filters['created_to'] != null) {
+                        tDate = DateFormat('dd-MM-yyyy')
+                            .format(DateTime.parse(filters['created_to']));
+                      } else {
+                        tDate = "Tap to select";
+                      }
+
+                      if (filters['category_ids']?.isNotEmpty ?? false) {
+                        categoryId = filters['category_ids'].first;
+                        var category = categories.firstWhere(
+                          (c) => c.expCatId == categoryId,
+                          orElse: () => ExpenseType(
+                              expCatId: "", expCatName: "Tap to select"),
+                        );
+                        categoryName = category.expCatName;
+                      } else {
+                        categoryId = "";
+                        categoryName = "Tap to select";
+                      }
+
+                      page = 1;
+                      items.clear();
+                    });
+                    getList();
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // getList() async {
+  //   expenseList = await HttpService.expenseList(
+  //       fDate, tDate, page, pageSize, categoryId,headId, staffId, search.text);
+  //   if (expenseList != null && expenseList!.status == true) {
+  //     items.addAll(expenseList!.data.lists);
+  //     page++;
+  //     setState(() {});
+  //   } else {
+  //     setState(() {});
+  //   }
+  // }
+
   getList() async {
+    List<String> categoryIds = currentFilters['category_ids'] ?? [];
+    List<String> fromHeadIds = currentFilters['from_account_head_ids'] ?? [];
+    List<String> toHeadIds = currentFilters['to_account_head_ids'] ?? [];
+    List<String> staffIds = currentFilters['created_by_ids'] ?? [];
+    String? fDate = currentFilters['created_from'];
+    String? tDate = currentFilters['created_to'];
+    String categoryId = categoryIds.join(',');
+    String headId = [...fromHeadIds, ...toHeadIds].join(',');
+    String staffId = staffIds.join(',');
     expenseList = await HttpService.expenseList(
-        fDate, tDate, page, pageSize, categoryId,headId, staffId, search.text);
+      fDate ?? '',
+      tDate ?? '',
+      page,
+      pageSize,
+      categoryId,
+      headId,
+      staffId,
+      search.text,
+    );
     if (expenseList != null && expenseList!.status == true) {
       items.addAll(expenseList!.data.lists);
       page++;
@@ -137,9 +254,6 @@ class _ExpenseListState extends State<ExpenseList> {
       setState(() {});
     }
   }
-
-
- 
 
   deleteExpense(String expId) async {
     deleteResponse = await HttpService.deleteExpense(expId);
@@ -229,26 +343,34 @@ class _ExpenseListState extends State<ExpenseList> {
                             },
                           ),
                           const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              filtrationSheet(context);
-                            },
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                color: const Color(0xFFd5f5f4),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Center(
-                                child: Image.asset(
-                                  "assets/icons/filter.png",
-                                  width: 18,
-                                ),
-                              ),
+                          // GestureDetector(
+                          //   onTap: () {
+                          //     filtrationSheet(context);
+                          //   },
+                          //   child: Container(
+                          //     width: 28,
+                          //     height: 28,
+                          //     decoration: BoxDecoration(
+                          //       border: Border.all(color: Colors.grey),
+                          //       color: const Color(0xFFd5f5f4),
+                          //       borderRadius: BorderRadius.circular(5),
+                          //     ),
+                          //     child: Center(
+                          //       child: Image.asset(
+                          //         "assets/icons/filter.png",
+                          //         width: 18,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.filter_alt,
+                              color: Colors.white,
                             ),
+                            onPressed: _showFilters,
                           ),
+
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert,
                                 color: Colors.white),
@@ -301,481 +423,635 @@ class _ExpenseListState extends State<ExpenseList> {
                 ),
               ),
             ),
-            body: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).size.height * .06,
-                  ),
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      add = 1;
-                      page = 1;
-                      items.clear();
-                      getList();
-                    },
-                    child: ScrollablePositionedList.builder(
-                        shrinkWrap: true,
-                        itemScrollController: itemScrollController,
-                        itemPositionsListener: itemPositionsListener,
-                        itemCount: items.length +
-                            (items.length + 20 == page * pageSize ? 1 : 0),
-                        initialScrollIndex: 0,
-                        itemBuilder: (context, index) {
-                          if (index == items.length) {
-                            return buildLoaderListItem();
-                          } else {
-                            if (_isDetailedView) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 4.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ExpenseHistory(
-                                          expId: items[index].cmpnyExId,
-                                           fromAccPerson: items[index].fromAccountPerson,
-                                            toAccPerson: items[index].toAccountPerson,
-                                               data: items[index]
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * .9,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          blurRadius: 0.95,
-                                          color: Colors.black12,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Container(
-                                            width: 30,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  if (isFiltered ||
+                      widget.fdate != null ||
+                      widget.tdate != null ||
+                      widget.catId != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      color: Colors.orange.shade50,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.filter_alt,
+                              size: 16, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Filters applied',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _clearFilters,
+                            child: const Text(
+                              'Clear all',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      // const SizedBox(height: 8),
+                      // Padding(
+                      //   padding: const EdgeInsets.only(left: 15),
+                      //   child: Align(
+                      //     alignment: Alignment.centerLeft,
+                      //     child: FractionallySizedBox(
+                      //       widthFactor: 0.94,
+                      //       child: TextFormField(
+                      //         controller: search,
+                      //         onChanged: (val) {
+                      //           // Debounce the search to avoid too many API calls
+                      //           Future.delayed(const Duration(milliseconds: 500), () {
+                      //             if (search.text == val) {
+                      //               setState(() {
+                      //                 page = 1;
+                      //                 items.clear();
+                      //                 getList();
+                      //               });
+                      //             }
+                      //           });
+                      //         },
+                      //         decoration: InputDecoration(
+                      //           hintText:
+                      //               'Search by Expense Name',
+                      //           hintStyle: const TextStyle(color: Colors.grey),
+                      //           prefixIcon:
+                      //               const Icon(Icons.search, color: Colors.grey),
+                      //           contentPadding: const EdgeInsets.symmetric(
+                      //               vertical: 10, horizontal: 12),
+                      //           filled: true,
+                      //           fillColor: Colors.white,
+                      //           border: OutlineInputBorder(
+                      //             borderRadius: BorderRadius.circular(5),
+                      //             borderSide: BorderSide(color: Colors.grey.shade300),
+                      //           ),
+                      //           enabledBorder: OutlineInputBorder(
+                      //             borderRadius: BorderRadius.circular(5),
+                      //             borderSide: BorderSide(color: Colors.grey.shade300),
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).size.height * .06,
+                        ),
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            add = 1;
+                            page = 1;
+                            items.clear();
+                            getList();
+                          },
+                          child: ScrollablePositionedList.builder(
+                              shrinkWrap: true,
+                              itemScrollController: itemScrollController,
+                              itemPositionsListener: itemPositionsListener,
+                              itemCount: items.length +
+                                  (items.length + 20 == page * pageSize
+                                      ? 1
+                                      : 0),
+                              initialScrollIndex: 0,
+                              itemBuilder: (context, index) {
+                                if (index == items.length) {
+                                  return buildLoaderListItem();
+                                } else {
+                                  if (_isDetailedView) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0, vertical: 4.0),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpenseHistory(
+                                                      expId: items[index]
+                                                          .cmpnyExId,
+                                                      fromAccPerson: items[
+                                                              index]
+                                                          .fromAccountPerson,
+                                                      toAccPerson: items[index]
+                                                          .toAccountPerson,
+                                                      data: items[index]),
                                             ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              (index + 1).toString(),
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  items[index].expCatName,
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Column(
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                      Icons.currency_rupee,
-                                                      size: 16),
-                                                  Text(
-                                                    " ${items[index].amount}",
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  GestureDetector(
-                                                    onTap: () async {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              EditExpense(
-                                                            data: items[index],
-                                                          ),
-                                                        ),
-                                                      ).then((_) {
-                                                        page = 1;
-                                                        add = 1;
-                                                        items.clear();
-                                                        getList();
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              4),
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(4),
-                                                        color: Colors.blue,
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.edit,
-                                                        color: Colors.white,
-                                                        size: 16,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  GestureDetector(
-                                                    onTap: () async {
-                                                      deleteDialog(
-                                                          context,
-                                                          items[index]
-                                                              .cmpnyExId);
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              4),
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(4),
-                                                        color: Colors.red,
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.delete,
-                                                        color: Colors.white,
-                                                        size: 16,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                          );
+                                        },
+                                        child: Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              .9,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            boxShadow: const [
+                                              BoxShadow(
+                                                blurRadius: 0.95,
+                                                color: Colors.black12,
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: 8.0,
-                                    top: 8.0,
-                                    left: 8.0,
-                                    right: 8.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ExpenseHistory(
-                                           expId: items[index].cmpnyExId,
-                                           fromAccPerson: items[index].fromAccountPerson,
-                                            toAccPerson: items[index].toAccountPerson,
-                                            data: items[index]
-                                          ),
-                                        ));
-                                  },
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * .9,
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            blurRadius: 0.95,
-                                            color: Colors.black12,
-                                          )
-                                        ],
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          CircleAvatar(
-                                              radius: 15,
-                                              backgroundColor: Colors.blue,
-                                              foregroundColor: Colors.white,
-                                              child: Text(
-                                                (index + 1).toString(),
-                                                style: const TextStyle(),
-                                              )),
-                                          SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                .6,
-                                            child: Column(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                                  CrossAxisAlignment.center,
                                               children: [
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .7,
-                                                  child: Text(
-                                                    items[index].expCatName,
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold),
+                                                Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            15),
                                                   ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .7,
+                                                  alignment: Alignment.center,
                                                   child: Text(
-                                                    "Created by: ${items[index].staffName}",
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                    (index + 1).toString(),
                                                     style: const TextStyle(
-                                                        fontSize: 14),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                Text(
-                                                  "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .5,
-                                                  child: Text(
-                                                    "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
-                                                    style: const TextStyle(
-                                                        fontSize: 14),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .5,
-                                                  child: Text(
-                                                    "Remarks: ${items[index].remarks}",
-                                                    style: const TextStyle(
-                                                        fontSize: 14),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.currency_rupee,
-                                                      size: 20,
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              .45,
-                                                      child: Text(
-                                                        " ${items[index].amount} /-",
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        items[index].expCatName,
+                                                        style: const TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        maxLines: 1,
                                                         overflow: TextOverflow
                                                             .ellipsis,
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
                                                         style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Column(
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                            Icons
+                                                                .currency_rupee,
+                                                            size: 16),
+                                                        Text(
+                                                          " ${items[index].amount}",
+                                                          style:
+                                                              const TextStyle(
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            fontSize: 20),
-                                                      ),
+                                                            fontSize: 16,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Row(
+                                                      children: [
+                                                        GestureDetector(
+                                                          onTap: () async {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        EditExpense(
+                                                                  data: items[
+                                                                      index],
+                                                                ),
+                                                              ),
+                                                            ).then((_) {
+                                                              page = 1;
+                                                              add = 1;
+                                                              items.clear();
+                                                              getList();
+                                                            });
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(4),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          4),
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.edit,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 16,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        GestureDetector(
+                                                          onTap: () async {
+                                                            deleteDialog(
+                                                                context,
+                                                                items[index]
+                                                                    .cmpnyExId);
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(4),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          4),
+                                                              color: Colors.red,
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.delete,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 16,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            EditExpense(
-                                                          data: items[index],
-                                                        ),
-                                                      )).then((_) {
-                                                    page = 1;
-                                                    add = 1;
-                                                    items.clear();
-                                                    getList();
-                                                  });
-                                                },
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2),
-                                                      color: Colors.blue),
-                                                  child: const Padding(
-                                                    padding:
-                                                        EdgeInsets.all(5.0),
-                                                    child: Icon(Icons.edit,
-                                                        color: Colors.white),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  deleteDialog(context,
-                                                      items[index].cmpnyExId);
-                                                },
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2),
-                                                      color: Colors.red),
-                                                  child: const Padding(
-                                                    padding:
-                                                        EdgeInsets.all(5.0),
-                                                    child: Icon(Icons.delete,
-                                                        color: Colors.white),
-                                                  ),
-                                                ),
-                                              ),
-                                              // const SizedBox(
-                                              //   height: 10,
-                                              // ),
-                                              // GestureDetector(
-                                              //   onTap: () async {
-                                              //     Navigator.push(
-                                              //         context,
-                                              //         MaterialPageRoute(
-                                              //           builder: (context) =>
-                                              //               ExpenseHistory(
-                                              //             expId: items[index]
-                                              //                 .cmpnyExId,
-                                              //           ),
-                                              //         ));
-                                              //   },
-                                              //   child: Container(
-                                              //     decoration: BoxDecoration(
-                                              //         borderRadius:
-                                              //             BorderRadius.circular(2),
-                                              //         color: Colors.teal),
-                                              //     child: const Padding(
-                                              //       padding: EdgeInsets.all(5.0),
-                                              //       child: Icon(
-                                              //         Icons.history,
-                                              //         color: Colors.white,
-                                              //       ),
-                                              //     ),
-                                              //   ),
-                                              // ),
-                                            ],
-                                          )
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        }),
-                  ),
+                                    );
+                                  } else {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                          top: 8.0,
+                                          left: 8.0,
+                                          right: 8.0),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ExpenseHistory(
+                                                        expId: items[index]
+                                                            .cmpnyExId,
+                                                        fromAccPerson: items[
+                                                                index]
+                                                            .fromAccountPerson,
+                                                        toAccPerson: items[
+                                                                index]
+                                                            .toAccountPerson,
+                                                        data: items[index]),
+                                              ));
+                                        },
+                                        child: Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              .9,
+                                          decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  blurRadius: 0.95,
+                                                  color: Colors.black12,
+                                                )
+                                              ],
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                CircleAvatar(
+                                                    radius: 15,
+                                                    backgroundColor:
+                                                        Colors.blue,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    child: Text(
+                                                      (index + 1).toString(),
+                                                      style: const TextStyle(),
+                                                    )),
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      .6,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .7,
+                                                        child: Text(
+                                                          items[index]
+                                                              .expCatName,
+                                                          style: const TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .7,
+                                                        child: Text(
+                                                          "Created by: ${items[index].staffName}",
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      Text(
+                                                        "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 14),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .5,
+                                                        child: Text(
+                                                          "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .5,
+                                                        child: Text(
+                                                          "Remarks: ${items[index].remarks}",
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          const Icon(
+                                                            Icons
+                                                                .currency_rupee,
+                                                            size: 20,
+                                                          ),
+                                                          SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                .45,
+                                                            child: Text(
+                                                              " ${items[index].amount} /-",
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 20),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () async {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      EditExpense(
+                                                                data: items[
+                                                                    index],
+                                                              ),
+                                                            )).then((_) {
+                                                          page = 1;
+                                                          add = 1;
+                                                          items.clear();
+                                                          getList();
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        2),
+                                                            color: Colors.blue),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  5.0),
+                                                          child: Icon(
+                                                              Icons.edit,
+                                                              color:
+                                                                  Colors.white),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () async {
+                                                        deleteDialog(
+                                                            context,
+                                                            items[index]
+                                                                .cmpnyExId);
+                                                      },
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        2),
+                                                            color: Colors.red),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  5.0),
+                                                          child: Icon(
+                                                              Icons.delete,
+                                                              color:
+                                                                  Colors.white),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // const SizedBox(
+                                                    //   height: 10,
+                                                    // ),
+                                                    // GestureDetector(
+                                                    //   onTap: () async {
+                                                    //     Navigator.push(
+                                                    //         context,
+                                                    //         MaterialPageRoute(
+                                                    //           builder: (context) =>
+                                                    //               ExpenseHistory(
+                                                    //             expId: items[index]
+                                                    //                 .cmpnyExId,
+                                                    //           ),
+                                                    //         ));
+                                                    //   },
+                                                    //   child: Container(
+                                                    //     decoration: BoxDecoration(
+                                                    //         borderRadius:
+                                                    //             BorderRadius.circular(2),
+                                                    //         color: Colors.teal),
+                                                    //     child: const Padding(
+                                                    //       padding: EdgeInsets.all(5.0),
+                                                    //       child: Icon(
+                                                    //         Icons.history,
+                                                    //         color: Colors.white,
+                                                    //       ),
+                                                    //     ),
+                                                    //   ),
+                                                    // ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              }),
+                        ),
+                      ),
+                     Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+            
+              child: Container(
+                height: 50.0,
+                color: Colors.grey.shade200,
+                child: Center(
+                  child: expenseList != null
+                      ? Text(
+                          'Total Expense : ${expenseList!.data.totalAmount}',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : const SizedBox(),
                 ),
-                Container(
-                  height: 50.0,
-                  color: Colors.grey.shade200,
-                  child: Center(
-                      child: expenseList != null
-                          ? Text(
-                              'Total Expense : ${expenseList!.data.totalAmount}',
-                              style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            )
-                          : const SizedBox()),
-                )
-              ],
+              ),
+            ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             floatingActionButton: FloatingActionButton(
               backgroundColor: Colors.blue,
@@ -1337,7 +1613,7 @@ class _ExpenseListState extends State<ExpenseList> {
     );
   }
 
-Future<dynamic> accountHeadDialog(BuildContext context) {
+  Future<dynamic> accountHeadDialog(BuildContext context) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -1400,7 +1676,7 @@ Future<dynamic> accountHeadDialog(BuildContext context) {
                   onPressed: () {
                     search.clear();
                     filteredHeads.clear();
-                      filteredHeads.addAll(allAccountHeads);
+                    filteredHeads.addAll(allAccountHeads);
                     if (context.mounted) {
                       Navigator.pop(context);
                     }

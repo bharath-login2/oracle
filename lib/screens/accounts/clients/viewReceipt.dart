@@ -3,6 +3,12 @@ import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/models/clients/getInvoiceSearchData.dart';
+import 'package:login2/models/clients/invoiceListModel.dart';
+import 'package:login2/models/clients/receiptListModel.dart' hide ListElement;
+import 'package:login2/screens/accounts/clients/editRecipt.dart';
+import 'package:login2/screens/accounts/clients/viewInvoice.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -30,6 +36,25 @@ class _ViewReceiptState extends State<ViewReceipt> {
   ViewReceiptPdfModel? receiptPdf;
   bool result = true;
   ScreenshotController screenshotController = ScreenshotController();
+  List<ListElement> items = [];
+  ReceiptListModel? receiptList;
+  InvoiceListModel? invoiceList;
+  GetInvoiceSearchData? searchData;
+  String fDate = DateFormat('dd-MM-yyyy')
+      .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
+  String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  String customerId = "";
+  String staffId = "";
+  String typeId = "";
+  List<Customer> customers = [];
+  List<Customer> filteredCustomers = [];
+  List<Staff> staffs = [];
+  List<Staff> filteredStaffs = [];
+  List<Type> types = [];
+  List<Type> filteredTypes = [];
+  int page = 1;
+  int add = 1;
+  bool isSearch = false;
 
   @override
   void initState() {
@@ -55,6 +80,30 @@ class _ViewReceiptState extends State<ViewReceipt> {
     if (receiptPdf != null) {
       setState(() {});
     }
+
+    invoiceList = await HttpService.invoiceList(
+        widget.token,
+        fDate == "From Date" ? "" : fDate.toString(),
+        tDate == "To Date" ? "" : tDate.toString(),
+        customerId,
+        staffId,
+        typeId);
+    if (invoiceList != null) {
+      searchData = await HttpService.getInvoiceSearch(widget.token);
+      customers = searchData!.data.customers;
+      filteredCustomers.addAll(customers);
+      staffs = searchData!.data.staff;
+      filteredStaffs.addAll(staffs);
+      types = searchData!.data.types;
+      filteredTypes.addAll(types);
+      if (isSearch == true) {
+        isSearch = false;
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+      setState(() {});
+    }
   }
 
   // takeScreenshot() async {
@@ -75,32 +124,32 @@ class _ViewReceiptState extends State<ViewReceipt> {
   // }
 
   takeScreenshot() async {
-  try {
-    String name = 'Receipt-${widget.receiptNumber}.pdf';
+    try {
+      String name = 'Receipt-${widget.receiptNumber}.pdf';
 
-    // Capture Screenshot
-    Uint8List? screenshot = await screenshotController.capture();
+      // Capture Screenshot
+      Uint8List? screenshot = await screenshotController.capture();
 
-    final pw.Document pdf = pw.Document();
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Image(pw.MemoryImage(screenshot!));
-        },
-      ),
-    );
+      final pw.Document pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Image(pw.MemoryImage(screenshot!));
+          },
+        ),
+      );
 
-    // Save the PDF
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$name');
-    await file.writeAsBytes(await pdf.save());
+      // Save the PDF
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$name');
+      await file.writeAsBytes(await pdf.save());
 
-   XFile xfile = XFile(file.path);
-    await Share.shareXFiles([xfile], text: 'Check out this PDF!');
+      XFile xfile = XFile(file.path);
+      await Share.shareXFiles([xfile], text: 'Check out this PDF!');
     } catch (e) {
-    print("Error in takeScreenshot: $e");
+      print("Error in takeScreenshot: $e");
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -153,15 +202,45 @@ class _ViewReceiptState extends State<ViewReceipt> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () {
-                          takeScreenshot();
-                        },
-                        icon: const Icon(
-                          Icons.share,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditReceipt(
+                                    widget.token,
+                                    widget.receiptId,
+                                  ),
+                                ),
+                              ).then((_) {
+                                items.clear();
+                                page = 1;
+                                add = 1;
+                                getData();
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              takeScreenshot();
+                            },
+                            icon: const Icon(
+                              Icons.share,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -384,13 +463,47 @@ class _ViewReceiptState extends State<ViewReceipt> {
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500,
                                         )),
-                                    Text(
-                                        receiptPdf!.data!.displayInvNumber
-                                            .toString(),
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                        )),
+                                    GestureDetector(
+                                      onTap: () {
+                                        final invoice =
+                                            invoiceList?.data.lists.firstWhere(
+                                          (inv) =>
+                                              inv.invoiceNumber ==
+                                              receiptPdf
+                                                  ?.data!.displayInvNumber,
+                                        );
+
+                                        if (invoice != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ViewInvoice(
+                                                widget.token,
+                                                invoice.id,
+                                                invoice.clientId,
+                                                invoice.invoiceNumber,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    "Invoice details not found")),
+                                          );
+                                        }
+                                      },
+                                      child: Text(
+                                          receiptPdf!.data!.displayInvNumber
+                                              .toString(),
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.blueAccent,
+                                             decoration: TextDecoration.underline,
+                                          )),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -598,6 +711,38 @@ class _ViewReceiptState extends State<ViewReceipt> {
                                       ),
                                     )
                                   : const SizedBox(),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 145),
+                                child: Row(
+                                  children: [
+                                    const Text('Collected By :'),
+                                    SizedBox(
+                                      width: 20,
+                                    ),
+                                    Text(receiptPdf!.data!.CollectByName
+                                        .toString()),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 145),
+                                child: Row(
+                                  children: [
+                                    const Text('Target Group :'),
+                                    SizedBox(
+                                      width: 20,
+                                    ),
+                                    Text(receiptPdf!.data!.TargetGroup
+                                        .toString()),
+                                  ],
+                                ),
+                              ),
                               const Divider(),
                               const SizedBox(
                                 height: 5,

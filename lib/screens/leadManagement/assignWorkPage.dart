@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
@@ -16,28 +15,28 @@ import '../../service/service.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 
 class TaskForm {
-  TextEditingController controller;
+  TextEditingController controller; // Task Title
+  TextEditingController descriptionController; // Task Description (NEW)
   String? status;
   String? taskId;
   List<TextEditingController> remarksControllers;
 
   TaskForm({
     required this.controller,
+    required this.descriptionController, // NEW
     this.status,
     this.taskId,
     List<TextEditingController>? remarks,
   }) : remarksControllers = remarks ?? [TextEditingController()];
 }
 
-class AddWorkPage extends StatefulWidget {
-  final String workId;
+class AssignWorkPage extends StatefulWidget {
   final WorkStatus? existingWork;
   final Function() onSuccess;
   final int isPaused;
   final int Restart;
-  const AddWorkPage({
+  const AssignWorkPage({
     super.key,
-    required this.workId,
     this.existingWork,
     required this.onSuccess,
     this.isPaused = 0,
@@ -45,10 +44,10 @@ class AddWorkPage extends StatefulWidget {
   });
 
   @override
-  _AddWorkPageState createState() => _AddWorkPageState();
+  _AssignWorkPageState createState() => _AssignWorkPageState();
 }
 
-class _AddWorkPageState extends State<AddWorkPage> {
+class _AssignWorkPageState extends State<AssignWorkPage> {
   late TextEditingController titleController;
   late List<TaskForm> tasks;
   String? selectedProjectId;
@@ -93,7 +92,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   List<Staff> staffList = [];
   List<TaskState> allTaskStates = [];
   List<PrioState> allPriorities = [];
-  AssignedWorkStatus? assignedWorks;
+
   @override
   void initState() {
     super.initState();
@@ -103,11 +102,15 @@ class _AddWorkPageState extends State<AddWorkPage> {
     titleController = TextEditingController(
       text: widget.existingWork?.title_name ?? '',
     );
+
     _searchController.addListener(_filterProjects);
+
     tasks = widget.existingWork != null
         ? widget.existingWork!.tasks
             .map((task) => TaskForm(
                   controller: TextEditingController(text: task.taskName),
+                  descriptionController:
+                      TextEditingController(text: task.description ?? ''),
                   status: task.status,
                   taskId: task.taskId,
                   remarks: task.remarks
@@ -118,7 +121,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
         : [
             TaskForm(
               controller: TextEditingController(),
-              status: null,
+              descriptionController: TextEditingController(),
+              status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
               taskId: null,
               remarks: [TextEditingController()],
             )
@@ -139,7 +143,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
     _loadStaffs();
     _loadTaskState();
     _loadPrioState();
-    checkAssignedWorks();
   }
 
   // void _initAsync() async {
@@ -156,45 +159,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
       setState(() {
         assignedTo = userId;
       });
-    }
-  }
-
-  Future<void> checkAssignedWorks() async {
-    final AssignedWorkModel =
-        await HttpService.getAssinedWorkStatus(widget.workId);
-    setState(() {
-      if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
-        assignedWorks = AssignedWorkModel.data.first;
-        if (widget.existingWork == null) {
-          titleController.text = assignedWorks?.titleName ?? '';
-          selectedProjectId = assignedWorks?.projectId;
-          selectedProjectName = assignedWorks?.projectName;
-          selectedTitleId = assignedWorks?.title;
-          dueDate = assignedWorks?.dueDate;
-          priority = assignedWorks?.priority;
-          assignedTo = assignedWorks?.assignedTo;
-          if (selectedProjectName != null) {
-            selectedProjectController.text = selectedProjectName!;
-          }
-          if (assignedWorks?.tasks != null && assignedWorks!.tasks.isNotEmpty) {
-            tasks = assignedWorks!.tasks
-                .map((task) => TaskForm(
-                      controller: TextEditingController(text: task.taskName),
-                      status: task.status,
-                      taskId: task.taskId,
-                      remarks: task.remarks
-                          .map((remark) => TextEditingController(text: remark))
-                          .toList(),
-                    ))
-                .toList();
-          }
-        }
-      } else {
-        assignedWorks = null;
-      }
-    });
-    if (selectedProjectId != null) {
-      await _loadTitle();
     }
   }
 
@@ -308,7 +272,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
         allPriorities = response.data;
         if (priority == null && allPriorities.isNotEmpty) {
           final highPriority = allPriorities.firstWhere(
-            (p) => p.priority.toLowerCase() == 'high',
+            (p) => p.priority.toLowerCase() == 'medium',
             orElse: () => allPriorities.first,
           );
           priority = highPriority.id;
@@ -444,19 +408,41 @@ class _AddWorkPageState extends State<AddWorkPage> {
       return;
     }
 
+    final currentUserId = await Common.getSharedPref('user_id');
+    if (assignedTo != currentUserId) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Confirm Assignment'),
+          content: const Text(
+            'Are you sure you want to assign this work to another staff?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
     final workData = {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
-
-      if (widget.workId != "") 'attendance_id': widget.workId,
-      'assignedId': widget.existingWork?.assignedId,
+      'due_date':
+          dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
+      'priority': priority,
+      'assigned_to': assignedTo,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       'tasks': tasks.asMap().entries.map((entry) {
@@ -464,7 +450,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
         return {
           'task_id': task.taskId,
           'description': task.controller.text,
-          'status': task.status,
+          'task_description': task.descriptionController.text,
+          'status': (task.status != null && task.status.toString().isNotEmpty)
+              ? task.status
+              : 1,
           'remarks': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -475,296 +464,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
     try {
       final response = widget.existingWork != null
           ? await HttpService.updateWorkData(workData)
-          : await HttpService.submitWorkData(workData);
+          : await HttpService.assignWorkData(workData);
 
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.existingWork != null
                 ? 'Work stopped successfully!'
-                : 'Work started successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Operation failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _savework() async {
-    if (selectedProjectId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    final workData = {
-      'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
-      'assignedId': widget.existingWork?.assignedId,
-      'latitude': currentLatitude,
-      'longitude': currentLongitude,
-      'tasks': tasks.asMap().entries.map((entry) {
-        final task = entry.value;
-        return {
-          'task_id': task.taskId,
-          'description': task.controller.text,
-          'status': task.status,
-          'remarks': task.remarksControllers
-              .map((controller) => controller.text)
-              .where((remark) => remark.isNotEmpty)
-              .toList(),
-        };
-      }).toList(),
-    };
-    try {
-      final response = await HttpService.saveWorkData(workData);
-      if (response.status) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Work saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onSuccess();
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Failed to save work'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving work: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _pauseWork() async {
-    if (selectedProjectId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    if (_isGettingLocation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait, fetching location...'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    if (isLocationEnabled &&
-        (currentLatitude == null || currentLongitude == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available yet.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    if (selectedTitleId == null ||
-        selectedTitleId!.isEmpty ||
-        titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a title'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final workData = {
-      'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
-      'assignedId': widget.existingWork?.assignedId,
-      'latitude': currentLatitude,
-      'longitude': currentLongitude,
-      'tasks': tasks.asMap().entries.map((entry) {
-        final task = entry.value;
-        return {
-          'task_id': task.taskId,
-          'description': task.controller.text,
-          'status': task.status,
-          'remarks': task.remarksControllers
-              .map((controller) => controller.text)
-              .where((remark) => remark.isNotEmpty)
-              .toList(),
-        };
-      }).toList(),
-    };
-    try {
-      final response = await HttpService.pauseWorkData(workData);
-
-      if (response.status) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.existingWork != null
-                ? 'Work stopped successfully!'
-                : 'Work started successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Operation failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _restartWork() async {
-    if (selectedProjectId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    if (_isGettingLocation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait, fetching location...'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    if (isLocationEnabled &&
-        (currentLatitude == null || currentLongitude == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available yet.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    if (selectedTitleId == null ||
-        selectedTitleId!.isEmpty ||
-        titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a title'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final workData = {
-      'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
-      'latitude': currentLatitude,
-      'longitude': currentLongitude,
-      'tasks': tasks.asMap().entries.map((entry) {
-        final task = entry.value;
-        return {
-          'task_id': task.taskId,
-          'description': task.controller.text,
-          'status': task.status,
-          'remarks': task.remarksControllers
-              .map((controller) => controller.text)
-              .where((remark) => remark.isNotEmpty)
-              .toList(),
-        };
-      }).toList(),
-    };
-    try {
-      final response = await HttpService.restartWork(workData);
-
-      if (response.status) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.existingWork != null &&
-                    widget.isPaused != 1 &&
-                    widget.Restart != 1
-                ? 'Work stopped successfully!'
-                : widget.isPaused == 1
-                    ? 'Work Paused successfully!'
-                    : widget.Restart == 1
-                        ? 'Work Restarted successfully!'
-                        : 'Work started successfully!'),
+                : 'Work Assigned successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -799,12 +506,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
     return Scaffold(
       appBar: AppBar(
         title: widget.isPaused != 1 && widget.Restart != 1
-            ? Text(widget.existingWork != null ? 'Stop Work' : 'Start Work')
+            ? Text(widget.existingWork != null ? 'Stop Work' : 'Assign Work')
             : widget.Restart != 1
                 ? const Text('Pause Work')
-                : assignedWorks != ""
-                    ? const Text('Start Work')
-                    : const Text('Restart Work'),
+                : const Text('Restart Work'),
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
@@ -897,9 +602,150 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: TextEditingController(
+                                  text: dueDate != null
+                                      ? DateFormat('dd-MM-yyyy')
+                                          .format(dueDate!)
+                                      : '',
+                                ),
+                                readOnly: true,
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2022),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      dueDate = picked;
+                                    });
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Due Date',
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.calendar_month),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                value: priority,
+                                items: allPriorities.isNotEmpty
+                                    ? allPriorities.map((prio) {
+                                        return DropdownMenuItem(
+                                          value: prio.id,
+                                          child: Text(
+                                            prio.priority,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                        );
+                                      }).toList()
+                                    : [],
+                                onChanged: (value) => setState(() {
+                                  priority = value;
+                                }),
+                                decoration: const InputDecoration(
+                                  labelText: 'Priority',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Text(
+                              'Assigned To:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final selected =
+                                      await _showStaffSearchDialog(context);
+                                  if (selected != null) {
+                                    setState(() {
+                                      assignedTo = selected['id'];
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: const InputDecoration(
+                                    hintText: 'Select Staff',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      // Text(
+                                      //   assignedTo != null &&
+                                      //           staffList.isNotEmpty
+                                      //       ? staffList
+                                      //           .firstWhere(
+                                      //             (s) => s.id == assignedTo,
+                                      //             orElse: () => Staff(
+                                      //                 id: '',
+                                      //                 name: 'Not found'),
+                                      //           )
+                                      //           .name
+                                      //       : 'Select Staff',
+                                      //   style: const TextStyle(fontSize: 16),
+                                      // ),
+                                      Text(
+                                        assignedTo != null &&
+                                                staffList.isNotEmpty
+                                            ? staffList
+                                                .firstWhere(
+                                                  (s) =>
+                                                      s.userIdStaff ==
+                                                      assignedTo,
+                                                  orElse: () => Staff(
+                                                      id: '',
+                                                      name: 'Not found',
+                                                      userIdStaff: ''),
+                                                )
+                                                .name
+                                            : 'Select Staff',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      const Icon(Icons.arrow_drop_down),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   ...List.generate(tasks.length, (taskIndex) {
-                    final now = DateTime.now();
-                    final formattedTime = DateFormat('hh:mm a').format(now);
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
@@ -928,10 +774,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
                                   isExpanded: true,
-                                  value: tasks[taskIndex].status?.isNotEmpty ==
-                                          true
-                                      ? tasks[taskIndex].status
-                                      : (allTaskStates.isNotEmpty
+                                  value: tasks[taskIndex].status ??
+                                      (allTaskStates.isNotEmpty
                                           ? allTaskStates.first.id
                                           : null),
                                   items: allTaskStates.isNotEmpty
@@ -946,16 +790,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                                 ),
                                               ))
                                           .toList()
-                                      : [], // Empty list if no task states
-                                  selectedItemBuilder: (context) {
-                                    return allTaskStates.map((status) {
-                                      return Text(
-                                        status.status,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      );
-                                    }).toList();
-                                  },
+                                      : [],
                                   onChanged: (value) => setState(() {
                                     tasks[taskIndex].status = value;
                                   }),
@@ -967,34 +802,28 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Column(
-                                children: [
-                                  if (taskIndex != 0)
-                                    IconButton(
-                                      icon: const Icon(Icons.close,
-                                          color: Colors.red),
-                                      onPressed: () {
-                                        setState(() {
-                                          tasks.removeAt(taskIndex);
-                                        });
-                                      },
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        ' $formattedTime',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                              if (taskIndex > 0)
+                                IconButton(
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      tasks.removeAt(taskIndex);
+                                    });
+                                  },
+                                ),
                             ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: tasks[taskIndex].descriptionController,
+                            minLines: 2,
+                            maxLines: 4,
+                            decoration: const InputDecoration(
+                              labelText: 'Task Description',
+                              border: OutlineInputBorder(),
+                              alignLabelWithHint: true,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           ...List.generate(
@@ -1010,46 +839,49 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               child: Row(
                                 children: [
                                   Expanded(
-                                    child: Column(
-                                      children: [
-                                        TextField(
-                                          controller: tasks[taskIndex]
-                                              .remarksControllers[remarkIndex],
-                                          minLines: 1,
-                                          maxLines: 3,
-                                          decoration: InputDecoration(
-                                            labelText:
-                                                'Remark ${remarkIndex + 1}',
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                        ),
-                                      ],
+                                    child: TextField(
+                                      controller: tasks[taskIndex]
+                                          .remarksControllers[remarkIndex],
+                                      minLines: 1,
+                                      maxLines: 3,
+                                      decoration: InputDecoration(
+                                        labelText: 'Remark ${remarkIndex + 1}',
+                                        border: const OutlineInputBorder(),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: Icon(
-                                      remarkIndex == 0
-                                          ? Icons.add
-                                          : Icons.remove,
-                                      color: remarkIndex == 0
-                                          ? Colors.green
-                                          : Colors.red,
+                                  if (!(taskIndex == 0 && remarkIndex == 0))
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () {
+                                        if (tasks[taskIndex]
+                                                .remarksControllers
+                                                .length >
+                                            1) {
+                                          _removeRemarkField(
+                                              taskIndex, remarkIndex);
+                                        }
+                                      },
                                     ),
-                                    onPressed: () {
-                                      if (remarkIndex == 0) {
+                                  if (remarkIndex ==
+                                      tasks[taskIndex]
+                                              .remarksControllers
+                                              .length -
+                                          1)
+                                    IconButton(
+                                      icon: const Icon(Icons.add,
+                                          color: Colors.green),
+                                      onPressed: () {
                                         _addRemarkField(taskIndex);
-                                      } else {
-                                        _removeRemarkField(
-                                            taskIndex, remarkIndex);
-                                      }
-                                    },
-                                  ),
+                                      },
+                                    ),
                                 ],
                               ),
                             );
                           }),
-                          if (taskIndex == 0)
+                          if (taskIndex == tasks.length - 1)
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton.icon(
@@ -1063,9 +895,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                   setState(() {
                                     tasks.add(TaskForm(
                                       controller: TextEditingController(),
+                                      descriptionController:
+                                          TextEditingController(),
                                       status: allTaskStates.isNotEmpty
                                           ? allTaskStates.first.id
-                                          : '',
+                                          : null,
                                       taskId: null,
                                       remarks: [TextEditingController()],
                                     ));
@@ -1081,90 +915,69 @@ class _AddWorkPageState extends State<AddWorkPage> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: InkWell(
-              onTap: _isGettingLocation
-                  ? null
-                  : () async {
-                      setState(() {
-                        isLocationEnabled = !isLocationEnabled;
-                        _isGettingLocation = true;
-                      });
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          //   child: InkWell(
+          //     onTap: _isGettingLocation
+          //         ? null
+          //         : () async {
+          //             setState(() {
+          //               isLocationEnabled = !isLocationEnabled;
+          //               _isGettingLocation = true;
+          //             });
 
-                      if (isLocationEnabled) {
-                        await _getCurrentLocation();
-                      } else {
-                        currentLatitude = null;
-                        currentLongitude = null;
-                      }
+          //             if (isLocationEnabled) {
+          //               await _getCurrentLocation();
+          //             } else {
+          //               currentLatitude = null;
+          //               currentLongitude = null;
+          //             }
 
-                      setState(() {
-                        _isGettingLocation = false;
-                      });
-                    },
-              borderRadius: BorderRadius.circular(4),
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: isLocationEnabled,
-                    onChanged: _isGettingLocation
-                        ? null
-                        : (value) async {
-                            setState(() {
-                              isLocationEnabled = value ?? false;
-                              _isGettingLocation = true;
-                            });
+          //             setState(() {
+          //               _isGettingLocation = false;
+          //             });
+          //           },
+          //     borderRadius: BorderRadius.circular(4),
+          //     child: Row(
+          //       children: [
+          //         Checkbox(
+          //           value: isLocationEnabled,
+          //           onChanged: _isGettingLocation
+          //               ? null
+          //               : (value) async {
+          //                   setState(() {
+          //                     isLocationEnabled = value ?? false;
+          //                     _isGettingLocation = true;
+          //                   });
 
-                            if (isLocationEnabled) {
-                              await _getCurrentLocation();
-                            } else {
-                              currentLatitude = null;
-                              currentLongitude = null;
-                            }
+          //                   if (isLocationEnabled) {
+          //                     await _getCurrentLocation();
+          //                   } else {
+          //                     currentLatitude = null;
+          //                     currentLongitude = null;
+          //                   }
 
-                            setState(() {
-                              _isGettingLocation = false;
-                            });
-                          },
-                  ),
-                  const Text(
-                    'Update Location',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  if (_isGettingLocation) ...[
-                    const SizedBox(width: 8),
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          widget.existingWork != null &&
-                  widget.isPaused != 1 &&
-                  widget.Restart != 1
-              ? Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.existingWork != null
-                          ? Colors.green
-                          : Colors.green,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    onPressed: _savework,
-                    child: Text(
-                      widget.existingWork != null ? 'SAVE WORK' : '',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                )
-              : const SizedBox(),
+          //                   setState(() {
+          //                     _isGettingLocation = false;
+          //                   });
+          //                 },
+          //         ),
+          //         const Text(
+          //           'Update Location',
+          //           style: TextStyle(fontSize: 16),
+          //         ),
+          //         if (_isGettingLocation) ...[
+          //           const SizedBox(width: 8),
+          //           const SizedBox(
+          //             width: 16,
+          //             height: 16,
+          //             child: CircularProgressIndicator(strokeWidth: 2),
+          //           ),
+          //         ],
+          //       ],
+          //     ),
+          //   ),
+          // ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
@@ -1176,32 +989,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
               ),
-              onPressed: widget.isPaused == 1 && widget.Restart != 1
-                  ? _pauseWork
-                  : widget.Restart == 1
-                      ? _restartWork
-                      : _submitWork,
-              child: widget.isPaused == 1
-                  ? const Text(
-                      "Pause Work",
-                      style: TextStyle(fontSize: 16),
-                    )
-                  : widget.Restart == 1
-                      ? const Text(
-                          "Restart Work",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          widget.existingWork != null
-                              ? 'STOP WORK'
-                              : 'START WORK',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
+              onPressed: _submitWork,
+              child: Text(
+                widget.existingWork != null ? 'STOP WORK' : 'ASSIGN WORK',
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
         ],
@@ -1531,76 +1325,20 @@ class _AddWorkPageState extends State<AddWorkPage> {
     );
   }
 
-  // Add this method to your _AddWorkPageState class
-  // Future<Map<String, String>?> _showStaffSearchDialog(
-  //     BuildContext context) async {
-  //   TextEditingController searchController = TextEditingController();
-  //   List<Staff> filteredStaff = List.from(staffList);
-
-  //   return showDialog<Map<String, String>>(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return AlertDialog(
-  //             title: const Text('Select Staff'),
-  //             content: SizedBox(
-  //               width: double.maxFinite,
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   TextField(
-  //                     controller: searchController,
-  //                     decoration: const InputDecoration(
-  //                       labelText: 'Search Staff',
-  //                       prefixIcon: Icon(Icons.search),
-  //                     ),
-  //                     onChanged: (value) {
-  //                       setState(() {
-  //                         filteredStaff = staffList
-  //                             .where((staff) => staff.name
-  //                                 .toLowerCase()
-  //                                 .contains(value.toLowerCase()))
-  //                             .toList();
-  //                       });
-  //                     },
-  //                   ),
-  //                   const SizedBox(height: 16),
-  //                   Expanded(
-  //                     child: ListView.builder(
-  //                       shrinkWrap: true,
-  //                       itemCount: filteredStaff.length,
-  //                       itemBuilder: (context, index) {
-  //                         final staff = filteredStaff[index];
-  //                         return ListTile(
-  //                           title: Text(staff.name),
-  //                           onTap: () {
-  //                             Navigator.pop(context, {
-  //                               'id': staff.id,
-  //                               'name': staff.name,
-  //                             });
-  //                           },
-  //                         );
-  //                       },
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
   Future<Map<String, String>?> _showStaffSearchDialog(
       BuildContext context) async {
     TextEditingController searchController = TextEditingController();
+    FocusNode focusNode = FocusNode();
     List<Staff> filteredStaff = List.from(staffList);
 
     return showDialog<Map<String, String>>(
       context: context,
       builder: (context) {
+        // Delay focus request until after build
+        Future.delayed(Duration(milliseconds: 100), () {
+          FocusScope.of(context).requestFocus(focusNode);
+        });
+
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
@@ -1612,6 +1350,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   children: [
                     TextField(
                       controller: searchController,
+                      focusNode: focusNode,
                       decoration: const InputDecoration(
                         labelText: 'Search Staff',
                         prefixIcon: Icon(Icons.search),
@@ -1637,8 +1376,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             title: Text(staff.name),
                             onTap: () {
                               Navigator.pop(context, {
-                                'id': staff
-                                    .userIdStaff, // Use userIdStaff instead of id
+                                'id': staff.userIdStaff,
                                 'name': staff.name,
                               });
                             },

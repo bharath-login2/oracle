@@ -37,33 +37,31 @@ class _AddProjectPageState extends State<AddProjectPage> {
     });
   }
 
-  Future<void> loadInitialData() async {
-    setState(() {
-      isLoading = true;
-      hasError = false;
-    });
-    try {
-      final projectResponse = await HttpService.getProjectsLists();
-      final customerResponse = await HttpService.getCustomers();
-
-      if (customerResponse != null && customerResponse.status) {
-        customers = customerResponse.data;
-        filteredCustomers = [...customers];
-      }
-
-      if (projectResponse != null) {
-        projects = projectResponse.data;
-        filteredProjects = List.from(projects);
-      }
-      setState(() => isLoading = false);
-    } catch (e) {
-      log("loadInitialData error: $e");
-      setState(() {
-        hasError = true;
-        isLoading = false;
-      });
+ Future<void> loadInitialData() async {
+  setState(() {
+    isLoading = true;
+    hasError = false;
+  });
+  try {
+    final projectResponse = await HttpService.getProjectsLists();
+    final customerResponse = await HttpService.getCustomers();
+    if (customerResponse != null && customerResponse.status) {
+      customers = customerResponse.data;
+      filteredCustomers = List.from(customers); 
     }
+    if (projectResponse != null) {
+      projects = projectResponse.data;
+      filteredProjects = List.from(projects);
+    }
+    setState(() => isLoading = false);
+  } catch (e) {
+    log("loadInitialData error: $e");
+    setState(() {
+      hasError = true;
+      isLoading = false;
+    });
   }
+}
 
   void filterProjects(String query) {
     final lowerQuery = query.toLowerCase();
@@ -75,10 +73,14 @@ class _AddProjectPageState extends State<AddProjectPage> {
   }
 
   void filterCustomers(String query) {
+    if (customers.isEmpty) return;
     final lower = query.toLowerCase();
     setState(() {
-      filteredCustomers =
-          customers.where((c) => c.name.toLowerCase().contains(lower)).toList();
+      filteredCustomers = query.isEmpty
+          ? List.from(customers)
+          : customers
+              .where((c) => c.name.toLowerCase().contains(lower))
+              .toList();
     });
   }
 
@@ -98,6 +100,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            if (filteredCustomers.isEmpty && customers.isNotEmpty) {
+              filteredCustomers = List.from(customers);
+            }
             return AlertDialog(
               scrollable: true,
               title: Column(
@@ -106,9 +111,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
+                        onTap: () => Navigator.pop(context),
                         child: const Icon(Icons.close),
                       ),
                     ],
@@ -117,9 +120,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: TextField(
                       autofocus: true,
-                      onChanged: (value) => filterCustomers(value),
+                      onChanged: filterCustomers,
                       decoration: const InputDecoration(
-                        labelText: 'Search...',
+                        labelText: 'Search',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -129,21 +132,26 @@ class _AddProjectPageState extends State<AddProjectPage> {
               content: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.4,
                 width: MediaQuery.of(context).size.width * 0.8,
-                child: ListView.builder(
-                  itemCount: filteredCustomers.length,
-                  itemBuilder: (context, index) {
-                    final customer = filteredCustomers[index];
-                    return ListTile(
-                      title: Text(customer.name),
-                      onTap: () {
-                        Navigator.pop(context, {
-                          'id': customer.id,
-                          'name': customer.name,
-                        });
-                      },
-                    );
-                  },
-                ),
+                child: filteredCustomers.isEmpty
+                    ? const Center(child: Text("No customers found"))
+                    : ListView.builder(
+                        itemCount: filteredCustomers.length,
+                        itemBuilder: (context, index) {
+                          if (index >= filteredCustomers.length) {
+                            return const SizedBox(); 
+                          }
+                          final customer = filteredCustomers[index];
+                          return ListTile(
+                            title: Text(customer.name),
+                            onTap: () {
+                              Navigator.pop(context, {
+                                'id': customer.id,
+                                'name': customer.name,
+                              });
+                            },
+                          );
+                        },
+                      ),
               ),
             );
           },

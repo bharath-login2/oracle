@@ -5,6 +5,7 @@ import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
 import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
+import 'package:login2/widgets/receiptListFilterWidget.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../../core/common.dart';
@@ -41,18 +42,39 @@ class _ReceiptListState extends State<ReceiptList> {
   int pageSize = 15;
   bool _isDetailedView = true;
   String headName = "Select Head";
+  bool get isFiltered =>
+      currentFilters.isNotEmpty ||
+      (!_ignoreWidgetDates && (widget.fdate != null || widget.tdate != null));
+  bool _ignoreWidgetDates = false;
   String headId = "";
   List<AccountHead> allAccountHeads = [];
   List<AccountHead> filteredHeads = [];
+  Map<String, dynamic> currentFilters = {};
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
+  bool _useInitialDates = true;
   @override
   void initState() {
     super.initState();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
+    type = widget.type ?? "0";
+    if (widget.fdate != null && widget.tdate != null) {
+      try {
+        final fromDate = DateFormat('dd-MM-yyyy').parse(widget.fdate!);
+        final toDate = DateFormat('dd-MM-yyyy').parse(widget.tdate!);
+        fDate = widget.fdate!;
+        tDate = widget.tdate!;
+        currentFilters['created_from'] = fromDate.toIso8601String();
+        currentFilters['created_to'] = toDate.toIso8601String();
+      } catch (e) {
+        print("Error parsing initial dates: $e");
+      }
+    }
+
     getData();
     getDetails();
+    getList();
   }
 
   void _onLoadMore() {
@@ -63,6 +85,103 @@ class _ReceiptListState extends State<ReceiptList> {
       getList();
       add++;
     }
+  }
+
+  void _initializeFilters(Map<String, dynamic>? filters) {
+    if (filters == null) return;
+    setState(() {
+      currentFilters = Map.from(filters);
+      if (filters['created_from'] != null) {
+        try {
+          final date = DateFormat('dd-MM-yyyy').parse(filters['created_from']);
+          fDate = DateFormat('dd-MM-yyyy').format(date);
+          currentFilters['created_from'] = date.toIso8601String();
+        } catch (e) {
+          print("Error parsing date: $e");
+        }
+      }
+      if (filters['created_to'] != null) {
+        try {
+          final date = DateFormat('dd-MM-yyyy').parse(filters['created_to']);
+          tDate = DateFormat('dd-MM-yyyy').format(date);
+          currentFilters['created_to'] = date.toIso8601String();
+        } catch (e) {
+          print("Error parsing date: $e");
+        }
+      }
+    });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      currentFilters.clear();
+      fDate = "From Date";
+      tDate = "To Date";
+      headId = "";
+      headName = "Select Head";
+      search.clear();
+      page = 1;
+      items.clear();
+      _ignoreWidgetDates = true;
+    });
+    getList();
+  }
+
+  void _showFilters() {
+    setState(() {
+      _ignoreWidgetDates = true;
+    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // final initialFilters = {
+            //   'created_from': widget.fdate,
+            //   'created_to': widget.tdate,
+            //   ...currentFilters,
+            // };
+            final initialFilters = {
+              if (!_ignoreWidgetDates) 'created_from': widget.fdate,
+              if (!_ignoreWidgetDates) 'created_to': widget.tdate,
+              ...currentFilters,
+            };
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: ReceiptListFilterWidget(
+                  pageId: 2,
+                  initialFilters: initialFilters,
+                  onApplyFilters: (filters) {
+                    setState(() {
+                      currentFilters = Map.from(filters);
+                      if (filters['created_from'] != null) {
+                        fDate = DateFormat('dd-MM-yyyy')
+                            .format(DateTime.parse(filters['created_from']));
+                      } else {
+                        fDate = "From Date";
+                      }
+                      if (filters['created_to'] != null) {
+                        tDate = DateFormat('dd-MM-yyyy')
+                            .format(DateTime.parse(filters['created_to']));
+                      } else {
+                        tDate = "To Date";
+                      }
+                      page = 1;
+                      items.clear();
+                    });
+                    getList();
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   getDetails() async {
@@ -97,14 +216,74 @@ class _ReceiptListState extends State<ReceiptList> {
   }
 
   getList() async {
-    receiptList = await HttpService.receptList(widget.token, fDate.toString(),
-        tDate.toString(), page, pageSize,headId, search.text, type);
-    if (receiptList != null) {
-      items.addAll(receiptList!.data.lists);
-      page++;
+    String? fDateFilter;
+    String? tDateFilter;
+
+    if (!_ignoreWidgetDates) {
+      fDateFilter = currentFilters['created_from'] ?? widget.fdate;
+      tDateFilter = currentFilters['created_to'] ?? widget.tdate;
+    } else {
+      fDateFilter = currentFilters['created_from'];
+      tDateFilter = currentFilters['created_to'];
     }
-    setState(() {});
+
+    List<String>? headIds = currentFilters['account_head_ids'];
+    String headId =
+        headIds != null && headIds.isNotEmpty ? headIds.join(',') : '';
+    try {
+      ReceiptListModel? newData = await HttpService.receptList(widget.token,
+          fDateFilter, tDateFilter, page, pageSize, headId, search.text, type);
+      if (newData != null) {
+        setState(() {
+          if (page == 1) {
+            items = newData.data.lists;
+          } else {
+            items.addAll(newData.data.lists);
+          }
+          receiptList = newData;
+        });
+      }
+    } catch (e) {
+      print("Error loading data: $e");
+    }
   }
+
+  // getList() async {
+  //   String? fDateFilter = currentFilters['created_from'];
+  //   String? tDateFilter = currentFilters['created_to'];
+  //   List<String>? headIds = currentFilters['account_head_ids'];
+  //   if (fDateFilter == null && widget.fdate != null) {
+  //     fDateFilter = widget.fdate;
+  //   }
+  //   if (tDateFilter == null && widget.tdate != null) {
+  //     tDateFilter = widget.tdate;
+  //   }
+  //   String headId =
+  //       headIds != null && headIds.isNotEmpty ? headIds.join(',') : '';
+  //   try {
+  //     ReceiptListModel? newData = await HttpService.receptList(
+  //         widget.token,
+  //         fDateFilter ?? "From Date",
+  //         tDateFilter ?? "To Date",
+  //         page,
+  //         pageSize,
+  //         headId,
+  //         search.text,
+  //         type);
+  //     if (newData != null) {
+  //       setState(() {
+  //         if (page == 1) {
+  //           items = newData.data.lists;
+  //         } else {
+  //           items.addAll(newData.data.lists);
+  //         }
+  //         receiptList = newData;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("Error loading data: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -157,16 +336,30 @@ class _ReceiptListState extends State<ReceiptList> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        icon: Icon(
-                          _isDetailedView ? Icons.list : Icons.filter_list,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isDetailedView = !_isDetailedView;
-                          });
-                        },
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.filter_alt,
+                              color: Colors.white,
+                            ),
+                            onPressed: _showFilters,
+                          ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              _isDetailedView ? Icons.list : Icons.filter_list,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isDetailedView = !_isDetailedView;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -174,1233 +367,517 @@ class _ReceiptListState extends State<ReceiptList> {
               ),
             ),
             body: receiptList != null
-                ? Stack(
-                    alignment: Alignment.bottomCenter,
+                ? Column(
                     children: [
-                      Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                /// 📅 From & To Date Row
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    /// From Date Picker
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          final selected = await showDatePicker(
-                                            context: context,
-                                            initialDate: DateTime(
-                                                DateTime.now().year,
-                                                DateTime.now().month,
-                                                1),
-                                            firstDate: DateTime(2000),
-                                            lastDate: DateTime.now(),
-                                          );
-                                          if (selected != null) {
-                                            fDate = DateFormat('dd-MM-yyyy')
-                                                .format(selected);
-                                            setState(() {});
-                                          }
-                                        },
-                                        child: Container(
-                                          height: 45,
-                                          margin:
-                                              const EdgeInsets.only(right: 8),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                            border: Border.all(
-                                                color: Colors.grey.shade400),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                fDate,
-                                                style: const TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                              const Icon(Icons.calendar_month,
-                                                  color: Colors.grey),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    /// To Date Picker
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          final selected = await showDatePicker(
-                                            context: context,
-                                            initialDate: DateTime.now(),
-                                            firstDate: DateTime(2000),
-                                            lastDate: DateTime(2100),
-                                          );
-                                          if (selected != null) {
-                                            tDate = DateFormat('dd-MM-yyyy')
-                                                .format(selected);
-                                            setState(() {});
-                                          }
-                                        },
-                                        child: Container(
-                                          height: 45,
-                                          margin:
-                                              const EdgeInsets.only(left: 8),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                            border: Border.all(
-                                                color: Colors.grey.shade400),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                tDate,
-                                                style: const TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                              const Icon(Icons.calendar_month,
-                                                  color: Colors.grey),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                      if (isFiltered)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          color: Colors.orange.shade50,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.filter_alt,
+                                  size: 16, color: Colors.orange),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Filters applied',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
                                 ),
-
-                                const SizedBox(height: 16),
-
-                                /// 🔍 Search + Account Head + Submit Button
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    /// Search Field
-                                    Expanded(
-                                      flex: 4,
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _clearFilters,
+                                child: const Text(
+                                  'Clear all',
+                                  style: TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Expanded(
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: 0.94,
                                       child: TextFormField(
                                         controller: search,
-                                        style: const TextStyle(
-                                            color: Colors.black),
-                                        decoration: InputDecoration(
-                                          hintText: 'Search',
-                                          hintStyle: const TextStyle(
-                                              color: Colors.grey),
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          contentPadding:
-                                              const EdgeInsets.all(10),
-                                          prefixIcon: const Icon(Icons.search,
-                                              color: Colors.grey),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 12),
-
-                                    /// Account Head Selector
-                                    Expanded(
-                                      flex: 4,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                    
-                                          GestureDetector(
-                                            onTap: () async {
-                                              await accountHeadDialog(context);
-                                              setState(() {});
-                                            },
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 12),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                              
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      headName.isNotEmpty
-                                                          ? headName
-                                                          : "Select Account Head",
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                          fontSize: 14),
-                                                    ),
-                                                  ),
-                                                  const Icon(
-                                                      Icons.arrow_drop_down,
-                                                      color: Colors.grey),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 12),
-
-                                    /// Submit Button
-                                    Expanded(
-                                      flex: 3,
-                                      child: InkWell(
-                                        onTap: () {
+                                        onChanged: (val) {
                                           setState(() {
-                                            items.clear();
                                             page = 1;
-                                            add = 1;
+                                            items.clear();
                                             getList();
                                           });
                                         },
-                                        child: Container(
-                                          height: 45,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xff2590cf),
+                                        style: const TextStyle(
+                                            color: Colors.black),
+                                        decoration: InputDecoration(
+                                          hintText: 'Search by Customer Name',
+                                          hintStyle: const TextStyle(
+                                              color: Colors.grey),
+                                          prefixIcon: const Icon(Icons.search,
+                                              color: Colors.grey),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10, horizontal: 12),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(5),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey.shade300),
                                           ),
-                                          child: const Center(
-                                            child: Text(
-                                              "Submit",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: BorderSide(
+                                                color: Colors.grey.shade300),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 12, right: 12, top: 5, bottom: 15),
-                            child: receiptList!.data.lists.isNotEmpty
-                                ? SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        .66,
-                                    child: ScrollablePositionedList.builder(
-                                      shrinkWrap: true,
-                                      itemScrollController:
-                                          itemScrollController,
-                                      itemPositionsListener:
-                                          itemPositionsListener,
-                                      itemCount: items.length +
-                                          (items.length + 15 == page * pageSize
-                                              ? 1
-                                              : 0),
-                                      initialScrollIndex: 0,
-                                      itemBuilder: (context, index) {
-                                        if (index == items.length) {
-                                          return buildLoaderListItem();
-                                        } else {
-                                          // return Padding(
-                                          //   padding: const EdgeInsets.only(
-                                          //       bottom: 10),
-                                          //   child: Container(
-                                          //     decoration: BoxDecoration(
-                                          //         boxShadow: [
-                                          //           BoxShadow(
-                                          //             color: Colors.grey
-                                          //                 .withOpacity(0.2),
-                                          //             spreadRadius: 1,
-                                          //             blurRadius: 1,
-                                          //             offset:
-                                          //                 const Offset(1, 1),
-                                          //           )
-                                          //         ],
-                                          //         borderRadius:
-                                          //             BorderRadius.circular(5),
-                                          //         color: Colors.white),
-                                          //     child: Padding(
-                                          //       padding:
-                                          //           const EdgeInsets.all(14.0),
-                                          //       child: Column(
-                                          //         crossAxisAlignment:
-                                          //             CrossAxisAlignment.start,
-                                          //         children: [
-                                          //           Row(
-                                          //             mainAxisAlignment:
-                                          //                 MainAxisAlignment
-                                          //                     .spaceBetween,
-                                          //             children: [
-                                          //               SizedBox(
-                                          //                 width: MediaQuery.of(
-                                          //                             context)
-                                          //                         .size
-                                          //                         .width *
-                                          //                     0.6,
-                                          //                 child: InkWell(
-                                          //                   onTap: () {
-                                          //                     Navigator.push(
-                                          //                       context,
-                                          //                       MaterialPageRoute(
-                                          //                           builder: (context) => ClientDetails(
-                                          //                               widget
-                                          //                                   .token,
-                                          //                               items[index]
-                                          //                                   .clientId
-                                          //                                   .toString())),
-                                          //                     ).then((_) {
-                                          //                       items.clear();
-                                          //                       page = 1;
-                                          //                       add = 1;
-                                          //                       getData();
-                                          //                     });
-                                          //                   },
-                                          //                   child: Text(
-                                          //                       items[index]
-                                          //                           .customerName
-                                          //                           .toString(),
-                                          //                       overflow:
-                                          //                           TextOverflow
-                                          //                               .ellipsis,
-                                          //                       style:
-                                          //                           const TextStyle(
-                                          //                         fontSize: 16,
-                                          //                         fontWeight:
-                                          //                             FontWeight
-                                          //                                 .w600,
-                                          //                       )),
-                                          //                 ),
-                                          //               ),
-                                          //               Container(
-                                          //                 decoration: BoxDecoration(
-                                          //                     borderRadius:
-                                          //                         BorderRadius
-                                          //                             .circular(
-                                          //                                 2),
-                                          //                     color: const Color(
-                                          //                         0xffe6fbec)),
-                                          //                 child: Center(
-                                          //                   child: Padding(
-                                          //                     padding:
-                                          //                         const EdgeInsets
-                                          //                             .only(
-                                          //                             left: 12,
-                                          //                             right: 12,
-                                          //                             top: 6,
-                                          //                             bottom:
-                                          //                                 6),
-                                          //                     child: Text(
-                                          //                         items[index]
-                                          //                             .recieptAmount
-                                          //                             .toString(),
-                                          //                         style:
-                                          //                             const TextStyle(
-                                          //                           color: Colors
-                                          //                               .green,
-                                          //                           fontSize:
-                                          //                               14,
-                                          //                           fontWeight:
-                                          //                               FontWeight
-                                          //                                   .w600,
-                                          //                         )),
-                                          //                   ),
-                                          //                 ),
-                                          //               )
-                                          //             ],
-                                          //           ),
-                                          //           const SizedBox(
-                                          //             height: 5,
-                                          //           ),
-                                          //           // Row(
-                                          //           //   mainAxisAlignment:
-                                          //           //       MainAxisAlignment
-                                          //           //           .spaceBetween,
-                                          //           //   children: [
-                                          //           //     SizedBox(
-                                          //           //       width: MediaQuery.of(
-                                          //           //                   context)
-                                          //           //               .size
-                                          //           //               .width *
-                                          //           //           0.6,
-                                          //           //       child: Text(
-                                          //           //         "Receipt No : ${items[index].receiptNumber}",
-                                          //           //         overflow:
-                                          //           //             TextOverflow
-                                          //           //                 .ellipsis,
-                                          //           //         style:
-                                          //           //             const TextStyle(
-                                          //           //           fontSize: 14,
-                                          //           //           fontWeight:
-                                          //           //               FontWeight
-                                          //           //                   .w400,
-                                          //           //         ),
-                                          //           //       ),
-                                          //           //     ),
-                                          //           //   ],
-                                          //           // ),
-                                          //           // SizedBox(
-                                          //           //   width:
-                                          //           //       MediaQuery.of(context)
-                                          //           //               .size
-                                          //           //               .width *
-                                          //           //           0.6,
-                                          //           //   child: SizedBox(
-                                          //           //     width: MediaQuery.of(
-                                          //           //                 context)
-                                          //           //             .size
-                                          //           //             .width *
-                                          //           //         0.41,
-                                          //           //     child: Text(
-                                          //           //       "Invoice No : ${items[index].invoiceNumber}",
-                                          //           //       overflow: TextOverflow
-                                          //           //           .ellipsis,
-                                          //           //       style:
-                                          //           //           const TextStyle(
-                                          //           //         fontSize: 14,
-                                          //           //         fontWeight:
-                                          //           //             FontWeight.w400,
-                                          //           //       ),
-                                          //           //     ),
-                                          //           //   ),
-                                          //           // ),
-                                          //           // const SizedBox(
-                                          //           //   height: 5,
-                                          //           // ),
-                                          //           Row(
-                                          //             mainAxisAlignment:
-                                          //                 MainAxisAlignment
-                                          //                     .start,
-                                          //             children: [
-                                          //               const Icon(
-                                          //                 Icons.calendar_month,
-                                          //                 color: Colors.grey,
-                                          //                 size: 20,
-                                          //               ),
-                                          //               const SizedBox(
-                                          //                 width: 8,
-                                          //               ),
-                                          //               Row(
-                                          //                 mainAxisAlignment:
-                                          //                     MainAxisAlignment
-                                          //                         .spaceBetween,
-                                          //                 children: [
-                                          //                   SizedBox(
-                                          //                     width: MediaQuery.of(
-                                          //                                 context)
-                                          //                             .size
-                                          //                             .width *
-                                          //                         0.6,
-                                          //                     child: Text(
-                                          //                         items[index]
-                                          //                             .receiptDate,
-                                          //                         maxLines: 1,
-                                          //                         overflow:
-                                          //                             TextOverflow
-                                          //                                 .ellipsis,
-                                          //                         style:
-                                          //                             const TextStyle(
-                                          //                           fontSize:
-                                          //                               14,
-                                          //                           fontWeight:
-                                          //                               FontWeight
-                                          //                                   .w400,
-                                          //                         )),
-                                          //                   ),
-                                          //                 ],
-                                          //               ),
-                                          //               Transform.translate(
-                                          //                 offset: Offset(-35,
-                                          //                     0), // move 8 pixels left
-                                          //                 child: Row(
-                                          //                   children: [
-                                          //                     SizedBox(
-                                          //                       width: MediaQuery.of(
-                                          //                                   context)
-                                          //                               .size
-                                          //                               .width *
-                                          //                           0.6,
-                                          //                       child: Text(
-                                          //                         items[index]
-                                          //                             .collectedStaff,
-                                          //                         maxLines: 1,
-                                          //                         overflow:
-                                          //                             TextOverflow
-                                          //                                 .ellipsis,
-                                          //                         style:
-                                          //                             const TextStyle(
-                                          //                           fontSize:
-                                          //                               11,
-                                          //                           fontWeight:
-                                          //                               FontWeight
-                                          //                                   .w400,
-                                          //                         ),
-                                          //                       ),
-                                          //                     ),
-                                          //                   ],
-                                          //                 ),
-                                          //               )
-                                          //             ],
-                                          //           ),
-                                          //           const SizedBox(
-                                          //             height: 8,
-                                          //           ),
-                                          //           Row(
-                                          //             mainAxisAlignment:
-                                          //                 MainAxisAlignment
-                                          //                     .spaceBetween,
-                                          //             children: [
-                                          //               Row(
-                                          //                 children: [
-                                          //                   Column(
-                                          //                     crossAxisAlignment:
-                                          //                         CrossAxisAlignment
-                                          //                             .start,
-                                          //                     children: [
-                                          //                       const SizedBox(
-                                          //                         height: 5,
-                                          //                       ),
-                                          //                       // Row(
-                                          //                       //   children: [
-                                          //                       //     const Icon(
-                                          //                       //       Icons
-                                          //                       //           .calendar_month,
-                                          //                       //       color: Colors
-                                          //                       //           .grey,
-                                          //                       //       size: 20,
-                                          //                       //     ),
-                                          //                       //     const SizedBox(
-                                          //                       //       width: 8,
-                                          //                       //     ),
-                                          //                       //     Text(
-                                          //                       //         items[index]
-                                          //                       //             .receiptDate
-                                          //                       //             .toString(),
-                                          //                       //         maxLines:
-                                          //                       //             2,
-                                          //                       //         overflow:
-                                          //                       //             TextOverflow
-                                          //                       //                 .ellipsis,
-                                          //                       //         style:
-                                          //                       //             const TextStyle(
-                                          //                       //           fontSize:
-                                          //                       //               14,
-                                          //                       //           fontWeight:
-                                          //                       //               FontWeight.w400,
-                                          //                       //         )),
-                                          //                       //   ],
-                                          //                       // ),
-                                          //                     ],
-                                          //                   ),
-                                          //                 ],
-                                          //               ),
-                                          //               Row(
-                                          //                 children: [
-                                          //                   InkWell(
-                                          //                     onTap: () {
-                                          //                       Navigator.push(
-                                          //                         context,
-                                          //                         MaterialPageRoute(
-                                          //                             builder: (context) => ViewReceipt(
-                                          //                                 widget
-                                          //                                     .token,
-                                          //                                 items[index]
-                                          //                                     .id
-                                          //                                     .toString(),
-                                          //                                 items[index]
-                                          //                                     .clientId
-                                          //                                     .toString(),
-                                          //                                 items[index]
-                                          //                                     .receiptNumber
-                                          //                                     .toString())),
-                                          //                       );
-                                          //                     },
-                                          //                     child: Container(
-                                          //                       decoration: BoxDecoration(
-                                          //                           borderRadius:
-                                          //                               BorderRadius
-                                          //                                   .circular(
-                                          //                                       2),
-                                          //                           color: const Color(
-                                          //                               0xffe9d9fd)),
-                                          //                       child:
-                                          //                           const Padding(
-                                          //                         padding:
-                                          //                             EdgeInsets
-                                          //                                 .all(
-                                          //                                     8.0),
-                                          //                         child: Icon(
-                                          //                             Icons
-                                          //                                 .local_print_shop_outlined,
-                                          //                             color: Color(
-                                          //                                 0xff9747FF)),
-                                          //                       ),
-                                          //                     ),
-                                          //                   ),
-                                          //                   const SizedBox(
-                                          //                     width: 10,
-                                          //                   ),
-                                          //                   InkWell(
-                                          //                     onTap: () {
-                                          //                       Navigator.push(
-                                          //                         context,
-                                          //                         MaterialPageRoute(
-                                          //                             builder: (context) => EditReceipt(
-                                          //                                 widget
-                                          //                                     .token,
-                                          //                                 items[index]
-                                          //                                     .id
-                                          //                                     .toString())),
-                                          //                       ).then((_) {
-                                          //                         items.clear();
-                                          //                         page = 1;
-                                          //                         add = 1;
-                                          //                         getData();
-                                          //                       });
-                                          //                     },
-                                          //                     child: Container(
-                                          //                       decoration: BoxDecoration(
-                                          //                           borderRadius:
-                                          //                               BorderRadius
-                                          //                                   .circular(
-                                          //                                       2),
-                                          //                           color: const Color(
-                                          //                               0xffaedcf4)),
-                                          //                       child:
-                                          //                           const Padding(
-                                          //                         padding:
-                                          //                             EdgeInsets
-                                          //                                 .all(
-                                          //                                     8.0),
-                                          //                         child: Icon(
-                                          //                             Icons
-                                          //                                 .mode_edit_outlined,
-                                          //                             color: Colors
-                                          //                                 .blue),
-                                          //                       ),
-                                          //                     ),
-                                          //                   ),
-                                          //                   const SizedBox(
-                                          //                     width: 10,
-                                          //                   ),
-                                          //                   InkWell(
-                                          //                     onTap: () {
-                                          //                       showDialog(
-                                          //                           context:
-                                          //                               context,
-                                          //                           builder:
-                                          //                               (BuildContext
-                                          //                                   context) {
-                                          //                             return AlertDialog(
-                                          //                               scrollable:
-                                          //                                   true,
-                                          //                               title: const Text(
-                                          //                                   'Please Confirm'),
-                                          //                               content:
-                                          //                                   const Text('Are you sure to Delete?'),
-                                          //                               actions: [
-                                          //                                 TextButton(
-                                          //                                     onPressed: () {
-                                          //                                       Navigator.of(context).pop();
-                                          //                                     },
-                                          //                                     child: const Text('No')),
-                                          //                                 TextButton(
-                                          //                                     onPressed: () async {
-                                          //                                       Common.showProgressDialog(context, "Loading..");
-                                          //                                       ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
-                                          //                                       if (deleteReceipt.data == true) {
-                                          //                                         Common.toastMessaage(deleteReceipt.message, Colors.green);
-                                          //                                         if (context.mounted) {
-                                          //                                           getData();
-                                          //                                           Navigator.pop(context);
-                                          //                                           Navigator.pop(context);
-                                          //                                         }
-                                          //                                       } else {
-                                          //                                         Common.toastMessaage(deleteReceipt.message, Colors.red);
-                                          //                                         if (context.mounted) {
-                                          //                                           Navigator.of(context).pop();
-                                          //                                         }
-                                          //                                       }
-                                          //                                     },
-                                          //                                     child: const Text('Yes')),
-                                          //                               ],
-                                          //                             );
-                                          //                           });
-                                          //                     },
-                                          //                     child: Container(
-                                          //                       decoration: BoxDecoration(
-                                          //                           borderRadius:
-                                          //                               BorderRadius
-                                          //                                   .circular(
-                                          //                                       2),
-                                          //                           color: const Color(
-                                          //                               0xfffcbcbc)),
-                                          //                       child:
-                                          //                           const Padding(
-                                          //                         padding:
-                                          //                             EdgeInsets
-                                          //                                 .all(
-                                          //                                     8.0),
-                                          //                         child: Icon(
-                                          //                             Icons
-                                          //                                 .delete_outline,
-                                          //                             color: Colors
-                                          //                                 .red),
-                                          //                       ),
-                                          //                     ),
-                                          //                   ),
-                                          //                   const SizedBox(
-                                          //                     width: 10,
-                                          //                   ),
-                                          //                   items[index].uploadedFile !=
-                                          //                           ''
-                                          //                       ? InkWell(
-                                          //                           onTap: () {
-                                          //                             Navigator
-                                          //                                 .push(
-                                          //                               context,
-                                          //                               MaterialPageRoute(
-                                          //                                   builder: (context) =>
-                                          //                                       WebViewPage('image', items[index].uploadedFile.toString())),
-                                          //                             );
-                                          //                           },
-                                          //                           child:
-                                          //                               Container(
-                                          //                             decoration: BoxDecoration(
-                                          //                                 borderRadius: BorderRadius.circular(
-                                          //                                     2),
-                                          //                                 color: Colors
-                                          //                                     .green
-                                          //                                     .shade100),
-                                          //                             child:
-                                          //                                 const Padding(
-                                          //                               padding:
-                                          //                                   EdgeInsets.all(8.0),
-                                          //                               child: Icon(
-                                          //                                   Icons
-                                          //                                       .screenshot,
-                                          //                                   color:
-                                          //                                       Colors.green),
-                                          //                             ),
-                                          //                           ),
-                                          //                         )
-                                          //                       : const SizedBox()
-                                          //                 ],
-                                          //               )
-                                          //             ],
-                                          //           )
-                                          //         ],
-                                          //       ),
-                                          //     ),
-                                          //   ),
-                                          // );
-
-                                          if (_isDetailedView) {
-                                            return InkWell(
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ViewReceipt(
-                                                            widget.token,
-                                                            items[index]
-                                                                .id
-                                                                .toString(),
-                                                            items[index]
-                                                                .clientId
-                                                                .toString(),
-                                                            items[index]
-                                                                .receiptNumber
-                                                                .toString(),
-                                                          )),
-                                                );
-                                              },
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 8.0),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.grey
-                                                            .withOpacity(0.1),
-                                                        spreadRadius: 0.5,
-                                                        blurRadius: 1,
-                                                        offset:
-                                                            const Offset(1, 1),
-                                                      )
-                                                    ],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 12.0,
-                                                        vertical: 10.0),
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Expanded(
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ClientDetails(
-                                                                              widget.token,
-                                                                              items[index].clientId.toString(),
-                                                                            )),
-                                                                  ).then((_) {
-                                                                    items
-                                                                        .clear();
-                                                                    page = 1;
-                                                                    add = 1;
-                                                                    getData();
-                                                                  });
-                                                                },
-                                                                child: Text(
-                                                                  items[index]
-                                                                      .customerName
-                                                                      .toString(),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                width: 8),
-                                                            Row(children: [
-                                                              Container(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        8,
-                                                                    vertical:
-                                                                        4),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: const Color(
-                                                                      0xffe6fbec),
-                                                                ),
-                                                                child: Text(
-                                                                  items[index]
-                                                                      .recieptAmount
-                                                                      .toString(),
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    color: Colors
-                                                                        .green,
-                                                                    fontSize:
-                                                                        13,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              PopupMenuButton<
-                                                                  String>(
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .zero,
-                                                                onSelected:
-                                                                    (value) {
-                                                                  if (value ==
-                                                                      'print') {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              ViewReceipt(
-                                                                                widget.token,
-                                                                                items[index].id.toString(),
-                                                                                items[index].clientId.toString(),
-                                                                                items[index].receiptNumber.toString(),
-                                                                              )),
-                                                                    );
-                                                                  } else if (value ==
-                                                                      'edit') {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              EditReceipt(
-                                                                                widget.token,
-                                                                                items[index].id.toString(),
-                                                                              )),
-                                                                    ).then((_) {
-                                                                      items
-                                                                          .clear();
-                                                                      page = 1;
-                                                                      add = 1;
-                                                                      getData();
-                                                                    });
-                                                                  } else if (value ==
-                                                                      'delete') {
-                                                                    showDialog(
-                                                                      context:
-                                                                          context,
-                                                                      builder:
-                                                                          (BuildContext
-                                                                              context) {
-                                                                        return AlertDialog(
-                                                                          title:
-                                                                              const Text('Please Confirm'),
-                                                                          content:
-                                                                              const Text('Are you sure to Delete?'),
-                                                                          actions: [
-                                                                            TextButton(
-                                                                              onPressed: () => Navigator.pop(context),
-                                                                              child: const Text('No'),
-                                                                            ),
-                                                                            TextButton(
-                                                                              onPressed: () async {
-                                                                                Common.showProgressDialog(context, "Loading..");
-                                                                                ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
-                                                                                if (deleteReceipt.data == true) {
-                                                                                  Common.toastMessaage(deleteReceipt.message, Colors.green);
-                                                                                  if (context.mounted) {
-                                                                                    getData();
-                                                                                    Navigator.pop(context);
-                                                                                    Navigator.pop(context);
-                                                                                  }
-                                                                                } else {
-                                                                                  Common.toastMessaage(deleteReceipt.message, Colors.red);
-                                                                                  if (context.mounted) {
-                                                                                    Navigator.pop(context);
-                                                                                  }
-                                                                                }
-                                                                              },
-                                                                              child: const Text('Yes'),
-                                                                            ),
-                                                                          ],
-                                                                        );
-                                                                      },
-                                                                    );
-                                                                  }
-                                                                },
-                                                                itemBuilder:
-                                                                    (context) =>
-                                                                        [
-                                                                  const PopupMenuItem(
-                                                                      value:
-                                                                          'print',
-                                                                      child: Text(
-                                                                          'Print')),
-                                                                  const PopupMenuItem(
-                                                                      value:
-                                                                          'edit',
-                                                                      child: Text(
-                                                                          'Edit')),
-                                                                  const PopupMenuItem(
-                                                                      value:
-                                                                          'delete',
-                                                                      child: Text(
-                                                                          'Delete')),
-                                                                ],
-                                                                icon: const Icon(
-                                                                    Icons
-                                                                        .more_vert,
-                                                                    size: 18),
-                                                              ),
-                                                            ]),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 12, right: 12, top: 5, bottom: 0),
+                                  child: receiptList!.data.lists.isNotEmpty
+                                      ? SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .76,
+                                          child:
+                                              ScrollablePositionedList.builder(
+                                            padding: EdgeInsets.zero,
+                                            shrinkWrap: true,
+                                            itemScrollController:
+                                                itemScrollController,
+                                            itemPositionsListener:
+                                                itemPositionsListener,
+                                            itemCount: items.length +
+                                                (items.length + 15 ==
+                                                        page * pageSize
+                                                    ? 1
+                                                    : 0),
+                                            initialScrollIndex: 0,
+                                            itemBuilder: (context, index) {
+                                              if (index == items.length) {
+                                                return buildLoaderListItem();
+                                              } else {
+                                                if (_isDetailedView) {
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder:
+                                                                (context) =>
+                                                                    ViewReceipt(
+                                                                      widget
+                                                                          .token,
+                                                                      items[index]
+                                                                          .id
+                                                                          .toString(),
+                                                                      items[index]
+                                                                          .clientId
+                                                                          .toString(),
+                                                                      items[index]
+                                                                          .receiptNumber
+                                                                          .toString(),
+                                                                    )),
+                                                      );
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Colors.grey
+                                                                  .withOpacity(
+                                                                      0.1),
+                                                              spreadRadius: 0.5,
+                                                              blurRadius: 1,
+                                                              offset:
+                                                                  const Offset(
+                                                                      1, 1),
+                                                            )
                                                           ],
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          color: Colors.white,
                                                         ),
-                                                        const SizedBox(
-                                                            height: 6),
-                                                        Row(children: [
-                                                          const Icon(
-                                                              Icons
-                                                                  .calendar_month,
-                                                              color:
-                                                                  Colors.grey,
-                                                              size: 16),
-                                                          const SizedBox(
-                                                              width: 6),
-                                                          Text(
-                                                              items[index]
-                                                                  .receiptDate,
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 12,
-                                                                color:
-                                                                    Colors.grey,
-                                                              )),
-                                                          const Spacer(),
-                                                          Flexible(
-                                                            child: Text(
-                                                              items[index]
-                                                                  .collectedStaff,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 12,
-                                                                color:
-                                                                    Colors.grey,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      12.0,
+                                                                  vertical:
+                                                                      10.0),
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  Expanded(
+                                                                    child:
+                                                                        InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ClientDetails(
+                                                                                    widget.token,
+                                                                                    items[index].clientId.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                            (_) {
+                                                                          items
+                                                                              .clear();
+                                                                          page =
+                                                                              1;
+                                                                          add =
+                                                                              1;
+                                                                          getData();
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Text(
+                                                                        items[index]
+                                                                            .customerName
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                        style:
+                                                                            const TextStyle(
+                                                                          fontSize:
+                                                                              15,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 8),
+                                                                  Row(
+                                                                      children: [
+                                                                        Container(
+                                                                          padding: const EdgeInsets
+                                                                              .symmetric(
+                                                                              horizontal: 8,
+                                                                              vertical: 4),
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(2),
+                                                                            color:
+                                                                                const Color(0xffe6fbec),
+                                                                          ),
+                                                                          child:
+                                                                              Text(
+                                                                            items[index].recieptAmount.toString(),
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              color: Colors.green,
+                                                                              fontSize: 13,
+                                                                              fontWeight: FontWeight.w600,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        PopupMenuButton<
+                                                                            String>(
+                                                                          padding:
+                                                                              EdgeInsets.zero,
+                                                                          onSelected:
+                                                                              (value) {
+                                                                            if (value ==
+                                                                                'print') {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                    builder: (context) => ViewReceipt(
+                                                                                          widget.token,
+                                                                                          items[index].id.toString(),
+                                                                                          items[index].clientId.toString(),
+                                                                                          items[index].receiptNumber.toString(),
+                                                                                        )),
+                                                                              );
+                                                                            } else if (value ==
+                                                                                'edit') {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                    builder: (context) => EditReceipt(
+                                                                                          widget.token,
+                                                                                          items[index].id.toString(),
+                                                                                        )),
+                                                                              ).then((_) {
+                                                                                items.clear();
+                                                                                page = 1;
+                                                                                add = 1;
+                                                                                getData();
+                                                                              });
+                                                                            } else if (value ==
+                                                                                'delete') {
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                builder: (BuildContext context) {
+                                                                                  return AlertDialog(
+                                                                                    title: const Text('Please Confirm'),
+                                                                                    content: const Text('Are you sure to Delete?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                        onPressed: () => Navigator.pop(context),
+                                                                                        child: const Text('No'),
+                                                                                      ),
+                                                                                      TextButton(
+                                                                                        onPressed: () async {
+                                                                                          Common.showProgressDialog(context, "Loading..");
+                                                                                          ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                                                                          if (deleteReceipt.data == true) {
+                                                                                            Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                                                                            if (context.mounted) {
+                                                                                              getData();
+                                                                                              Navigator.pop(context);
+                                                                                              Navigator.pop(context);
+                                                                                            }
+                                                                                          } else {
+                                                                                            Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                                                                            if (context.mounted) {
+                                                                                              Navigator.pop(context);
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        child: const Text('Yes'),
+                                                                                      ),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            }
+                                                                          },
+                                                                          itemBuilder:
+                                                                              (context) => [
+                                                                            const PopupMenuItem(
+                                                                                value: 'print',
+                                                                                child: Text('Print')),
+                                                                            const PopupMenuItem(
+                                                                                value: 'edit',
+                                                                                child: Text('Edit')),
+                                                                            const PopupMenuItem(
+                                                                                value: 'delete',
+                                                                                child: Text('Delete')),
+                                                                          ],
+                                                                          icon: const Icon(
+                                                                              Icons.more_vert,
+                                                                              size: 18),
+                                                                        ),
+                                                                      ]),
+                                                                ],
                                                               ),
-                                                            ),
-                                                          ),
-                                                        ]),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                  bottom: 10),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.grey
-                                                            .withOpacity(0.2),
-                                                        spreadRadius: 1,
-                                                        blurRadius: 1,
-                                                        offset:
-                                                            const Offset(1, 1),
-                                                      )
-                                                    ],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    color: Colors.white),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(
-                                                      14.0),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.6,
-                                                            child: InkWell(
-                                                              onTap: () {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) => ClientDetails(
-                                                                          widget
-                                                                              .token,
-                                                                          items[index]
-                                                                              .clientId
-                                                                              .toString())),
-                                                                ).then((_) {
-                                                                  items.clear();
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  getData();
-                                                                });
-                                                              },
-                                                              child: Text(
-                                                                  items[index]
-                                                                      .customerName
-                                                                      .toString(),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  )),
-                                                            ),
-                                                          ),
-                                                          Container(
-                                                            decoration: BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2),
-                                                                color: const Color(
-                                                                    0xffe6fbec)),
-                                                            child: Center(
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        left:
-                                                                            12,
-                                                                        right:
-                                                                            12,
-                                                                        top: 6,
-                                                                        bottom:
-                                                                            6),
-                                                                child: Text(
+                                                              const SizedBox(
+                                                                  height: 6),
+                                                              Row(children: [
+                                                                const Icon(
+                                                                    Icons
+                                                                        .calendar_month,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    size: 16),
+                                                                const SizedBox(
+                                                                    width: 6),
+                                                                Text(
                                                                     items[index]
-                                                                        .recieptAmount
-                                                                        .toString(),
+                                                                        .receiptDate,
                                                                     style:
                                                                         const TextStyle(
-                                                                      color: Colors
-                                                                          .green,
                                                                       fontSize:
-                                                                          14,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
+                                                                          12,
+                                                                      color: Colors
+                                                                          .grey,
                                                                     )),
-                                                              ),
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      const SizedBox(height: 5),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.6,
-                                                            child: Text(
-                                                              "Receipt No : ${items[index].receiptNumber}",
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.6,
-                                                        child: SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.41,
-                                                          child: Text(
-                                                            "Invoice No : ${items[index].invoiceNumber}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 14,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                            ),
+                                                                const Spacer(),
+                                                                Flexible(
+                                                                  child: Text(
+                                                                    items[index]
+                                                                        .collectedStaff,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ]),
+                                                            ],
                                                           ),
                                                         ),
                                                       ),
-                                                      const SizedBox(height: 5),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          const Icon(
-                                                            Icons.person,
-                                                            color: Colors.grey,
-                                                            size: 20,
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 8),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.6,
-                                                                child: Text(
-                                                                    "Collected by : ${items[index].collectedStaff} ",
-                                                                    maxLines: 1,
+                                                    ),
+                                                  );
+                                                } else {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 10),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Colors.grey
+                                                                  .withOpacity(
+                                                                      0.2),
+                                                              spreadRadius: 1,
+                                                              blurRadius: 1,
+                                                              offset:
+                                                                  const Offset(
+                                                                      1, 1),
+                                                            )
+                                                          ],
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          color: Colors.white),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(14.0),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                SizedBox(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.6,
+                                                                  child:
+                                                                      InkWell(
+                                                                    onTap: () {
+                                                                      Navigator
+                                                                          .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                ClientDetails(widget.token, items[index].clientId.toString())),
+                                                                      ).then(
+                                                                          (_) {
+                                                                        items
+                                                                            .clear();
+                                                                        page =
+                                                                            1;
+                                                                        add = 1;
+                                                                        getData();
+                                                                      });
+                                                                    },
+                                                                    child: Text(
+                                                                        items[index]
+                                                                            .customerName
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow
+                                                                                .ellipsis,
+                                                                        style:
+                                                                            const TextStyle(
+                                                                          fontSize:
+                                                                              16,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        )),
+                                                                  ),
+                                                                ),
+                                                                Container(
+                                                                  decoration: BoxDecoration(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              2),
+                                                                      color: const Color(
+                                                                          0xffe6fbec)),
+                                                                  child: Center(
+                                                                    child:
+                                                                        Padding(
+                                                                      padding: const EdgeInsets.only(
+                                                                          left:
+                                                                              12,
+                                                                          right:
+                                                                              12,
+                                                                          top:
+                                                                              6,
+                                                                          bottom:
+                                                                              6),
+                                                                      child: Text(
+                                                                          items[index]
+                                                                              .recieptAmount
+                                                                              .toString(),
+                                                                          style:
+                                                                              const TextStyle(
+                                                                            color:
+                                                                                Colors.green,
+                                                                            fontSize:
+                                                                                14,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                          )),
+                                                                    ),
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 5),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                SizedBox(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.6,
+                                                                  child: Text(
+                                                                    "Receipt No : ${items[index].receiptNumber}",
                                                                     overflow:
                                                                         TextOverflow
                                                                             .ellipsis,
@@ -1411,47 +888,68 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w400,
-                                                                    )),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.6,
+                                                              child: SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.41,
+                                                                child: Text(
+                                                                  "Invoice No : ${items[index].invoiceNumber}",
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                  ),
+                                                                ),
                                                               ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(height: 8),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Row(
-                                                            children: [
-                                                              Column(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  const SizedBox(
-                                                                      height:
-                                                                          5),
-                                                                  Row(
-                                                                    children: [
-                                                                      const Icon(
-                                                                        Icons
-                                                                            .calendar_month,
-                                                                        color: Colors
-                                                                            .grey,
-                                                                        size:
-                                                                            20,
-                                                                      ),
-                                                                      const SizedBox(
-                                                                          width:
-                                                                              8),
-                                                                      Text(
-                                                                          items[index]
-                                                                              .receiptDate
-                                                                              .toString(),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 5),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                const Icon(
+                                                                  Icons.person,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  size: 20,
+                                                                ),
+                                                                const SizedBox(
+                                                                    width: 8),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    SizedBox(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.6,
+                                                                      child: Text(
+                                                                          "Collected by : ${items[index].collectedStaff} ",
                                                                           maxLines:
-                                                                              2,
+                                                                              1,
                                                                           overflow: TextOverflow
                                                                               .ellipsis,
                                                                           style:
@@ -1461,167 +959,59 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                             fontWeight:
                                                                                 FontWeight.w400,
                                                                           )),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) => ViewReceipt(
-                                                                            widget.token,
-                                                                            items[index].id.toString(),
-                                                                            items[index].clientId.toString(),
-                                                                            items[index].receiptNumber.toString())),
-                                                                  );
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              2),
-                                                                      color: const Color(
-                                                                          0xffe9d9fd)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding:
-                                                                        EdgeInsets.all(
-                                                                            8.0),
-                                                                    child: Icon(
-                                                                        Icons
-                                                                            .local_print_shop_outlined,
-                                                                        color: Color(
-                                                                            0xff9747FF)),
-                                                                  ),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ),
-                                                              const SizedBox(
-                                                                  width: 10),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) => EditReceipt(
-                                                                            widget.token,
-                                                                            items[index].id.toString())),
-                                                                  ).then((_) {
-                                                                    items
-                                                                        .clear();
-                                                                    page = 1;
-                                                                    add = 1;
-                                                                    getData();
-                                                                  });
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              2),
-                                                                      color: const Color(
-                                                                          0xffaedcf4)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding:
-                                                                        EdgeInsets.all(
-                                                                            8.0),
-                                                                    child: Icon(
-                                                                        Icons
-                                                                            .mode_edit_outlined,
-                                                                        color: Colors
-                                                                            .blue),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                  width: 10),
-                                                              InkWell(
-                                                                onTap: () {
-                                                                  showDialog(
-                                                                      context:
-                                                                          context,
-                                                                      builder:
-                                                                          (BuildContext
-                                                                              context) {
-                                                                        return AlertDialog(
-                                                                          scrollable:
-                                                                              true,
-                                                                          title:
-                                                                              const Text('Please Confirm'),
-                                                                          content:
-                                                                              const Text('Are you sure to Delete?'),
-                                                                          actions: [
-                                                                            TextButton(
-                                                                                onPressed: () {
-                                                                                  Navigator.of(context).pop();
-                                                                                },
-                                                                                child: const Text('No')),
-                                                                            TextButton(
-                                                                                onPressed: () async {
-                                                                                  Common.showProgressDialog(context, "Loading..");
-                                                                                  ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
-                                                                                  if (deleteReceipt.data == true) {
-                                                                                    Common.toastMessaage(deleteReceipt.message, Colors.green);
-                                                                                    if (context.mounted) {
-                                                                                      getData();
-                                                                                      Navigator.pop(context);
-                                                                                      Navigator.pop(context);
-                                                                                    }
-                                                                                  } else {
-                                                                                    Common.toastMessaage(deleteReceipt.message, Colors.red);
-                                                                                    if (context.mounted) {
-                                                                                      Navigator.of(context).pop();
-                                                                                    }
-                                                                                  }
-                                                                                },
-                                                                                child: const Text('Yes')),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 8),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    Column(
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .start,
+                                                                      children: [
+                                                                        const SizedBox(
+                                                                            height:
+                                                                                5),
+                                                                        Row(
+                                                                          children: [
+                                                                            const Icon(
+                                                                              Icons.calendar_month,
+                                                                              color: Colors.grey,
+                                                                              size: 20,
+                                                                            ),
+                                                                            const SizedBox(width: 8),
+                                                                            Text(items[index].receiptDate.toString(),
+                                                                                maxLines: 2,
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: const TextStyle(
+                                                                                  fontSize: 14,
+                                                                                  fontWeight: FontWeight.w400,
+                                                                                )),
                                                                           ],
-                                                                        );
-                                                                      });
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              2),
-                                                                      color: const Color(
-                                                                          0xfffcbcbc)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding:
-                                                                        EdgeInsets.all(
-                                                                            8.0),
-                                                                    child: Icon(
-                                                                        Icons
-                                                                            .delete_outline,
-                                                                        color: Colors
-                                                                            .red),
-                                                                  ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ),
-                                                              const SizedBox(
-                                                                  width: 10),
-                                                              items[index].uploadedFile !=
-                                                                      ''
-                                                                  ? InkWell(
+                                                                Row(
+                                                                  children: [
+                                                                    InkWell(
                                                                       onTap:
                                                                           () {
                                                                         Navigator
                                                                             .push(
                                                                           context,
                                                                           MaterialPageRoute(
-                                                                              builder: (context) => WebViewPage('image', items[index].uploadedFile.toString())),
+                                                                              builder: (context) => ViewReceipt(widget.token, items[index].id.toString(), items[index].clientId.toString(), items[index].receiptNumber.toString())),
                                                                         );
                                                                       },
                                                                       child:
@@ -1629,74 +1019,198 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                         decoration: BoxDecoration(
                                                                             borderRadius:
                                                                                 BorderRadius.circular(2),
-                                                                            color: Colors.green.shade100),
+                                                                            color: const Color(0xffe9d9fd)),
                                                                         child:
                                                                             const Padding(
                                                                           padding:
                                                                               EdgeInsets.all(8.0),
                                                                           child: Icon(
-                                                                              Icons.screenshot,
-                                                                              color: Colors.green),
+                                                                              Icons.local_print_shop_outlined,
+                                                                              color: Color(0xff9747FF)),
                                                                         ),
                                                                       ),
-                                                                    )
-                                                                  : const SizedBox()
-                                                            ],
-                                                          )
-                                                        ],
-                                                      )
-                                                    ],
-                                                  ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            10),
+                                                                    InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => EditReceipt(widget.token, items[index].id.toString())),
+                                                                        ).then(
+                                                                            (_) {
+                                                                          items
+                                                                              .clear();
+                                                                          page =
+                                                                              1;
+                                                                          add =
+                                                                              1;
+                                                                          getData();
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        decoration: BoxDecoration(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(2),
+                                                                            color: const Color(0xffaedcf4)),
+                                                                        child:
+                                                                            const Padding(
+                                                                          padding:
+                                                                              EdgeInsets.all(8.0),
+                                                                          child: Icon(
+                                                                              Icons.mode_edit_outlined,
+                                                                              color: Colors.blue),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            10),
+                                                                    InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        showDialog(
+                                                                            context:
+                                                                                context,
+                                                                            builder:
+                                                                                (BuildContext context) {
+                                                                              return AlertDialog(
+                                                                                scrollable: true,
+                                                                                title: const Text('Please Confirm'),
+                                                                                content: const Text('Are you sure to Delete?'),
+                                                                                actions: [
+                                                                                  TextButton(
+                                                                                      onPressed: () {
+                                                                                        Navigator.of(context).pop();
+                                                                                      },
+                                                                                      child: const Text('No')),
+                                                                                  TextButton(
+                                                                                      onPressed: () async {
+                                                                                        Common.showProgressDialog(context, "Loading..");
+                                                                                        ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                                                                        if (deleteReceipt.data == true) {
+                                                                                          Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                                                                          if (context.mounted) {
+                                                                                            getData();
+                                                                                            Navigator.pop(context);
+                                                                                            Navigator.pop(context);
+                                                                                          }
+                                                                                        } else {
+                                                                                          Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                                                                          if (context.mounted) {
+                                                                                            Navigator.of(context).pop();
+                                                                                          }
+                                                                                        }
+                                                                                      },
+                                                                                      child: const Text('Yes')),
+                                                                                ],
+                                                                              );
+                                                                            });
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        decoration: BoxDecoration(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(2),
+                                                                            color: const Color(0xfffcbcbc)),
+                                                                        child:
+                                                                            const Padding(
+                                                                          padding:
+                                                                              EdgeInsets.all(8.0),
+                                                                          child: Icon(
+                                                                              Icons.delete_outline,
+                                                                              color: Colors.red),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            10),
+                                                                    items[index].uploadedFile !=
+                                                                            ''
+                                                                        ? InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(builder: (context) => WebViewPage('image', items[index].uploadedFile.toString())),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), color: Colors.green.shade100),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(8.0),
+                                                                                child: Icon(Icons.screenshot, color: Colors.green),
+                                                                              ),
+                                                                            ),
+                                                                          )
+                                                                        : const SizedBox()
+                                                                  ],
+                                                                )
+                                                              ],
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+
+                                                  // Helper Widget for Action Buttons
+                                                }
+                                              }
+                                            },
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              SizedBox(
+                                                width: 180,
+                                                height: 180,
+                                                child: Image.asset(
+                                                  "assets/icons/nodatafound.png",
                                                 ),
                                               ),
-                                            );
-
-// Helper Widget for Action Buttons
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  )
-                                : Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                          width: 180,
-                                          height: 180,
-                                          child: Image.asset(
-                                            "assets/icons/nodatafound.png",
+                                              const Text(
+                                                'No Data Found',
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        const Text(
-                                          'No Data Found',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                          )
-                        ],
+                                )
+                              ],
+                            ),
+                            items.isNotEmpty
+                                ? Container(
+                                    height: 36.0,
+                                    color: Colors.grey.shade200,
+                                    child: Center(
+                                        child: Text(
+                                      'Total : ${receiptList!.data.receiptSum}',
+                                      style: const TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    )),
+                                  )
+                                : const SizedBox()
+                          ],
+                        ),
                       ),
-                      items.isNotEmpty
-                          ? Container(
-                              height: 50.0,
-                              color: Colors.grey.shade200,
-                              child: Center(
-                                  child: Text(
-                                'Total : ${receiptList!.data.receiptSum}',
-                                style: const TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                              )),
-                            )
-                          : const SizedBox()
                     ],
                   )
                 : Center(

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
@@ -363,9 +364,13 @@ class _DraweScreenState extends State<DraweScreen> {
                                                           (context, index) {
                                                         return ListTile(
                                                           onTap: () {
-                                                            Common.dialPad(
-                                                                supportPhone[
-                                                                    index]);
+                                                            // Common.dialPad(
+                                                            //     supportPhone[
+                                                            //         index]);
+                                                            FlutterPhoneDirectCaller
+                                                                .callNumber(
+                                                                    supportPhone[
+                                                                        index]);
                                                           },
                                                           title: Text(
                                                             supportNames[index],

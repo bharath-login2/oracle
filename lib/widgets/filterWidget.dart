@@ -1,0 +1,606 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/models/lead_management/priorityStatusModel.dart';
+import 'package:login2/models/lead_management/taskStatusModel.dart';
+import 'package:login2/models/expense/staffListModel.dart';
+import 'package:login2/service/service.dart';
+
+class FilterWidget extends StatefulWidget {
+  final Function(Map<String, dynamic>) onApplyFilters;
+  final int pageId;
+  final Map<String, dynamic>? initialFilters;
+
+  const FilterWidget({
+    super.key,
+    required this.onApplyFilters,
+    required this.pageId,
+    this.initialFilters,
+  });
+
+  @override
+  State<FilterWidget> createState() => _FilterWidgetState();
+}
+
+class _FilterWidgetState extends State<FilterWidget> {
+  String selectedCategory = 'Task status';
+  Set<String> selectedPriorityIds = {};
+  Set<String> selectedStatusIds = {};
+  Set<String> selectedAssignedByIds = {};
+  Set<String> selectedAssignedToIds = {};
+  DateTime? dueDateFrom;
+  DateTime? dueDateTo;
+  DateTime? createdFrom;
+  DateTime? createdTo;
+  List<PrioState> prioList = [];
+  List<TaskState> statusList = [];
+  List<Staff> staffList = [];
+
+  final DateFormat _formatter = DateFormat('dd-MM-yyyy');
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData().then((_) {
+      _initializeFilters();
+    });
+  }
+
+  Future<void> _loadData() async {
+    final prio = await HttpService.getPrioState();
+    final task = await HttpService.getTaskState();
+    final staff = await HttpService.getStaffs();
+
+    if (mounted) {
+      setState(() {
+        if (prio?.data != null) prioList = prio!.data;
+        if (task?.data != null) statusList = task!.data;
+        if (staff?.data != null) staffList = staff!.data;
+      });
+    }
+  }
+
+  void _initializeFilters() {
+    if (widget.initialFilters != null) {
+      setState(() {
+        selectedPriorityIds =
+            Set.from(widget.initialFilters?['priority_ids'] ?? []);
+        selectedStatusIds =
+            Set.from(widget.initialFilters?['status_ids'] ?? []);
+        selectedAssignedByIds =
+            Set.from(widget.initialFilters?['assigned_by_ids'] ?? []);
+        selectedAssignedToIds =
+            Set.from(widget.initialFilters?['assigned_to_ids'] ?? []);
+
+        if (widget.initialFilters?['due_from'] != null) {
+          dueDateFrom = DateTime.parse(widget.initialFilters?['due_from']);
+        }
+        if (widget.initialFilters?['due_to'] != null) {
+          dueDateTo = DateTime.parse(widget.initialFilters?['due_to']);
+        }
+        if (widget.initialFilters?['created_from'] != null) {
+          createdFrom = DateTime.parse(widget.initialFilters?['created_from']);
+        }
+        if (widget.initialFilters?['created_to'] != null) {
+          createdTo = DateTime.parse(widget.initialFilters?['created_to']);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 3,
+            blurRadius: 7,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filters',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E3A59),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Color(0xFF2E3A59)),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F9FC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFilterCategory(
+                          'Task status', Icons.star_outline_sharp),
+                      _buildFilterCategory('Assigned By', Icons.person),
+                      _buildFilterCategory('Assigned to', Icons.person_2),
+                      _buildFilterCategory('Due date', Icons.date_range),
+                      _buildFilterCategory('Priority', Icons.priority_high),
+                      _buildFilterCategory('Created time', Icons.date_range),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: _buildFilterOptionsPanel()),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Divider(color: Color(0xFFE4E9F2), height: 1),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // TextButton(
+              //   onPressed: _resetFilters,
+              //   child: const Text(
+              //     'Reset Filters',
+              //     style: TextStyle(
+              //       color: Color(0xFF3366FF),
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              Padding(
+                padding: const EdgeInsets.only(left:170 ),
+                child: ElevatedButton(
+                  onPressed: _applyFilters,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3366FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text(
+                    'Apply Filters',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget _buildFilterCategory(String title, IconData icon) {
+  //   final isSelected = selectedCategory == title;
+  //   return GestureDetector(
+  //     onTap: () => setState(() => selectedCategory = title),
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(vertical: 8),
+  //       decoration: BoxDecoration(
+  //         color: isSelected ? const Color(0xFFE3F2FD) : Colors.transparent,
+  //         borderRadius: BorderRadius.circular(8),
+  //       ),
+  //       child: Row(
+  //         children: [
+  //           Icon(icon, size: 18, color: const Color(0xFF3366FF)),
+  //           const SizedBox(width: 8),
+  //           Expanded(
+  //             child: Text(
+  //               title,
+  //               style: const TextStyle(
+  //                 fontSize: 14,
+  //                 color: Color(0xFF2E3A59),
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+  Widget _buildFilterCategory(String title, IconData icon) {
+    final isSelected = selectedCategory == title;
+
+    // ✅ Determine if a filter is applied for this category
+    bool isFiltered = false;
+    switch (title) {
+      case 'Priority':
+        isFiltered = selectedPriorityIds.isNotEmpty;
+        break;
+      case 'Task status':
+        isFiltered = selectedStatusIds.isNotEmpty;
+        break;
+      case 'Assigned By':
+        isFiltered = selectedAssignedByIds.isNotEmpty;
+        break;
+      case 'Assigned to':
+        isFiltered = selectedAssignedToIds.isNotEmpty;
+        break;
+      case 'Due date':
+        isFiltered = dueDateFrom != null || dueDateTo != null;
+        break;
+      case 'Created time':
+        isFiltered = createdFrom != null || createdTo != null;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () => setState(() => selectedCategory = title),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFE3F2FD) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: const Color(0xFF3366FF),
+                ),
+                if (isFiltered)
+                  const Positioned(
+                    left: 115, 
+                    top: 5,
+                    child: Icon(Icons.circle, size: 10, color: Colors.orange),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2E3A59),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterOptionsPanel() {
+    switch (selectedCategory) {
+      case 'Priority':
+        return _buildMultiSelectList(
+          items: prioList,
+          selectedIds: selectedPriorityIds,
+          displayProperty: (p) => p.priority,
+          getId: (p) => p.id,
+        );
+
+      case 'Task status':
+        return _buildMultiSelectList(
+          items: statusList,
+          selectedIds: selectedStatusIds,
+          displayProperty: (s) => s.status,
+          getId: (s) => s.id,
+        );
+
+      case 'Assigned By':
+        return _buildStaffSelectionList(
+          selectedIds: selectedAssignedByIds,
+        );
+
+      case 'Assigned to':
+        return _buildStaffSelectionList(
+          selectedIds: selectedAssignedToIds,
+        );
+
+      case 'Due date':
+        return Column(
+          children: [
+            _buildDateField(
+              "From",
+              dueDateFrom,
+              (d) => setState(() => dueDateFrom = d),
+            ),
+            _buildDateField(
+              "To",
+              dueDateTo,
+              (d) => setState(() => dueDateTo = d),
+            ),
+          ],
+        );
+
+      case 'Created time':
+        return Column(
+          children: [
+            _buildDateField(
+              "From",
+              createdFrom,
+              (d) => setState(() => createdFrom = d),
+            ),
+            _buildDateField(
+              "To",
+              createdTo,
+              (d) => setState(() => createdTo = d),
+            ),
+          ],
+        );
+
+      default:
+        return const Text("Coming soon...");
+    }
+  }
+
+  Widget _buildMultiSelectList<T>({
+    required List<T> items,
+    required Set<String> selectedIds,
+    required String Function(T) displayProperty,
+    required String Function(T) getId,
+  }) {
+    final filteredItems = items.where((item) {
+      final searchTerm = _searchController.text.toLowerCase();
+      return displayProperty(item).toLowerCase().contains(searchTerm);
+    }).toList();
+
+    return Column(
+      children: [
+        Container(
+          height: 250,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFC5CEE0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: filteredItems.length,
+            itemBuilder: (context, index) {
+              final item = filteredItems[index];
+              final id = getId(item);
+              final selected = selectedIds.contains(id);
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (selected) {
+                      selectedIds.remove(id);
+                    } else {
+                      selectedIds.add(id);
+                    }
+                  });
+                },
+                child: SizedBox(
+                  height: 40,
+                  child: ListTile(
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    contentPadding: const EdgeInsets.only(left: 4, right: 8),
+                    leading: Transform.scale(
+                      scale: 0.7,
+                      child: Checkbox(
+                        value: selected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedIds.add(id);
+                            } else {
+                              selectedIds.remove(id);
+                            }
+                          });
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    title: Text(
+                      displayProperty(item),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: selected
+                            ? const Color(0xFF3366FF)
+                            : const Color(0xFF2E3A59),
+                        fontWeight:
+                            selected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    minLeadingWidth: 12,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStaffSelectionList({
+    required Set<String> selectedIds,
+  }) {
+    final filteredStaff = staffList.where((staff) {
+      final searchTerm = _searchController.text.toLowerCase();
+      return staff.name.toLowerCase().contains(searchTerm);
+    }).toList();
+
+    return Column(
+      children: [
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search',
+            prefixIcon: const Icon(Icons.search, size: 18),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            isDense: true,
+          ),
+          onChanged: (value) => setState(() {}),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 250,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFC5CEE0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: filteredStaff.length,
+            itemBuilder: (context, index) {
+              final staff = filteredStaff[index];
+              final id = staff.userIdStaff;
+              final selected = selectedIds.contains(id);
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (selected) {
+                      selectedIds.remove(id);
+                    } else {
+                      selectedIds.add(id);
+                    }
+                  });
+                },
+                child: SizedBox(
+                  height: 40,
+                  child: ListTile(
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    contentPadding: const EdgeInsets.only(left: 4, right: 8),
+                    leading: Transform.scale(
+                      scale: 0.7,
+                      child: Checkbox(
+                        value: selected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedIds.add(id);
+                            } else {
+                              selectedIds.remove(id);
+                            }
+                          });
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    title: Text(
+                      staff.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: selected
+                            ? const Color(0xFF3366FF)
+                            : const Color(0xFF2E3A59),
+                        fontWeight:
+                            selected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    minLeadingWidth: 12,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateField(
+    String label,
+    DateTime? value,
+    Function(DateTime) onSelect,
+  ) {
+    final display = value != null ? _formatter.format(value) : 'Select';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: value ?? DateTime.now(),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) onSelect(picked);
+        },
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_month,
+                size: 20, color: Color(0xFF3366FF)),
+            const SizedBox(width: 8),
+            Text(
+              '$label: $display',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF2E3A59),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyFilters() {
+    widget.onApplyFilters({
+      'priority_ids': selectedPriorityIds.toList(),
+      'status_ids': selectedStatusIds.toList(),
+      'assigned_by_ids': selectedAssignedByIds.toList(),
+      'assigned_to_ids': selectedAssignedToIds.toList(),
+      'due_from': dueDateFrom?.toIso8601String(),
+      'due_to': dueDateTo?.toIso8601String(),
+      'created_from': createdFrom?.toIso8601String(),
+      'created_to': createdTo?.toIso8601String(),
+    });
+    Navigator.pop(context);
+  }
+
+  void _resetFilters() {
+    setState(() {
+      selectedPriorityIds.clear();
+      selectedStatusIds.clear();
+      selectedAssignedByIds.clear();
+      selectedAssignedToIds.clear();
+      dueDateFrom = null;
+      dueDateTo = null;
+      createdFrom = null;
+      createdTo = null;
+    });
+  }
+}

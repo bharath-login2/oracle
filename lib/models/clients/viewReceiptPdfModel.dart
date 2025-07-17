@@ -36,6 +36,8 @@ class Data {
   String? particulars;
   ShippingAddress? shippingAddress;
   List<CompanyDetails>? companyDetails;
+    String? CollectByName;
+      String? TargetGroup;
 
   Data(
       {this.receiptId,
@@ -50,7 +52,9 @@ class Data {
         this.clientName,
         this.particulars,
         this.shippingAddress,
-        this.companyDetails});
+        this.companyDetails,
+          this.CollectByName,
+            this.TargetGroup});
 
   Data.fromJson(Map<String, dynamic> json) {
     receiptId = json['receipt_id'];
@@ -73,6 +77,8 @@ class Data {
         companyDetails!.add(CompanyDetails.fromJson(v));
       });
     }
+       CollectByName = json['CollectByName'];
+          TargetGroup = json['TargetGroup'];
   }
 
   Map<String, dynamic> toJson() {
@@ -95,6 +101,8 @@ class Data {
       data['company_details'] =
           companyDetails!.map((v) => v.toJson()).toList();
     }
+     data['CollectByName'] = CollectByName;
+      data['TargetGroup'] = TargetGroup;
     return data;
   }
 }

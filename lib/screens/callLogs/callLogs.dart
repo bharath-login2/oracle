@@ -7,6 +7,7 @@ import 'package:call_e_log/call_log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 // import 'package:flutter_dialpad/flutter_dialpad.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/config.dart';
@@ -175,9 +176,7 @@ class _CallLogsState extends State<CallLogs> {
     });
   }
 
-
-
-    void askUserNeedsOld(BuildContext context, bool showPopUp) async {
+  void askUserNeedsOld(BuildContext context, bool showPopUp) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     List<String> callTypes = prefs.getStringList('callTypes') ?? [];
@@ -367,8 +366,6 @@ class _CallLogsState extends State<CallLogs> {
           );
         },
       );
-
-     
     }
   }
 
@@ -698,7 +695,7 @@ class _CallLogsState extends State<CallLogs> {
                   actions: [
                     Row(
                       children: [
-                           Expanded(
+                        Expanded(
                           child: ElevatedButton(
                             onPressed: () {
                               Navigator.push(
@@ -725,7 +722,7 @@ class _CallLogsState extends State<CallLogs> {
                             ),
                           ),
                         ),
-                         const SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
@@ -735,7 +732,7 @@ class _CallLogsState extends State<CallLogs> {
                               await Permission.phone.request();
                               await Common.saveSharedPref(
                                   "callLogPermission", 'true');
-                                    Navigator.of(context).pop();
+                              Navigator.of(context).pop();
                               setState(() {
                                 refresh = true;
                               });
@@ -758,8 +755,6 @@ class _CallLogsState extends State<CallLogs> {
                             ),
                           ),
                         ),
-                      
-                     
                       ],
                     ),
                   ],
@@ -1674,12 +1669,18 @@ class _CallLogsState extends State<CallLogs> {
                                                         if (direction ==
                                                             DismissDirection
                                                                 .startToEnd) {
-                                                          Common.dialPad(
-                                                              _callLogEntries
+                                                          await FlutterPhoneDirectCaller
+                                                              .callNumber(_callLogEntries
                                                                   .elementAt(
                                                                       indexStaff)
                                                                   .number
                                                                   .toString());
+                                                          // Common.dialPad(
+                                                          //     _callLogEntries
+                                                          //         .elementAt(
+                                                          //             indexStaff)
+                                                          //         .number
+                                                          //         .toString());
                                                         } else {
                                                           Navigator.push(
                                                               context,
@@ -2763,126 +2764,127 @@ class _CallLogsState extends State<CallLogs> {
                           )
                   ],
                 ),
-              ):const SizedBox(),
-            // : Material(
-            //     type: MaterialType.transparency,
-            //     child: Padding(
-            //       padding: const EdgeInsets.only(bottom: 50),
-            //       child: Center(
-            //         child: Container(
-            //           decoration: BoxDecoration(
-            //             borderRadius: BorderRadius.circular(10),
-            //             color: Colors.grey,
-            //           ),
-            //           width: MediaQuery.of(context).size.width * 0.9,
-            //           height: MediaQuery.of(context).size.height * 0.5,
-            //           child: Padding(
-            //             padding: const EdgeInsets.only(left: 20, right: 20),
-            //             child: Column(
-            //               mainAxisAlignment: MainAxisAlignment.center,
-            //               crossAxisAlignment: CrossAxisAlignment.center,
-            //               children: [
-            //                 const Text(
-            //                   "Permission",
-            //                   style: TextStyle(
-            //                     fontSize: 18,
-            //                     fontWeight: FontWeight.w700,
-            //                     color: Colors.black,
-            //                     // decoration: TextDecoration.none,
-            //                     //fontFamily: Theme.of(context).textTheme,
-            //                   ),
-            //                 ),
-            //                 const SizedBox(
-            //                   height: 10,
-            //                 ),
-            //                 const Text(
-            //                   "We want to inform you that our app collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
-            //                   style: TextStyle(
-            //                     fontSize: 14,
-            //                     fontWeight: FontWeight.w500,
-            //                     color: Colors.black,
-            //                     decoration: TextDecoration.none,
-            //                   ),
-            //                 ),
-            //                 const SizedBox(
-            //                   height: 20,
-            //                 ),
-            //                 Row(
-            //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //                   children: [
-            //                     InkWell(
-            //                       onTap: () {
-            //                         Navigator.push(
-            //                           context,
-            //                           MaterialPageRoute(
-            //                               builder: (context) =>
-            //                                   Dashboard(widget.token)),
-            //                         );
-            //                       },
-            //                       child: Container(
-            //                         width: MediaQuery.of(context).size.width *
-            //                             0.35,
-            //                         height: 30,
-            //                         decoration: BoxDecoration(
-            //                             borderRadius: BorderRadius.circular(5),
-            //                             color: const Color(0xffe94040)),
-            //                         child: const Center(
-            //                           child: Text("Deny",
-            //                               style: TextStyle(
-            //                                   fontSize: 18,
-            //                                   fontWeight: FontWeight.w700,
-            //                                   decoration: TextDecoration.none,
-            //                                   color: Colors.white)),
-            //                         ),
-            //                       ),
-            //                     ),
-            //                     InkWell(
-            //                       // onTap: () async {
-            //                       //   await Permission.phone.request();
-            //                       //   setState(() {
-            //                       //     Common.saveSharedPref(
-            //                       //         "callLogPermission", 'true');
-            //                       //     refresh = true;
-            //                       //     getSharedData();
-            //                       //   });
-            //                       // },
-            //                       onTap: () async {
-            //                         await Permission.phone.request();
-            //                         await Common.saveSharedPref(
-            //                             "callLogPermission", 'true');
-            //                         Navigator.pop(context);
-            //                         setState(() {
-            //                           refresh = true;
-            //                         });
-            //                         getSharedData();
-            //                       },
+              )
+            : const SizedBox(),
+        // : Material(
+        //     type: MaterialType.transparency,
+        //     child: Padding(
+        //       padding: const EdgeInsets.only(bottom: 50),
+        //       child: Center(
+        //         child: Container(
+        //           decoration: BoxDecoration(
+        //             borderRadius: BorderRadius.circular(10),
+        //             color: Colors.grey,
+        //           ),
+        //           width: MediaQuery.of(context).size.width * 0.9,
+        //           height: MediaQuery.of(context).size.height * 0.5,
+        //           child: Padding(
+        //             padding: const EdgeInsets.only(left: 20, right: 20),
+        //             child: Column(
+        //               mainAxisAlignment: MainAxisAlignment.center,
+        //               crossAxisAlignment: CrossAxisAlignment.center,
+        //               children: [
+        //                 const Text(
+        //                   "Permission",
+        //                   style: TextStyle(
+        //                     fontSize: 18,
+        //                     fontWeight: FontWeight.w700,
+        //                     color: Colors.black,
+        //                     // decoration: TextDecoration.none,
+        //                     //fontFamily: Theme.of(context).textTheme,
+        //                   ),
+        //                 ),
+        //                 const SizedBox(
+        //                   height: 10,
+        //                 ),
+        //                 const Text(
+        //                   "We want to inform you that our app collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
+        //                   style: TextStyle(
+        //                     fontSize: 14,
+        //                     fontWeight: FontWeight.w500,
+        //                     color: Colors.black,
+        //                     decoration: TextDecoration.none,
+        //                   ),
+        //                 ),
+        //                 const SizedBox(
+        //                   height: 20,
+        //                 ),
+        //                 Row(
+        //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //                   children: [
+        //                     InkWell(
+        //                       onTap: () {
+        //                         Navigator.push(
+        //                           context,
+        //                           MaterialPageRoute(
+        //                               builder: (context) =>
+        //                                   Dashboard(widget.token)),
+        //                         );
+        //                       },
+        //                       child: Container(
+        //                         width: MediaQuery.of(context).size.width *
+        //                             0.35,
+        //                         height: 30,
+        //                         decoration: BoxDecoration(
+        //                             borderRadius: BorderRadius.circular(5),
+        //                             color: const Color(0xffe94040)),
+        //                         child: const Center(
+        //                           child: Text("Deny",
+        //                               style: TextStyle(
+        //                                   fontSize: 18,
+        //                                   fontWeight: FontWeight.w700,
+        //                                   decoration: TextDecoration.none,
+        //                                   color: Colors.white)),
+        //                         ),
+        //                       ),
+        //                     ),
+        //                     InkWell(
+        //                       // onTap: () async {
+        //                       //   await Permission.phone.request();
+        //                       //   setState(() {
+        //                       //     Common.saveSharedPref(
+        //                       //         "callLogPermission", 'true');
+        //                       //     refresh = true;
+        //                       //     getSharedData();
+        //                       //   });
+        //                       // },
+        //                       onTap: () async {
+        //                         await Permission.phone.request();
+        //                         await Common.saveSharedPref(
+        //                             "callLogPermission", 'true');
+        //                         Navigator.pop(context);
+        //                         setState(() {
+        //                           refresh = true;
+        //                         });
+        //                         getSharedData();
+        //                       },
 
-            //                       child: Container(
-            //                         width: MediaQuery.of(context).size.width *
-            //                             0.35,
-            //                         height: 30,
-            //                         decoration: BoxDecoration(
-            //                             borderRadius: BorderRadius.circular(5),
-            //                             color: Colors.green),
-            //                         child: const Center(
-            //                           child: Text("Allow",
-            //                               style: TextStyle(
-            //                                   fontSize: 18,
-            //                                   fontWeight: FontWeight.w700,
-            //                                   decoration: TextDecoration.none,
-            //                                   color: Colors.white)),
-            //                         ),
-            //                       ),
-            //                     ),
-            //                   ],
-            //                 )
-            //               ],
-            //             ),
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ),
+        //                       child: Container(
+        //                         width: MediaQuery.of(context).size.width *
+        //                             0.35,
+        //                         height: 30,
+        //                         decoration: BoxDecoration(
+        //                             borderRadius: BorderRadius.circular(5),
+        //                             color: Colors.green),
+        //                         child: const Center(
+        //                           child: Text("Allow",
+        //                               style: TextStyle(
+        //                                   fontSize: 18,
+        //                                   fontWeight: FontWeight.w700,
+        //                                   decoration: TextDecoration.none,
+        //                                   color: Colors.white)),
+        //                         ),
+        //                       ),
+        //                     ),
+        //                   ],
+        //                 )
+        //               ],
+        //             ),
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.green,
           onPressed: () {
@@ -2998,16 +3000,35 @@ class _CallLogsState extends State<CallLogs> {
                           ),
 
                           /// Call Button
+                          // ElevatedButton(
+                          //   style: ElevatedButton.styleFrom(
+                          //       padding: const EdgeInsets.all(20),
+                          //       elevation: 5,
+                          //       shape: const CircleBorder(),
+                          //       backgroundColor: Colors.green),
+                          //   onPressed: phoneNumber.isEmpty
+                          //       ? null
+                          //       : () async {
+                          //           Common.dialPad(phoneNumber);
+                          //         },
+                          //   child: const Icon(
+                          //     Icons.call,
+                          //     color: Colors.white,
+                          //     size: 35,
+                          //   ),
+                          // ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.all(20),
-                                elevation: 5,
-                                shape: const CircleBorder(),
-                                backgroundColor: Colors.green),
+                              padding: const EdgeInsets.all(20),
+                              elevation: 5,
+                              shape: const CircleBorder(),
+                              backgroundColor: Colors.green,
+                            ),
                             onPressed: phoneNumber.isEmpty
                                 ? null
                                 : () async {
-                                    Common.dialPad(phoneNumber);
+                                    await FlutterPhoneDirectCaller.callNumber(
+                                        phoneNumber);
                                   },
                             child: const Icon(
                               Icons.call,
@@ -3015,6 +3036,7 @@ class _CallLogsState extends State<CallLogs> {
                               size: 35,
                             ),
                           ),
+
                           const SizedBox(
                             width: 30,
                           ),

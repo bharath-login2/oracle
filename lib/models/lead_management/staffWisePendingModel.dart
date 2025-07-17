@@ -19,7 +19,8 @@ class StaffSummaryReport {
       StaffSummaryReport(
         status: json["status"],
         summary: json["summary"] != null
-            ? List<Summary>.from(json["summary"].map((x) => Summary.fromJson(x)))
+            ? List<Summary>.from(
+                json["summary"].map((x) => Summary.fromJson(x)))
             : [],
       );
 
@@ -29,7 +30,8 @@ class StaffSummaryReport {
       };
 
   @override
-  String toString() => 'StaffSummaryReport(status: $status, summaryCount: ${summary.length})';
+  String toString() =>
+      'StaffSummaryReport(status: $status, summaryCount: ${summary.length})';
 }
 
 class Summary {
@@ -53,7 +55,8 @@ class Summary {
         loginTime: json["login_time"] ?? '',
         logoutTime: json["logout_time"] ?? '',
         projects: json["projects"] != null
-            ? List<Project>.from(json["projects"].map((x) => Project.fromJson(x)))
+            ? List<Project>.from(
+                json["projects"].map((x) => Project.fromJson(x)))
             : [],
       );
 
@@ -105,6 +108,7 @@ class Project {
 }
 
 class Task {
+  String attendanceId;
   String projectId;
   String customerId;
   String taskName;
@@ -115,8 +119,12 @@ class Task {
   String module;
   String name;
   String date;
-
+  String dueDate;
+  String priority;
+  String assignedTo;
+  String assignedBy;
   Task({
+    required this.attendanceId,
     required this.projectId,
     required this.customerId,
     required this.taskName,
@@ -127,9 +135,14 @@ class Task {
     required this.module,
     required this.name,
     required this.date,
+    required this.dueDate,
+    required this.priority,
+    required this.assignedTo,
+     required this.assignedBy,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
+        attendanceId: json["attendance_id"].toString(),
         projectId: json["project_id"].toString(),
         customerId: json["customer_id"].toString(),
         taskName: json["task_name"] ?? '',
@@ -142,9 +155,14 @@ class Task {
         module: json["module"] ?? '',
         name: json["name"] ?? '',
         date: json["date"] ?? '',
+        dueDate: json["due_date"] ?? '',
+        priority: json["priority"] ?? '',
+        assignedTo: json["assigned_to"] ?? '',
+         assignedBy: json["assigned_by"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
+        "attendance_id": attendanceId,
         "project_id": projectId,
         "customer_id": customerId,
         "task_name": taskName,
@@ -155,5 +173,9 @@ class Task {
         "module": module,
         "name": name,
         "date": date,
+        "due_date": dueDate,
+        "priority": priority,
+        "assigned_to": assignedTo,
+         "assigned_by": assignedBy,
       };
 }

@@ -6,27 +6,27 @@
 
 import 'dart:convert';
 
-WorkStatusModel workStatusModelFromJson(String str) =>
-    WorkStatusModel.fromJson(json.decode(str));
+AssignedWorkStatusModel workStatusModelFromJson(String str) =>
+    AssignedWorkStatusModel.fromJson(json.decode(str));
 
-String workStatusModelToJson(WorkStatusModel data) =>
+String workStatusModelToJson(AssignedWorkStatusModel data) =>
     json.encode(data.toJson());
 
-class WorkStatusModel {
-  final List<WorkStatus> data;
+class AssignedWorkStatusModel {
+  final List<AssignedWorkStatus> data;
   final bool status;
   final String message;
 
-  WorkStatusModel({
+  AssignedWorkStatusModel({
     required this.data,
     required this.status,
     required this.message,
   });
 
-  factory WorkStatusModel.fromJson(Map<String, dynamic> json) =>
-      WorkStatusModel(
-        data: List<WorkStatus>.from(
-            json["data"].map((x) => WorkStatus.fromJson(x))),
+  factory AssignedWorkStatusModel.fromJson(Map<String, dynamic> json) =>
+      AssignedWorkStatusModel(
+        data: List<AssignedWorkStatus>.from(
+            json["data"].map((x) => AssignedWorkStatus.fromJson(x))),
         status: json["status"],
         message: json["message"],
       );
@@ -38,28 +38,28 @@ class WorkStatusModel {
       };
 }
 
-class WorkStatus {
+class AssignedWorkStatus {
   final String id;
   final String projectId;
+  final String projectName;
   final String title;
-  final String title_name;
+  final String titleName;
   final DateTime? dueDate;
   final String? priority;
-  final String? assignedId;
   final String? assignedTo;
   final String createdAt;
   final String loginTime;
   final String logoutTime;
   final List<Task> tasks;
 
-  WorkStatus({
+  AssignedWorkStatus({
     required this.id,
     required this.projectId,
+    required this.projectName,
     required this.title,
-    required this.title_name,
+    required this.titleName,
     required this.dueDate,
     required this.priority,
-     required this.assignedId,
     required this.assignedTo,
     required this.createdAt,
     required this.loginTime,
@@ -67,16 +67,16 @@ class WorkStatus {
     required this.tasks,
   });
 
-  factory WorkStatus.fromJson(Map<String, dynamic> json) => WorkStatus(
-        id: json["id"] ?? "",
+  factory AssignedWorkStatus.fromJson(Map<String, dynamic> json) => AssignedWorkStatus(
+        id: json["assign_id"] ?? "",
         projectId: json["project_id"] ?? "",
+        projectName: json["project_name"] ?? "",
         title: json["title"] ?? "",
-        title_name: json["title_name"] ?? "",
+        titleName: json["title_name"] ?? "",
         dueDate: json["due_date"] != null && json["due_date"] != ""
             ? DateTime.tryParse(json["due_date"])
             : null,
         priority: json["priority"] ?? "",
-         assignedId: json["assigned_id"] ?? "",
         assignedTo: json["assigned_to"] ?? "",
         createdAt: json["created_at"] ?? "",
         loginTime: json["login_time"] ?? "",
@@ -85,13 +85,13 @@ class WorkStatus {
       );
 
   Map<String, dynamic> toJson() => {
-        "id": id,
+        "assign_id": id,
         "project_id": projectId,
+        "project_name": projectName,
         "title": title,
-        "title_name": title_name,
+        "title_name": titleName,
         "due_date": dueDate?.toIso8601String(),
         "priority": priority,
-          "assigned_id": assignedId,
         "assigned_to": assignedTo,
         "created_at": createdAt,
         "login_time": loginTime,
@@ -100,18 +100,19 @@ class WorkStatus {
       };
 }
 
+
 class Task {
   final String taskId;
   final String taskName;
   final String status;
-   final String description;
+  final String description;
   final List<String> remarks;
 
   Task({
     required this.taskId,
     required this.taskName,
     required this.status,
-      required this.description,
+    required this.description,
     required this.remarks,
   });
 
@@ -119,15 +120,18 @@ class Task {
         taskId: json["task_id"] ?? "",
         taskName: json["task_name"] ?? "",
         status: json["status"] ?? "",
-          description: json["description"] ?? "",
-        remarks:
-            json["remarks"] != null ? List<String>.from(json["remarks"]) : [],
+        description: json["description"] ?? "",
+        remarks: json["remarks"] != null
+            ? List<String>.from(json["remarks"])
+            : [],
       );
 
   Map<String, dynamic> toJson() => {
         "task_id": taskId,
         "task_name": taskName,
         "status": status,
+        "description": description,
         "remarks": remarks,
       };
 }
+
