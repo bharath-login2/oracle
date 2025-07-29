@@ -79,7 +79,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   dynamic prodTaxExisting = TextEditingController();
   dynamic typeDuration;
   bool isLocationEnabled = false;
-  bool _isGettingLocation = false;
+  final bool _isGettingLocation = false;
   double? currentLatitude;
   double? currentLongitude;
   void filterCustomers(String value) {}
@@ -92,6 +92,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   List<Staff> staffList = [];
   List<TaskState> allTaskStates = [];
   List<PrioState> allPriorities = [];
+  bool whatsappNotification = false;
+  bool pushNotification = false;
+  bool notifyOnStart = false;
+  bool notifyOnComplete = false;
+  bool notifyToAssignedStaff = true;
+  bool notifyOnStatusChange = false;
+  bool notifyOtherPeople = false;
+  List<String> selectedStaffIds = [];
 
   @override
   void initState() {
@@ -138,6 +146,23 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         selectedProjectId = null;
       }
     }
+
+    if (widget.existingWork != null &&
+        widget.existingWork!.assignedTo != null) {
+      if (widget.existingWork!.assignedTo != null) {
+        selectedStaffIds = [widget.existingWork!.assignedTo!];
+      } else {
+        selectedStaffIds = [];
+      }
+    } else if (assignedTo != null) {
+      selectedStaffIds = [assignedTo!];
+    }
+
+    whatsappNotification = false;
+    pushNotification = false;
+    notifyOnStart = false;
+    notifyOnComplete = false;
+    selectedStaffIds = [];
 
     _initAsync();
     _loadStaffs();
@@ -242,10 +267,15 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       setState(() {
         staffList = response.data;
         if (assignedTo == null) {
-          if (staffList.any((staff) => staff.id == userId)) {
+          if (staffList.any((staff) => staff.userIdStaff == userId)) {
             assignedTo = userId;
           }
         }
+        // Initialize notification settings
+        notifyToAssignedStaff = true;
+        notifyOnStatusChange = false;
+        notifyOtherPeople = false;
+        selectedStaffIds = [];
       });
     }
   }
@@ -445,6 +475,20 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       'assigned_to': assignedTo,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'notification': {
+        'whatsapp': whatsappNotification,
+        'push': pushNotification,
+        'notify_to_assigned': notifyToAssignedStaff,
+        'notify_on_status_change': notifyOnStatusChange,
+        'notify_other_people': notifyOtherPeople,
+        'staff_ids': [
+          if (notifyToAssignedStaff && assignedTo != null) assignedTo!,
+          if (notifyOtherPeople)
+            ...selectedStaffIds.where((id) => id != assignedTo),
+        ].join(','),
+        'on_start': notifyOnStart,
+        'on_complete': notifyOnComplete,
+      },
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -688,6 +732,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   if (selected != null) {
                                     setState(() {
                                       assignedTo = selected['id'];
+                                      if (!selectedStaffIds
+                                          .contains(selected['id'])) {
+                                        selectedStaffIds = [
+                                          selected['id'] as String
+                                        ];
+                                      }
                                     });
                                   }
                                 },
@@ -911,6 +961,139 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                       ),
                     );
                   }),
+                  // Notification Section
+                  // Notification Section
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Notification Settings',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: whatsappNotification,
+                              onChanged: (value) => setState(
+                                  () => whatsappNotification = value ?? false),
+                            ),
+                            const Text('WhatsApp Notification'),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: pushNotification,
+                              onChanged: (value) => setState(
+                                  () => pushNotification = value ?? false),
+                            ),
+                            const Text('Push Notification'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // New notification options
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: notifyToAssignedStaff,
+                              onChanged: (value) => setState(
+                                  () => notifyToAssignedStaff = value ?? false),
+                            ),
+                            const Text('Notify to Assigned Staff'),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: notifyOnStatusChange,
+                              onChanged: (value) => setState(
+                                  () => notifyOnStatusChange = value ?? false),
+                            ),
+                            const Text('Notify on status change'),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: notifyOtherPeople,
+                              onChanged: (value) {
+                                setState(() {
+                                  notifyOtherPeople = value ?? false;
+                                  if (!notifyOtherPeople) {
+                                    selectedStaffIds.clear();
+                                  }
+                                });
+                              },
+                            ),
+                            const Text('Notify other people'),
+                          ],
+                        ),
+                        // Show staff selection only if "Notify other people" is checked
+                        if (notifyOtherPeople) ...[
+                          const SizedBox(height: 8),
+                          const Text('Select Staff to Notify:'),
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () =>
+                                _showMultiStaffSelectionDialog(context),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    selectedStaffIds.isEmpty
+                                        ? 'Select Staff to Notify'
+                                        : '${selectedStaffIds.length} staff selected',
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  const Icon(Icons.arrow_drop_down),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: notifyOnStart,
+                              onChanged: (value) => setState(
+                                  () => notifyOnStart = value ?? false),
+                            ),
+                            const Text('Notify when work starts'),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: notifyOnComplete,
+                              onChanged: (value) => setState(
+                                  () => notifyOnComplete = value ?? false),
+                            ),
+                            const Text('Notify when work completes'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1243,6 +1426,83 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     );
   }
 
+  Future<void> _showMultiStaffSelectionDialog(BuildContext context) async {
+  final selected = await showDialog<List<String>>(
+    context: context,
+    builder: (context) {
+      final tempSelected = List<String>.from(selectedStaffIds);
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Select Staff to Notify'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Search Staff',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      // You can implement search filtering here if needed
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: staffList.length,
+                      itemBuilder: (context, index) {
+                        final staff = staffList[index];
+                        // Don't show assigned staff if "Notify to Assigned Staff" is checked
+                        if (notifyToAssignedStaff && staff.userIdStaff == assignedTo) {
+                          return const SizedBox.shrink();
+                        }
+                        return CheckboxListTile(
+                          title: Text(staff.name),
+                          value: tempSelected.contains(staff.userIdStaff),
+                          onChanged: (value) {
+                            setState(() {
+                              if (value == true) {
+                                tempSelected.add(staff.userIdStaff);
+                              } else {
+                                tempSelected.remove(staff.userIdStaff);
+                              }
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, tempSelected),
+                child: const Text('Confirm'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (selected != null) {
+    setState(() {
+      selectedStaffIds = selected;
+    });
+  }
+}
+
   Future<TitleListDet?> showProjectTitleDialog(BuildContext context) async {
     TextEditingController titleController = TextEditingController();
     TextEditingController projectController = TextEditingController();
@@ -1334,7 +1594,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     return showDialog<Map<String, String>>(
       context: context,
       builder: (context) {
-        // Delay focus request until after build
         Future.delayed(Duration(milliseconds: 100), () {
           FocusScope.of(context).requestFocus(focusNode);
         });

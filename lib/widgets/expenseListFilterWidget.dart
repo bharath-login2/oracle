@@ -17,8 +17,10 @@ class ExpenseListFilterWidget extends StatefulWidget {
   });
 
   @override
-  State<ExpenseListFilterWidget> createState() => _ExpenseListFilterWidgetState();
+  State<ExpenseListFilterWidget> createState() =>
+      _ExpenseListFilterWidgetState();
 }
+
 class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
   String selectedCategory = 'Category';
   DateTime? createdFrom;
@@ -34,29 +36,31 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
-void initState() {
-  super.initState();
-  final now = DateTime.now();
-  createdFrom = widget.initialFilters?['created_from'] != null 
-      ? DateTime.parse(widget.initialFilters!['created_from'])
-      : DateTime(now.year, now.month, 1);
-  createdTo = widget.initialFilters?['created_to'] != null
-      ? DateTime.parse(widget.initialFilters!['created_to'])
-      : DateTime(now.year, now.month + 1, 0);
-  selectedCategoryIds = widget.initialFilters?['category_ids'] != null
-      ? Set.from(widget.initialFilters!['category_ids'])
-      : <String>{};
-  selectedFromAccountHeadIds = widget.initialFilters?['from_account_head_ids'] != null
-      ? Set.from(widget.initialFilters!['from_account_head_ids'])
-      : <String>{};
-  selectedToAccountHeadIds = widget.initialFilters?['to_account_head_ids'] != null
-      ? Set.from(widget.initialFilters!['to_account_head_ids'])
-      : <String>{};
-  selectedCreatedByIds = widget.initialFilters?['created_by_ids'] != null
-      ? Set.from(widget.initialFilters!['created_by_ids'])
-      : <String>{};
-  _loadData();
-}
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    createdFrom = widget.initialFilters?['created_from'] != null
+        ? DateTime.parse(widget.initialFilters!['created_from'])
+        : DateTime(now.year, now.month, 1);
+    createdTo = widget.initialFilters?['created_to'] != null
+        ? DateTime.parse(widget.initialFilters!['created_to'])
+        : DateTime(now.year, now.month + 1, 0);
+    selectedCategoryIds = widget.initialFilters?['category_ids'] != null
+        ? Set.from(widget.initialFilters!['category_ids'])
+        : <String>{};
+    selectedFromAccountHeadIds =
+        widget.initialFilters?['from_account_head_ids'] != null
+            ? Set.from(widget.initialFilters!['from_account_head_ids'])
+            : <String>{};
+    selectedToAccountHeadIds =
+        widget.initialFilters?['to_account_head_ids'] != null
+            ? Set.from(widget.initialFilters!['to_account_head_ids'])
+            : <String>{};
+    selectedCreatedByIds = widget.initialFilters?['created_by_ids'] != null
+        ? Set.from(widget.initialFilters!['created_by_ids'])
+        : <String>{};
+    _loadData();
+  }
 
   Future<void> _loadData() async {
     final masterData = await HttpService.expenseMasterData();
@@ -75,8 +79,15 @@ void initState() {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.5), spreadRadius: 3, blurRadius: 7, offset: const Offset(0, -3))],
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 3,
+              blurRadius: 7,
+              offset: const Offset(0, -3))
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -99,7 +110,10 @@ void initState() {
       children: [
         const Text(
           'Filters',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2E3A59)),
+          style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2E3A59)),
         ),
         IconButton(
           icon: const Icon(Icons.close, color: Color(0xFF2E3A59)),
@@ -112,7 +126,9 @@ void initState() {
   Widget _buildFilterBody() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFFF7F9FC), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+          color: const Color(0xFFF7F9FC),
+          borderRadius: BorderRadius.circular(12)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -125,7 +141,13 @@ void initState() {
   }
 
   Widget _buildFilterCategories() {
-    final categories = [ 'Category', 'From Account', 'To Account','Transaction Date', 'Created By'];
+    final categories = [
+      'Category',
+      'From Account',
+      'To Account',
+      'Transaction Date',
+      'Created By'
+    ];
 
     return Expanded(
       child: Column(
@@ -135,7 +157,9 @@ void initState() {
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: _buildFilterCategory(
                     title,
-                    title == 'Transaction Date' ? Icons.date_range : Icons.account_circle,
+                    title == 'Transaction Date'
+                        ? Icons.date_range
+                        : Icons.account_circle,
                   ),
                 ))
             .toList(),
@@ -143,7 +167,7 @@ void initState() {
     );
   }
 
-   Widget _buildFilterCategory(String title, IconData icon) {
+  Widget _buildFilterCategory(String title, IconData icon) {
     final isSelected = selectedCategory == title;
     final hasFilters = _hasFiltersForCategory(title);
 
@@ -221,9 +245,11 @@ void initState() {
       case 'Transaction Date':
         return Column(
           children: [
-            _buildDateField("From", createdFrom, (d) => setState(() => createdFrom = d)),
-            const SizedBox(height: 18),
-            _buildDateField("To", createdTo, (d) => setState(() => createdTo = d)),
+            _buildDateField(
+                "From", createdFrom, (d) => setState(() => createdFrom = d)),
+            const SizedBox(height: 30),
+            _buildDateField(
+                "To", createdTo, (d) => setState(() => createdTo = d)),
           ],
         );
 
@@ -275,10 +301,19 @@ void initState() {
     required Set<String> selectedIds,
     required String hintText,
   }) {
+    final searchTerm = _searchController.text.toLowerCase();
+
     final filteredItems = items.where((item) {
-      final term = _searchController.text.toLowerCase();
-      return getLabel(item).toLowerCase().contains(term);
+      return getLabel(item).toLowerCase().contains(searchTerm);
     }).toList();
+    filteredItems.sort((a, b) {
+      final aSelected = selectedIds.contains(getId(a));
+      final bSelected = selectedIds.contains(getId(b));
+
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
 
     return Column(
       children: [
@@ -295,7 +330,10 @@ void initState() {
         const SizedBox(height: 8),
         Container(
           height: 250,
-          decoration: BoxDecoration(border: Border.all(color: const Color(0xFFC5CEE0)), borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFC5CEE0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: ListView.builder(
             itemCount: filteredItems.length,
             itemBuilder: (context, index) {
@@ -328,7 +366,8 @@ void initState() {
     );
   }
 
-  Widget _buildDateField(String label, DateTime? value, Function(DateTime) onSelect) {
+  Widget _buildDateField(
+      String label, DateTime? value, Function(DateTime) onSelect) {
     final display = value != null ? _formatter.format(value) : 'Select';
     return GestureDetector(
       onTap: () async {
@@ -344,7 +383,8 @@ void initState() {
         children: [
           const Icon(Icons.calendar_today, size: 20, color: Color(0xFF3366FF)),
           const SizedBox(width: 8),
-          Text('$label: $display', style: const TextStyle(fontSize: 14, color: Color(0xFF2E3A59))),
+          Text('$label: $display',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF2E3A59))),
         ],
       ),
     );
@@ -358,12 +398,14 @@ void initState() {
           onPressed: _applyFilters,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF3366FF),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
           child: const Text(
             'Apply Filters',
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
       ],

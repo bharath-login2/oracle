@@ -213,39 +213,62 @@ class _NotificationPageState extends State<NotificationPage> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      LeadDetails(
-                                                        widget.token!,
-                                                        widget.editLead,
-                                                        widget.deleteLead,
-                                                        widget.cloudCall,
-                                                        leadNotification!
-                                                            .data[i].id
-                                                            .toString(),
-                                                        pageName:
-                                                            'LeadNotification',
-                                                      )),
+                                                builder: (context) =>
+                                                    LeadDetails(
+                                                  widget.token!,
+                                                  widget.editLead,
+                                                  widget.deleteLead,
+                                                  widget.cloudCall,
+                                                  leadNotification!.data[i].id
+                                                      .toString(),
+                                                  pageName: 'LeadNotification',
+                                                ),
+                                              ),
                                             ).then((r) {
                                               getData();
                                             });
                                           }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "4") {
+                                          if (context.mounted) {
+                                            // Navigator.push(
+                                            //   context,
+                                            //   MaterialPageRoute(
+                                            //     builder: (context) =>
+                                            //         LeadDetails(
+                                            //       widget.token!,
+                                            //       widget.editLead,
+                                            //       widget.deleteLead,
+                                            //       widget.cloudCall,
+                                            //       leadNotification!.data[i].id
+                                            //           .toString(),
+                                            //       pageName: 'LeadNotification',
+                                            //     ),
+                                            //   ),
+                                            // ).then((r) {
+                                            //   getData();
+                                            // });
+                                          }
                                         } else {
                                           if (context.mounted) {
                                             Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ChatScreen(
-                                                    groupId: leadNotification!
-                                                        .data[i].id
-                                                        .toString(),
-                                                    nav: "",
-                                                  ),
-                                                )).then((r) {
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChatScreen(
+                                                  groupId: leadNotification!
+                                                      .data[i].id
+                                                      .toString(),
+                                                  nav: "",
+                                                ),
+                                              ),
+                                            ).then((r) {
                                               getData();
                                             });
                                           }
                                         }
+
                                         if (leadNotification!.data[i].isRead ==
                                             false) {
                                           await HttpService

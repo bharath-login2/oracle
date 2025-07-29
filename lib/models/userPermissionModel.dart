@@ -50,6 +50,7 @@ class Data {
   String? updateFacebookSettings;
   String? deleteFacebookSettings;
   String? createLeadImports;
+    String? viewTargetReport;
   String? cloudCall;
   String? accessCallHistory;
   String? accessCallRecording;
@@ -102,6 +103,7 @@ class Data {
     this.updateFacebookSettings,
     this.deleteFacebookSettings,
     this.createLeadImports,
+    this.viewTargetReport,
     this.cloudCall,
     this.accessCallHistory,
     this.accessCallRecording,
@@ -155,6 +157,7 @@ class Data {
     updateFacebookSettings = json['update_facebook_settings'];
     deleteFacebookSettings = json['delete_facebook_settings'];
     createLeadImports = json['create_lead_imports'];
+        viewTargetReport = json['view_target_report'];
     cloudCall = json['cloud_call'];
     accessCallHistory = json['access_call_history'];
     accessCallRecording = json['access_call_recording'];
@@ -210,6 +213,7 @@ class Data {
     data['update_facebook_settings'] = updateFacebookSettings;
     data['delete_facebook_settings'] = deleteFacebookSettings;
     data['create_lead_imports'] = createLeadImports;
+       data['view_target_report'] = viewTargetReport;
     data['cloud_call'] = cloudCall;
     data['access_call_history'] = accessCallHistory;
     data['access_call_recording'] = accessCallRecording;

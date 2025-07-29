@@ -173,7 +173,7 @@ class _FilterWidgetState extends State<FilterWidget> {
               //   ),
               // ),
               Padding(
-                padding: const EdgeInsets.only(left:170 ),
+                padding: const EdgeInsets.only(left: 170),
                 child: ElevatedButton(
                   onPressed: _applyFilters,
                   style: ElevatedButton.styleFrom(
@@ -181,8 +181,8 @@ class _FilterWidgetState extends State<FilterWidget> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
                   child: const Text(
                     'Apply Filters',
@@ -276,7 +276,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                 ),
                 if (isFiltered)
                   const Positioned(
-                    left: 115, 
+                    left: 115,
                     top: 5,
                     child: Icon(Icons.circle, size: 10, color: Colors.orange),
                   ),
@@ -370,10 +370,25 @@ class _FilterWidgetState extends State<FilterWidget> {
     required String Function(T) displayProperty,
     required String Function(T) getId,
   }) {
+    // final filteredItems = items.where((item) {
+    //   final searchTerm = _searchController.text.toLowerCase();
+    //   return displayProperty(item).toLowerCase().contains(searchTerm);
+    // }).toList();
+    final searchTerm = _searchController.text.toLowerCase();
+
     final filteredItems = items.where((item) {
-      final searchTerm = _searchController.text.toLowerCase();
       return displayProperty(item).toLowerCase().contains(searchTerm);
     }).toList();
+
+// Move selected items to top
+    filteredItems.sort((a, b) {
+      final aSelected = selectedIds.contains(getId(a));
+      final bSelected = selectedIds.contains(getId(b));
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return displayProperty(a)
+          .compareTo(displayProperty(b)); 
+    });
 
     return Column(
       children: [
@@ -450,10 +465,21 @@ class _FilterWidgetState extends State<FilterWidget> {
   Widget _buildStaffSelectionList({
     required Set<String> selectedIds,
   }) {
+    // final filteredStaff = staffList.where((staff) {
+    //   final searchTerm = _searchController.text.toLowerCase();
+    //   return staff.name.toLowerCase().contains(searchTerm);
+    // }).toList();
+    final searchTerm = _searchController.text.toLowerCase();
     final filteredStaff = staffList.where((staff) {
-      final searchTerm = _searchController.text.toLowerCase();
       return staff.name.toLowerCase().contains(searchTerm);
     }).toList();
+    filteredStaff.sort((a, b) {
+      final aSelected = selectedIds.contains(a.userIdStaff);
+      final bSelected = selectedIds.contains(b.userIdStaff);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return a.name.compareTo(b.name); 
+    });
 
     return Column(
       children: [

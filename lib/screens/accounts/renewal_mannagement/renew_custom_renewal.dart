@@ -176,8 +176,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
           "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
           "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
           "total_amount": renewalDetails!.data.invoiceLists[i].amount,
-          "description":
-              renewalDetails!.data.invoiceLists[i].productDescription,
+          "description": renewalDetails!.data.invoiceLists[i].productDescription,
         });
       }
       setState(() {
@@ -917,7 +916,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text('Pay Status * :'),
+                        const Text('Payment Status * :'),
                         const SizedBox(
                           width: 10,
                         ),
@@ -1029,7 +1028,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              const Text('Pay Methord * :'),
+                              const Text('Pay Method * :'),
                               const SizedBox(
                                 width: 10,
                               ),

@@ -281,13 +281,13 @@ class _AllReportState extends State<AllReport> {
                     ),
                   ],
                 ),
-                 IconButton(
-                            icon: Icon(
-                              Icons.filter_alt,
-                              color: Colors.white,
-                            ),
-                            onPressed: _showFilters,
-                          ),
+                //  IconButton(
+                //             icon: Icon(
+                //               Icons.filter_alt,
+                //               color: Colors.white,
+                //             ),
+                //             onPressed: _showFilters,
+                //           ),
                 InkWell(
                   onTap: () {
                     fromdate = "";

@@ -588,17 +588,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
               });
               fetchWorkCalendar(focusedDay);
             },
-            // calendarStyle: CalendarStyle(
-            //   todayDecoration: BoxDecoration(
-            //       color: Colors.orange.shade600, shape: BoxShape.circle),
-            //   selectedDecoration: BoxDecoration(
-            //       color: Colors.blue.shade700, shape: BoxShape.circle),
-            //   holidayDecoration: BoxDecoration(
-            //       color: const Color.fromARGB(255, 238, 197, 197),
-            //       shape: BoxShape.circle),
-            //   holidayTextStyle: const TextStyle(
-            //       color: Color.fromARGB(255, 212, 17, 17), fontWeight: FontWeight.bold),
-            // ),
+        
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: Colors.orange.shade600,
@@ -742,7 +732,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
     );
   }
 }
-
 class LegendDot extends StatelessWidget {
   final Color color;
   final String label;

@@ -177,6 +177,8 @@ class _LoginState extends State<Login> {
                   object1.data!.deleteStaff.toString());
               Common.saveSharedPref("viewStaffReportPermission",
                   object1.data!.viewStaffReport.toString());
+                    Common.saveSharedPref("viewTargetReportPermission",
+                  object1.data!.viewTargetReport.toString());
               Common.saveSharedPref("createStaffDesignationPermission",
                   object1.data!.viewStaffReport.toString());
               Common.saveSharedPref("viewStaffDesignationPermission",

@@ -1781,12 +1781,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                                prefixIcon: Icon(
-                                                                    Icons
-                                                                        .arrow_right,
-                                                                    color:
-                                                                        Colors
-                                                                            .grey),
+                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1794,11 +1789,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                   borderSide:
                                                                       BorderSide(
                                                                           color:
-                                                                              Colors.grey),
+                                                                              Color.fromARGB(255, 12, 12, 12)),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Colors
-                                                                        .grey)),
+                                                                    color: Color.fromARGB(255, 16, 15, 15))),
                                                       ),
                                                     ),
                                                     const SizedBox(
@@ -1833,12 +1827,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                                prefixIcon: Icon(
-                                                                    Icons
-                                                                        .arrow_right,
-                                                                    color:
-                                                                        Colors
-                                                                            .grey),
+                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1849,8 +1838,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Colors
-                                                                        .grey)),
+                                                                    color: Color.fromARGB(255, 31, 30, 30))),
                                                       ),
                                                     ),
                                                   ],
@@ -1891,12 +1879,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                                prefixIcon: Icon(
-                                                                    Icons
-                                                                        .arrow_right,
-                                                                    color:
-                                                                        Colors
-                                                                            .grey),
+                                                                
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1907,8 +1890,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Colors
-                                                                        .grey)),
+                                                                    color: Color.fromARGB(255, 25, 25, 25))),
                                                       ),
                                                     ),
                                                     const SizedBox(
@@ -1942,12 +1924,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                                prefixIcon: Icon(
-                                                                    Icons
-                                                                        .arrow_right,
-                                                                    color:
-                                                                        Colors
-                                                                            .grey),
+                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1958,8 +1935,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Colors
-                                                                        .grey)),
+                                                                    color: Color.fromARGB(255, 26, 26, 26))),
                                                       ),
                                                     ),
                                                   ],
@@ -1987,15 +1963,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             fillColor:
                                                                 Colors.white,
                                                             filled: true,
-                                                            prefixIcon: Icon(
-                                                                Icons
-                                                                    .arrow_right,
-                                                                color: Colors
-                                                                    .grey),
+                                                           
                                                             border:
                                                                 OutlineInputBorder(),
                                                             focusedBorder:
-                                                                OutlineInputBorder(
+                                                                OutlineInputBorder(  
                                                               borderSide:
                                                                   BorderSide(
                                                                       color: Colors
@@ -2003,8 +1975,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             ),
                                                             labelStyle:
                                                                 TextStyle(
-                                                                    color: Colors
-                                                                        .grey)),
+                                                                    color: Color.fromARGB(255, 31, 30, 30))),
                                                   ),
                                                 ),
 

@@ -39,6 +39,7 @@ import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
+import 'package:login2/models/lead_management/workMessageModel.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/models/officialWhatsapp/campaign_sample_model.dart';
 import 'package:login2/models/officialWhatsapp/message_view_status.dart';
@@ -3494,7 +3495,7 @@ class HttpService {
   static Future<AssignedWorkStatusModel?> getAssinedWorkStatus(workId) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-         "work_id": workId,
+      "work_id": workId,
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}get_assigned_works",
@@ -3576,7 +3577,7 @@ class HttpService {
       "project_id": workData['project_id'],
       "title": workData['title'],
       "assigned_id": workData['assignedId'],
-   //   "attendance_id": workData['attendance_id'],
+      //   "attendance_id": workData['attendance_id'],
       "title_id": workData['title_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
@@ -3636,7 +3637,6 @@ class HttpService {
       "longitude": workData['longitude'],
       "tasks": workData['tasks'],
     };
-
     try {
       var result = await _dio.post(
         "${await Config.getUrl()}save_work",
@@ -3702,6 +3702,17 @@ class HttpService {
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
       "work_start_time": workData['work_time'],
+      "whatsapp_notification": workData['notification']['whatsapp'] ?? false,
+      "push_notification": workData['notification']['push'] ?? false,
+      "notify_to_assigned":
+          workData['notification']['notify_to_assigned'] ?? false,
+      "notify_on_status_change":
+          workData['notification']['notify_on_status_change'] ?? false,
+      "notify_other_people":
+          workData['notification']['notify_other_people'] ?? false,
+      "notify_staff_ids": workData['notification']['staff_ids'] ?? '',
+      "notify_on_start": workData['notification']['on_start'] ?? false,
+      "notify_on_complete": workData['notification']['on_complete'] ?? false,
     });
     // try {
     var result = await _dio.post(
@@ -3729,7 +3740,7 @@ class HttpService {
       'work_end_time': workData['work_time'],
       "title": workData['title'],
       "title_id": workData['title_id'],
-       "assigned_id": workData['assignedId'],
+      "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
@@ -5982,7 +5993,6 @@ class HttpService {
         'token': token,
         'date': date,
       });
-
       final response = await _dio.post(
         "${await Config.getUrl()}staff_work_summary",
         data: formData,
@@ -5990,7 +6000,6 @@ class HttpService {
           contentType: Headers.formUrlEncodedContentType,
         ),
       );
-
       if (response.statusCode == 200) {
         if (response.data['status'] == 'success') {
           return StaffWorkSummery.fromJson(response.data);
@@ -6004,7 +6013,6 @@ class HttpService {
       log("getAllDoneworks error: $e");
       log("Stacktrace: $stacktrace");
     }
-
     return null;
   }
 
@@ -6551,9 +6559,8 @@ class HttpService {
   //   }
   // }
 
-  static Future<List<AssignedWork>> getAssignedWorks({
-    Map<String, dynamic>? filters,
-  }) async {
+  static Future<List<AssignedWork>> getAssignedWorks(
+      {Map<String, dynamic>? filters}) async {
     final token = await Common.getSharedPref('token');
     final formData = FormData();
     formData.fields.add(MapEntry('token', token ?? ''));
@@ -6579,4 +6586,102 @@ class HttpService {
       throw Exception('Failed to fetch assigned works');
     }
   }
+
+  static Future<bool> alertWorkNotification(Map<String, String> data) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}alert_work_notification",
+        data: FormData.fromMap({
+          'token': token,
+          ...data,
+        }),
+      );
+
+      final responseData = jsonDecode(response.data);
+      print("🔍 Decoded Response data: $responseData");
+
+      return response.statusCode == 200 && responseData['status'] == true;
+    } catch (e) {
+      log("🔥 Error in alertWorkNotification: $e");
+      return false;
+    }
+  }
+
+
+  // HttpService.dart
+
+static Future<GetWorkMessageModel?> getWorkChatMessages(String groupId) async {
+  var token = await Common.getSharedPref('token');
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}getWorkMessages",
+      data: FormData.fromMap({
+        'token': token,
+        'group_id': groupId,
+      }),
+      options: Options(contentType: 'multipart/form-data'),
+    );
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return GetWorkMessageModel.fromJson(response.data);
+    } else {
+      print("❌ Error response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    print("🔥 Exception: $e");
+    return null;
+  }
+}
+
+static Future<GetWorkMessageModel?> markRead(String groupId) async {
+  var token = await Common.getSharedPref('token');
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}markRead",
+      data: FormData.fromMap({
+        'token': token,
+        'work_id': groupId,
+      }),
+      options: Options(contentType: 'multipart/form-data'),
+    );
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return GetWorkMessageModel.fromJson(response.data);
+    } else {
+      print("❌ Error response: ${response.data}");
+      return null;
+    }
+  } catch (e) {
+    print("🔥 Exception: $e");
+    return null;
+  }
+}
+
+
+
+static Future<bool> sendWorkChatMessage(String groupId, String message,String assignedToId) async {
+  var token = await Common.getSharedPref('token');
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}assigned_work_chat",
+      data: FormData.fromMap({
+        'token': token,
+        'assigned_work_id': groupId,
+        'message': message,
+          'assigned_to_id': assignedToId,
+      }),
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    return response.statusCode == 200 && response.data['status'] == true;
+  } catch (e) {
+    print("🔥 Error sending message: $e");
+    return false;
+  }
+}
+
+
 }

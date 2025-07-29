@@ -50,6 +50,7 @@ class workDetailsList {
   final String gapDuration;
      final String is_paused;
   final List<Task> tasks;
+    final List<Assign> assigns;
    final String loginTime;
     final String logoutTime;
  final String totalIdeaTime;
@@ -71,6 +72,7 @@ class workDetailsList {
     required this.gapDuration,
     required this.is_paused,
     required this.tasks,
+      required this.assigns,
      required this.loginTime,
       required this.logoutTime,
       required this.totalIdeaTime,
@@ -98,6 +100,9 @@ class workDetailsList {
         tasks: json["tasks"] != null
             ? List<Task>.from(json["tasks"].map((x) => Task.fromJson(x)))
             : [],
+              assigns: json["assigns"] != null
+            ? List<Assign>.from(json["assigns"].map((x) => Assign.fromJson(x)))
+            : [],
         loginTime: json["login_time"] ?? "",
          logoutTime: json["logout_time"] ?? "",
           totalIdeaTime: json["total_gap_duration"] ?? "",
@@ -120,6 +125,7 @@ class workDetailsList {
         "gap_duration": gapDuration,
           "is_paused": is_paused,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+          "assigns": List<dynamic>.from(assigns.map((x) => x.toJson())),
          "login_time": loginTime,
           "logout_time": logoutTime,
            "total_gap_duration": totalIdeaTime,
@@ -163,6 +169,30 @@ class Task {
         "task_start": taskStart,
         "task_end": taskEnd,
         "remarks": remarks, 
+      };
+}
+
+class Assign {
+  final String dueDate;
+  final String priority;
+  final String assignedBy;
+
+  Assign({
+    required this.dueDate,
+    required this.priority,
+    required this.assignedBy,
+  });
+
+  factory Assign.fromJson(Map<String, dynamic> json) => Assign(
+        dueDate: json["due_date"] ?? "",
+        priority: json["priority"] ?? "",
+        assignedBy: json["assigned_by"] ?? "",
+      );
+
+  Map<String, dynamic> toJson() => {
+        "due_date": dueDate,
+        "priority": priority,
+        "assigned_by": assignedBy,
       };
 }
 

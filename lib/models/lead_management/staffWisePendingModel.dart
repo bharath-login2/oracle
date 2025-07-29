@@ -1,45 +1,39 @@
 import 'dart:convert';
 
-StaffSummaryReport staffSummaryReportFromJson(String str) =>
+StaffSummaryReport staffSummaryReportFromJson(String str) => 
     StaffSummaryReport.fromJson(json.decode(str));
 
-String staffSummaryReportToJson(StaffSummaryReport data) =>
+String staffSummaryReportToJson(StaffSummaryReport data) => 
     json.encode(data.toJson());
 
 class StaffSummaryReport {
-  bool status;
-  List<Summary> summary;
+  final bool status;
+  final List<Summary> summary;
 
   StaffSummaryReport({
     required this.status,
     required this.summary,
   });
 
-  factory StaffSummaryReport.fromJson(Map<String, dynamic> json) =>
-      StaffSummaryReport(
-        status: json["status"],
-        summary: json["summary"] != null
-            ? List<Summary>.from(
-                json["summary"].map((x) => Summary.fromJson(x)))
-            : [],
-      );
+  factory StaffSummaryReport.fromJson(Map<String, dynamic> json) => StaffSummaryReport(
+    status: json["status"] ?? false,
+    summary: json["summary"] != null 
+        ? List<Summary>.from(json["summary"].map((x) => Summary.fromJson(x)))
+        : <Summary>[],
+  );
 
   Map<String, dynamic> toJson() => {
-        "status": status,
-        "summary": List<dynamic>.from(summary.map((x) => x.toJson())),
-      };
-
-  @override
-  String toString() =>
-      'StaffSummaryReport(status: $status, summaryCount: ${summary.length})';
+    "status": status,
+    "summary": List<dynamic>.from(summary.map((x) => x.toJson())),
+  };
 }
 
 class Summary {
-  String userId;
-  String staffName;
-  String loginTime;
-  String logoutTime;
-  List<Project> projects;
+  final String userId;
+  final String staffName;
+  final String loginTime;
+  final String logoutTime;
+  final List<Project> projects;
 
   Summary({
     required this.userId,
@@ -50,32 +44,31 @@ class Summary {
   });
 
   factory Summary.fromJson(Map<String, dynamic> json) => Summary(
-        userId: json["user_id"].toString(),
-        staffName: json["staff_name"] ?? '',
-        loginTime: json["login_time"] ?? '',
-        logoutTime: json["logout_time"] ?? '',
-        projects: json["projects"] != null
-            ? List<Project>.from(
-                json["projects"].map((x) => Project.fromJson(x)))
-            : [],
-      );
+    userId: json["user_id"]?.toString() ?? '',
+    staffName: json["staff_name"]?.toString() ?? '',
+    loginTime: json["login_time"]?.toString() ?? '',
+    logoutTime: json["logout_time"]?.toString() ?? '',
+    projects: json["projects"] != null
+        ? List<Project>.from(json["projects"].map((x) => Project.fromJson(x)))
+        : <Project>[],
+  );
 
   Map<String, dynamic> toJson() => {
-        "user_id": userId,
-        "staff_name": staffName,
-        "login_time": loginTime,
-        "logout_time": logoutTime,
-        "projects": List<dynamic>.from(projects.map((x) => x.toJson())),
-      };
+    "user_id": userId,
+    "staff_name": staffName,
+    "login_time": loginTime,
+    "logout_time": logoutTime,
+    "projects": List<dynamic>.from(projects.map((x) => x.toJson())),
+  };
 }
 
 class Project {
-  String projectId;
-  String projectName;
-  String customerId;
-  String customerName;
-  String module;
-  List<Task> tasks;
+  final String projectId;
+  final String projectName;
+  final String customerId;
+  final String customerName;
+  final String module;
+  final List<Task> tasks;
 
   Project({
     required this.projectId,
@@ -87,46 +80,49 @@ class Project {
   });
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
-        projectId: json["project_id"].toString(),
-        projectName: json["project_name"] ?? '',
-        customerId: json["customer_id"].toString(),
-        customerName: json["customer_name"] ?? '',
-        module: json["module"] ?? '',
-        tasks: json["tasks"] != null
-            ? List<Task>.from(json["tasks"].map((x) => Task.fromJson(x)))
-            : [],
-      );
+    projectId: json["project_id"]?.toString() ?? '',
+    projectName: json["project_name"]?.toString() ?? '',
+    customerId: json["customer_id"]?.toString() ?? '',
+    customerName: json["customer_name"]?.toString() ?? '',
+    module: json["module"]?.toString() ?? '',
+    tasks: json["tasks"] != null
+        ? List<Task>.from(json["tasks"].map((x) => Task.fromJson(x)))
+        : <Task>[],
+  );
 
   Map<String, dynamic> toJson() => {
-        "project_id": projectId,
-        "project_name": projectName,
-        "customer_id": customerId,
-        "customer_name": customerName,
-        "module": module,
-        "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
-      };
+    "project_id": projectId,
+    "project_name": projectName,
+    "customer_id": customerId,
+    "customer_name": customerName,
+    "module": module,
+    "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+  };
 }
 
 class Task {
-  String attendanceId;
-  String projectId;
-  String customerId;
-  String taskName;
-  String status;
-  String startTime;
-  String endTime;
-  List<String> remarks;
-  String module;
-  String name;
-  String date;
-  String dueDate;
-  String priority;
-  String assignedTo;
-  String assignedBy;
+  final String attendanceId;
+  final String projectId;
+  final String customerId;
+  final String assignedTo;
+  final String assignedBy;
+  final String taskName;
+  final String status;
+  final String startTime;
+  final String endTime;
+  final List<String> remarks;
+  final String module;
+  final String name;
+  final String date;
+  final String dueDate;
+  final String priority;
+
   Task({
     required this.attendanceId,
     required this.projectId,
     required this.customerId,
+    required this.assignedTo,
+    required this.assignedBy,
     required this.taskName,
     required this.status,
     required this.startTime,
@@ -137,45 +133,53 @@ class Task {
     required this.date,
     required this.dueDate,
     required this.priority,
-    required this.assignedTo,
-     required this.assignedBy,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
-        attendanceId: json["attendance_id"].toString(),
-        projectId: json["project_id"].toString(),
-        customerId: json["customer_id"].toString(),
-        taskName: json["task_name"] ?? '',
-        status: json["status"].toString(),
-        startTime: json["start_time"] ?? '',
-        endTime: json["end_time"] ?? '',
-        remarks: json["remarks"] != null
-            ? List<String>.from(json["remarks"].map((x) => x))
-            : [],
-        module: json["module"] ?? '',
-        name: json["name"] ?? '',
-        date: json["date"] ?? '',
-        dueDate: json["due_date"] ?? '',
-        priority: json["priority"] ?? '',
-        assignedTo: json["assigned_to"] ?? '',
-         assignedBy: json["assigned_by"] ?? '',
-      );
+    attendanceId: json["attendance_id"]?.toString() ?? '',
+    projectId: json["project_id"]?.toString() ?? '',
+    customerId: json["customer_id"]?.toString() ?? '',
+    assignedTo: json["assigned_to"]?.toString() ?? '',
+    assignedBy: json["assigned_by"]?.toString() ?? '',
+    taskName: json["task_name"]?.toString() ?? '',
+    status: json["status"]?.toString() ?? '',
+    startTime: json["start_time"]?.toString() ?? '',
+    endTime: json["end_time"]?.toString() ?? '',
+    remarks: json["remarks"] != null 
+        ? List<String>.from(json["remarks"].map((x) => x.toString()))
+        : <String>[],
+    module: json["module"]?.toString() ?? '',
+    name: json["name"]?.toString() ?? '',
+    date: json["date"]?.toString() ?? '',
+    dueDate: json["due_date"]?.toString() ?? '',
+    priority: json["priority"]?.toString() ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
-        "attendance_id": attendanceId,
-        "project_id": projectId,
-        "customer_id": customerId,
-        "task_name": taskName,
-        "status": status,
-        "start_time": startTime,
-        "end_time": endTime,
-        "remarks": List<dynamic>.from(remarks.map((x) => x)),
-        "module": module,
-        "name": name,
-        "date": date,
-        "due_date": dueDate,
-        "priority": priority,
-        "assigned_to": assignedTo,
-         "assigned_by": assignedBy,
-      };
+    "attendance_id": attendanceId,
+    "project_id": projectId,
+    "customer_id": customerId,
+    "assigned_to": assignedTo,
+    "assigned_by": assignedBy,
+    "task_name": taskName,
+    "status": status,
+    "start_time": startTime,
+    "end_time": endTime,
+    "remarks": List<dynamic>.from(remarks.map((x) => x)),
+    "module": module,
+    "name": name,
+    "date": date,
+    "due_date": dueDate,
+    "priority": priority,
+  };
+
+  // Helper method to check if task is completed
+  bool get isCompleted => status == "1";
+  
+  // Helper method to get duration if both times are available
+  String? get duration {
+    if (startTime.isEmpty || endTime.isEmpty) return null;
+    // Add duration calculation logic here if needed
+    return '';
+  }
 }

@@ -20,13 +20,19 @@ class TaskForm {
   String? status;
   String? taskId;
   List<TextEditingController> remarksControllers;
+  bool isChecked;
 
   TaskForm({
     required this.controller,
     this.status,
     this.taskId,
     List<TextEditingController>? remarks,
-  }) : remarksControllers = remarks ?? [TextEditingController()];
+    this.isChecked = false,
+  }) : remarksControllers = remarks ?? [TextEditingController()] {
+    if (remarksControllers.isEmpty) {
+      remarksControllers.add(TextEditingController());
+    }
+  }
 }
 
 class AddWorkPage extends StatefulWidget {
@@ -160,11 +166,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> checkAssignedWorks() async {
+    if (widget.workId.isEmpty) return;
+
     final AssignedWorkModel =
         await HttpService.getAssinedWorkStatus(widget.workId);
     setState(() {
       if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
         assignedWorks = AssignedWorkModel.data.first;
+
         if (widget.existingWork == null) {
           titleController.text = assignedWorks?.titleName ?? '';
           selectedProjectId = assignedWorks?.projectId;
@@ -173,26 +182,45 @@ class _AddWorkPageState extends State<AddWorkPage> {
           dueDate = assignedWorks?.dueDate;
           priority = assignedWorks?.priority;
           assignedTo = assignedWorks?.assignedTo;
+
           if (selectedProjectName != null) {
             selectedProjectController.text = selectedProjectName!;
           }
-          if (assignedWorks?.tasks != null && assignedWorks!.tasks.isNotEmpty) {
-            tasks = assignedWorks!.tasks
-                .map((task) => TaskForm(
-                      controller: TextEditingController(text: task.taskName),
-                      status: task.status,
-                      taskId: task.taskId,
-                      remarks: task.remarks
-                          .map((remark) => TextEditingController(text: remark))
-                          .toList(),
-                    ))
-                .toList();
+          tasks = (assignedWorks?.tasks ?? [])
+              .map((task) => TaskForm(
+                    controller: TextEditingController(text: task.taskName),
+                    status: task.status,
+                    taskId: task.taskId,
+                    isChecked: task.status == '4',
+                    remarks: task.remarks.isNotEmpty
+                        ? task.remarks
+                            .map(
+                                (remark) => TextEditingController(text: remark))
+                            .toList()
+                        : [TextEditingController()],
+                  ))
+              .toList();
+
+          if (tasks.isEmpty) {
+            tasks.add(TaskForm(
+              controller: TextEditingController(),
+              status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+              remarks: [TextEditingController()],
+            ));
           }
         }
       } else {
         assignedWorks = null;
+        tasks = [
+          TaskForm(
+            controller: TextEditingController(),
+            status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+            remarks: [TextEditingController()],
+          )
+        ];
       }
     });
+
     if (selectedProjectId != null) {
       await _loadTitle();
     }
@@ -465,6 +493,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'task_id': task.taskId,
           'description': task.controller.text,
           'status': task.status,
+          'is_checked': task.isChecked ? 1 : 0,
           'remarks': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -541,6 +570,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'task_id': task.taskId,
           'description': task.controller.text,
           'status': task.status,
+           'is_checked': task.isChecked ? 1 : 0,
           'remarks': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -904,6 +934,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
+                        color: tasks[taskIndex].isChecked ||
+                                tasks[taskIndex].status == '4'
+                            ? Colors.lightBlue.shade50
+                            : Colors.white,
                         border: Border.all(color: Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -911,6 +945,56 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         children: [
                           Row(
                             children: [
+                              Checkbox(
+                                value: tasks[taskIndex].status == '4'
+                                    ? true
+                                    : tasks[taskIndex].isChecked,
+                                onChanged: (value) {
+                                  setState(() {
+                                    for (var i = 0; i < tasks.length; i++) {
+                                      if (i != taskIndex) {
+                                        tasks[i].isChecked = false;
+                                        final toDoStatus =
+                                            allTaskStates.firstWhere(
+                                          (status) =>
+                                              status.status
+                                                  .toLowerCase()
+                                                  .contains('to-do') ||
+                                              status.status
+                                                  .toLowerCase()
+                                                  .contains('todo'),
+                                          orElse: () => allTaskStates.first,
+                                        );
+                                        tasks[i].status = toDoStatus.id;
+                                      }
+                                    }
+
+                                    tasks[taskIndex].isChecked = value ?? false;
+                                    final targetStatus = tasks[taskIndex]
+                                            .isChecked
+                                        ? allTaskStates.firstWhere(
+                                            (status) =>
+                                                status.id == '4' ||
+                                                status.status
+                                                    .toLowerCase()
+                                                    .contains('progress'),
+                                            orElse: () => allTaskStates.first,
+                                          )
+                                        : allTaskStates.firstWhere(
+                                            (status) =>
+                                                status.status
+                                                    .toLowerCase()
+                                                    .contains('to-do') ||
+                                                status.status
+                                                    .toLowerCase()
+                                                    .contains('todo'),
+                                            orElse: () => allTaskStates.first,
+                                          );
+
+                                    tasks[taskIndex].status = targetStatus.id;
+                                  });
+                                },
+                              ),
                               Expanded(
                                 flex: 5,
                                 child: TextField(

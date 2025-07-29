@@ -1,5 +1,3 @@
-
-
 // To parse this JSON data, do
 //
 //     final workStatusModel = workStatusModelFromJson(jsonString);
@@ -67,7 +65,8 @@ class AssignedWorkStatus {
     required this.tasks,
   });
 
-  factory AssignedWorkStatus.fromJson(Map<String, dynamic> json) => AssignedWorkStatus(
+  factory AssignedWorkStatus.fromJson(Map<String, dynamic> json) =>
+      AssignedWorkStatus(
         id: json["assign_id"] ?? "",
         projectId: json["project_id"] ?? "",
         projectName: json["project_name"] ?? "",
@@ -100,14 +99,12 @@ class AssignedWorkStatus {
       };
 }
 
-
 class Task {
   final String taskId;
   final String taskName;
   final String status;
   final String description;
   final List<String> remarks;
-
   Task({
     required this.taskId,
     required this.taskName,
@@ -115,17 +112,14 @@ class Task {
     required this.description,
     required this.remarks,
   });
-
   factory Task.fromJson(Map<String, dynamic> json) => Task(
         taskId: json["task_id"] ?? "",
         taskName: json["task_name"] ?? "",
         status: json["status"] ?? "",
         description: json["description"] ?? "",
-        remarks: json["remarks"] != null
-            ? List<String>.from(json["remarks"])
-            : [],
+        remarks:
+            json["remarks"] != null ? List<String>.from(json["remarks"]) : [],
       );
-
   Map<String, dynamic> toJson() => {
         "task_id": taskId,
         "task_name": taskName,
@@ -134,4 +128,3 @@ class Task {
         "remarks": remarks,
       };
 }
-

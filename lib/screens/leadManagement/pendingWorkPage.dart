@@ -186,7 +186,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
   }
 
   Widget buildStaffTab() {
-    if (staffData == null || workStatusDetails == null) {
+    if (staffData == null ) {
       return const Center(child: CircularProgressIndicator());
     }
 

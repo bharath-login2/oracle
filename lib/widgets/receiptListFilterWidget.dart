@@ -203,7 +203,7 @@ void initState() {
         return Column(
           children: [
             _buildDateField("From", createdFrom, (d) => setState(() => createdFrom = d)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
             _buildDateField("To", createdTo, (d) => setState(() => createdTo = d)),
           ],
         );
@@ -236,60 +236,126 @@ void initState() {
   );
 }
 
+  // Widget _buildAccountHeadSelectionList() {
+  //   final filteredHeads = allAccountHeads.where((head) {
+  //     final searchTerm = _searchController.text.toLowerCase();
+  //     return head.accountName.toLowerCase().contains(searchTerm);
+  //   }).toList();
+
+  //   return Column(
+  //     children: [
+  //       TextField(
+  //         controller: _searchController,
+  //         decoration: InputDecoration(
+  //           hintText: 'Search Account Head',
+  //           prefixIcon: const Icon(Icons.search),
+  //           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+  //           isDense: true,
+  //         ),
+  //         onChanged: (value) => setState(() {}),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Container(
+  //         height: 250,
+  //         decoration: BoxDecoration(border: Border.all(color: const Color(0xFFC5CEE0)), borderRadius: BorderRadius.circular(8)),
+  //         child: ListView.builder(
+  //           itemCount: filteredHeads.length,
+  //           itemBuilder: (context, index) {
+  //             final head = filteredHeads[index];
+  //             final selected = selectedAccountHeadIds.contains(head.accountId);
+
+  //             return CheckboxListTile(
+  //               controlAffinity: ListTileControlAffinity.leading,
+  //               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+  //               dense: true,
+  //               visualDensity: VisualDensity.compact,
+  //               value: selected,
+  //               onChanged: (val) {
+  //                 setState(() {
+  //                   if (val == true) {
+  //                     selectedAccountHeadIds.add(head.accountId);
+  //                   } else {
+  //                     selectedAccountHeadIds.remove(head.accountId);
+  //                   }
+  //                 });
+  //               },
+  //               title: Text(
+  //                 head.accountName,
+  //                 style: const TextStyle(fontSize: 13),
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
   Widget _buildAccountHeadSelectionList() {
-    final filteredHeads = allAccountHeads.where((head) {
-      final searchTerm = _searchController.text.toLowerCase();
-      return head.accountName.toLowerCase().contains(searchTerm);
-    }).toList();
+  final searchTerm = _searchController.text.toLowerCase();
+  final filteredHeads = allAccountHeads.where((head) {
+    return head.accountName.toLowerCase().contains(searchTerm);
+  }).toList();
+  filteredHeads.sort((a, b) {
+    final aSelected = selectedAccountHeadIds.contains(a.accountId);
+    final bSelected = selectedAccountHeadIds.contains(b.accountId);
 
-    return Column(
-      children: [
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search Account Head',
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            isDense: true,
-          ),
-          onChanged: (value) => setState(() {}),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 250,
-          decoration: BoxDecoration(border: Border.all(color: const Color(0xFFC5CEE0)), borderRadius: BorderRadius.circular(8)),
-          child: ListView.builder(
-            itemCount: filteredHeads.length,
-            itemBuilder: (context, index) {
-              final head = filteredHeads[index];
-              final selected = selectedAccountHeadIds.contains(head.accountId);
+    if (aSelected && !bSelected) return -1;
+    if (!aSelected && bSelected) return 1;
+    return 0;
+  });
 
-              return CheckboxListTile(
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                value: selected,
-                onChanged: (val) {
-                  setState(() {
-                    if (val == true) {
-                      selectedAccountHeadIds.add(head.accountId);
-                    } else {
-                      selectedAccountHeadIds.remove(head.accountId);
-                    }
-                  });
-                },
-                title: Text(
-                  head.accountName,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              );
-            },
-          ),
+  return Column(
+    children: [
+      TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search Account Head',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          isDense: true,
         ),
-      ],
-    );
-  }
+        onChanged: (value) => setState(() {}),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        height: 250,
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFC5CEE0)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ListView.builder(
+          itemCount: filteredHeads.length,
+          itemBuilder: (context, index) {
+            final head = filteredHeads[index];
+            final selected = selectedAccountHeadIds.contains(head.accountId);
+
+            return CheckboxListTile(
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              value: selected,
+              onChanged: (val) {
+                setState(() {
+                  if (val == true) {
+                    selectedAccountHeadIds.add(head.accountId);
+                  } else {
+                    selectedAccountHeadIds.remove(head.accountId);
+                  }
+                });
+              },
+              title: Text(
+                head.accountName,
+                style: const TextStyle(fontSize: 13),
+              ),
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
 
   Widget _buildApplyButton() {
     return Row(

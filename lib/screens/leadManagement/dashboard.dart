@@ -22,6 +22,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_lis
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
+import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
@@ -131,6 +132,7 @@ class _DashboardState extends State<Dashboard> {
   String createLeadPermission = '';
   String viewLeadPermission = '';
   String viewAllWorkPermission = '';
+  String viewTargetReportPermission = '';
   String addWorkPermission = '';
   String startAndStopWorkPermission = '';
   String adminCheckPermission = '';
@@ -385,7 +387,7 @@ class _DashboardState extends State<Dashboard> {
         loginOrNot = await HttpService.getLoginorNot(widget.token);
         if (loginOrNot?.data != true) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-           // showLoginPrompt(context);
+          showLoginPrompt(context);
           });
         }
       }
@@ -411,6 +413,7 @@ class _DashboardState extends State<Dashboard> {
       viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
       viewAllWorkPermission =
           await Common.getSharedPref("viewAllWorkPermission");
+           viewTargetReportPermission = await Common.getSharedPref("viewTargetReportPermission");
       addWorkPermission = await Common.getSharedPref("addWorkPermission");
       viewWorkReportPermission =
           await Common.getSharedPref("viewWorkReportPermission");
@@ -1949,45 +1952,6 @@ class _DashboardState extends State<Dashboard> {
                       InkWell(
                         onTap: () {
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReceiptList(
-                                  widget.token!,
-                                  fdate: DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now()),
-                                  tdate: DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now()),
-                                ),
-                              ));
-                        },
-                        child: gridItem(
-                            "TODAYS INCOME",
-                            accountDashboard!.data.todaysIncome,
-                            Colors.black,
-                            colorList[2]),
-                      ),
-                      // InkWell(
-                      //   onTap: () {
-                      //     Navigator.push(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //           builder: (context) => ExpenseList(
-                      //             fdate: DateFormat('dd-MM-yyyy')
-                      //                 .format(DateTime.now()),
-                      //             tdate: DateFormat('dd-MM-yyyy')
-                      //                 .format(DateTime.now()),
-                      //           ),
-                      //         ));
-                      //   },
-                      //   child: gridItem(
-                      //       "TODAYS EXPENSE",
-                      //       accountDashboard!.data.todayExpense,
-                      //       Colors.black,
-                      //       colorList[3]),
-                      // ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ReceiptList(
@@ -1996,7 +1960,7 @@ class _DashboardState extends State<Dashboard> {
                                 //     .format(DateTime.now()),
                                 // tdate: DateFormat('dd-MM-yyyy')
                                 //     .format(DateTime.now()),
-                                 fdate: DateFormat('yyyy-MM-dd')
+                                fdate: DateFormat('yyyy-MM-dd')
                                     .format(DateTime.now()),
                                 tdate: DateFormat('yyyy-MM-dd')
                                     .format(DateTime.now()),
@@ -2011,6 +1975,53 @@ class _DashboardState extends State<Dashboard> {
                           colorList[2],
                         ),
                       ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ExpenseList(
+                                  // fdate: DateFormat('dd-MM-yyyy')
+                                    fdate: DateFormat('yyyy-MM-dd')
+                                      .format(DateTime.now()),
+                                  // tdate: DateFormat('dd-MM-yyyy')
+                                     tdate: DateFormat('yyyy-MM-dd')
+                                      .format(DateTime.now()),
+                                ),
+                              ));
+                        },
+                        child: gridItem(
+                            "TODAYS EXPENSE",
+                            accountDashboard!.data.todayExpense,
+                            Colors.black,
+                            colorList[3]),
+                      ),
+                      // InkWell(
+                      //   onTap: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (context) => ReceiptList(
+                      //           widget.token!,
+                      //           // fdate: DateFormat('dd-MM-yyyy')
+                      //           //     .format(DateTime.now()),
+                      //           // tdate: DateFormat('dd-MM-yyyy')
+                      //           //     .format(DateTime.now()),
+                      //            fdate: DateFormat('yyyy-MM-dd')
+                      //               .format(DateTime.now()),
+                      //           tdate: DateFormat('yyyy-MM-dd')
+                      //               .format(DateTime.now()),
+                      //         ),
+                      //       ),
+                      //     );
+                      //   },
+                      //   child: gridItem(
+                      //     "TODAYS INCOME",
+                      //     accountDashboard!.data.todaysIncome,
+                      //     Colors.black,
+                      //     colorList[2],
+                      //   ),
+                      // ),
                       InkWell(
                         onTap: () {
                           Navigator.push(
@@ -2038,10 +2049,12 @@ class _DashboardState extends State<Dashboard> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => ExpenseList(
-                                  fdate: DateFormat('dd-MM-yyyy').format(
+                                  // fdate: DateFormat('dd-MM-yyyy').format(
+                                    fdate: DateFormat('yyyy-MM-dd').format(
                                       DateTime(DateTime.now().year,
                                           DateTime.now().month, 1)),
-                                  tdate: DateFormat('dd-MM-yyyy')
+                                 // tdate: DateFormat('dd-MM-yyyy')
+                                  tdate: DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                                 ),
                               ));
@@ -3753,7 +3766,6 @@ class _DashboardState extends State<Dashboard> {
                                                   //   ),
                                                   // ),
 
-
                                                   adminCheckPermission == "true"
                                                       ? PopupMenuItem<int>(
                                                           // value: 6,
@@ -3903,6 +3915,35 @@ class _DashboardState extends State<Dashboard> {
                                                       ],
                                                     ),
                                                   ),
+                                                  viewTargetReportPermission =='true'?
+                                                  PopupMenuItem<int>(
+                                                    onTap: () async {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ViewAllTargetReportPage(
+                                                                  id: userId),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: const Row(
+                                                      children: [
+                                                        Icon(
+                                                            Icons.track_changes,
+                                                            size: 20),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            'View Target Report'),
+                                                      ],
+                                                    ),
+                                                  ):const PopupMenuItem<
+                                                          int>(
+                                                          enabled: false,
+                                                          height: 0,
+                                                          child:
+                                                              SizedBox.shrink(),
+                                                        ),
                                                   // PopupMenuItem<int>(
                                                   //   onTap: () async {
                                                   //     Navigator.push(
@@ -8321,36 +8362,36 @@ class _DashboardState extends State<Dashboard> {
             Row(
               children: [
                 InkWell(
-                    onTap: () => logout(context),
-                    // onTap: () async {
-                    //   try {
-                    //     final result = await HttpService.getWorkStatus();
-                    //     if (result != null && result.data.isNotEmpty) {
-                    //       showDialog(
-                    //         context: context,
-                    //         builder: (context) => AlertDialog(
-                    //           title: const Text('Logout Blocked'),
-                    //           content: const Text(
-                    //               'Work is in progress. Please close all work before logging out.'),
-                    //           actions: [
-                    //             TextButton(
-                    //               onPressed: () => Navigator.of(context).pop(),
-                    //               child: const Text('OK'),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       );
-                    //     } else {
-                    //       logout(context);
-                    //     }
-                    //   } catch (e) {
-                    //     print('Error checking work status: $e');
-                    //     ScaffoldMessenger.of(context).showSnackBar(
-                    //       const SnackBar(
-                    //           content: Text('Failed to check work status')),
-                    //     );
-                    //   }
-                    // },
+                //   onTap: () => logout(context),
+                    onTap: () async {
+                      try {
+                        final result = await HttpService.getWorkStatus();
+                        if (result != null && result.data.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Logout Blocked'),
+                              content: const Text(
+                                  'Work is in progress. Please close all work before logging out.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          logout(context);
+                        }
+                      } catch (e) {
+                        print('Error checking work status: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to check work status')),
+                        );
+                      }
+                    },
                     child: Container(
                       decoration: BoxDecoration(
                           boxShadow: [
@@ -8405,19 +8446,18 @@ class _DashboardState extends State<Dashboard> {
             Row(
               children: [
                 userDashboard != null
-                    ?
-                //      StartStopToggle(
-                //         initialStatus: userDashboard!.data.loginCheck,
-                //         onToggle: (bool started) {
-                //           setState(() {
-                //             userDashboard!.data.loginCheck = started;
-                //           });
-                //         },
-                //       )
-                //     : const SizedBox(),
-                // const SizedBox(
-                //   width: 20,
-                // ),
+                    ? StartStopToggle(
+                        initialStatus: userDashboard!.data.loginCheck,
+                        onToggle: (bool started) {
+                          setState(() {
+                            userDashboard!.data.loginCheck = started;
+                          });
+                        },
+                      )
+                    : const SizedBox(),
+                const SizedBox(
+                  width: 20,
+                ),
                 InkWell(
                   onTap: () {
                     Navigator.push(
@@ -8460,7 +8500,7 @@ class _DashboardState extends State<Dashboard> {
                       ],
                     ),
                   ),
-                ):const SizedBox(),
+                ),
                 InkWell(
                   onTap: () {
                     _scaffoldKey.currentState!.openEndDrawer();

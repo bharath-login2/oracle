@@ -110,8 +110,20 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
         label = 'New';
         break;
       case '2':
-        color = Colors.red;
+        color = const Color.fromARGB(255, 227, 143, 34);
         label = 'Pending';
+        break;
+         case '3':
+        color = Colors.green;
+        label = 'Completed';
+        break;
+         case '4':
+        color = const Color.fromARGB(255, 200, 181, 37);
+        label = 'In-Progress';
+        break;
+           case '5':
+        color = const Color.fromARGB(255, 235, 69, 69);
+        label = ' Cancelled';
         break;
       default:
         color = Colors.green;

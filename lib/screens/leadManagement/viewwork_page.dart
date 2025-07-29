@@ -361,10 +361,9 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
       //         child: const Icon(Icons.add, color: Colors.white),
       //       ),
 
-      floatingActionButton:
-      ((widget.staffId != "")
-          ? (userId != null && widget.staffId == userId)
-          : (userId != null))
+      floatingActionButton: ((widget.staffId != "")
+              ? (userId != null && widget.staffId == userId)
+              : (userId != null))
           ? (existingWork != null
               ? StreamBuilder<DateTime>(
                   stream: Stream.periodic(
@@ -396,7 +395,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         final paused = await showDialog(
                           context: context,
                           builder: (context) => AddWorkPage(
-                              workId: "",
+                            workId: "",
                             existingWork: newExistingWork,
                             onSuccess: () {
                               setState(() {
@@ -612,6 +611,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         itemCount: workStatusDetails!.data.length,
                         itemBuilder: (context, index) {
                           final item = workStatusDetails!.data[index];
+                          final hasAssignment = item.assigns.any((assign) => assign.assignedBy.isNotEmpty);
                           List<bool> expandedTasks = List.generate(
                               item.tasks.length, (index) => false);
 
@@ -660,6 +660,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                       ],
                                     ),
                                   ),
+                                  
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -691,7 +692,9 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                       ],
                                     ),
                                     const SizedBox(width: 12),
+                                  
                                     Expanded(
+                                      
                                       child: Column(
                                         children: [
                                           Container(
@@ -699,7 +702,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                 bottom: 8),
                                             padding: const EdgeInsets.all(16),
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                                 color: hasAssignment ? const Color.fromARGB(255, 255, 249, 220) : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                               boxShadow: [
@@ -733,196 +736,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                         softWrap: true,
                                                       ),
                                                     ),
-                                                    // const SizedBox(width: 8),
-                                                    // (item.totalDuration
-                                                    //             .isNotEmpty) &&
-                                                    //         item.is_paused !=
-                                                    //             "1"
-                                                    //     ? Text(
-                                                    //         "Worked:${item.totalDuration}",
-                                                    //         style: TextStyle(
-                                                    //             fontSize: 14,
-                                                    //             color: Colors
-                                                    //                 .grey
-                                                    //                 .shade600,
-                                                    //             fontWeight:
-                                                    //                 FontWeight
-                                                    //                     .bold),
-                                                    //         overflow:
-                                                    //             TextOverflow
-                                                    //                 .ellipsis,
-                                                    //       )
-                                                    //     : item.is_paused == "1"
-                                                    //         ? GestureDetector(
-                                                    //             onTap:
-                                                    //                 () async {
-                                                    //               final workStatusModel =
-                                                    //                   await HttpService
-                                                    //                       .getWorkStatusPaused(
-                                                    //                           item.id);
-                                                    //               workStatus
-                                                    //                   .WorkStatus?
-                                                    //                   newExistingWork;
-                                                    //               if (workStatusModel !=
-                                                    //                       null &&
-                                                    //                   workStatusModel
-                                                    //                       .data
-                                                    //                       .isNotEmpty) {
-                                                    //                 newExistingWork =
-                                                    //                     workStatusModel
-                                                    //                         .data
-                                                    //                         .first;
-                                                    //               }
-                                                    //               Navigator
-                                                    //                   .push(
-                                                    //                 context,
-                                                    //                 MaterialPageRoute(
-                                                    //                   builder:
-                                                    //                       (context) =>
-                                                    //                           AddWorkPage(
-                                                    //                     existingWork:
-                                                    //                         newExistingWork,
-                                                    //                     isPaused:
-                                                    //                         0,
-                                                    //                     Restart:
-                                                    //                         1,
-                                                    //                     onSuccess:
-                                                    //                         () {
-                                                    //                       setState(
-                                                    //                           () {
-                                                    //                         getWorkDuration(currentDate);
-                                                    //                         checkExistingWorkStatus();
-                                                    //                       });
-                                                    //                     },
-                                                    //                   ),
-                                                    //                 ),
-                                                    //               );
-                                                    //             },
-                                                    //             child: Row(
-                                                    //               mainAxisSize:
-                                                    //                   MainAxisSize
-                                                    //                       .min,
-                                                    //               children: [
-                                                    //                 Icon(
-                                                    //                   Icons
-                                                    //                       .restart_alt,
-                                                    //                   size: 20,
-                                                    //                   color: const Color
-                                                    //                       .fromARGB(
-                                                    //                       255,
-                                                    //                       29,
-                                                    //                       183,
-                                                    //                       230),
-                                                    //                 ),
-                                                    //                 const SizedBox(
-                                                    //                     width:
-                                                    //                         4),
-                                                    //                 const Text(
-                                                    //                   "Restart",
-                                                    //                   style:
-                                                    //                       TextStyle(
-                                                    //                     fontSize:
-                                                    //                         14,
-                                                    //                     color: Color.fromARGB(
-                                                    //                         255,
-                                                    //                         29,
-                                                    //                         183,
-                                                    //                         230),
-                                                    //                     fontWeight:
-                                                    //                         FontWeight.bold,
-                                                    //                   ),
-                                                    //                   overflow:
-                                                    //                       TextOverflow
-                                                    //                           .ellipsis,
-                                                    //                 ),
-                                                    //               ],
-                                                    //             ),
-                                                    //           )
-                                                    //         : GestureDetector(
-                                                    //             onTap:
-                                                    //                 () async {
-                                                    //               final workStatusModel =
-                                                    //                   await HttpService.getWorkStatus(
-                                                    //                       isPaused:
-                                                    //                           1);
-                                                    //               workStatus
-                                                    //                   .WorkStatus?
-                                                    //                   newExistingWork;
-
-                                                    //               if (workStatusModel !=
-                                                    //                       null &&
-                                                    //                   workStatusModel
-                                                    //                       .data
-                                                    //                       .isNotEmpty) {
-                                                    //                 newExistingWork =
-                                                    //                     workStatusModel
-                                                    //                         .data
-                                                    //                         .first;
-                                                    //               }
-
-                                                    //               Navigator
-                                                    //                   .push(
-                                                    //                 context,
-                                                    //                 MaterialPageRoute(
-                                                    //                   builder:
-                                                    //                       (context) =>
-                                                    //                           AddWorkPage(
-                                                    //                     existingWork:
-                                                    //                         newExistingWork,
-                                                    //                     isPaused:
-                                                    //                         1,
-                                                    //                     onSuccess:
-                                                    //                         () {
-                                                    //                       setState(
-                                                    //                           () {
-                                                    //                         getWorkDuration(currentDate);
-                                                    //                         checkExistingWorkStatus();
-                                                    //                       });
-                                                    //                     },
-                                                    //                   ),
-                                                    //                 ),
-                                                    //               );
-                                                    //             },
-                                                    //             child: Row(
-                                                    //               mainAxisSize:
-                                                    //                   MainAxisSize
-                                                    //                       .min,
-                                                    //               children: [
-                                                    //                 Icon(
-                                                    //                   Icons
-                                                    //                       .pause_circle_filled,
-                                                    //                   size: 20,
-                                                    //                   color: const Color
-                                                    //                       .fromARGB(
-                                                    //                       255,
-                                                    //                       238,
-                                                    //                       109,
-                                                    //                       4),
-                                                    //                 ),
-                                                    //                 const SizedBox(
-                                                    //                     width:
-                                                    //                         4),
-                                                    //                 const Text(
-                                                    //                   "Pause",
-                                                    //                   style:
-                                                    //                       TextStyle(
-                                                    //                     fontSize:
-                                                    //                         14,
-                                                    //                     color: Color.fromARGB(
-                                                    //                         255,
-                                                    //                         238,
-                                                    //                         109,
-                                                    //                         4),
-                                                    //                     fontWeight:
-                                                    //                         FontWeight.bold,
-                                                    //                   ),
-                                                    //                   overflow:
-                                                    //                       TextOverflow
-                                                    //                           .ellipsis,
-                                                    //                 ),
-                                                    //               ],
-                                                    //             ),
-                                                    //           )
                                                     const SizedBox(width: 8),
                                                     (item.totalDuration
                                                                 .isNotEmpty) &&
@@ -970,7 +783,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         MaterialPageRoute(
                                                                           builder: (context) =>
                                                                               AddWorkPage(
-                                                                                  workId: "",
+                                                                            workId:
+                                                                                "",
                                                                             existingWork:
                                                                                 newExistingWork,
                                                                             isPaused:
@@ -988,7 +802,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         ),
                                                                       );
                                                                     },
-                                                                    child: const Row(
+                                                                    child:
+                                                                        const Row(
                                                                       mainAxisSize:
                                                                           MainAxisSize
                                                                               .min,
@@ -998,8 +813,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                               .restart_alt,
                                                                           size:
                                                                               20,
-                                                                          color: Color
-                                                                              .fromARGB(
+                                                                          color: Color.fromARGB(
                                                                               255,
                                                                               29,
                                                                               183,
@@ -1069,7 +883,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         MaterialPageRoute(
                                                                           builder: (context) =>
                                                                               AddWorkPage(
-                                                                                  workId: "",
+                                                                            workId:
+                                                                                "",
                                                                             existingWork:
                                                                                 newExistingWork,
                                                                             isPaused:
@@ -1085,7 +900,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                         ),
                                                                       );
                                                                     },
-                                                                    child: const Row(
+                                                                    child:
+                                                                        const Row(
                                                                       mainAxisSize:
                                                                           MainAxisSize
                                                                               .min,
@@ -1095,8 +911,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                               .pause_circle_filled,
                                                                           size:
                                                                               20,
-                                                                          color: Color
-                                                                              .fromARGB(
+                                                                          color: Color.fromARGB(
                                                                               255,
                                                                               238,
                                                                               109,
@@ -1129,31 +944,13 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                   ],
                                                 ),
                                                 const SizedBox(height: 8),
-                                                // Text(
-                                                //   "Project: ${item.projectId}",
-                                                //   style: TextStyle(
-                                                //     fontSize: 14,
-                                                //     color: Colors.grey.shade700,
-                                                //   ),
-                                                // ),
-                                                 Text(
+                                                Text(
                                                   "Module: ${item.titleName}",
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     color: Colors.grey.shade700,
                                                   ),
                                                 ),
-                                              //  const SizedBox(height: 8),
-                                                // item.customerName != ""
-                                                //     ? Text(
-                                                //         "Client: ${item.customerName}",
-                                                //         style: TextStyle(
-                                                //           fontSize: 14,
-                                                //           color: Colors
-                                                //               .grey.shade700,
-                                                //         ),
-                                                //       )
-                                                //     : SizedBox(),
                                                 const SizedBox(height: 8),
                                                 Row(
                                                   children: [
@@ -1166,16 +963,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                       ),
                                                     ),
                                                     const SizedBox(width: 16),
-                                                    // Text(
-                                                    //   "End: ${isInProgress ? "Running" : item.endTime}",
-                                                    //   style: TextStyle(
-                                                    //     fontSize: 13,
-                                                    //     color: isInProgress
-                                                    //         ? Colors.orange
-                                                    //         : Colors
-                                                    //             .grey.shade600,
-                                                    //   ),
-                                                    // ),
                                                     isInProgress
                                                         ? const Row(
                                                             children: [
@@ -1209,7 +996,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                   ],
                                                 ),
                                                 const SizedBox(height: 8),
-                                                // if (item.latitude.isNotEmpty)
                                                 if (item.latitude.isNotEmpty &&
                                                     double.tryParse(
                                                             item.latitude) !=
@@ -1235,283 +1021,244 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                // ...item.tasks.map(
-                                                //   (task) => StatefulBuilder(
-                                                //     builder:
-                                                //         (context, setState) {
-                                                //       bool isExpanded = false;
-
-                                                //       return Column(
-                                                //         crossAxisAlignment:
-                                                //             CrossAxisAlignment
-                                                //                 .start,
-                                                //         children: [
-                                                //           GestureDetector(
-                                                //             onTap: () {
-                                                //               setState(() {
-                                                //                 isExpanded =
-                                                //                     !isExpanded;
-                                                //               });
-                                                //             },
-                                                //             child: Padding(
-                                                //               padding:
-                                                //                   const EdgeInsets
-                                                //                       .only(
-                                                //                       bottom:
-                                                //                           8),
-                                                //               child: Row(
-                                                //                 children: [
-                                                //                   Container(
-                                                //                     width: 8,
-                                                //                     height: 8,
-                                                //                     decoration:
-                                                //                         BoxDecoration(
-                                                //                       color: _getStatusColor(
-                                                //                           task.status),
-                                                //                       shape: BoxShape
-                                                //                           .circle,
-                                                //                     ),
-                                                //                   ),
-                                                //                   const SizedBox(
-                                                //                       width: 8),
-                                                //                   Expanded(
-                                                //                     child:
-                                                //                         Column(
-                                                //                       crossAxisAlignment:
-                                                //                           CrossAxisAlignment
-                                                //                               .start,
-                                                //                       children: [
-                                                //                         Text(
-                                                //                           task.taskName,
-                                                //                           style:
-                                                //                               const TextStyle(fontSize: 14),
-                                                //                         ),
-                                                //                         const SizedBox(
-                                                //                             height:
-                                                //                                 4),
-                                                //                         Row(
-                                                //                           children: [
-                                                //                             Text(
-                                                //                               '${task.taskStart} - ${task.taskEnd}',
-                                                //                               style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                                //                             ),
-                                                //                             const SizedBox(width: 15),
-                                                //                             Container(
-                                                //                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                //                               decoration: BoxDecoration(
-                                                //                                 color: _getStatusColor(task.status).withOpacity(0.2),
-                                                //                                 borderRadius: BorderRadius.circular(4),
-                                                //                               ),
-                                                //                               child: Text(
-                                                //                                 task.status,
-                                                //                                 style: TextStyle(
-                                                //                                   fontSize: 12,
-                                                //                                   color: _getStatusColor(task.status),
-                                                //                                 ),
-                                                //                               ),
-                                                //                             ),
-                                                //                           ],
-                                                //                         ),
-                                                //                       ],
-                                                //                     ),
-                                                //                   ),
-                                                //                 ],
-                                                //               ),
-                                                //             ),
-                                                //           ),
-                                                //           AnimatedSize(
-                                                //             duration:
-                                                //                 const Duration(
-                                                //                     milliseconds:
-                                                //                         300),
-                                                //             curve: Curves
-                                                //                 .easeInOut,
-                                                //             child: isExpanded
-                                                //                 ? Padding(
-                                                //                     padding: const EdgeInsets
-                                                //                         .only(
-                                                //                         left:
-                                                //                             16,
-                                                //                         bottom:
-                                                //                             8),
-                                                //                     child:
-                                                //                         Column(
-                                                //                       crossAxisAlignment:
-                                                //                           CrossAxisAlignment
-                                                //                               .start,
-                                                //                       children: task
-                                                //                           .remarks
-                                                //                           .map(
-                                                //                               (remark) {
-                                                //                         return Padding(
-                                                //                           padding: const EdgeInsets
-                                                //                               .symmetric(
-                                                //                               vertical: 2),
-                                                //                           child:
-                                                //                               Text(
-                                                //                             '• $remark',
-                                                //                             style:
-                                                //                                 const TextStyle(fontSize: 12, color: Colors.black87),
-                                                //                           ),
-                                                //                         );
-                                                //                       }).toList(),
-                                                //                     ),
-                                                //                   )
-                                                //                 : const SizedBox(),
-                                                //           ),
-                                                //         ],
-                                                //       );
-                                                //     },
-                                                //   ),
-                                                // ),
-
                                                 ...item.tasks
                                                     .asMap()
                                                     .entries
-                                                    .map(
-                                                  (entry) {
-                                                    int index = entry.key;
-                                                    var task = entry.value;
-
-                                                    return StatefulBuilder(
-                                                      builder:
-                                                          (context, setState) {
-                                                        return Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  expandedTasks[
-                                                                          index] =
-                                                                      !expandedTasks[
-                                                                          index];
-                                                                });
-                                                              },
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        bottom:
-                                                                            8),
-                                                                child: Row(
-                                                                  children: [
-                                                                    Container(
-                                                                      width: 8,
-                                                                      height: 8,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        color: _getStatusColor(
-                                                                            task.status),
-                                                                        shape: BoxShape
-                                                                            .circle,
-                                                                      ),
+                                                    .map((entry) {
+                                                  int index = entry.key;
+                                                  var task = entry.value;
+                                                  return StatefulBuilder(
+                                                    builder:
+                                                        (context, setState) {
+                                                      return Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          GestureDetector(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                expandedTasks[
+                                                                        index] =
+                                                                    !expandedTasks[
+                                                                        index];
+                                                              });
+                                                            },
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      bottom:
+                                                                          8),
+                                                              child: Row(
+                                                                children: [
+                                                                  Container(
+                                                                    width: 8,
+                                                                    height: 8,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: _getStatusColor(
+                                                                          task.status),
+                                                                      shape: BoxShape
+                                                                          .circle,
                                                                     ),
-                                                                    const SizedBox(
-                                                                        width:
-                                                                            8),
-                                                                    Expanded(
-                                                                      child:
-                                                                          Column(
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Text(
-                                                                            task.taskName,
-                                                                            style:
-                                                                                const TextStyle(fontSize: 14),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                              height: 4),
-                                                                          Row(
-                                                                            children: [
-                                                                              Text(
-                                                                                '${task.taskStart} - ${task.taskEnd}',
-                                                                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 8),
+                                                                  Expanded(
+                                                                    child:
+                                                                        Column(
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .start,
+                                                                      children: [
+                                                                        Text(
+                                                                          task.taskName,
+                                                                          style:
+                                                                              const TextStyle(fontSize: 14),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                            height:
+                                                                                4),
+                                                                        Row(
+                                                                          children: [
+                                                                            Text(
+                                                                              '${task.taskStart} - ${task.taskEnd}',
+                                                                              style: const TextStyle(
+                                                                                fontSize: 12,
+                                                                                color: Colors.grey,
                                                                               ),
-                                                                              const SizedBox(width: 15),
-                                                                              Container(
-                                                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                                                decoration: BoxDecoration(
-                                                                                  color: _getStatusColor(task.status).withOpacity(0.2),
-                                                                                  borderRadius: BorderRadius.circular(4),
-                                                                                ),
-                                                                                child: Text(
-                                                                                  task.status,
-                                                                                  style: TextStyle(
-                                                                                    fontSize: 12,
-                                                                                    color: _getStatusColor(task.status),
-                                                                                  ),
+                                                                            ),
+                                                                            const SizedBox(width: 15),
+                                                                            Container(
+                                                                              padding: const EdgeInsets.symmetric(
+                                                                                horizontal: 8,
+                                                                                vertical: 2,
+                                                                              ),
+                                                                              decoration: BoxDecoration(
+                                                                                color: _getStatusColor(task.status).withOpacity(0.2),
+                                                                                borderRadius: BorderRadius.circular(4),
+                                                                              ),
+                                                                              child: Text(
+                                                                                task.status,
+                                                                                style: TextStyle(
+                                                                                  fontSize: 12,
+                                                                                  color: _getStatusColor(task.status),
                                                                                 ),
                                                                               ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ],
                                                                     ),
-                                                                  ],
-                                                                ),
+                                                                  ),
+                                                                ],
                                                               ),
                                                             ),
-                                                            AnimatedSize(
-                                                              duration:
-                                                                  const Duration(
-                                                                      milliseconds:
-                                                                          300),
-                                                              curve: Curves
-                                                                  .easeInOut,
-                                                              child: expandedTasks[
-                                                                      index]
-                                                                  ? Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          left:
-                                                                              16,
-                                                                          bottom:
-                                                                              8),
-                                                                      child:
-                                                                          Column(
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          const Text(
-                                                                            'Remarks:',
-                                                                            style:
-                                                                                TextStyle(
-                                                                              fontSize: 13,
-                                                                              fontWeight: FontWeight.w600,
-                                                                              color: Colors.black87,
-                                                                            ),
+                                                          ),
+                                                          AnimatedSize(
+                                                            duration:
+                                                                const Duration(
+                                                                    milliseconds:
+                                                                        300),
+                                                            curve: Curves
+                                                                .easeInOut,
+                                                            child: expandedTasks[
+                                                                    index]
+                                                                ? Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left:
+                                                                            16,
+                                                                        bottom:
+                                                                            8),
+                                                                    child:
+                                                                        Column(
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .start,
+                                                                      children: [
+                                                                        const Text(
+                                                                          'Remarks:',
+                                                                          style:
+                                                                              TextStyle(
+                                                                            fontSize:
+                                                                                13,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                            color:
+                                                                                Colors.black87,
                                                                           ),
-                                                                          const SizedBox(
-                                                                              height: 4),
-                                                                          ...task
-                                                                              .remarks
-                                                                              .map((remark) {
-                                                                            return Padding(
-                                                                              padding: const EdgeInsets.symmetric(vertical: 2),
-                                                                              child: Text(
-                                                                                '• $remark',
-                                                                                style: const TextStyle(
-                                                                                  fontSize: 12,
-                                                                                  color: Colors.black87,
-                                                                                ),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                            height:
+                                                                                4),
+                                                                        ...task
+                                                                            .remarks
+                                                                            .map((remark) {
+                                                                          return Padding(
+                                                                            padding:
+                                                                                const EdgeInsets.symmetric(vertical: 2),
+                                                                            child:
+                                                                                Text(
+                                                                              '• $remark',
+                                                                              style: const TextStyle(
+                                                                                fontSize: 12,
+                                                                                color: Colors.black87,
                                                                               ),
-                                                                            );
-                                                                          }),
-                                                                        ],
-                                                                      ),
-                                                                    )
-                                                                  : const SizedBox(),
-                                                            ),
-                                                          ],
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                ),
+                                                                            ),
+                                                                          );
+                                                                        }),
+                                                                      ],
+                                                                    ),
+                                                                  )
+                                                                : const SizedBox(),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                }),
+                                                if (item.assigns.any((assign) =>
+                                                    assign.assignedBy
+                                                        .isNotEmpty)) ...[
+                                                  const SizedBox(height: 12),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.grey.shade100,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .grey.shade300,
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        const Text(
+                                                          "Assignment Details",
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color:
+                                                                Colors.blueGrey,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 8),
+                                                        ...item.assigns
+                                                            .map((assign) {
+                                                          return Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              if (assign.dueDate
+                                                                  .isNotEmpty)
+                                                                _buildAssignDetailRow(
+                                                                  "Due Date",
+                                                                  assign
+                                                                      .dueDate,
+                                                                  Icons
+                                                                      .calendar_today,
+                                                                ),
+                                                              if (assign
+                                                                  .priority
+                                                                  .isNotEmpty)
+                                                                _buildAssignDetailRow(
+                                                                  "Priority",
+                                                                  _getPriorityText(
+                                                                      assign
+                                                                          .priority),
+                                                                  Icons
+                                                                      .priority_high,
+                                                                ),
+                                                              if (assign
+                                                                  .assignedBy
+                                                                  .isNotEmpty)
+                                                                _buildAssignDetailRow(
+                                                                  "Assigned By",
+                                                                  assign
+                                                                      .assignedBy,
+                                                                  Icons.person,
+                                                                ),
+                                                            ],
+                                                          );
+                                                        }),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ),
@@ -1736,14 +1483,62 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
     return 60 + (tasks.length * 28.0);
   }
 
+  Widget _buildAssignDetailRow(String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: Colors.grey.shade600,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            "$label: ",
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getPriorityText(String priority) {
+    switch (priority) {
+      case "1":
+        return "Low";
+      case "2":
+        return "Medium";
+      case "3":
+        return "High";
+      default:
+        return priority;
+    }
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'complete':
         return Colors.green;
       case 'pending':
-        return Colors.orange;
+        return const Color.fromARGB(255, 172, 201, 7);
       case 'To Do':
         return Colors.blue;
+      case 'in-progress':
+        return const Color.fromARGB(255, 226, 117, 15);
+      case 'cancelled':
+        return const Color.fromARGB(255, 164, 21, 19);
       default:
         return const Color.fromARGB(255, 42, 188, 251);
     }
