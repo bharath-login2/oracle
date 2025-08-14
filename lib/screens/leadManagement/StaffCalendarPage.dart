@@ -51,8 +51,9 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
 
       final String yearMonth =
           "${currentMonth.year.toString().padLeft(4, '0')}-${currentMonth.month.toString().padLeft(2, '0')}";
-      final AttendanceDataModel? result =
-          await HttpService.getAttendanceData(widget.staffId, yearMonth, monthYear: '');
+      final AttendanceDataModel? result = await HttpService.getAttendanceData(
+          widget.staffId, yearMonth,
+          monthYear: '');
       if (result != null) {
         Map<DateTime, Map<String, String>> parsedData = {};
         for (var item in result.data.calendarData) {
@@ -139,43 +140,12 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
     }
   }
 
-  // void _showLoginLogoutPopup(DateTime day) {
-  //   final key = DateTime.utc(day.year, day.month, day.day);
-  //   final data = attendanceMap[key];
-
-  //   final title = data?["title"] ?? "Not Added";
-  //   final status = data?["status"] ?? "Not Added";
-  //   final login = data?["login"] ?? "Not Added";
-  //   final logout = data?["logout"] ?? "Not Added";
-  //   if (data != null) {
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) {
-  //         return AlertDialog(
-  //           title: const Text("Attendance Info"),
-  //           content: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               _infoRow("Date", "${day.day}-${day.month}-${day.year}"),
-  //               _infoRow("Title", data["title"]!.toUpperCase()),
-  //               _infoRow("Status", data["status"]!.toUpperCase()),
-  //               _infoRow("Login", data["login"]!),
-  //               _infoRow("Logout", data["logout"]!),
-  //             ],
-  //           ),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () => Navigator.pop(context),
-  //               child: const Text("Close"),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     );
-  //   }
-  // }
-
   void _showLoginLogoutPopup(DateTime day) {
+    final now = DateTime.now();
+    if (day.isAfter(now)) {
+      return;
+    }
+
     final key = DateTime.utc(day.year, day.month, day.day);
     final data = attendanceMap[key];
 
@@ -186,6 +156,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
 
     bool isLeave = false;
     bool isHalfDay = false;
+    bool isEditing = false;
     String selectedLeaveType = '';
     String selectedWorkStatus = 'Full Day';
 
@@ -197,160 +168,6 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // return AlertDialog(
-            //   title: Text(
-            //     "Attendance Action - ${day.day.toString().padLeft(2, '0')}-${day.month.toString().padLeft(2, '0')}-${day.year}",
-            //   ),
-            //   content: SingleChildScrollView(
-            //     child: Column(
-            //       crossAxisAlignment: CrossAxisAlignment.start,
-            //       mainAxisSize: MainAxisSize.min,
-            //       children: [
-            //         const Text("Select Action",
-            //             style: TextStyle(fontWeight: FontWeight.bold)),
-            //         Wrap(
-            //           spacing: 10,
-            //           children: [
-            //             Row(mainAxisSize: MainAxisSize.min, children: [
-            //               Radio<bool>(
-            //                 value: true,
-            //                 groupValue: isLeave,
-            //                 onChanged: (val) => setState(() => isLeave = true),
-            //               ),
-            //               const Text("Mark Leave"),
-            //             ]),
-            //             Row(mainAxisSize: MainAxisSize.min, children: [
-            //               Radio<bool>(
-            //                 value: false,
-            //                 groupValue: isLeave,
-            //                 onChanged: (val) => setState(() => isLeave = false),
-            //               ),
-            //               const Text("Mark Attendance"),
-            //             ]),
-            //           ],
-            //         ),
-            //         const SizedBox(height: 12),
-            //         if (isLeave) ...[
-            //           DropdownButtonFormField<String>(
-            //             isExpanded: true,
-            //             decoration: const InputDecoration(
-            //               labelText: "Leave Type",
-            //               border: OutlineInputBorder(),
-            //             ),
-            //             value: selectedLeaveType.isNotEmpty
-            //                 ? selectedLeaveType
-            //                 : null,
-            //             items: leaveTypes.map((type) {
-            //               return DropdownMenuItem(
-            //                   value: type, child: Text(type));
-            //             }).toList(),
-            //             onChanged: (value) =>
-            //                 setState(() => selectedLeaveType = value ?? ''),
-            //           ),
-            //           const SizedBox(height: 10),
-            //           CheckboxListTile(
-            //             contentPadding: EdgeInsets.zero,
-            //             title: const Text("Half Day Leave"),
-            //             value: isHalfDay,
-            //             onChanged: (val) =>
-            //                 setState(() => isHalfDay = val ?? false),
-            //           ),
-            //         ] else ...[
-            //           DropdownButtonFormField<String>(
-            //             isExpanded: true,
-            //             decoration: const InputDecoration(
-            //               labelText: "Work Status",
-            //               border: OutlineInputBorder(),
-            //             ),
-            //             value: selectedWorkStatus,
-            //             items: workStatusOptions.map((status) {
-            //               return DropdownMenuItem(
-            //                   value: status, child: Text(status));
-            //             }).toList(),
-            //             onChanged: (value) =>
-            //                 setState(() => selectedWorkStatus = value ?? ''),
-            //           ),
-            //         ],
-            //         const SizedBox(height: 16),
-            //         const Divider(),
-            //         const Text("Existing Info",
-            //             style: TextStyle(fontWeight: FontWeight.bold)),
-            //         const SizedBox(height: 8),
-            //         _infoRow("Title", title.toUpperCase()),
-            //         _infoRow("Status", status.toUpperCase()),
-            //         _infoRow("Login", login),
-            //         _infoRow("Logout", logout),
-            //       ],
-            //     ),
-            //   ),
-            //   actions: [
-            //     TextButton(
-            //       style: TextButton.styleFrom(
-            //         foregroundColor: Colors.grey[800],
-            //         textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            //         padding: const EdgeInsets.symmetric(
-            //             horizontal: 20, vertical: 12),
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(8),
-            //         ),
-            //       ),
-            //       onPressed: () => Navigator.pop(context),
-            //       child: const Text("Cancel"),
-            //     ),
-            //     if (!isLeave)
-            //       ElevatedButton(
-            //         onPressed: () async {
-            //           final success = await HttpService.saveWork(
-            //             staffId: widget.staffId,
-            //             date:
-            //                 "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}",
-            //             workStatus: selectedWorkStatus,
-            //           );
-            //           Navigator.pop(context);
-            //           fetchAttendanceData(_focusedDay);
-            //           if (success) {
-            //             ScaffoldMessenger.of(context).showSnackBar(
-            //               const SnackBar(content: Text("Work status updated successfully."),
-            //                backgroundColor: Colors.green,),
-
-            //             );
-            //           } else {
-            //             ScaffoldMessenger.of(context).showSnackBar(
-            //               const SnackBar(
-            //                   content: Text("Failed to save work status.")),
-            //             );
-            //           }
-            //         },
-            //         child: const Text("Save Work Status"),
-            //       ),
-            //     if (isLeave)
-            //       ElevatedButton(
-            //         onPressed: () async {
-            //           final success = await HttpService.saveLeave(
-            //             staffId: widget.staffId,
-            //             date:
-            //                 "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}",
-            //             leaveType: selectedLeaveType,
-            //             isHalfDay: isHalfDay,
-            //           );
-            //           Navigator.pop(context);
-            //           fetchAttendanceData(_focusedDay);
-            //           if (success) {
-            //             ScaffoldMessenger.of(context).showSnackBar(
-            //               const SnackBar(content: Text("Leave Marked Successfully."),
-            //                backgroundColor: Colors.green,),
-            //             );
-            //           } else {
-            //             ScaffoldMessenger.of(context).showSnackBar(
-            //               const SnackBar(
-            //                   content: Text("Failed to save leave.")),
-            //             );
-            //           }
-            //         },
-            //         child: const Text("Save Leave"),
-            //       ),
-            //   ],
-            // );
             return AlertDialog(
               title: Text(
                 "Attendance Action - ${day.day.toString().padLeft(2, '0')}-${day.month.toString().padLeft(2, '0')}-${day.year}",
@@ -360,135 +177,148 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("Select Action",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Wrap(
-                      spacing: 10,
-                      children: [
-                        GestureDetector(
-                          onTap: () => setState(() => isLeave = true),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<bool>(
-                                value: true,
-                                groupValue: isLeave,
-                                onChanged: (val) =>
-                                    setState(() => isLeave = true),
-                              ),
-                              const Text("Mark Leave"),
-                            ],
+                    if (isEditing || title == "Absent") ...[
+                      const Text("Select Action",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Wrap(
+                        spacing: 10,
+                        children: [
+                          GestureDetector(
+                            onTap: () => setState(() => isLeave = true),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Radio<bool>(
+                                  value: true,
+                                  groupValue: isLeave,
+                                  onChanged: (val) =>
+                                      setState(() => isLeave = true),
+                                ),
+                                const Text("Mark Leave"),
+                              ],
+                            ),
                           ),
+                          GestureDetector(
+                            onTap: () => setState(() => isLeave = false),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Radio<bool>(
+                                  value: false,
+                                  groupValue: isLeave,
+                                  onChanged: (val) =>
+                                      setState(() => isLeave = false),
+                                ),
+                                const Text("Mark Attendance"),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (isLeave) ...[
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: "Leave Type",
+                            border: OutlineInputBorder(),
+                          ),
+                          value: selectedLeaveType.isNotEmpty
+                              ? selectedLeaveType
+                              : null,
+                          items: leaveTypes.map((type) {
+                            return DropdownMenuItem(
+                                value: type, child: Text(type));
+                          }).toList(),
+                          onChanged: (value) =>
+                              setState(() => selectedLeaveType = value ?? ''),
                         ),
-                        GestureDetector(
-                          onTap: () => setState(() => isLeave = false),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<bool>(
-                                value: false,
-                                groupValue: isLeave,
-                                onChanged: (val) =>
-                                    setState(() => isLeave = false),
-                              ),
-                              const Text("Mark Attendance"),
-                            ],
+                        const SizedBox(height: 10),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text("Half Day Leave"),
+                          value: isHalfDay,
+                          onChanged: (val) =>
+                              setState(() => isHalfDay = val ?? false),
+                        ),
+                      ] else ...[
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: "Work Status",
+                            border: OutlineInputBorder(),
                           ),
+                          value: selectedWorkStatus,
+                          items: workStatusOptions.map((status) {
+                            return DropdownMenuItem(
+                                value: status, child: Text(status));
+                          }).toList(),
+                          onChanged: (value) =>
+                              setState(() => selectedWorkStatus = value ?? ''),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    if (isLeave) ...[
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: "Leave Type",
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedLeaveType.isNotEmpty
-                            ? selectedLeaveType
-                            : null,
-                        items: leaveTypes.map((type) {
-                          return DropdownMenuItem(
-                              value: type, child: Text(type));
-                        }).toList(),
-                        onChanged: (value) =>
-                            setState(() => selectedLeaveType = value ?? ''),
-                      ),
-                      const SizedBox(height: 10),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text("Half Day Leave"),
-                        value: isHalfDay,
-                        onChanged: (val) =>
-                            setState(() => isHalfDay = val ?? false),
-                      ),
-                    ] else ...[
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: "Work Status",
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedWorkStatus,
-                        items: workStatusOptions.map((status) {
-                          return DropdownMenuItem(
-                              value: status, child: Text(status));
-                        }).toList(),
-                        onChanged: (value) =>
-                            setState(() => selectedWorkStatus = value ?? ''),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final dateStr =
-                              "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
-                          final success = isLeave
-                              ? await HttpService.saveLeave(
-                                  staffId: widget.staffId,
-                                  date: dateStr,
-                                  leaveType: selectedLeaveType,
-                                  isHalfDay: isHalfDay,
-                                )
-                              : await HttpService.saveWork(
-                                  staffId: widget.staffId,
-                                  date: dateStr,
-                                  workStatus: selectedWorkStatus,
-                                );
+                      const SizedBox(height: 16),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final dateStr =
+                                "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
+                            final success = isLeave
+                                ? await HttpService.saveLeave(
+                                    staffId: widget.staffId,
+                                    date: dateStr,
+                                    leaveType: selectedLeaveType,
+                                    isHalfDay: isHalfDay,
+                                  )
+                                : await HttpService.saveWork(
+                                    staffId: widget.staffId,
+                                    date: dateStr,
+                                    workStatus: selectedWorkStatus,
+                                  );
 
-                          Navigator.pop(context);
-                          fetchAttendanceData(_focusedDay);
+                            Navigator.pop(context);
+                            fetchAttendanceData(_focusedDay);
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? (isLeave
-                                        ? "Leave Marked Successfully."
-                                        : "Work status updated successfully.")
-                                    : "Failed to save ${isLeave ? 'leave' : 'work status'}.",
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? (isLeave
+                                          ? "Leave Marked Successfully."
+                                          : "Work status updated successfully.")
+                                      : "Failed to save ${isLeave ? 'leave' : 'work status'}.",
+                                ),
+                                backgroundColor:
+                                    success ? Colors.green : Colors.red,
                               ),
-                              backgroundColor:
-                                  success ? Colors.green : Colors.red,
-                            ),
-                          );
-                        },
-                        child:
-                            Text(isLeave ? "Save Leave" : "Save Work Status"),
+                            );
+                          },
+                          child:
+                              Text(isLeave ? "Save Leave" : "Save Work Status"),
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                    ],
+                    Row(
+                      children: [
+                        const Text("Existing Info",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                            if (!isEditing && title != "Absent")
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => setState(() => isEditing = true),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const Text("Existing Info",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     _infoRow("Title", title.toUpperCase()),
                     _infoRow("Status", status.toUpperCase()),
                     _infoRow("Login", login),
                     _infoRow("Logout", logout),
                     const SizedBox(height: 16),
+
+                    // Action buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -501,19 +331,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                           onPressed: () => Navigator.pop(context),
                           child: const Text("Cancel"),
                         ),
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     // Navigator.pop(context);
-
-                        //     // Navigator.push(
-                        //     //   context,
-                        //     //   MaterialPageRoute(
-                        //     //     builder: (_) => ViewWorkStatusPage(date: day),
-                        //     //   ),
-                        //     // );
-                        //   },
-                        //   child: const Text("View Works"),
-                        // ),
+                        
                         ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
@@ -786,8 +604,8 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

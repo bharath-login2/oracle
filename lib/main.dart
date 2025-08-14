@@ -127,8 +127,7 @@ Future<void> main() async {
   await initService();
   service.invoke('setAsForeground');
   }
-
-  // await Hive.initFlutter();
+ // await Hive.initFlutter();
   // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
   // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
   try {

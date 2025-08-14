@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 // import '../models/pushNotificationModel.dart';
 import '../models/pushNotificationModel.dart';
@@ -100,20 +101,35 @@ class FirebaseServices {
     } else {
       cloudCall = false;
     }
+    log("🔍 detailId: $detailId");
+    log("🔍 message.data: ${message.data}");
+    final notificationMessage = message.notification?.body?.toLowerCase() ??
+        message.data['message']?.toLowerCase() ??
+        '';
     if (navigation == 'whatsapp') {
       Get.to(() => ChatScreen(
             groupId: detailId.toString(),
             nav: "Notification",
           ));
     } else if (navigation == 'notification') {
-      Get.to(() => LeadDetails(
-            token!,
-            editLead!,
-            deleteLead!,
-            cloudCall!,
-            detailId!,
-            pageName: 'notification',
-          ));
+      if (notificationMessage.contains("task")) {
+        Get.to(() => AssignReport(workId: detailId.toString(),sectionId:""));
+      } else if(notificationMessage.contains("Work")){
+          Get.to(() => AssignReport(workId: detailId.toString(),sectionId:""));
+      }else if(notificationMessage.contains("logout")){
+          Get.to(() => Dashboard(token));
+      }else if(notificationMessage.contains("login")){
+          Get.to(() => Dashboard(token));
+      }else {
+        Get.to(() => LeadDetails(
+              token!,
+              editLead!,
+              deleteLead!,
+              cloudCall!,
+              detailId!,
+              pageName: 'notification',
+            ));
+      }
     } else {
       Get.to(() => Dashboard(token!));
     }

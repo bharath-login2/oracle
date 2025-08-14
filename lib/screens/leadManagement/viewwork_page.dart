@@ -14,7 +14,6 @@ import '../../service/service.dart';
 class ViewWorkPage extends StatefulWidget {
   final String staffId;
   final DateTime? selectedDate;
-
   const ViewWorkPage({super.key, this.selectedDate, required this.staffId});
 
   @override
@@ -35,6 +34,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   CommonResponse? loginOrNot;
   bool? isLoggedIn;
   String? userId;
+  String? addWorkPermission;
   // @override
   // void initState() {
   //   super.initState();
@@ -76,6 +76,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
 
   Future<void> _initData() async {
     userId = await Common.getSharedPref("userId");
+    addWorkPermission = await Common.getSharedPref("addWorkPermission");
     print("userId:$userId");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getWorkDuration(currentDate);
@@ -99,6 +100,16 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
         existingWork = null;
       }
     });
+  }
+
+  String formatDueDate(String? dueDate) {
+    if (dueDate == null || dueDate.isEmpty) return '';
+    try {
+      DateTime parsedDate = DateTime.parse(dueDate);
+      return DateFormat('dd-MM-yyyy').format(parsedDate);
+    } catch (e) {
+      return dueDate;
+    }
   }
 
   Future<void> loginorNot() async {
@@ -226,144 +237,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
           ),
         ],
       ),
-
-      // floatingActionButton: existingWork != null
-      //     ? StreamBuilder<DateTime>(
-      //         stream: Stream.periodic(
-      //             const Duration(seconds: 1), (_) => DateTime.now()),
-      //         builder: (context, snapshot) {
-      //           if (!snapshot.hasData) return const SizedBox();
-
-      //           final now = snapshot.data!;
-      //           final createdAt = DateTime.parse(existingWork!.createdAt);
-      //           final diff = now.difference(createdAt);
-      //           String timeSince =
-      //               "${diff.inHours.toString().padLeft(2, '0')}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
-
-      //           return FloatingActionButton.extended(
-      //             onPressed: () async {
-      //               final workStatusModel = await HttpService.getWorkStatus();
-      //               workStatus.WorkStatus? newExistingWork;
-
-      //               if (workStatusModel != null &&
-      //                   workStatusModel.data.isNotEmpty) {
-      //                 newExistingWork = workStatusModel.data.first;
-      //               }
-
-      //               final paused = await showDialog(
-      //                 context: context,
-      //                 builder: (context) => AddWorkPage(
-      //                   existingWork: newExistingWork,
-      //                   onSuccess: () {
-      //                     setState(() {
-      //                       getWorkDuration(currentDate);
-      //                       checkExistingWorkStatus();
-      //                     });
-      //                   },
-      //                 ),
-      //               );
-
-      //               if (paused == true) {
-      //                 setState(() {
-      //                   existingWork = null;
-      //                 });
-      //                 getWorkDuration(currentDate);
-      //               }
-      //             },
-      //             backgroundColor: Colors.red,
-      //             label: Row(
-      //               mainAxisSize: MainAxisSize.min,
-      //               children: [
-      //                 Text(
-      //                   timeSince,
-      //                   style: const TextStyle(
-      //                     fontSize: 14,
-      //                     color: Colors.white,
-      //                     fontWeight: FontWeight.bold,
-      //                   ),
-      //                 ),
-      //                 const SizedBox(width: 8),
-      //                 const Icon(Icons.pause, color: Colors.white),
-      //               ],
-      //             ),
-      //           );
-      //         },
-      //       )
-      //     : FloatingActionButton(
-      //         // onPressed: () async {
-      //         //   final workStatusModel = await HttpService.getWorkStatus();
-      //         //   workStatus.WorkStatus? newExistingWork;
-
-      //         //   if (workStatusModel != null &&
-      //         //       workStatusModel.data.isNotEmpty) {
-      //         //     newExistingWork = workStatusModel.data.first;
-      //         //   }
-      //         //   Navigator.push(
-      //         //     context,
-      //         //     MaterialPageRoute(
-      //         //       builder: (context) => AddWorkPage(
-      //         //         existingWork: newExistingWork,
-      //         //         onSuccess: () {
-      //         //           setState(() {
-      //         //             getWorkDuration(currentDate);
-      //         //             checkExistingWorkStatus();
-      //         //           });
-      //         //         },
-      //         //       ),
-      //         //     ),
-      //         //   );
-      //         // },
-      //         onPressed: () async {
-      //           if (isLoggedIn == true) {
-      //             final workStatusModel = await HttpService.getWorkStatus();
-      //             workStatus.WorkStatus? newExistingWork;
-
-      //             if (workStatusModel != null &&
-      //                 workStatusModel.data.isNotEmpty) {
-      //               newExistingWork = workStatusModel.data.first;
-      //             }
-
-      //             Navigator.push(
-      //               context,
-      //               MaterialPageRoute(
-      //                 builder: (context) => AddWorkPage(
-      //                   existingWork: newExistingWork,
-      //                   onSuccess: () {
-      //                     setState(() {
-      //                       getWorkDuration(currentDate);
-      //                       checkExistingWorkStatus();
-      //                     });
-      //                   },
-      //                 ),
-      //               ),
-      //             );
-      //           } else {
-      //             showDialog(
-      //               context: context,
-      //               builder: (BuildContext context) {
-      //                 return AlertDialog(
-      //                   title: const Text('Login Required'),
-      //                   content: const Text('Please login to add work.'),
-      //                   actions: [
-      //                     TextButton(
-      //                       child: const Text('OK'),
-      //                       onPressed: () {
-      //                         Navigator.of(context).pop();
-      //                       },
-      //                     ),
-      //                   ],
-      //                 );
-      //               },
-      //             );
-      //           }
-      //         },
-      //         backgroundColor: Colors.green,
-      //         child: const Icon(Icons.add, color: Colors.white),
-      //       ),
-
       floatingActionButton: ((widget.staffId != "")
-              ? (userId != null && widget.staffId == userId)
-              : (userId != null))
+                  ? (userId != null && widget.staffId == userId)
+                  : (userId != null)) &&
+              addWorkPermission == "true"
           ? (existingWork != null
               ? StreamBuilder<DateTime>(
                   stream: Stream.periodic(
@@ -611,7 +488,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         itemCount: workStatusDetails!.data.length,
                         itemBuilder: (context, index) {
                           final item = workStatusDetails!.data[index];
-                          final hasAssignment = item.assigns.any((assign) => assign.assignedBy.isNotEmpty);
+                          final hasAssignment = item.assigns
+                              .any((assign) => assign.assignedBy.isNotEmpty);
                           List<bool> expandedTasks = List.generate(
                               item.tasks.length, (index) => false);
 
@@ -660,7 +538,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                       ],
                                     ),
                                   ),
-                                  
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -692,9 +569,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                       ],
                                     ),
                                     const SizedBox(width: 12),
-                                  
                                     Expanded(
-                                      
                                       child: Column(
                                         children: [
                                           Container(
@@ -702,7 +577,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                 bottom: 8),
                                             padding: const EdgeInsets.all(16),
                                             decoration: BoxDecoration(
-                                                 color: hasAssignment ? const Color.fromARGB(255, 255, 249, 220) : Colors.white,
+                                              color: hasAssignment
+                                                  ? const Color.fromARGB(
+                                                      255, 255, 249, 220)
+                                                  : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                               boxShadow: [
@@ -1225,10 +1103,18 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                             children: [
                                                               if (assign.dueDate
                                                                   .isNotEmpty)
+                                                                // _buildAssignDetailRow(
+                                                                //   "Due Date",
+                                                                //   assign
+                                                                //       .dueDate,
+                                                                //   Icons
+                                                                //       .calendar_today,
+                                                                // ),
                                                                 _buildAssignDetailRow(
                                                                   "Due Date",
-                                                                  assign
-                                                                      .dueDate,
+                                                                  formatDueDate(
+                                                                      assign
+                                                                          .dueDate),
                                                                   Icons
                                                                       .calendar_today,
                                                                 ),
@@ -1368,6 +1254,15 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                     );
                   },
                 ),
+                // _buildTimeSummaryItem(
+                //   "Work Time",
+                //   (workStatusDetails != null &&
+                //           workStatusDetails!.data.isNotEmpty)
+                //       ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
+                //       : "--",
+                //   Icons.timer,
+                //   Colors.purple,
+                // ),
                 _buildTimeSummaryItem(
                   "Work Time",
                   (workStatusDetails != null &&
@@ -1375,8 +1270,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                       ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
                       : "--",
                   Icons.timer,
-                  Colors.purple,
+                  Colors.deepPurpleAccent,
+                  isHighlight: true,
                 ),
+
                 _buildTimeSummaryItem(
                   "Ideal",
                   (workStatusDetails != null &&
@@ -1400,8 +1297,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                   "Loggedin Time",
                   (workStatusDetails != null &&
                           workStatusDetails!.data.isNotEmpty)
-                      ? getDurationSinceLogin(
-                          workStatusDetails!.data.first.loginTime)
+                      ? workStatusDetails!.data.first.TimeDifference
                       : "--",
                   Icons.timeline_rounded,
                   Colors.green,
@@ -1434,49 +1330,58 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   }
 
   Widget _buildTimeSummaryItem(
-    String label,
+    String title,
     String value,
     IconData icon,
     Color color, {
-    VoidCallback? onTap, // only passed for "Login"
+    bool isHighlight = false,
+    VoidCallback? onTap,
   }) {
-    final isClickable = onTap != null;
-
-    final content = Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: title == "Work Time"
+              ? Border.all(
+                  color: Colors.deepPurpleAccent,
+                  width: 2) // Only for Work Time
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-          ),
-          if (isClickable)
-            const Icon(Icons.arrow_forward_ios,
-                size: 16, color: Colors.black45),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.black54)),
+                  const SizedBox(height: 4),
+                  Text(value,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight:
+                            isHighlight ? FontWeight.bold : FontWeight.normal,
+                      )),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
-
-    return isClickable ? InkWell(onTap: onTap, child: content) : content;
   }
 
   double _calculateItemHeight(List<workDetails.Task> tasks) {

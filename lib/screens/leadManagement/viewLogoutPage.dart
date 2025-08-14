@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/common.dart';
@@ -29,7 +30,9 @@ class _InfoCardExampleState extends State<InfoCardExample> {
   bool isLoading = true;
   bool isSyncingCallLogs = false;
   late String token;
-
+  String ? ideal_time;
+  String ? work_time;
+  String ? ProjectDashboardPermission;
   @override
   void initState() {
     super.initState();
@@ -38,6 +41,8 @@ class _InfoCardExampleState extends State<InfoCardExample> {
 
   Future<void> _initializeData() async {
     token = await Common.getSharedPref("token") ?? "";
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
     await Future.wait([
       _fetchWorkStatus(),
       _fetchTimeDetails(),
@@ -68,8 +73,28 @@ class _InfoCardExampleState extends State<InfoCardExample> {
 
   Future<void> _handleLogout() async {
     final now = DateTime.now();
-
+    ideal_time =timeDetails?.data.totalGapDuration;
+    work_time =timeDetails?.data.totalWorkDuration;
     try {
+       final result = await HttpService.getWorkStatus();
+    if (result != null && result.data.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Logout Blocked'),
+          content: const Text(
+            'Work is in progress. Please close all work before logging out.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    } 
       setState(() => isSyncingCallLogs = true);
       await _getSharedData();
       LocationPermission permission = await Geolocator.checkPermission();
@@ -82,7 +107,6 @@ class _InfoCardExampleState extends State<InfoCardExample> {
           return;
         }
       }
-
       if (permission == LocationPermission.deniedForever) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -95,13 +119,13 @@ class _InfoCardExampleState extends State<InfoCardExample> {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-
       final response = await HttpService.stopWork(
         now,
         latitude: position.latitude,
         longitude: position.longitude,
+        ideal_time:ideal_time,
+        work_time:work_time,
       );
-
       if (response != null && response.status == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -109,8 +133,11 @@ class _InfoCardExampleState extends State<InfoCardExample> {
             backgroundColor: Colors.green,
           ),
         );
-
+        ProjectDashboardPermission =="true"?
         Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProjectDashboard()),
+        ):Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Dashboard(token)),
         );

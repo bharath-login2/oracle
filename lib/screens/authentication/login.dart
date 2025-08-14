@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -5,10 +6,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/forgot_password.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:workmanager/workmanager.dart';
@@ -33,6 +40,7 @@ class _LoginState extends State<Login> {
   TextEditingController username = TextEditingController();
   TextEditingController password = TextEditingController();
   String? firebaseToken;
+
   bool _loading = false;
   bool timeOut = false;
   bool obSecure = true;
@@ -43,6 +51,8 @@ class _LoginState extends State<Login> {
   final MethodChannel _channel =
       const MethodChannel('onreBootInitFunctionChannel');
   final GlobalKey popupMenuKey = GlobalKey();
+  File? _faceImageFile;
+  String? _faceBase64;
 
   handleAsync() async {
     try {
@@ -93,6 +103,108 @@ class _LoginState extends State<Login> {
     }
   }
 
+// Future<void> captureFace() async {
+//   var status = await Permission.camera.request();
+// if (!status.isGranted) {
+//   Common.toastMessaage('Camera permission denied.', Colors.red);
+//   return;
+// }
+//   final cameras = await availableCameras();
+//   final frontCamera = cameras.firstWhere(
+//     (camera) => camera.lensDirection == CameraLensDirection.front,
+//   );
+
+//   final faceImage = await Navigator.of(context).push<File>(
+//     MaterialPageRoute(
+//       builder: (context) => Scaffold(
+//         backgroundColor: Colors.black,
+//         body: FaceDetectionCamera(
+//           onFaceCaptured: (File imageFile) {
+//             Navigator.of(context).pop(imageFile);
+//           },
+//         ),
+//       ),
+//     ),
+//   );
+
+//   if (faceImage != null) {
+//     final faceDetector = FaceDetector(options: FaceDetectorOptions());
+//     final inputImage = InputImage.fromFilePath(faceImage.path);
+//     final faces = await faceDetector.processImage(inputImage);
+
+//     if (faces.isNotEmpty) {
+//       _faceImageFile = faceImage;
+//       final bytes = await _faceImageFile!.readAsBytes();
+//       _faceBase64 = base64Encode(bytes);
+//       setState(() {});
+//     } else {
+//       Common.toastMessaage('No face detected. Please try again.', Colors.red);
+//     }
+//     faceDetector.close();
+//   } else {
+//     Common.toastMessaage('No image captured', Colors.red);
+//   }
+// }
+
+  Future<String?> generateFaceHash(File faceImageFile) async {
+    final faceDetector = FaceDetector(
+      options: FaceDetectorOptions(
+        enableLandmarks: true,
+        enableContours: true,
+        enableClassification: false,
+      ),
+    );
+
+    final inputImage = InputImage.fromFile(faceImageFile);
+    final faces = await faceDetector.processImage(inputImage);
+
+    if (faces.isEmpty) return null;
+
+    final face = faces.first;
+    final landmarks = face.landmarks;
+
+    // Serialize key landmarks
+    final serialized = [
+      landmarks[FaceLandmarkType.leftEye]?.position,
+      landmarks[FaceLandmarkType.rightEye]?.position,
+      landmarks[FaceLandmarkType.noseBase]?.position,
+      landmarks[FaceLandmarkType.leftCheek]?.position,
+      landmarks[FaceLandmarkType.rightCheek]?.position,
+    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+
+    // Add lip contours (optional but increases uniqueness)
+    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+    final lipData =
+        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+
+    faceDetector.close();
+
+    final combined = '$serialized;$lipData';
+    return base64Encode(utf8.encode(combined));
+  }
+
+  Future<void> captureFace() async {
+    final faceImage = await Navigator.of(context).push<File>(
+      MaterialPageRoute(
+        builder: (context) => FaceDetectionCamera(
+          onFaceCaptured: (File imageFile) {
+            Navigator.of(context).pop(imageFile);
+          },
+        ),
+      ),
+    );
+
+    if (faceImage != null && mounted) {
+      final faceHash = await generateFaceHash(faceImage);
+      if (faceHash == null) {
+        Common.toastMessaage('Face hash failed', Colors.red);
+        return;
+      }
+      _faceBase64 = faceHash;
+      setState(() {});
+    }
+  }
+
   login() async {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
@@ -102,18 +214,26 @@ class _LoginState extends State<Login> {
           Common.toastMessaage('Username cannot be empty', Colors.red);
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
-        }
-         else if (serverChoose == false) {
+        } else if (serverChoose == false) {
           Common.toastMessaage('Choose a Server', Colors.red);
           openPopupMenu();
-        } 
-        else {
+        } else {
           setState(() {
             _loading = true;
           });
 
+          //      await captureFace();
+          // if (_faceBase64 == null || _faceBase64!.isEmpty) {
+          //   Common.toastMessaage('Face capture required for login', Colors.red);
+          //   return;
+          // }
+
           LoginModel? object = await HttpService.login(
-              username.text, password.text, firebaseToken!);
+            username.text,
+            password.text,
+            firebaseToken!,
+            _faceBase64,
+          );
           if (object!.status == true) {
             Common.saveSharedPref(
                 "accountName", object.data!.accountName.toString());
@@ -131,22 +251,22 @@ class _LoginState extends State<Login> {
                   "createLeadPermission", object1.data!.createLead.toString());
               Common.saveSharedPref(
                   "viewLeadPermission", object1.data!.viewLead.toString());
-                  Common.saveSharedPref(
+              Common.saveSharedPref(
                   "addWorkPermission", object1.data!.addWorks.toString());
-                  Common.saveSharedPref(
-                  "viewAllWorkPermission", object1.data!.viewAllWorks.toString());
-                  Common.saveSharedPref(
-                  "viewWorkReportPermission", object1.data!.viewWorkReport.toString());
-                  Common.saveSharedPref(
-                  "startAndStopWorkPermission", object1.data!.startAndStopWork.toString());
-                     Common.saveSharedPref(
+              Common.saveSharedPref("viewAllWorkPermission",
+                  object1.data!.viewAllWorks.toString());
+              Common.saveSharedPref("viewWorkReportPermission",
+                  object1.data!.viewWorkReport.toString());
+              Common.saveSharedPref("startAndStopWorkPermission",
+                  object1.data!.startAndStopWork.toString());
+              Common.saveSharedPref(
                   "adminCheckPermission", object1.data!.adminCheck.toString());
-                     Common.saveSharedPref(
+              Common.saveSharedPref(
                   "multipleUsers", object1.data!.multipleUsers.toString());
-                   Common.saveSharedPref(
+              Common.saveSharedPref(
                   "multipleWorks", object1.data!.multipleWorks.toString());
-                   Common.saveSharedPref(
-                  "hasPhonecallAccess", object1.data!.hasPhonecallAccess.toString());
+              Common.saveSharedPref("hasPhonecallAccess",
+                  object1.data!.hasPhonecallAccess.toString());
               Common.saveSharedPref(
                   "updateLeadPermission", object1.data!.updateLead.toString());
               Common.saveSharedPref(
@@ -177,7 +297,7 @@ class _LoginState extends State<Login> {
                   object1.data!.deleteStaff.toString());
               Common.saveSharedPref("viewStaffReportPermission",
                   object1.data!.viewStaffReport.toString());
-                    Common.saveSharedPref("viewTargetReportPermission",
+              Common.saveSharedPref("viewTargetReportPermission",
                   object1.data!.viewTargetReport.toString());
               Common.saveSharedPref("createStaffDesignationPermission",
                   object1.data!.viewStaffReport.toString());
@@ -195,6 +315,7 @@ class _LoginState extends State<Login> {
                   object1.data!.whatsappUnofficial.toString());
               Common.saveSharedPref(
                   "transferLeads", object1.data!.transferLead.toString());
+            
               Common.saveSharedPref(
                   "uploadCallLog", object1.data!.uploadCallLog.toString());
             }
@@ -207,18 +328,57 @@ class _LoginState extends State<Login> {
             Common.saveSharedPref("roleId", object.data!.roleId.toString());
             Common.saveSharedPref(
                 "multiBranch", object.data!.isMultiBranch.toString());
-          // Common.saveSharedPref("callLogPermission", 'false');
-          //  Common.saveSharedPref(
-          //  "callLogPermission", 'true');
+            Common.saveSharedPref(
+                "faceDetection", object1.data!.faceDetection.toString());
+            Common.saveSharedPref(
+                "companyLocation", object1.data!.companyLocation.toString());
+                Common.saveSharedPref(
+                "assignWork", object1.data!.assignWork.toString());
+                 Common.saveSharedPref(
+                "ProjectDashboardPermission", object1.data!.ProjectDashboard.toString());
+                 Common.saveSharedPref(
+                "LeadDashboard", object1.data!.LeadDashboard.toString());
+                 Common.saveSharedPref(
+                "AccountsDashboardPermission", object1.data!.AccountsDashboard.toString());
+                 Common.saveSharedPref(
+                "MenuDashboard", object1.data!.MenuDashboard.toString());
+                 Common.saveSharedPref(
+                "RenewalDashboardPermission", object1.data!.RenewalDashboard.toString());
+
+            // Common.saveSharedPref("callLogPermission", 'false');
+            //  Common.saveSharedPref(
+            //  "callLogPermission", 'true');
+            String? projectDash = object1.data!.ProjectDashboard.toString();
+            String? leadDash = object1.data!.LeadDashboard.toString();
+            String? accountsDash = object1.data!.AccountsDashboard.toString();
+            String? menuDash = object1.data!.MenuDashboard.toString();
+            String? renewalDash = object1.data!.RenewalDashboard.toString();
+            Widget dashboardToOpen;
+            if (projectDash == "true") {
+              dashboardToOpen = ProjectDashboard();
+            } else if (leadDash == "true") {
+              dashboardToOpen = Dashboard(object.data!.token.toString());
+            } else if (accountsDash == "true") {
+              dashboardToOpen = AccountsDashboard(token: object.data!.token.toString());
+            } else if (menuDash == "true") {
+              dashboardToOpen = HomePage(object.data!.token.toString());
+            } else if (renewalDash == "true") {
+              dashboardToOpen = RenewalDashboard();
+            } else {
+              dashboardToOpen = Dashboard(object.data!.token.toString()); // fallback
+               }
 
             if (object.status == true) {
               if (mounted) {
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //       builder: (context) =>
+                //           Dashboard(object.data!.token.toString())),
+                // );
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          Dashboard(object.data!.token.toString())),
+                  MaterialPageRoute(builder: (context) => dashboardToOpen),
                 );
-              }
+                            }
             } else {}
 
             Common.toastMessaage(object.message, Colors.green);
@@ -494,61 +654,55 @@ class _LoginState extends State<Login> {
                                   //         ),
                                   //       ],
                                   //     )),
-                                     Container(
-                                            child: Align(
-                                              child: updatedata!.data!.server!
-                                                          .length >
-                                                      1
-                                                  ? PopupMenuButton(
-                                                      key: popupMenuKey,
-                                                      child: const Text(
-                                                        "Select Server",
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.blue,
-                                                        ),
-                                                      ),
-                                                      itemBuilder: (context) {
-                                                        return updatedata!
-                                                            .data!.server!
-                                                            .map((data) {
-                                                          return PopupMenuItem<
-                                                              String>(
-                                                            value: data.url,
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Text(data.name
-                                                                    .toString()),
-                                                                if (selectedUrl ==
-                                                                    data.url)
-                                                                  const Icon(
-                                                                    Icons
-                                                                        .check_circle,
-                                                                    color: Colors
-                                                                        .green,
-                                                                    size: 20,
-                                                                  )
-                                                              ],
-                                                            ),
-                                                          );
-                                                        }).toList();
-                                                      },
-                                                      onSelected: (value) {
-                                                        Common.saveSharedPref(
-                                                            "url", value);
-                                                        selectedUrl = value;
-                                                        serverChoose = true;
-                                                        setState(() {});
-                                                      },
-                                                    )
-                                                  : const SizedBox(),
-                                            ),
-                                          ),
-                                       const SizedBox(
+                                  Container(
+                                    child: Align(
+                                      child: updatedata!.data!.server!.length >
+                                              1
+                                          ? PopupMenuButton(
+                                              key: popupMenuKey,
+                                              child: const Text(
+                                                "Select Server",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue,
+                                                ),
+                                              ),
+                                              itemBuilder: (context) {
+                                                return updatedata!.data!.server!
+                                                    .map((data) {
+                                                  return PopupMenuItem<String>(
+                                                    value: data.url,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Text(data.name
+                                                            .toString()),
+                                                        if (selectedUrl ==
+                                                            data.url)
+                                                          const Icon(
+                                                            Icons.check_circle,
+                                                            color: Colors.green,
+                                                            size: 20,
+                                                          )
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList();
+                                              },
+                                              onSelected: (value) {
+                                                Common.saveSharedPref(
+                                                    "url", value);
+                                                selectedUrl = value;
+                                                serverChoose = true;
+                                                setState(() {});
+                                              },
+                                            )
+                                          : const SizedBox(),
+                                    ),
+                                  ),
+                                  const SizedBox(
                                     height: 10,
                                   ),
                                   InkWell(

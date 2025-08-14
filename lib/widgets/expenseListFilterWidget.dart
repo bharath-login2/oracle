@@ -1,4 +1,3 @@
-// Your imports here...
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
@@ -32,6 +31,18 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
   Set<String> selectedToAccountHeadIds = {};
   Set<String> selectedCategoryIds = {};
   Set<String> selectedCreatedByIds = {};
+
+  // Track original order of items
+  Map<String, List<String>> originalOrder = {
+    'category_ids': [],
+    'from_account_head_ids': [],
+    'to_account_head_ids': [],
+    'created_by_ids': [],
+  };
+
+  // Track if we should sort selected items to top
+  bool shouldSortSelectedToTop = false;
+
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
 
@@ -45,20 +56,26 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
     createdTo = widget.initialFilters?['created_to'] != null
         ? DateTime.parse(widget.initialFilters!['created_to'])
         : DateTime(now.year, now.month + 1, 0);
+
     selectedCategoryIds = widget.initialFilters?['category_ids'] != null
         ? Set.from(widget.initialFilters!['category_ids'])
         : <String>{};
+
     selectedFromAccountHeadIds =
         widget.initialFilters?['from_account_head_ids'] != null
             ? Set.from(widget.initialFilters!['from_account_head_ids'])
             : <String>{};
+
     selectedToAccountHeadIds =
         widget.initialFilters?['to_account_head_ids'] != null
             ? Set.from(widget.initialFilters!['to_account_head_ids'])
             : <String>{};
+
     selectedCreatedByIds = widget.initialFilters?['created_by_ids'] != null
         ? Set.from(widget.initialFilters!['created_by_ids'])
         : <String>{};
+
+    shouldSortSelectedToTop = widget.initialFilters != null;
     _loadData();
   }
 
@@ -69,6 +86,15 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
         allAccountHeads = masterData.data.accountHead;
         staffs = masterData.data.staffList;
         filteredCategories = masterData.data.expenseType;
+
+        // Store original order
+        originalOrder['category_ids'] =
+            filteredCategories.map((e) => e.expCatId).toList();
+        originalOrder['from_account_head_ids'] =
+            allAccountHeads.map((e) => e.accountId).toList();
+        originalOrder['to_account_head_ids'] =
+            allAccountHeads.map((e) => e.accountId).toList();
+        originalOrder['created_by_ids'] = staffs.map((e) => e.userId).toList();
       });
     }
   }
@@ -80,13 +106,16 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 3,
-              blurRadius: 7,
-              offset: const Offset(0, -3))
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 3,
+            blurRadius: 7,
+            offset: const Offset(0, -3),
+          )
         ],
       ),
       child: Column(
@@ -111,9 +140,10 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
         const Text(
           'Filters',
           style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2E3A59)),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2E3A59),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.close, color: Color(0xFF2E3A59)),
@@ -127,8 +157,9 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC),
-          borderRadius: BorderRadius.circular(12)),
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -149,7 +180,8 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
       'Created By'
     ];
 
-    return Expanded(
+    return SizedBox(
+      width: 120,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: categories
@@ -177,7 +209,7 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
         setState(() => selectedCategory = title);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFE3F2FD) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
@@ -259,6 +291,7 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
           getId: (item) => item.userId,
           getLabel: (item) => item.staffName,
           selectedIds: selectedCreatedByIds,
+          orderKey: 'created_by_ids',
           hintText: "Search Staff",
         );
 
@@ -268,6 +301,7 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
           getId: (item) => item.expCatId,
           getLabel: (item) => item.expCatName,
           selectedIds: selectedCategoryIds,
+          orderKey: 'category_ids',
           hintText: "Search Category",
         );
 
@@ -277,6 +311,7 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
           getId: (item) => item.accountId,
           getLabel: (item) => item.accountName,
           selectedIds: selectedFromAccountHeadIds,
+          orderKey: 'from_account_head_ids',
           hintText: "Search Account Head",
         );
 
@@ -286,6 +321,7 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
           getId: (item) => item.accountId,
           getLabel: (item) => item.accountName,
           selectedIds: selectedToAccountHeadIds,
+          orderKey: 'to_account_head_ids',
           hintText: "Search Account Head",
         );
 
@@ -299,21 +335,37 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
     required String Function(T) getId,
     required String Function(T) getLabel,
     required Set<String> selectedIds,
+    required String orderKey,
     required String hintText,
   }) {
     final searchTerm = _searchController.text.toLowerCase();
 
-    final filteredItems = items.where((item) {
+    // First filter items based on search term
+    List<T> filteredItems = items.where((item) {
       return getLabel(item).toLowerCase().contains(searchTerm);
     }).toList();
-    filteredItems.sort((a, b) {
-      final aSelected = selectedIds.contains(getId(a));
-      final bSelected = selectedIds.contains(getId(b));
 
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return 0;
-    });
+    // If we should sort selected to top, create a new list with selected first
+    if (shouldSortSelectedToTop) {
+      allAccountHeads = _sortSelectedToTop(
+          allAccountHeads,
+          selectedFromAccountHeadIds,
+          'from_account_head_ids',
+          (a) => a.accountId);
+      allAccountHeads = _sortSelectedToTop(allAccountHeads,
+          selectedToAccountHeadIds, 'to_account_head_ids', (a) => a.accountId);
+      staffs = _sortSelectedToTop(
+          staffs, selectedCreatedByIds, 'created_by_ids', (s) => s.userId);
+      filteredCategories = _sortSelectedToTop(filteredCategories,
+          selectedCategoryIds, 'category_ids', (c) => c.expCatId);
+    } else {
+      // Maintain original order if we shouldn't sort selected to top
+      filteredItems.sort((a, b) {
+        final aIndex = originalOrder[orderKey]!.indexOf(getId(a));
+        final bIndex = originalOrder[orderKey]!.indexOf(getId(b));
+        return aIndex.compareTo(bIndex);
+      });
+    }
 
     return Column(
       children: [
@@ -383,8 +435,10 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
         children: [
           const Icon(Icons.calendar_today, size: 20, color: Color(0xFF3366FF)),
           const SizedBox(width: 8),
-          Text('$label: $display',
-              style: const TextStyle(fontSize: 14, color: Color(0xFF2E3A59))),
+          Text(
+            '$label: $display',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF2E3A59)),
+          ),
         ],
       ),
     );
@@ -411,8 +465,33 @@ class _ExpenseListFilterWidgetState extends State<ExpenseListFilterWidget> {
       ],
     );
   }
+List<T> _sortSelectedToTop<T>(
+  List<T> items,
+  Set<String> selectedIds,
+  String orderKey,
+  String Function(T) getId
+) {
+  final selectedItems = items.where((item) => selectedIds.contains(getId(item))).toList();
+  final unselectedItems = items.where((item) => !selectedIds.contains(getId(item))).toList();
+
+  selectedItems.sort((a, b) =>
+    originalOrder[orderKey]!.indexOf(getId(a)).compareTo(
+      originalOrder[orderKey]!.indexOf(getId(b))
+    )
+  );
+  unselectedItems.sort((a, b) =>
+    originalOrder[orderKey]!.indexOf(getId(a)).compareTo(
+      originalOrder[orderKey]!.indexOf(getId(b))
+    )
+  );
+
+  return [...selectedItems, ...unselectedItems];
+}
 
   void _applyFilters() {
+    setState(() {
+      shouldSortSelectedToTop = true;
+    });
     widget.onApplyFilters({
       'created_from': createdFrom?.toIso8601String(),
       'created_to': createdTo?.toIso8601String(),

@@ -23,6 +23,11 @@ class UserPermissionModel {
 }
 
 class Data {
+   String? ProjectDashboard;
+    String? LeadDashboard;
+     String? AccountsDashboard;
+      String? MenuDashboard;
+       String? RenewalDashboard;
   String? adminCheck;
   String? createStaff;
   String? viewStaff;
@@ -74,8 +79,15 @@ class Data {
   String? viewAllWorks;
   String? viewWorkReport;
   String? startAndStopWork;
-
+ String? faceDetection;
+  String? companyLocation;
+    String? assignWork;
   Data({
+      this.ProjectDashboard,
+        this.LeadDashboard,
+          this.AccountsDashboard,
+            this.MenuDashboard,
+              this.RenewalDashboard,
         this.adminCheck,
     this.createStaff,
     this.viewStaff,
@@ -127,9 +139,17 @@ class Data {
     this.viewAllWorks,
     this.viewWorkReport,
     this.startAndStopWork,
+      this.faceDetection,
+        this.companyLocation,
+          this.assignWork,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
+       ProjectDashboard = json['dashboard_project'];
+          LeadDashboard = json['dashboard_lead'];
+             AccountsDashboard = json['dashboard_accounts'];
+                MenuDashboard = json['dashboard_menu'];
+                   RenewalDashboard = json['dashboard_renewal'];
         adminCheck = json['admins_check'];
     createStaff = json['create_staff'];
     viewStaff = json['view_staff'];
@@ -181,11 +201,19 @@ class Data {
     viewAllWorks = json['view_all_works'];
     viewWorkReport = json['View_Work_Report'];
     startAndStopWork = json['start_and_stop_work'];
+     faceDetection = json['face_detection'];
+      companyLocation = json['company_location'];
+        assignWork = json['assign_work'];
 
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+     data['dashboard_project'] = ProjectDashboard;
+      data['dashboard_lead'] = LeadDashboard;
+       data['dashboard_accounts'] = AccountsDashboard;
+        data['dashboard_menu'] = MenuDashboard;
+         data['dashboard_renewal'] = RenewalDashboard;
     data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
@@ -232,6 +260,9 @@ class Data {
     data['view_all_works'] = viewAllWorks;
     data['View_Work_Report'] = viewWorkReport;
     data['start_and_stop_work'] = startAndStopWork;
+      data['face_detection'] = faceDetection;
+        data['company_location'] = companyLocation;
+         data['assign_work'] = assignWork;
     return data;
   }
 }

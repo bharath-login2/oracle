@@ -1,6 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
+import 'package:login2/screens/leadManagement/ChatScreenWork.dart';
 import 'package:lottie/lottie.dart';
 import '../../models/lead_management/delete_notification.dart';
 import '../../models/lead_management/leadNotificationListModel.dart';
@@ -230,25 +232,112 @@ class _NotificationPageState extends State<NotificationPage> {
                                           }
                                         } else if (leadNotification!
                                                 .data[i].type ==
-                                            "4") {
+                                            "12") {
                                           if (context.mounted) {
-                                            // Navigator.push(
-                                            //   context,
-                                            //   MaterialPageRoute(
-                                            //     builder: (context) =>
-                                            //         LeadDetails(
-                                            //       widget.token!,
-                                            //       widget.editLead,
-                                            //       widget.deleteLead,
-                                            //       widget.cloudCall,
-                                            //       leadNotification!.data[i].id
-                                            //           .toString(),
-                                            //       pageName: 'LeadNotification',
-                                            //     ),
-                                            //   ),
-                                            // ).then((r) {
-                                            //   getData();
-                                            // });
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AssignReport(
+                                                        preselectedWorkId:
+                                                            leadNotification!
+                                                                .data[i].id
+                                                                .toString(),
+                                                        workId:
+                                                            leadNotification!
+                                                                .data[i].id
+                                                                .toString(),
+                                                        sectionId: ""),
+                                              ),
+                                            );
+                                          }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "13") {
+                                          if (context.mounted) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AssignReport(
+                                                        preselectedWorkId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        workId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        sectionId: ""),
+                                              ),
+                                            );
+                                          }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "14") {
+                                          if (context.mounted) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AssignReport(
+                                                        preselectedWorkId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        workId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        sectionId: ""),
+                                              ),
+                                            );
+                                          }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "15") {
+                                          if (context.mounted) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AssignReport(
+                                                        preselectedWorkId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        workId:
+                                                            leadNotification!
+                                                                .data[i]
+                                                                .assignedId
+                                                                .toString(),
+                                                        sectionId: ""),
+                                              ),
+                                            );
+                                          }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "7") {
+                                          if (context.mounted) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChatScreenWork(
+                                                  groupId: leadNotification!
+                                                      .data[i].id,
+                                                  nav: "",
+                                                  assignedTo: "",
+                                                  project: "",
+                                                  assignedToId: "",
+                                                ),
+                                              ),
+                                            );
                                           }
                                         } else {
                                           if (context.mounted) {

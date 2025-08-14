@@ -1567,7 +1567,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         const SizedBox(
                                                           height: 3,
                                                         ),
-                                                        Text(
+                                                        Text(   
                                                           items[index]
                                                               .scheduledDate
                                                               .toString(),

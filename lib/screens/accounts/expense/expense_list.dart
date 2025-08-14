@@ -219,6 +219,8 @@ class _ExpenseListState extends State<ExpenseList> {
     String categoryId = categoryIds.join(',');
     String headId = [...fromHeadIds, ...toHeadIds].join(',');
     String staffId = staffIds.join(',');
+    String fromHeadIdStr = fromHeadIds.join(','); // ✅ new
+String toHeadIdStr = toHeadIds.join(','); 
 
     try {
       ExpenseListModel? newData = await HttpService.expenseList(
@@ -229,6 +231,8 @@ class _ExpenseListState extends State<ExpenseList> {
         categoryId,
         headId,
         staffId,
+        fromHeadIdStr,
+        toHeadIdStr,
         search.text,
       );
 
@@ -641,34 +645,82 @@ class _ExpenseListState extends State<ExpenseList> {
                           Row(
                             children: [
                               GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EditExpense(data: item),
-                                  ),
-                                ).then((_) {
-                                  setState(() {
-                                    page = 1;
-                                    add = 1;
-                                    items.clear();
-                                  });
-                                  getList();
-                                }),
+                                onTap: () {
+                                  if (item.isVerified == "N") {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EditExpense(data: item),
+                                      ),
+                                    ).then((_) {
+                                      setState(() {
+                                        page = 1;
+                                        add = 1;
+                                        items.clear();
+                                      });
+                                      getList();
+                                    });
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text("Cannot Edit"),
+                                          content: const Text(
+                                              "This expense is already verified and cannot be edited."),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text("OK"),
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                            )
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(4),
                                     color: Colors.blue,
                                   ),
-                                  child: const Icon(Icons.edit,
-                                      color: Colors.white, size: 16),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap: () =>
-                                    deleteDialog(context, item.cmpnyExId),
+                                onTap: () {
+                                  if (item.isVerified == "N") {
+                                    deleteDialog(context, item.cmpnyExId);
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text("Cannot Edit"),
+                                          content: const Text(
+                                              "This expense is already verified and cannot be deleted."),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text("OK"),
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                            )
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
@@ -794,42 +846,104 @@ class _ExpenseListState extends State<ExpenseList> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditExpense(data: item),
-                              ),
-                            ).then((_) {
-                              setState(() {
-                                page = 1;
-                                add = 1;
-                                items.clear();
-                              });
-                              getList();
-                            }),
+                            onTap: () {
+                              if (item.isVerified == "N") {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditExpense(data: item),
+                                  ),
+                                ).then((_) {
+                                  setState(() {
+                                    page = 1;
+                                    add = 1;
+                                    items.clear();
+                                  });
+                                  getList();
+                                });
+                              } else {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("Cannot Edit"),
+                                      content: const Text(
+                                          "This expense is already verified and cannot be edited."),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("OK"),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            },
                             child: Container(
+                              padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(4),
                                 color: Colors.blue,
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(5.0),
-                                child: Icon(Icons.edit, color: Colors.white),
+                              child: const Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 16,
                               ),
                             ),
                           ),
                           const SizedBox(height: 10),
+                          // GestureDetector(
+                          //   // onTap: () => deleteDialog(context, item.cmpnyExId),
+
+                          //   child: Container(
+                          //     decoration: BoxDecoration(
+                          //       borderRadius: BorderRadius.circular(2),
+                          //       color: Colors.red,
+                          //     ),
+                          //     child: const Padding(
+                          //       padding: EdgeInsets.all(5.0),
+                          //       child: Icon(Icons.delete, color: Colors.white),
+                          //     ),
+                          //   ),
+                          // ),
                           GestureDetector(
-                            onTap: () => deleteDialog(context, item.cmpnyExId),
+                            onTap: () {
+                              if (item.isVerified == "N") {
+                                deleteDialog(context, item.cmpnyExId);
+                              }else{
+                                showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text("Cannot Edit"),
+                                          content: const Text(
+                                              "This expense is already verified and cannot be deleted."),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text("OK"),
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                            )
+                                          ],
+                                        );
+                                      },
+                                    );
+                              }
+                            },
                             child: Container(
+                              padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(4),
                                 color: Colors.red,
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(5.0),
-                                child: Icon(Icons.delete, color: Colors.white),
-                              ),
+                              child: const Icon(Icons.delete,
+                                  color: Colors.white, size: 16),
                             ),
                           ),
                         ],

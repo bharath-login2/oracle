@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
 
 class AddProjectPage extends StatefulWidget {
@@ -430,6 +431,18 @@ class _AddProjectPageState extends State<AddProjectPage> {
         backgroundColor: const Color.fromARGB(255, 81, 139, 238),
         foregroundColor: const Color.fromARGB(255, 255, 255, 255),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dashboard),
+              onPressed: () async {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProjectDashboard(),
+                ),
+              );
+            },
+            tooltip: "Project dashboard",
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => showAddOrEditDialog(),

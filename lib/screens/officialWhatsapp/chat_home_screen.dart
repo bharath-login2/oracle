@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/components/campaignsBubble.dart';
@@ -48,6 +49,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   OfficialWhatsappConfigeModel? officialWhatsAppConfigure;
   String userId = "";
   String token = '';
+    String ProjectDashboardPermission = '';
+      String LeadDashboard = '';
   int add = 1;
   bool isConfigered = true;
 
@@ -120,12 +123,24 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     return PopScope(
       onPopInvoked: (pop) async {
         token = await Common.getSharedPref("token");
+         ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
+      LeadDashboard = await Common.getSharedPref("LeadDashboard");
         if (context.mounted) {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Dashboard(token),
-              ));
+          // Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => Dashboard(token),
+          //     ));
+            ProjectDashboardPermission =="true"?
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProjectDashboard()),
+                    ): Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => Dashboard(token)),
+                    );
         }
       },
       child: SafeArea(

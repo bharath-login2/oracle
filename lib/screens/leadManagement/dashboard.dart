@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:call_e_log/call_log.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/models/callLogs/callLogUploadModel.dart';
@@ -20,6 +23,7 @@ import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
+import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
@@ -29,6 +33,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.da
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
+import 'package:login2/screens/leadManagement/setDashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
@@ -149,6 +154,7 @@ class _DashboardState extends State<Dashboard> {
   String createLeadCategory = '';
   String updateLeadCategory = '';
   String deleteLeadCategory = '';
+   String startAndStopWork = '';
   String accessCallRecordingPermission = '';
   String visibleP = '';
   bool updateLeadPermission1 = false;
@@ -182,6 +188,7 @@ class _DashboardState extends State<Dashboard> {
   int stfClosed = 0;
   String thisMonth = "";
   String prevMonth = "";
+   String? _faceBase64;
   LeadProgressbarModel? object1;
   bool isLoading = true;
   AccountDashboardModel? accountDashboard;
@@ -370,6 +377,57 @@ class _DashboardState extends State<Dashboard> {
         await HttpService.leadProgressbar(token, fromDate, toDate, callStatus);
   }
 
+    Future<String?> generateFaceHash(File faceImageFile) async {
+    final faceDetector = FaceDetector(
+      options: FaceDetectorOptions(
+        enableLandmarks: true,
+        enableContours: true,
+        enableClassification: false,
+      ),
+    );
+    final inputImage = InputImage.fromFile(faceImageFile);
+    final faces = await faceDetector.processImage(inputImage);
+    if (faces.isEmpty) return null;
+    final face = faces.first;
+    final landmarks = face.landmarks;
+    final serialized = [
+      landmarks[FaceLandmarkType.leftEye]?.position,
+      landmarks[FaceLandmarkType.rightEye]?.position,
+      landmarks[FaceLandmarkType.noseBase]?.position,
+      landmarks[FaceLandmarkType.leftCheek]?.position,
+      landmarks[FaceLandmarkType.rightCheek]?.position,
+    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+    final lipData = lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+
+    faceDetector.close();
+
+    final combined = '$serialized;$lipData';
+    return base64Encode(utf8.encode(combined));
+  }
+
+  Future<void> captureFace() async {
+    final faceImage = await Navigator.of(context).push<File>(
+      MaterialPageRoute(
+        builder: (context) => FaceDetectionCamera(
+          onFaceCaptured: (File imageFile) {
+            Navigator.of(context).pop(imageFile);
+          },
+        ),
+      ),
+    );
+    if (faceImage != null && mounted) {
+      final faceHash = await generateFaceHash(faceImage);
+      if (faceHash == null) {
+        Common.toastMessaage('Face hash failed', Colors.red);
+        return;
+      }
+      _faceBase64 = faceHash;
+      setState(() {});
+    }
+  }
+
+
   getData(token, fromDate, toDate) async {
     renewalPermission = await Common.getSharedPref("renewalPermission");
     accPermission = await Common.getSharedPref("accPermission");
@@ -385,7 +443,7 @@ class _DashboardState extends State<Dashboard> {
 
       if (dismissedDate != today) {
         loginOrNot = await HttpService.getLoginorNot(widget.token);
-        if (loginOrNot?.data != true) {
+        if (loginOrNot?.data != true ) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
           showLoginPrompt(context);
           });
@@ -425,6 +483,7 @@ class _DashboardState extends State<Dashboard> {
       hasPhonecallAccess = await Common.getSharedPref("hasPhonecallAccess");
       updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
       deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
+        //  startAndStopWork = await Common.getSharedPref("startAndStopWork");
       phoneCallLogPermission =
           await Common.getSharedPref("phoneCallLogPermission");
       accessCallHistoryPermission =
@@ -667,6 +726,8 @@ class _DashboardState extends State<Dashboard> {
                       now,
                       latitude: position.latitude,
                       longitude: position.longitude,
+                       faceData:_faceBase64,
+                      
                     );
 
                     Navigator.of(context).pop();
@@ -1176,6 +1237,7 @@ class _DashboardState extends State<Dashboard> {
       startTime,
       latitude: latitude,
       longitude: longitude,
+       faceData:_faceBase64,
     );
   }
 
@@ -1190,11 +1252,9 @@ class _DashboardState extends State<Dashboard> {
               "callTypes": log.callType
                   .toString()
                   .substring(log.callType.toString().indexOf('.') + 1),
-              // "time": DateTime.parse(log.timeStamp).toString(),
               "time":
                   DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
-                      .toString(), // log.timestamp,
-              // "time": log.timeStamp.toString(), // log.timestamp,
+                      .toString(), 
               "duration": log.duration,
               "simName": log.simSlot ?? "NIL",
               "timeStamp": log.timeStamp,
@@ -3902,6 +3962,7 @@ class _DashboardState extends State<Dashboard> {
                                                           builder: (context) =>
                                                               AssignReport(
                                                             workId: "",
+                                                            sectionId:""
                                                           ),
                                                         ),
                                                       );
@@ -3944,6 +4005,28 @@ class _DashboardState extends State<Dashboard> {
                                                           child:
                                                               SizedBox.shrink(),
                                                         ),
+                                                  //        PopupMenuItem<int>(
+                                                  //   onTap: () async {
+                                                  //     Navigator.push(
+                                                  //       context,
+                                                  //       MaterialPageRoute(
+                                                  //         builder: (context) =>
+                                                  //             SetDashboardPage(
+                                                  //                 id: userId),
+                                                  //       ),
+                                                  //     );
+                                                  //   },
+                                                  //   child: const Row(
+                                                  //     children: [
+                                                  //       Icon(
+                                                  //           Icons.dashboard_customize,
+                                                  //           size: 20),
+                                                  //       SizedBox(width: 10),
+                                                  //       Text(
+                                                  //           'Set Dashboard'),
+                                                  //     ],
+                                                  //   ),
+                                                  // ),
                                                   // PopupMenuItem<int>(
                                                   //   onTap: () async {
                                                   //     Navigator.push(
@@ -8445,7 +8528,7 @@ class _DashboardState extends State<Dashboard> {
             ),
             Row(
               children: [
-                userDashboard != null
+                userDashboard != null && startAndStopWorkPermission =="true"
                     ? StartStopToggle(
                         initialStatus: userDashboard!.data.loginCheck,
                         onToggle: (bool started) {

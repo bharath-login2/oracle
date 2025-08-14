@@ -186,7 +186,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
   }
 
   Widget buildStaffTab() {
-    if (staffData == null ) {
+    if (staffData == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -251,13 +251,18 @@ class _PendingWorkPageState extends State<PendingWorkPage>
               // Scrollable Content
               if (isExpanded)
                 SizedBox(
-                  height: MediaQuery.of(context).size.height *
-                      0.6, // 60% of screen height
+                  height: MediaQuery.of(context).size.height * 0.6,
                   child: SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
                     child: Column(
                       children: [
-                        ...summary.projects.map((project) {
+                        ...?summary.projects.map((project) {
+                          final projectName =
+                              project.projectName ?? 'Unnamed Project';
+                          final customerName =
+                              project.customerName ?? 'Unknown Customer';
+                          final module = project.module ?? 'Unknown Module';
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -265,7 +270,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 8),
                                 child: Text(
-                                  '${project.projectName} [${project.customerName}]',
+                                  '$projectName [$customerName]',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
@@ -277,30 +282,44 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 4),
                                 child: Text(
-                                  'Module: ${project.module}',
+                                  'Module: $module',
                                   style: const TextStyle(
                                       fontSize: 13, color: Colors.grey),
                                 ),
                               ),
-                              ...project.tasks.asMap().entries.map((entry) {
+                              ...?project.tasks.asMap().entries.map((entry) {
                                 final task = entry.value;
+                                final taskName =
+                                    task.taskName ?? 'Unnamed Task';
+                                final startTime = task.startTime ?? '-';
+                                final endTime = task.endTime ?? '-';
+                                final date = task.date ?? '';
+                                final assignedBy = task.assignedBy ?? 'Unknown';
+                                final assignedTo = task.assignedTo ?? 'Unknown';
+                                final dueDate = task.dueDate ?? '-';
+                                final status = task.status ?? '1';
+                                final priority = task.priority ?? '1';
+                                final remarks = task.remarks ?? [];
+
                                 return buildTimelineItem(
-                                  title: task.taskName,
-                                  subtitle:
-                                      'Time: ${task.startTime} - ${task.endTime}',
+                                  title: taskName,
+                                  subtitle: (startTime.isNotEmpty)
+                                      ? 'Time: $startTime - $endTime'
+                                      : null,
                                   isFirst: entry.key == 0,
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.calendar_month,
-                                            size: 16, color: Colors.indigo),
-                                        const SizedBox(width: 6),
-                                        Text(task.date),
+                                        if (date.isNotEmpty)
+                                          const Icon(Icons.calendar_month,
+                                              size: 16, color: Colors.indigo),
+                                        if (date.isNotEmpty)
+                                          const SizedBox(width: 6),
+                                        if (date.isNotEmpty) Text(date),
                                         const Spacer(),
                                         summary.userId == userIdSelf &&
                                                 name.toLowerCase() ==
-                                                    task.assignedTo
-                                                        .toLowerCase()
+                                                    assignedTo.toLowerCase() && task.dueDate ==""
                                             ? GestureDetector(
                                                 onTap: () async {
                                                   final result =
@@ -328,12 +347,12 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                         ],
                                                       ),
                                                     );
-                                                  } else {
-                                                    final workStatusModel =
+                                                  } else if(task.dueDate!=""){
+                                                     final workStatusModel =
                                                         await HttpService
                                                             .getWorkStatusPaused(
                                                                 task.attendanceId);
-
+                                                                
                                                     workStatus.WorkStatus?
                                                         newExistingWork;
                                                     if (workStatusModel !=
@@ -344,7 +363,42 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                           workStatusModel
                                                               .data.first;
                                                     }
-
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddWorkPage(
+                                                          workId: "",
+                                                          existingWork:
+                                                              newExistingWork,
+                                                          isPaused: 0,
+                                                          Restart: 1,
+                                                          onSuccess: () {
+                                                            setState(() {
+                                                              getWorkDuration(
+                                                                  currentDate);
+                                                              checkExistingWorkStatus();
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    final workStatusModel =
+                                                        await HttpService
+                                                            .getWorkStatusPaused(
+                                                                task.attendanceId);
+                                                                
+                                                    workStatus.WorkStatus?
+                                                        newExistingWork;
+                                                    if (workStatusModel !=
+                                                            null &&
+                                                        workStatusModel
+                                                            .data.isNotEmpty) {
+                                                      newExistingWork =
+                                                          workStatusModel
+                                                              .data.first;
+                                                    }
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
@@ -367,27 +421,191 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                     );
                                                   }
                                                 },
-                                                child: const Row(
+                                                child: 
+                                                task.dueDate ==""?
+                                                const Row(
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
                                                     Icon(Icons.restart_alt,
                                                         size: 20,
-                                                        color: Color.fromARGB(
-                                                            255, 29, 183, 230)),
+                                                        color:
+                                                            Color(0xFF1DB7E6)),
                                                     SizedBox(width: 4),
-                                                    Text("Restart",
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color:
-                                                                Color.fromARGB(
-                                                                    255,
-                                                                    29,
-                                                                    183,
-                                                                    230),
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold))
+                                                    Text(
+                                                      "Restart",
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color:
+                                                            Color(0xFF1DB7E6),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ):  const Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.restart_alt,
+                                                        size: 20,
+                                                        color:
+                                                            Color(0xFF1DB7E6)),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      "Start",
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color:
+                                                            Color(0xFF1DB7E6),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                              ):task.dueDate !=""?GestureDetector(
+                                                onTap: () async {
+                                                  final result =
+                                                      await HttpService
+                                                          .getWorkStatus();
+                                                  if (result != null &&
+                                                      result.data.isNotEmpty) {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) =>
+                                                          AlertDialog(
+                                                        title: const Text(
+                                                            'Logout Blocked'),
+                                                        content: const Text(
+                                                            'Work is in progress. Please close all work before restarting another.'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(),
+                                                            child: const Text(
+                                                                'OK'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  } else if(task.dueDate!=""){
+                                                     final workStatusModel =
+                                                        await HttpService
+                                                            .getWorkStatusPaused(
+                                                                task.attendanceId);
+                                                                
+                                                    workStatus.WorkStatus?
+                                                        newExistingWork;
+                                                    if (workStatusModel !=
+                                                            null &&
+                                                        workStatusModel
+                                                            .data.isNotEmpty) {
+                                                      newExistingWork =
+                                                          workStatusModel
+                                                              .data.first;
+                                                    }
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddWorkPage(
+                                                          workId: "",
+                                                          existingWork:
+                                                              newExistingWork,
+                                                          isPaused: 0,
+                                                          Restart: 1,
+                                                          onSuccess: () {
+                                                            setState(() {
+                                                              getWorkDuration(
+                                                                  currentDate);
+                                                              checkExistingWorkStatus();
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    final workStatusModel =
+                                                        await HttpService
+                                                            .getWorkStatusPaused(
+                                                                task.attendanceId);
+                                                                
+                                                    workStatus.WorkStatus?
+                                                        newExistingWork;
+                                                    if (workStatusModel !=
+                                                            null &&
+                                                        workStatusModel
+                                                            .data.isNotEmpty) {
+                                                      newExistingWork =
+                                                          workStatusModel
+                                                              .data.first;
+                                                    }
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddWorkPage(
+                                                          workId: "",
+                                                          existingWork:
+                                                              newExistingWork,
+                                                          isPaused: 0,
+                                                          Restart: 1,
+                                                          onSuccess: () {
+                                                            setState(() {
+                                                              getWorkDuration(
+                                                                  currentDate);
+                                                              checkExistingWorkStatus();
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                child: 
+                                                task.dueDate ==""?
+                                                const Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.restart_alt,
+                                                        size: 20,
+                                                        color:
+                                                            Color(0xFF1DB7E6)),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      "Restart",
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color:
+                                                            Color(0xFF1DB7E6),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ):  const Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.start,
+                                                        size: 20,
+                                                        color:
+                                                            Color.fromARGB(255, 29, 230, 146)),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      "Start",
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color:
+                                                            Color.fromARGB(255, 29, 230, 129),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )
                                                   ],
                                                 ),
                                               )
@@ -395,7 +613,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                 padding: const EdgeInsets.only(
                                                     top: 4),
                                                 child: Text(
-                                                  'Assigned By: ${task.assignedBy}',
+                                                  'Assigned By: $assignedBy',
                                                   style: const TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.w500,
@@ -405,13 +623,13 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                               ),
                                       ],
                                     ),
-                                    if (task.remarks.isNotEmpty)
+                                    if (remarks.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 12),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
-                                          children: task.remarks.map((remark) {
+                                          children: remarks.map((remark) {
                                             return Row(
                                               children: [
                                                 const Icon(Icons.check_circle,
@@ -419,9 +637,12 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                     color: Colors.green),
                                                 const SizedBox(width: 6),
                                                 Expanded(
-                                                    child: Text(remark,
-                                                        style: const TextStyle(
-                                                            fontSize: 13)))
+                                                  child: Text(
+                                                    remark,
+                                                    style: const TextStyle(
+                                                        fontSize: 13),
+                                                  ),
+                                                ),
                                               ],
                                             );
                                           }).toList(),
@@ -429,51 +650,48 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                       ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      task.status == "1"
+                                      status == "1"
                                           ? 'Status: To Do'
-                                          : task.status == "2"
+                                          : status == "2"
                                               ? 'Status: Pending'
                                               : 'Status: Completed',
                                       style: TextStyle(
-                                        color: task.status == "1"
+                                        color: status == "1"
                                             ? Colors.blue
-                                            : task.status == "2"
+                                            : status == "2"
                                                 ? Colors.orange
                                                 : Colors.green,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      task.priority == "1"
+                                      priority == "1"
                                           ? 'Priority: Low'
-                                          : task.priority == "2"
+                                          : priority == "2"
                                               ? 'Priority: Medium'
                                               : 'Priority: High',
                                       style: TextStyle(
-                                        color: task.priority == "1"
+                                        color: priority == "1"
                                             ? Colors.blue
-                                            : task.priority == "2"
-                                                ? const Color.fromARGB(
-                                                    240, 240, 170, 64)
-                                                : const Color.fromARGB(
-                                                    255, 248, 55, 7),
+                                            : priority == "2"
+                                                ? const Color(0xFFF0AA40)
+                                                : const Color(0xFFF83707),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Due Date: ${task.dueDate}',
+                                      'Due Date: $dueDate',
                                       style: const TextStyle(
-                                        color: Color.fromARGB(255, 248, 55, 7),
+                                        color: Color(0xFFF83707),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Assigned To: ${task.assignedTo}',
+                                      'Assigned To: $assignedTo',
                                       style: const TextStyle(
-                                        color:
-                                            Color.fromARGB(223, 31, 210, 216),
+                                        color: Color(0xFF1FD2D8),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -487,7 +705,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                       ],
                     ),
                   ),
-                ),
+                )
             ],
           );
         },

@@ -9,6 +9,8 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
+import 'package:login2/screens/leadManagement/CompanyLocationPage.dart';
+import 'package:login2/screens/leadManagement/setDashboard.dart';
 import 'package:login2/screens/leadManagement/webview.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
@@ -41,6 +43,7 @@ class _DraweScreenState extends State<DraweScreen> {
   String name = '';
   String role = '';
   String roleId = '';
+  String userId = '';
   bool isVisible = true;
   final List<Color> _textColors = [
     Colors.red,
@@ -83,7 +86,7 @@ class _DraweScreenState extends State<DraweScreen> {
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
     roleId = await Common.getSharedPref("roleId");
-
+    userId = await Common.getSharedPref("userId");
     setState(() {
       result = result1;
     });
@@ -129,127 +132,311 @@ class _DraweScreenState extends State<DraweScreen> {
                                 height: 130, fit: BoxFit.contain),
                           )),
                         ),
+                        // Expanded(
+                        //   child: Column(
+                        //     children: [
+                        //       const SizedBox(
+                        //         height: 10,
+                        //       ),
+                        //       ListTile(
+                        //         leading: SizedBox(
+                        //             width: 25,
+                        //             child: Center(
+                        //               child: Image.asset(
+                        //                   'assets/icons/home.png',
+                        //                   height: 100,
+                        //                   fit: BoxFit.contain),
+                        //             )),
+                        //         title: const Text('Home'),
+                        //         onTap: () => {
+                        //           Navigator.of(context).push(
+                        //             MaterialPageRoute(
+                        //                 builder: (context) =>
+                        //                     HomePage(widget.token)),
+                        //           ),
+                        //         },
+                        //       ),
+                        //       // ListTile(
+                        //       //   leading: SizedBox(
+                        //       //       width: 25,
+                        //       //       child: Center(
+                        //       //         child: Image.asset('assets/main/user.png',
+                        //       //             height: 120, fit: BoxFit.contain),
+                        //       //       )),
+                        //       //   title: const Text('Profile'),
+                        //       //   onTap: () => {
+                        //       //
+                        //       //   },
+                        //       // ),
+                        //       if (roleId == "2")
+                        //         ListTile(
+                        //           leading: SizedBox(
+                        //               width: 25,
+                        //               child: Center(
+                        //                 child: Image.asset(
+                        //                     'assets/main/padlock.png',
+                        //                     height: 100,
+                        //                     fit: BoxFit.contain),
+                        //               )),
+                        //           title: const Text('Change Password'),
+                        //           onTap: () => {
+                        //             Navigator.push(
+                        //               context,
+                        //               MaterialPageRoute(
+                        //                   builder: (context) =>
+                        //                       UserChangePassword(widget.token)),
+                        //             ),
+                        //           },
+                        //         ),
+                        //       ListTile(
+                        //         leading: SizedBox(
+                        //             width: 25,
+                        //             child: Center(
+                        //               child: Image.asset(
+                        //                   'assets/main/insurance.png',
+                        //                   height: 100,
+                        //                   fit: BoxFit.contain),
+                        //             )),
+                        //         title: const Text('Privacy T&C'),
+                        //         onTap: () async => {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //                 builder: (context) => const WebViewPage(
+                        //                     'Privacy T&C',
+                        //                     'https://login2.co.in/privacypolicy.html')),
+                        //           ),
+                        //         },
+                        //       ),
+                        //       ListTile(
+                        //         leading: SizedBox(
+                        //             width: 25,
+                        //             child: Center(
+                        //               child: Image.asset(
+                        //                   'assets/icons/notification.png',
+                        //                   height: 100,
+                        //                   fit: BoxFit.contain),
+                        //             )),
+                        //         title: const Text('Notification Settings'),
+                        //         onTap: () {
+                        //           AppSettings.openAppSettings(
+                        //               type: AppSettingsType.notification);
+                        //         },
+                        //       ),
+
+                        //       ListTile(
+                        //         leading:
+                        //             Icon(Icons.location_on, color: Colors.red),
+                        //         title: const Text('Company Locations'),
+                        //         onTap: () {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //                 builder: (context) =>
+                        //                     const CompanyLocationPage()),
+                        //           );
+                        //         },
+                        //       ),
+
+                        //       ListTile(
+                        //         leading:
+                        //             Icon(Icons.dashboard_customize, color: const Color.fromARGB(255, 40, 160, 216)),
+                        //         title: const Text('Set Dasboard'),
+                        //         onTap: () {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //                 builder: (context) =>
+                        //                     const CompanyLocationPage()),
+                        //           );
+                        //         },
+                        //       ),
+
+                        //       // ListTile(
+                        //       //   leading: SizedBox(
+                        //       //       width: 25,
+                        //       //       child: Center(
+                        //       //         child: Image.asset(
+                        //       //             'assets/icons/facebook.png',
+                        //       //             height: 100,
+                        //       //             fit: BoxFit.contain),
+                        //       //       )),
+                        //       //   title: const Text('Facebook Settings'),
+                        //       //   onTap: () {
+                        //       //     Navigator.push(
+                        //       //       context,
+                        //       //       MaterialPageRoute(
+                        //       //           builder: (context) =>
+                        //       //               FacebookSettings(widget.token)),
+                        //       //     );
+                        //       //   },
+                        //       // ),
+                        //       ListTile(
+                        //         leading: SizedBox(
+                        //             width: 25,
+                        //             child: Center(
+                        //               child: Image.asset(
+                        //                   'assets/icons/logout.png',
+                        //                   height: 100,
+                        //                   fit: BoxFit.contain),
+                        //             )),
+                        //         title: const Text('Logout'),
+                        //         //  onTap: () => logout(context),
+                        //         onTap: () async {
+                        //           try {
+                        //             final result =
+                        //                 await HttpService.getWorkStatus();
+                        //             if (result != null &&
+                        //                 result.data.isNotEmpty) {
+                        //               showDialog(
+                        //                 context: context,
+                        //                 builder: (context) => AlertDialog(
+                        //                   title: const Text('Logout Blocked'),
+                        //                   content: const Text(
+                        //                       'Work is in progress. Please close all work before logging out.'),
+                        //                   actions: [
+                        //                     TextButton(
+                        //                       onPressed: () =>
+                        //                           Navigator.of(context).pop(),
+                        //                       child: const Text('OK'),
+                        //                     ),
+                        //                   ],
+                        //                 ),
+                        //               );
+                        //             } else {
+                        //               logout(context);
+                        //             }
+                        //           } catch (e) {
+                        //             print('Error checking work status: $e');
+                        //             ScaffoldMessenger.of(context).showSnackBar(
+                        //               const SnackBar(
+                        //                   content: Text(
+                        //                       'Failed to check work status')),
+                        //             );
+                        //           }
+                        //         },
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                         Expanded(
-                          child: Column(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             children: [
-                              const SizedBox(
-                                height: 10,
-                              ),
                               ListTile(
                                 leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/icons/home.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
+                                  width: 25,
+                                  child: Center(
+                                    child: Image.asset('assets/icons/home.png',
+                                        height: 24, fit: BoxFit.contain),
+                                  ),
+                                ),
                                 title: const Text('Home'),
-                                onTap: () => {
+                                onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                         builder: (context) =>
                                             HomePage(widget.token)),
-                                  ),
+                                  );
                                 },
                               ),
-                              // ListTile(
-                              //   leading: SizedBox(
-                              //       width: 25,
-                              //       child: Center(
-                              //         child: Image.asset('assets/main/user.png',
-                              //             height: 120, fit: BoxFit.contain),
-                              //       )),
-                              //   title: const Text('Profile'),
-                              //   onTap: () => {
-                              //
-                              //   },
-                              // ),
                               if (roleId == "2")
                                 ListTile(
                                   leading: SizedBox(
-                                      width: 25,
-                                      child: Center(
-                                        child: Image.asset(
-                                            'assets/main/padlock.png',
-                                            height: 100,
-                                            fit: BoxFit.contain),
-                                      )),
+                                    width: 25,
+                                    child: Center(
+                                      child: Image.asset(
+                                          'assets/main/padlock.png',
+                                          height: 24,
+                                          fit: BoxFit.contain),
+                                    ),
+                                  ),
                                   title: const Text('Change Password'),
-                                  onTap: () => {
+                                  onTap: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) =>
                                               UserChangePassword(widget.token)),
-                                    ),
+                                    );
                                   },
                                 ),
                               ListTile(
                                 leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/main/insurance.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
+                                  width: 25,
+                                  child: Center(
+                                    child: Image.asset(
+                                        'assets/main/insurance.png',
+                                        height: 24,
+                                        fit: BoxFit.contain),
+                                  ),
+                                ),
                                 title: const Text('Privacy T&C'),
-                                onTap: () async => {
+                                onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => const WebViewPage(
-                                            'Privacy T&C',
-                                            'https://login2.co.in/privacypolicy.html')),
-                                  ),
+                                      builder: (context) => const WebViewPage(
+                                        'Privacy T&C',
+                                        'https://login2.co.in/privacypolicy.html',
+                                      ),
+                                    ),
+                                  );
                                 },
                               ),
                               ListTile(
                                 leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/icons/notification.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
+                                  width: 25,
+                                  child: Center(
+                                    child: Image.asset(
+                                        'assets/icons/notification.png',
+                                        height: 24,
+                                        fit: BoxFit.contain),
+                                  ),
+                                ),
                                 title: const Text('Notification Settings'),
                                 onTap: () {
                                   AppSettings.openAppSettings(
                                       type: AppSettingsType.notification);
                                 },
                               ),
-                              // ListTile(
-                              //   leading: SizedBox(
-                              //       width: 25,
-                              //       child: Center(
-                              //         child: Image.asset(
-                              //             'assets/icons/facebook.png',
-                              //             height: 100,
-                              //             fit: BoxFit.contain),
-                              //       )),
-                              //   title: const Text('Facebook Settings'),
-                              //   onTap: () {
-                              //     Navigator.push(
-                              //       context,
-                              //       MaterialPageRoute(
-                              //           builder: (context) =>
-                              //               FacebookSettings(widget.token)),
-                              //     );
-                              //   },
-                              // ),
+                              ListTile(
+                                leading: const Icon(Icons.location_on,
+                                    color: Colors.red),
+                                title: const Text('Company Locations'),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const CompanyLocationPage()),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.dashboard_customize,
+                                    color: Color.fromARGB(255, 40, 160, 216)),
+                                title: const Text('Set Dashboard'),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                             SetDashboardPage(id:userId)),
+                                  );
+                                },
+                              ),
                               ListTile(
                                 leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/icons/logout.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
+                                  width: 25,
+                                  child: Center(
+                                    child: Image.asset(
+                                        'assets/icons/logout.png',
+                                        height: 24,
+                                        fit: BoxFit.contain),
+                                  ),
+                                ),
                                 title: const Text('Logout'),
-                                //  onTap: () => logout(context),
                                 onTap: () async {
                                   try {
                                     final result =
@@ -287,6 +474,7 @@ class _DraweScreenState extends State<DraweScreen> {
                             ],
                           ),
                         ),
+
                         Align(
                             alignment: FractionalOffset.bottomCenter,
                             child: Column(

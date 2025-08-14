@@ -7,7 +7,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/push_notification_channel.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
@@ -69,9 +73,40 @@ class _SplashScreenState extends State<SplashScreen> {
       openAppLink(appLink);
     } else {
       String? token = await Common.getSharedPref("token");
+      String? ProjectDashboardPermission =
+          await Common.getSharedPref("ProjectDashboardPermission");
+      String? LeadDashboard = await Common.getSharedPref("LeadDashboard");
+      String? AccountsDashboardPermission =
+          await Common.getSharedPref("AccountsDashboardPermission");
+      String? MenuDashboard = await Common.getSharedPref("MenuDashboard");
+      String? RenewalDashboardPermission =
+          await Common.getSharedPref("RenewalDashboardPermission");
+
+      Widget dashboardToOpen;
+      if (ProjectDashboardPermission == "true") {
+        dashboardToOpen = ProjectDashboard();
+      } else if (LeadDashboard == "true") {
+        dashboardToOpen = Dashboard(token);
+      } else if (AccountsDashboardPermission == "true") {
+        if (token != null) {
+          dashboardToOpen = AccountsDashboard(token: token);
+        } else {
+          dashboardToOpen =
+                dashboardToOpen = Dashboard(token); 
+        }
+      } else if (MenuDashboard == "true") {
+        dashboardToOpen = HomePage(token);
+      } else if (RenewalDashboardPermission == "true") {
+        dashboardToOpen = RenewalDashboard();
+      } else {
+        dashboardToOpen = Dashboard(token); // fallback
+      }
       if (mounted) {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
+        // Navigator.of(context)
+        //     .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
+         Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => dashboardToOpen),
+                );
       }
     }
 
@@ -293,29 +328,30 @@ class _SplashScreenState extends State<SplashScreen> {
             ));
   }
 
-            routeTOHomePage() async {
-              if (navigation == null) {
-                String? token = await Common.getSharedPref("token");
-                log(firebaseToken.toString());
-                if (firebaseToken == null) {
-            log("Firebase token is still null. Retrying...");
-            firebaseToken = await FirebaseMessaging.instance.getToken();
-          }
+  routeTOHomePage() async {
+    if (navigation == null) {
+      String? token = await Common.getSharedPref("token");
+      log(firebaseToken.toString());
+      if (firebaseToken == null) {
+        log("Firebase token is still null. Retrying...");
+        firebaseToken = await FirebaseMessaging.instance.getToken();
+      }
 
-          if (firebaseToken == null) {
-            Common.toastMessaage('Unable to get Firebase token. Try restarting app.', Colors.red);
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const Login()),
-                (Route<dynamic> route) => false);
-            return;
-          }
+      if (firebaseToken == null) {
+        Common.toastMessaage(
+            'Unable to get Firebase token. Try restarting app.', Colors.red);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const Login()),
+            (Route<dynamic> route) => false);
+        return;
+      }
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
-          if (loginCheck == null) {
-         Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const Login()),
-              (Route<dynamic> route) => false);
-        }
+      if (loginCheck == null) {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const Login()),
+            (Route<dynamic> route) => false);
+      }
       if (loginCheck!.data == true) {
         initDeepLinks();
       } else {
@@ -326,7 +362,7 @@ class _SplashScreenState extends State<SplashScreen> {
               (Route<dynamic> route) => false);
         }
       }
-        } else {}
+    } else {}
   }
 }
 

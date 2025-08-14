@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
@@ -27,7 +28,6 @@ import 'package:text_scroll/text_scroll.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'complaints/complaint_list_screen.dart';
 import 'leadManagement/allReport.dart';
-import 'leadManagement/viewwork_page.dart';
 import 'officialWhatsapp/chat_home_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -50,6 +50,8 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String name = '';
   String role = '';
+  String ProjectDashboardPermission = '';
+  String LeadDashboard = '';
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
@@ -74,6 +76,9 @@ class _HomePageState extends State<HomePage> {
 
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+     ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
+      LeadDashboard = await Common.getSharedPref("LeadDashboard");
+      
     log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
@@ -727,7 +732,7 @@ class _HomePageState extends State<HomePage> {
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (context) =>
-                                                      const ViewWorkPage(staffId: ''),
+                                                      const ProjectDashboard(),
                                                 ),
                                               );
                                             } else if (userDashboard!
@@ -1031,7 +1036,12 @@ class _HomePageState extends State<HomePage> {
                 floatingActionButton: FloatingActionButton(
                   backgroundColor: Colors.black,
                   onPressed: () {
+                    ProjectDashboardPermission =="true"?
                     Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProjectDashboard()),
+                    ): Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => Dashboard(widget.token)),

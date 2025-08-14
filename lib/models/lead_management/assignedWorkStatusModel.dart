@@ -49,6 +49,8 @@ class AssignedWorkStatus {
   final String loginTime;
   final String logoutTime;
   final List<Task> tasks;
+  final NotificationSettings notification;
+  final String unreadCounts;
 
   AssignedWorkStatus({
     required this.id,
@@ -63,6 +65,8 @@ class AssignedWorkStatus {
     required this.loginTime,
     required this.logoutTime,
     required this.tasks,
+    required this.notification,
+    required this.unreadCounts,
   });
 
   factory AssignedWorkStatus.fromJson(Map<String, dynamic> json) =>
@@ -81,6 +85,17 @@ class AssignedWorkStatus {
         loginTime: json["login_time"] ?? "",
         logoutTime: json["logout_time"] ?? "",
         tasks: List<Task>.from(json["tasks"].map((x) => Task.fromJson(x))),
+        notification: NotificationSettings.fromJson(json["notification"] ??
+            {
+              "whatsup_notification": "0",
+              "push_notification": "0",
+              "on_start": "0",
+              "on_save": "0",
+              "on_complete": "0",
+              "staff_ids": [],
+              "participant_ids": []
+            }),
+             unreadCounts: json["unread_count"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -96,7 +111,12 @@ class AssignedWorkStatus {
         "login_time": loginTime,
         "logout_time": logoutTime,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
+        "notification": notification.toJson(),
+          "unread_count": unreadCounts,
+        
       };
+
+  firstWhere(bool Function(dynamic item) param0, {required Null Function() orElse}) {}
 }
 
 class Task {
@@ -126,5 +146,51 @@ class Task {
         "status": status,
         "description": description,
         "remarks": remarks,
+      };
+}
+
+class NotificationSettings {
+  final String whatsupNotification;
+  final String pushNotification;
+  final String onStart;
+  final String onSave;
+  final String onComplete;
+  final List<String> staffIds;
+  final List<String> participantIds;
+
+  NotificationSettings({
+    required this.whatsupNotification,
+    required this.pushNotification,
+    required this.onStart,
+    required this.onSave,
+    required this.onComplete,
+    required this.staffIds,
+    required this.participantIds,
+  });
+
+  factory NotificationSettings.fromJson(Map<String, dynamic> json) =>
+      NotificationSettings(
+        whatsupNotification: json["whatsup_notification"]?.toString() ?? "0",
+        pushNotification: json["push_notification"]?.toString() ?? "0",
+        onStart: json["on_start"]?.toString() ?? "0",
+        onSave: json["on_save"]?.toString() ?? "0",
+        onComplete: json["on_complete"]?.toString() ?? "0",
+        staffIds: json["staff_ids"] != null
+            ? List<String>.from(json["staff_ids"].map((x) => x.toString()))
+            : [],
+        participantIds: json["participant_ids"] != null
+            ? List<String>.from(
+                json["participant_ids"].map((x) => x.toString()))
+            : [],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "whatsup_notification": whatsupNotification,
+        "push_notification": pushNotification,
+        "on_start": onStart,
+        "on_save": onSave,
+        "on_complete": onComplete,
+        "staff_ids": List<dynamic>.from(staffIds.map((x) => x)),
+        "participant_ids": List<dynamic>.from(participantIds.map((x) => x)),
       };
 }

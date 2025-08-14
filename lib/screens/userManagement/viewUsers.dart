@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/screens/userManagement/branches.dart';
@@ -35,6 +36,8 @@ class _ViewUsersState extends State<ViewUsers> {
   String name = '';
   String role = '';
   String roleId = '';
+    String ProjectDashboardPermission = '';
+  String LeadDashboard = '';
   String? createStaffPermission;
   String? viewStaffPermission;
   String? updateStaffPermission;
@@ -79,6 +82,8 @@ class _ViewUsersState extends State<ViewUsers> {
         await Common.getSharedPref("updateStaffPasswordPermission");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+          ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
+      LeadDashboard = await Common.getSharedPref("LeadDashboard");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -1048,13 +1053,25 @@ class _ViewUsersState extends State<ViewUsers> {
                   FloatingActionButtonLocation.centerDocked,
               floatingActionButton: FloatingActionButton(
                 backgroundColor: Colors.black,
+                // onPressed: () {
+                //   Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //         builder: (context) => Dashboard(widget.token)),
+                //   );
+                // },
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => Dashboard(widget.token)),
-                  );
-                },
+                    ProjectDashboardPermission =="true"?
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProjectDashboard()),
+                    ): Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => Dashboard(widget.token)),
+                    );
+                  },
                 child: Image.asset("assets/icons/menu.png",
                     width: 25), //icon inside button
               ),

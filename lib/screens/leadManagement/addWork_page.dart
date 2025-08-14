@@ -7,6 +7,7 @@ import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 
 import '../../core/common.dart';
 import '../../models/lead_management/projectList_model.dart';
@@ -63,6 +64,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
   DateTime? dueDate;
   String? priority;
   String? assignedTo;
+  String? sectionId;
+  String? ProjectDashboardPermission;
   final TextEditingController _searchController = TextEditingController();
   List<Projects> _filteredProjects = [];
   bool _isSearching = false;
@@ -156,6 +159,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
   void _initAsync() async {
     token = await Common.getSharedPref("token") ?? "";
     userId = await Common.getSharedPref("userId");
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
     await _loadProjects();
 
     if (assignedTo == null) {
@@ -165,11 +170,27 @@ class _AddWorkPageState extends State<AddWorkPage> {
     }
   }
 
+  bool _validateTasks() {
+    bool atLeastOneChecked =
+        tasks.any((task) => task.status == '4' || task.isChecked);
+
+    if (!atLeastOneChecked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please check at least one task to proceed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   Future<void> checkAssignedWorks() async {
     if (widget.workId.isEmpty) return;
 
     final AssignedWorkModel =
-        await HttpService.getAssinedWorkStatus(widget.workId);
+        await HttpService.getAssinedWorkStatus(widget.workId, sectionId = "");
     setState(() {
       if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
         assignedWorks = AssignedWorkModel.data.first;
@@ -431,6 +452,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _submitWork() async {
+    if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -516,13 +538,21 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
+        ProjectDashboardPermission == "true"
+            ? Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProjectDashboard(),
+                ),
+                (route) => false,
+              )
+            : Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Dashboard(token),
+                ),
+                (route) => false,
+              );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -542,6 +572,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _savework() async {
+    if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -570,7 +601,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'task_id': task.taskId,
           'description': task.controller.text,
           'status': task.status,
-           'is_checked': task.isChecked ? 1 : 0,
+          'is_checked': task.isChecked ? 1 : 0,
           'remarks': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -608,6 +639,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _pauseWork() async {
+    if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -688,13 +720,22 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
+        
+        ProjectDashboardPermission == "true"
+            ? Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProjectDashboard(),
+                ),
+                (route) => false,
+              )
+            : Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Dashboard(token),
+                ),
+                (route) => false,
+              );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -714,6 +755,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _restartWork() async {
+    if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -799,13 +841,22 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
+        
+        ProjectDashboardPermission == "true"
+            ? Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProjectDashboard(),
+                ),
+                (route) => false,
+              )
+            : Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Dashboard(token),
+                ),
+                (route) => false,
+              );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

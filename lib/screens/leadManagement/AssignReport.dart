@@ -15,7 +15,13 @@ import 'package:login2/models/expense/staffListModel.dart';
 
 class AssignReport extends StatefulWidget {
   final String workId;
-  const AssignReport({super.key, required this.workId});
+  final String sectionId;
+  final String? preselectedWorkId;
+  const AssignReport(
+      {super.key,
+      required this.workId,
+      required this.sectionId,
+      this.preselectedWorkId});
 
   @override
   State<AssignReport> createState() => _AssignReportState();
@@ -31,26 +37,114 @@ class _AssignReportState extends State<AssignReport> {
   final bool _showAllTasks = false;
   WorkCompanyDetailsModel? workStatusDetails;
   String? name;
+  String? assignWork;
   bool isLoading = true;
   bool isRemarkExpanded = false;
+  List<String> participantIds = [];
+  String _selectedFilter = 'all';
+  String? _currentUserId;
+  Set<String> _selectedFilters = {};
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadData();
+  //   checkAssignedWorks();
+  //   _loadName();
+  //   currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  // }
+
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserId();
     _loadData();
     checkAssignedWorks();
     _loadName();
     currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
-  Future<void> _loadName() async {
-    name = await Common.getSharedPref("name");
+  Future<void> _loadCurrentUserId() async {
+    _currentUserId = await Common.getSharedPref("userId");
     setState(() {});
   }
 
+  Future<void> _loadName() async {
+    name = await Common.getSharedPref("name");
+    assignWork = await Common.getSharedPref("assignWork");
+    setState(() {});
+  }
+
+  // void _loadData() {
+  //   assignedWorkFuture = HttpService.getAssignedWorks(filters: currentFilters);
+  //   assignedWorkFuture.then((assignedList) {
+  //     if (widget.workId.isNotEmpty) {
+  //       final AssignedWork matchedItem = assignedList.firstWhere(
+  //         (item) => item.id.toString() == widget.workId,
+  //         orElse: () => null as AssignedWork,
+  //       );
+  //       if (matchedItem != null) {
+  //         WidgetsBinding.instance.addPostFrameCallback((_) {
+  //           _showTaskDetails(context, matchedItem);
+  //         });
+  //       }
+  //     }
+  //     setState(() {});
+  //   });
+  // }
   void _loadData() {
     setState(() {
-      assignedWorkFuture =
-          HttpService.getAssignedWorks(filters: currentFilters);
+      isLoading = true;
+    });
+
+    assignedWorkFuture = HttpService.getAssignedWorks(
+            filters: currentFilters, sectionId: widget.sectionId)
+        .then((assignedList) {
+      List<AssignedWork> filteredList = assignedList.where((item) {
+        bool matchesAssignedByMe = _selectedFilters.contains('assignedByMe')
+            ? item.assignedBy?.toLowerCase() == name?.toLowerCase()
+            : true;
+
+        bool matchesPending = _selectedFilters.contains('pending')
+            ? item.status.toLowerCase() == 'pending'
+            : true;
+
+        return matchesAssignedByMe && matchesPending;
+      }).toList();
+
+      if (widget.workId.isNotEmpty) {
+        final AssignedWork? matchedItem = filteredList.firstWhere(
+          (item) => item.id.toString() == widget.workId,
+          orElse: () => null as AssignedWork,
+        );
+        if (matchedItem != null && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showTaskDetails(context, matchedItem);
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      return filteredList;
+    }).catchError((error) {
+      debugPrint('Error loading assigned works: $error');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      return <AssignedWork>[];
+    });
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _loadData();
+      checkExistingWorkStatus();
+      checkAssignedWorks();
     });
   }
 
@@ -74,7 +168,7 @@ class _AssignReportState extends State<AssignReport> {
 
   Future<void> checkAssignedWorks() async {
     final AssignedWorkModel =
-        await HttpService.getAssinedWorkStatus(widget.workId);
+        await HttpService.getAssinedWorkStatus(widget.workId, widget.sectionId);
     setState(() {
       if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
         assignedWorks = AssignedWorkModel.data.first;
@@ -103,26 +197,82 @@ class _AssignReportState extends State<AssignReport> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AssignWorkPage(
-                onSuccess: () {
-                  setState(() {
-                    checkExistingWorkStatus();
-                  });
-                },
-              ),
-            ),
-          );
-        },
-      ),
+      floatingActionButton: assignWork == "true"
+          ? FloatingActionButton(
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AssignWorkPage(
+                      onSuccess: () {
+                        setState(() {
+                          checkExistingWorkStatus();
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _selectedFilters.contains('assignedByMe')
+                          ? Colors.blue
+                          : Colors.grey.shade300,
+                      foregroundColor: _selectedFilters.contains('assignedByMe')
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (_selectedFilters.contains('assignedByMe')) {
+                          _selectedFilters.remove('assignedByMe');
+                        } else {
+                          _selectedFilters.add('assignedByMe');
+                        }
+                        _loadData();
+                      });
+                    },
+                    child: const Text('Assigned By Me'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _selectedFilters.contains('pending')
+                          ? Colors.blue
+                          : Colors.grey.shade300,
+                      foregroundColor: _selectedFilters.contains('pending')
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (_selectedFilters.contains('pending')) {
+                          _selectedFilters.remove('pending');
+                        } else {
+                          _selectedFilters.add('pending');
+                        }
+                        _loadData();
+                      });
+                    },
+                    child: const Text('Pending'),
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (isFiltered)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -148,72 +298,75 @@ class _AssignReportState extends State<AssignReport> {
               ),
             ),
           Expanded(
-            child: FutureBuilder<List<AssignedWork>>(
-              future: assignedWorkFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text("Error: ${snapshot.error}",
-                            style: const TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.assignment_outlined,
-                            size: 48, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(
-                          isFiltered
-                              ? 'No matching assignments found'
-                              : 'No work assigned yet',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                        if (isFiltered) ...[
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: _clearFilters,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade800,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text('Clear filters',
-                                style: TextStyle(color: Colors.white)),
-                          ),
+            child: RefreshIndicator(
+              onRefresh: _handleRefresh,
+              child: FutureBuilder<List<AssignedWork>>(
+                future: assignedWorkFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 48, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text("Error: ${snapshot.error}",
+                              style: const TextStyle(color: Colors.red)),
                         ],
-                      ],
-                    ),
-                  );
-                }
+                      ),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.assignment_outlined,
+                              size: 48, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Text(
+                            isFiltered
+                                ? 'No matching assignments found'
+                                : 'No work assigned yet',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          if (isFiltered) ...[
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: _clearFilters,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade800,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Clear filters',
+                                  style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }
 
-                final assignedItems = snapshot.data!;
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: assignedItems.length,
-                  itemBuilder: (context, index) {
-                    final item = assignedItems[index];
-                    return _buildAssignmentCard(item, context);
-                  },
-                );
-              },
+                  final assignedItems = snapshot.data!;
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: assignedItems.length,
+                    itemBuilder: (context, index) {
+                      final item = assignedItems[index];
+                      return _buildAssignmentCard(item, context);
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -230,7 +383,9 @@ class _AssignReportState extends State<AssignReport> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showTaskDetails(context, item),
+        onTap: widget.workId == item.id.toString()
+            ? () => _showTaskDetails(context, item)
+            : null,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -293,36 +448,33 @@ class _AssignReportState extends State<AssignReport> {
                     child: _buildInfoRow(
                         Icons.person, "Assigned by", item.assignedBy),
                   ),
-                  _buildStatusChip(item.status),
+                  if (name?.toLowerCase() == item.assignedTo.toLowerCase())
+                    _buildStatusChip(item.status),
                 ],
               ),
               item.dueDate != ""
                   ? _buildInfoRow(
                       Icons.calendar_today, "Due date", item.dueDate)
                   : SizedBox(),
+              //  _buildInfoRow(
+              //     Icons.disabled_visible_outlined,
+              //     "Completion",
+              //     item.completion,
+
+              //   ),
+              _buildCompletionWidget(item.completion),
+
               _buildInfoRow(Icons.work, "Work Status", item.startStatus),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  // OutlinedButton(
-                  //   style: OutlinedButton.styleFrom(
-                  //     side: BorderSide(color: Colors.blue.shade800),
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(8),
-                  //     ),
-                  //     padding: const EdgeInsets.symmetric(
-                  //         horizontal: 16, vertical: 8),
-                  //   ),
-                  //   onPressed: () => _showTaskDetails(context, item),
-                  //   child: const Text("View Details",
-                  //       style: TextStyle(color: Colors.blue)),
-                  // ),
-                         if (name?.toLowerCase() == item.assignedTo.toLowerCase())
+                  if (name?.toLowerCase() == item.assignedTo.toLowerCase())
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: item.startStatus == "Started"
                             ? const Color.fromARGB(255, 122, 121, 121)
                             : const Color.fromARGB(255, 32, 179, 67),
+                        disabledBackgroundColor: const Color.fromARGB(255, 236, 167, 18), // for null onPressed
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -352,141 +504,187 @@ class _AssignReportState extends State<AssignReport> {
                           ),
                         ],
                       ),
-                    ),   
-                      const SizedBox(width: 8),
-                      IconButton(
-                    icon: Icon(Icons.remove_red_eye,
-                        color: Colors.blue.shade800),
-                     onPressed: () => _showTaskDetails(context, item),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.blue.shade800),
+                    ),
+                  if (name?.toLowerCase() != item.assignedTo.toLowerCase())
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: item.status == "Completed"
+                            ? const Color.fromARGB(255, 32, 179, 67)
+                            : item.status == "To Do"
+                                ? const Color.fromARGB(255, 48, 192, 236)
+                                : item.status == "Pending"
+                                    ? const Color.fromARGB(255, 236, 190, 39)
+                                    : item.status == "In-Progress"
+                                        ? const Color.fromARGB(
+                                            255, 248, 145, 48)
+                                        : const Color.fromARGB(
+                                            255, 221, 53, 31),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                      ),
+                      onPressed: () => (),
+                      // item.startStatus == "Started"
+                      //     ? null
+                      //     : () =>() ,
+                      child: Row(
+                        children: [
+                          Icon(
+                            item.status == "Completed"
+                                ? Icons.check
+                                : item.status == "To Do"
+                                    ? Icons.list
+                                    : item.status == "Pending"
+                                        ? Icons.pending
+                                        : Icons.play_circle_outline,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.status,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                   const SizedBox(width: 8),
-                      IconButton(
-                    icon: Icon(Icons.message,
-                        color: const Color.fromARGB(255, 28, 139, 236)),
-                    onPressed: () =>   Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatScreenWork(
-                              groupId: item.id
-                                  .toString(),
-                              nav: "",
-                                assignedTo: item.assignedTo,
-                                   project: item.projectName,
-                                  assignedToId: item.assignedToId.toString(),
-                            ),
-                          ),
-                        ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.remove_red_eye,
+                        color: const Color.fromARGB(255, 238, 26, 26)),
+                    onPressed: () => _showTaskDetails(context, item),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.blue.shade50,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.blue.shade800),
+                        side: BorderSide(
+                            color: const Color.fromARGB(255, 238, 23, 23)),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-             
-                  // if (name?.toLowerCase() == item.assignedTo.toLowerCase())
-                  //   ElevatedButton(
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: item.startStatus == "Started"
-                  //           ? const Color.fromARGB(255, 122, 121, 121)
-                  //           : const Color.fromARGB(255, 32, 179, 67),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-                  //       padding: const EdgeInsets.symmetric(
-                  //           horizontal: 16, vertical: 8),
-                  //     ),
-                  //     onPressed: item.startStatus == "Started"
-                  //         ? null
-                  //         : () => _handleStartWork(item),
-                  //     child: Row(
-                  //       children: [
-                  //         Icon(
-                  //           item.startStatus == "Started"
-                  //               ? Icons.stop_circle_outlined
-                  //               : Icons.play_circle_outline,
-                  //           size: 16,
-                  //           color: item.startStatus == "Not Started"
-                  //               ? Colors.white
-                  //               : const Color.fromARGB(255, 179, 32, 32),
-                  //         ),
-                  //         const SizedBox(width: 4),
-                  //         Text(
-                  //           item.startStatus == "Started"
-                  //               ? "Work Started"
-                  //               : "Start Work",
-                  //           style: const TextStyle(color: Colors.white),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),   
-                  //     const SizedBox(width: 8),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
                       IconButton(
+                        icon: Icon(Icons.message,
+                            color: const Color.fromARGB(255, 22, 182, 62)),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreenWork(
+                              groupId: item.id.toString(),
+                              nav: "",
+                              assignedTo: item.assignedTo,
+                              project: item.projectName,
+                              assignedToId: item.assignedToId.toString(),
+                            ),
+                          ),
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.blue.shade50,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                                color: const Color.fromARGB(255, 19, 175, 53)),
+                          ),
+                        ),
+                      ),
+                      item.unreadCount != "0"
+                          ? Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 20,
+                                  minHeight: 20,
+                                ),
+                                child: Text(
+                                  item.unreadCount,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          : SizedBox(),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
                     icon: Icon(Icons.notification_add,
-                        color: Colors.blue.shade800),
+                        color: const Color.fromARGB(255, 146, 180, 20)),
                     onPressed: () => _showShareDialog(context, item),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.blue.shade50,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.blue.shade800),
+                        side: BorderSide(
+                            color: const Color.fromARGB(255, 20, 212, 94)),
                       ),
                     ),
                   ),
-
-                 
-                
-                  // const SizedBox(width: 60),
-                  // PopupMenuButton<String>(
-                  //   onSelected: (value) {
-                  //     if (value == 'view') {
-                  //       _showTaskDetails(context, item);
-                  //     } else if (value == 'chat') {
-                  //       Navigator.push(
-                  //         context,
-                  //         MaterialPageRoute(
-                  //           builder: (context) => ChatScreenWork(
-                  //             groupId: item.id
-                  //                 .toString(),
-                  //             nav: "",
-                  //               assignedTo: item.assignedTo,
-                  //                  project: item.projectName,
-                  //           ),
-                  //         ),
-                  //       );
-                  //     }
-                  //   },
-                  //   itemBuilder: (context) => [
-                  //     const PopupMenuItem(
-                  //       value: 'view',
-                  //       child: Text('View Details'),
-                  //     ),
-                  //     const PopupMenuItem(
-                  //       value: 'chat',
-                  //       child: Text('Chat'),
-                  //     ),
-                  //   ],
-                  //   icon: const Icon(
-                  //     Icons.more_vert,
-                  //     size: 30,
-                  //     color: Color.fromARGB(255, 10, 10, 10),
-                  //   ),
-                  // ),
                 ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCompletionWidget(String completion) {
+    final parts = completion.split('/');
+    int completed = int.tryParse(parts[0]) ?? 0;
+    int total = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+
+    double progress = total > 0 ? completed / total : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Completion",
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+            backgroundColor: Colors.grey.shade300,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              progress == 1.0 ? Colors.green : Colors.blue,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.only(left: 210),
+          child: Text(
+            "$completed of $total tasks",
+            style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 
@@ -649,6 +847,15 @@ class _AssignReportState extends State<AssignReport> {
                           _buildDetailItem("Assigned To", item.assignedTo),
                           _buildDetailItem("Assigned By", item.assignedBy),
                           _buildDetailItem("Created At", item.createdAt),
+                        ]),
+                        const SizedBox(height: 24),
+                        _buildDetailSection("Participants", [
+                          _buildDetailItem(
+                            "Chat Participants",
+                            item.notification.participantNames.isNotEmpty
+                                ? item.notification.participantNames.join(", ")
+                                : "--",
+                          ),
                         ]),
                         const SizedBox(height: 24),
                         _buildWorkSessionsSection(item),
@@ -1104,18 +1311,38 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   void _showShareDialog(BuildContext context, AssignedWork item) {
+    bool whatsappNotification = item.notification.whatsappNotification == "1";
+    bool pushNotification = item.notification.pushNotification == "1";
+    bool notifyOnStart = item.notification.onStart == "1";
+    bool notifyStatusChange = item.notification.onSave == "1";
+    bool notifyOnComplete = item.notification.onComplete == "1";
+
+    // Initialize selected staff IDs
+    List<String> notificationStaffIds = item.notification.staffIds is String
+        ? (item.notification.staffIds as String)
+            .split(',')
+            .where((id) => id.isNotEmpty)
+            .toList()
+        : List<String>.from(item.notification.staffIds ?? []);
+
+    List<String> participantIds = item.notification.participantIds is String
+        ? (item.notification.participantIds as String)
+            .split(',')
+            .where((id) => id.isNotEmpty)
+            .toList()
+        : List<String>.from(item.notification.participantIds ?? []);
+
+    bool hasOtherStaff =
+        notificationStaffIds.any((id) => id != item.assignedToId);
+    bool notifyOtherPeople = hasOtherStaff;
+
+    // Track selected staff (excluding the assigned staff)
+    List<String> selectedStaffIds =
+        List.from(notificationStaffIds.where((id) => id != item.assignedToId));
+
     showDialog(
       context: context,
       builder: (context) {
-        bool whatsappNotification = false;
-        bool pushNotification = false;
-        bool notifyToAssignedStaff = true;
-        bool notifyOnStatusChange = false;
-        bool notifyOtherPeople = false;
-        bool notifyOnStart = false;
-        bool notifyOnComplete = false;
-        List<String> selectedStaffIds = [];
-
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
@@ -1128,73 +1355,136 @@ class _AssignReportState extends State<AssignReport> {
                     const Text("Notification Settings",
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: whatsappNotification,
-                          onChanged: (value) {
-                            setState(() {
-                              whatsappNotification = value ?? false;
-                            });
-                          },
-                        ),
-                        const Text('WhatsApp Notification'),
-                      ],
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          whatsappNotification = !whatsappNotification;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: whatsappNotification,
+                            onChanged: (value) {
+                              setState(() {
+                                whatsappNotification = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('WhatsApp Notification'),
+                        ],
+                      ),
                     ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: pushNotification,
-                          onChanged: (value) {
-                            setState(() {
-                              pushNotification = value ?? false;
-                            });
-                          },
-                        ),
-                        const Text('Push Notification'),
-                      ],
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          pushNotification = !pushNotification;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: pushNotification,
+                            onChanged: (value) {
+                              setState(() {
+                                pushNotification = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('Push Notification'),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
-                    // New notification options
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: notifyToAssignedStaff,
-                          onChanged: (value) => setState(
-                              () => notifyToAssignedStaff = value ?? false),
-                        ),
-                        const Text('Notify to Assigned Staff'),
-                      ],
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          notifyOnStart = !notifyOnStart;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: notifyOnStart,
+                            onChanged: (value) {
+                              setState(() {
+                                notifyOnStart = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('Notify on Work Start'),
+                        ],
+                      ),
                     ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: notifyOnStatusChange,
-                          onChanged: (value) => setState(
-                              () => notifyOnStatusChange = value ?? false),
-                        ),
-                        const Text('Notify on status change'),
-                      ],
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          notifyStatusChange = !notifyStatusChange;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: notifyStatusChange,
+                            onChanged: (value) {
+                              setState(() {
+                                notifyStatusChange = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('Notify on Status Change'),
+                        ],
+                      ),
                     ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: notifyOtherPeople,
-                          onChanged: (value) {
-                            setState(() {
-                              notifyOtherPeople = value ?? false;
-                              if (!notifyOtherPeople) {
-                                selectedStaffIds.clear();
-                              }
-                            });
-                          },
-                        ),
-                        const Text('Notify other people'),
-                      ],
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          notifyOnComplete = !notifyOnComplete;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: notifyOnComplete,
+                            onChanged: (value) {
+                              setState(() {
+                                notifyOnComplete = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('Notify on Work Completion'),
+                        ],
+                      ),
                     ),
-
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          notifyOtherPeople = !notifyOtherPeople;
+                          if (!notifyOtherPeople) selectedStaffIds.clear();
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: notifyOtherPeople,
+                            onChanged: (value) {
+                              setState(() {
+                                notifyOtherPeople = value ?? false;
+                                if (!notifyOtherPeople) {
+                                  selectedStaffIds.clear();
+                                }
+                              });
+                            },
+                          ),
+                          const Text('Notify other people'),
+                        ],
+                      ),
+                    ),
                     if (notifyOtherPeople) ...[
                       const SizedBox(height: 8),
                       const Text('Select Staff to Notify:'),
@@ -1203,8 +1493,10 @@ class _AssignReportState extends State<AssignReport> {
                         onTap: () async {
                           final selected = await _showMultiStaffSelectionDialog(
                             context,
-                            item.assignedTo,
+                            false,
+                            item.assignedToId,
                             selectedStaffIds,
+                            item,
                           );
                           if (selected != null) {
                             setState(() => selectedStaffIds = selected);
@@ -1222,7 +1514,7 @@ class _AssignReportState extends State<AssignReport> {
                               Text(
                                 selectedStaffIds.isEmpty
                                     ? 'Select Staff'
-                                    : '${selectedStaffIds.length} staff selected',
+                                    : '${selectedStaffIds.length + 1} staff selected',
                                 style: const TextStyle(fontSize: 16),
                               ),
                               const Icon(Icons.arrow_drop_down),
@@ -1234,31 +1526,46 @@ class _AssignReportState extends State<AssignReport> {
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: notifyOnStart,
-                          onChanged: (value) {
-                            setState(() {
-                              notifyOnStart = value ?? false;
-                            });
-                          },
-                        ),
-                        const Text('Notify when work starts'),
-                      ],
+                    const Text(
+                      'Participants in Chat',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: notifyOnComplete,
-                          onChanged: (value) {
-                            setState(() {
-                              notifyOnComplete = value ?? false;
-                            });
-                          },
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () async {
+                        final selected = await _showMultiStaffSelectionDialog(
+                          context,
+                          true,
+                          item.assignedToId,
+                          participantIds,
+                          item,
+                        );
+                        if (selected != null) {
+                          setState(() => participantIds = selected);
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                         ),
-                        const Text('Notify when work completes'),
-                      ],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              participantIds.isEmpty
+                                  ? 'Select Chat Participants'
+                                  : '${participantIds.length} participants selected',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1270,9 +1577,15 @@ class _AssignReportState extends State<AssignReport> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
+                    final allStaffIds = [
+                      item.assignedToId,
+                      ...selectedStaffIds,
+                    ].where((id) => id.isNotEmpty).toList();
+
                     final notificationData = {
                       'work_id': item.id.toString(),
                       'assigned_to': item.assignedToId,
+                      'assigned_to_name': item.assignedTo,
                       'assigned_by': item.assignedBy,
                       'project_name': item.projectName,
                       'task_name': item.taskName,
@@ -1281,22 +1594,19 @@ class _AssignReportState extends State<AssignReport> {
                       'due_date': item.dueDate,
                       'whatsapp': whatsappNotification ? '1' : '0',
                       'push': pushNotification ? '1' : '0',
-                      'notify_to_assigned': notifyToAssignedStaff ? '1' : '0',
-                      'notify_on_status_change':
-                          notifyOnStatusChange ? '1' : '0',
-                      'notify_other_people': notifyOtherPeople ? '1' : '0',
                       'on_start': notifyOnStart ? '1' : '0',
+                      'on_save': notifyStatusChange ? '1' : '0',
                       'on_complete': notifyOnComplete ? '1' : '0',
-                      'staff_ids': [
-                        if (notifyToAssignedStaff) item.assignedToId,
-                        if (notifyOtherPeople) ...selectedStaffIds,
-                      ].join(','),
+                      'notify_other_people': notifyOtherPeople ? '1' : '0',
+                      'staff_ids': allStaffIds.join(','),
+                      'participant_ids': participantIds.join(','),
                     };
 
                     final isSuccess = await HttpService.alertWorkNotification(
                         notificationData);
 
                     if (isSuccess) {
+                      await _handleRefresh();
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -1308,7 +1618,7 @@ class _AssignReportState extends State<AssignReport> {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Already Added Once!"),
+                          content: Text("Failed to send notification"),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -1326,8 +1636,10 @@ class _AssignReportState extends State<AssignReport> {
 
   Future<List<String>?> _showMultiStaffSelectionDialog(
     BuildContext context,
-    String assignedTo,
+    bool isForParticipants,
+    String assignedToId,
     List<String> initiallySelected,
+    AssignedWork item,
   ) async {
     List<String> tempSelected = List.from(initiallySelected);
 
@@ -1341,154 +1653,147 @@ class _AssignReportState extends State<AssignReport> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.group, color: Colors.blue),
-                      const SizedBox(width: 12),
-                      const Text(
-                        "Select Staff to Notify",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                unselectedWidgetColor: Colors.grey,
+                disabledColor: Colors.grey,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.group, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            isForParticipants
+                                ? 'Select Chat Participants'
+                                : 'Select Staff to Notify',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search staff...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search staff...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    onChanged: (value) {},
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: FutureBuilder<List<Staff>>(
+                      future: HttpService.getStaffs().then(
+                        (staffListModel) => staffListModel?.data ?? <Staff>[],
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
 
-                Expanded(
-                  child: FutureBuilder<List<Staff>>(
-                    future: (() async {
-                      final staffListModel = await HttpService.getStaffs();
-                      return staffListModel?.data ?? <Staff>[];
-                    })(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(
+                              child: Text("No staff available"));
+                        }
 
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text("No staff available"),
-                          ),
-                        );
-                      }
+                        final staffList = snapshot.data!;
 
-                      final staffList = snapshot.data!;
+                        return StatefulBuilder(
+                          builder: (context, setState) {
+                            return ListView.builder(
+                              itemCount: staffList.length,
+                              itemBuilder: (context, index) {
+                                final staff = staffList[index];
+                                final staffId = staff.userIdStaff.toString();
+                                final isSelected =
+                                    tempSelected.contains(staffId);
+                                final isAssignedStaff = staffId == assignedToId;
+                                final isDisabled =
+                                    !isForParticipants && isAssignedStaff;
 
-                      final otherStaff = staffList
-                          .where((s) => s.userIdStaff != assignedTo)
-                          .toList();
-
-                      return StatefulBuilder(
-                        builder: (context, setState) {
-                          return Column(
-                            children: [
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: otherStaff.length,
-                                  itemBuilder: (context, index) {
-                                    final staff = otherStaff[index];
-                                    return CheckboxListTile(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              horizontal: 16),
-                                      title: Text(staff.name),
-                                      value: tempSelected
-                                          .contains(staff.userIdStaff),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            tempSelected.add(staff.userIdStaff);
-                                          } else {
-                                            tempSelected
-                                                .remove(staff.userIdStaff);
-                                          }
-                                        });
-                                      },
+                                return Container(
+                                    color: isSelected
+                                        ? Colors.blue.withOpacity(0.1)
+                                        : null,
+                                    child: CheckboxListTile(
+                                      value: isSelected,
+                                      onChanged: isDisabled
+                                          ? null
+                                          : (value) {
+                                              setState(() {
+                                                if (value == true) {
+                                                  tempSelected.add(staffId);
+                                                } else {
+                                                  tempSelected.remove(staffId);
+                                                }
+                                              });
+                                            },
+                                      title: Text(
+                                        staff.name +
+                                            (isDisabled ? ' (Assigned)' : ''),
+                                        style: isDisabled
+                                            ? const TextStyle(
+                                                color: Colors.grey)
+                                            : null,
+                                      ),
                                       secondary:
                                           const Icon(Icons.person_outline),
                                       controlAffinity:
                                           ListTileControlAffinity.leading,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
+                                      activeColor: Colors.blue,
+                                      checkColor: Colors.white,
+                                    ));
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ),
-
-                // Footer buttons
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel')),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context, tempSelected),
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(color: Colors.white),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context, tempSelected);
+                            },
+                            child: const Text('Confirm'),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -1496,6 +1801,35 @@ class _AssignReportState extends State<AssignReport> {
     );
   }
 
+  // void _showFilters() {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setModalState) {
+  //           return SingleChildScrollView(
+  //             child: Padding(
+  //               padding: EdgeInsets.only(
+  //                 bottom: MediaQuery.of(context).viewInsets.bottom,
+  //               ),
+  //               child: FilterWidget(
+  //                 pageId: 2,
+  //                 initialFilters: currentFilters,
+  //                 onApplyFilters: (filters) {
+  //                   setState(() {
+  //                     currentFilters = Map.from(filters);
+  //                     _loadData();
+  //                   });
+  //                 },
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
   void _showFilters() {
     showModalBottomSheet(
       context: context,
@@ -1510,7 +1844,10 @@ class _AssignReportState extends State<AssignReport> {
                 ),
                 child: FilterWidget(
                   pageId: 2,
-                  initialFilters: currentFilters,
+                  initialFilters: {
+                    if (_selectedFilters.contains('assignedByMe'))
+                      'assigned_by_ids': [_currentUserId ?? '']
+                  }..addAll(currentFilters),
                   onApplyFilters: (filters) {
                     setState(() {
                       currentFilters = Map.from(filters);
@@ -1529,7 +1866,7 @@ class _AssignReportState extends State<AssignReport> {
   Color _getPriorityColor(String priority) {
     switch (priority) {
       case "1":
-        return Colors.blue;
+        return const Color.fromARGB(255, 28, 197, 118);
       case "2":
         return Colors.orange;
       case "3":
@@ -1556,7 +1893,7 @@ class _AssignReportState extends State<AssignReport> {
     switch (status.toLowerCase()) {
       case 'pending':
         return Colors.orange;
-      case 'To Do':
+      case 'to do':
         return Colors.blue;
       case 'completed':
         return Colors.green;

@@ -31,6 +31,7 @@ class Datum {
   String title;
   String content;
   String id;
+    String assignedId;
   dynamic dateTime;
   bool isRead;
   String type;
@@ -40,6 +41,7 @@ class Datum {
     required this.title,
     required this.content,
     required this.id,
+    required this.assignedId,
     required this.dateTime,
     required this.isRead,
     required this.type,
@@ -50,6 +52,7 @@ class Datum {
         title: json["title"],
         content: json["content"],
         id: json["id"],
+         assignedId: json["assigned_id"],
         dateTime: json["date_time"],
         isRead: json["is_read"],
         type: json["type"],

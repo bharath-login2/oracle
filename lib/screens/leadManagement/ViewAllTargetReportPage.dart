@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/targetGroupModel.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
+import 'package:login2/screens/leadManagement/setTargetPage.dart';
 import 'package:login2/screens/staff_reports/achievementDetailspage.dart';
 import 'package:login2/service/service.dart';
 
@@ -110,6 +111,17 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
         title: const Text("All Target Reports"),
         backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SetTargetPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

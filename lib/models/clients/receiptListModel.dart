@@ -62,6 +62,7 @@ class ListElement {
     String recieptAmount;
     String collectedStaff;
     String uploadedFile;
+     String isVerified;
 
     ListElement({
         required this.id,
@@ -73,6 +74,7 @@ class ListElement {
         required this.recieptAmount,
         required this.collectedStaff,
         required this.uploadedFile,
+         required this.isVerified,
     });
 
     factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -85,6 +87,7 @@ class ListElement {
         recieptAmount: json["reciept_amount"],
         collectedStaff: json["collected_staff"],
         uploadedFile: json["uploaded_file"],
+         isVerified: json["is_verified"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -97,6 +100,7 @@ class ListElement {
         "reciept_amount": recieptAmount,
         "collected_staff": collectedStaff,
         "uploaded_file": uploadedFile,
+          "is_verified": isVerified,
     };
 }
 

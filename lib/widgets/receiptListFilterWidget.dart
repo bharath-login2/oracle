@@ -44,13 +44,28 @@ void initState() {
 }
 
   Future<void> _loadData() async {
-    final masterData = await HttpService.expenseMasterData();
-    if (mounted && masterData != null && masterData.status) {
-      setState(() {
-        allAccountHeads = masterData.data.accountHead;
-      });
-    }
+  final masterData = await HttpService.expenseMasterData();
+  if (mounted && masterData != null && masterData.status) {
+    setState(() {
+      allAccountHeads = _sortSelectedToTop(
+        masterData.data.accountHead,
+        selectedAccountHeadIds,
+        (a) => a.accountId
+      );
+    });
   }
+}
+
+List<T> _sortSelectedToTop<T>(
+  List<T> items,
+  Set<String> selectedIds,
+  String Function(T) getId
+) {
+  final selectedItems = items.where((item) => selectedIds.contains(getId(item))).toList();
+  final unselectedItems = items.where((item) => !selectedIds.contains(getId(item))).toList();
+  return [...selectedItems, ...unselectedItems];
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +202,7 @@ void initState() {
       case 'Receipt Date':
         return createdFrom != null || createdTo != null;
       case 'Target Group':
-        return false; // Add your target group filter logic here
+        return false; 
       default:
         return false;
     }
@@ -207,8 +222,6 @@ void initState() {
             _buildDateField("To", createdTo, (d) => setState(() => createdTo = d)),
           ],
         );
-
-    
       default:
         return const Text("Coming soon...");
     }
@@ -290,19 +303,11 @@ void initState() {
   //     ],
   //   );
   // }
-  Widget _buildAccountHeadSelectionList() {
+ Widget _buildAccountHeadSelectionList() {
   final searchTerm = _searchController.text.toLowerCase();
   final filteredHeads = allAccountHeads.where((head) {
     return head.accountName.toLowerCase().contains(searchTerm);
   }).toList();
-  filteredHeads.sort((a, b) {
-    final aSelected = selectedAccountHeadIds.contains(a.accountId);
-    final bSelected = selectedAccountHeadIds.contains(b.accountId);
-
-    if (aSelected && !bSelected) return -1;
-    if (!aSelected && bSelected) return 1;
-    return 0;
-  });
 
   return Column(
     children: [
@@ -355,6 +360,7 @@ void initState() {
     ],
   );
 }
+
 
 
   Widget _buildApplyButton() {

@@ -183,12 +183,10 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
         "toStaffId": checkedCreatedStaffItems,
         "branchId": branch,
       };
-
       viewLeads = await HttpService.transferLeadReport(body);
       if (viewLeads != null) {
         setState(() {});
       }
-
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (commonDetails != null) {
         setState(() {});

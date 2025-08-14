@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/authentication/face_detection_camera.dart';
+import 'package:login2/screens/leadManagement/CompanyLocationPage.dart';
 
 import '../core/common.dart';
 import '../screens/leadManagement/viewLogoutPage.dart';
@@ -10,13 +16,11 @@ class StartStopToggle extends StatefulWidget {
   final bool initialStatus;
   final Function(bool) onToggle;
 
-  const StartStopToggle(
-    {
+  const StartStopToggle({
     super.key,
     required this.initialStatus,
     required this.onToggle,
-  }
-  );
+  });
 
   @override
   _StartStopToggleState createState() => _StartStopToggleState();
@@ -25,15 +29,87 @@ class StartStopToggle extends StatefulWidget {
 class _StartStopToggleState extends State<StartStopToggle> {
   late bool isWorkStarted;
   bool isLoading = false;
-
+  String? _faceBase64;
+  String faceDetection = "true";
+  String companyLocation = "true";
+  // static  renewalPermission =  Common.getSharedPref("renewalPermission");
   @override
   void initState() {
     super.initState();
     isWorkStarted = widget.initialStatus;
+    _loadSharedPrefs();
+  }
+
+  Future<void> _loadSharedPrefs() async {
+    final facepermission = await Common.getSharedPref("faceDetection");
+    final companylocation = await Common.getSharedPref("companyLocation");
+    setState(() {
+      faceDetection = facepermission ?? "false";
+      companyLocation = companylocation ?? "false";
+    });
+  }
+
+  Future<String?> generateFaceHash(File faceImageFile) async {
+    final faceDetector = FaceDetector(
+      options: FaceDetectorOptions(
+        enableLandmarks: true,
+        enableContours: true,
+        enableClassification: false,
+      ),
+    );
+
+    final inputImage = InputImage.fromFile(faceImageFile);
+    final faces = await faceDetector.processImage(inputImage);
+
+    if (faces.isEmpty) return null;
+
+    final face = faces.first;
+    final landmarks = face.landmarks;
+
+    // Serialize key landmarks
+    final serialized = [
+      landmarks[FaceLandmarkType.leftEye]?.position,
+      landmarks[FaceLandmarkType.rightEye]?.position,
+      landmarks[FaceLandmarkType.noseBase]?.position,
+      landmarks[FaceLandmarkType.leftCheek]?.position,
+      landmarks[FaceLandmarkType.rightCheek]?.position,
+    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+
+    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+    final lipData =
+        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+
+    faceDetector.close();
+
+    final combined = '$serialized;$lipData';
+    return base64Encode(utf8.encode(combined));
+  }
+
+  Future<void> captureFace() async {
+    final faceImage = await Navigator.of(context).push<File>(
+      MaterialPageRoute(
+        builder: (context) => FaceDetectionCamera(
+          onFaceCaptured: (File imageFile) {
+            Navigator.of(context).pop(imageFile);
+          },
+        ),
+      ),
+    );
+
+    if (faceImage != null && mounted) {
+      final faceHash = await generateFaceHash(faceImage);
+      if (faceHash == null) {
+        Common.toastMessaage('Face hash failed', Colors.red);
+        return;
+      }
+      _faceBase64 = faceHash;
+      setState(() {});
+    }
   }
 
   void toggleSwitch() async {
     final now = DateTime.now();
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -55,9 +131,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
         );
       },
     );
-
     if (confirmed != true) return;
-
     if (!isWorkStarted) {
       setState(() => isLoading = true);
       try {
@@ -70,21 +144,132 @@ class _StartStopToggleState extends State<StartStopToggle> {
             return;
           }
         }
-
         if (permission == LocationPermission.deniedForever) {
-          showError(
-              "Location permission permanently denied. Please enable it from settings.");
+          showError("Location permission permanently denied.");
           setState(() => isLoading = false);
           return;
         }
         final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
+        if (companyLocation == "true") {
+          final companyResponse = await HttpService.getCompanyLocations();
+          if (companyResponse == null || companyResponse.status != true) {
+            showError("Failed to fetch company locations.");
+            setState(() => isLoading = false);
+            return;
+          }
 
+          final String rawLocations = companyResponse.data.location;
+          final List<String> locationStrings = rawLocations
+              .replaceAll('{', '')
+              .split('},')
+              .map((e) => e.replaceAll('}', '').trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          bool isWithinRange = false;
+          const double maxDistanceMeters = 100;
+          for (final locStr in locationStrings) {
+            final parts = locStr.split(',');
+            if (parts.length == 2) {
+              final double? companyLat = double.tryParse(parts[0].trim());
+              final double? companyLng = double.tryParse(parts[1].trim());
+
+              if (companyLat != null && companyLng != null) {
+                final double distance = Geolocator.distanceBetween(
+                  position.latitude,
+                  position.longitude,
+                  companyLat,
+                  companyLng,
+                );
+
+                if (distance <= maxDistanceMeters) {
+                  isWithinRange = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (locationStrings.isEmpty ||
+              locationStrings.any((loc) => loc.trim().isEmpty)) {
+            setState(() => isLoading = false);
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("No Location Found"),
+                  content: const Text(
+                      "Please add company location before you start to login"),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("OK"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CompanyLocationPage()),
+                        );
+                      },
+                      child: const Text("Add Location"),
+                    ),
+                  ],
+                );
+              },
+            );
+            return;
+          }
+          if (!isWithinRange) {
+            setState(() => isLoading = false);
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Location Error"),
+                  content: Text(
+                    "You are not within $maxDistanceMeters meters of any company location.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        toggleSwitch();
+                      },
+                      child: const Text("Retry"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("OK"),
+                    ),
+                  ],
+                );
+              },
+            );
+            return;
+          }
+        }
+        faceDetection == "true" ? await captureFace() : SizedBox();
+        if (faceDetection == "true") {
+          if (_faceBase64 == null || _faceBase64!.isEmpty) {
+            Common.toastMessaage('Face capture required for login', Colors.red);
+            setState(() => isLoading = false);
+            return;
+          }
+        }
         final response = await HttpService.startWork(
           now,
           latitude: position.latitude,
           longitude: position.longitude,
+          faceData: _faceBase64,
         );
         if (response != null && response.status == true) {
           await Common.saveSharedPref("is_work_started", "true");
@@ -102,7 +287,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
           showError(response?.message ?? "Failed to start work");
         }
       } catch (e) {
-        showError("Location error: $e");
+        showError("Error: $e");
       } finally {
         setState(() => isLoading = false);
       }
@@ -113,7 +298,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
           builder: (context) => const InfoCardExample(),
           settings: RouteSettings(
             arguments: {
-              "logoutTime": now.toIso8601String(),
+              "logoutTime": DateTime.now().toIso8601String(),
             },
           ),
         ),

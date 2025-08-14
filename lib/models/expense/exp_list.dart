@@ -65,6 +65,7 @@ class Expense {
     String toAccountPerson;
     String expCatName;
     String staffName;
+     String isVerified;
 
     Expense({
         required this.cmpnyExId,
@@ -79,6 +80,7 @@ class Expense {
         required this.toAccountPerson,
         required this.expCatName,
         required this.staffName,
+          required this.isVerified,
     });
 
     factory Expense.fromJson(Map<String, dynamic> json) => Expense(
@@ -94,6 +96,7 @@ class Expense {
         toAccountPerson: json["to_account_person"],
         expCatName: json["ExpCatName"],
         staffName: json["staff_name"],
+         isVerified: json["is_verified"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -109,5 +112,6 @@ class Expense {
         "to_account_person": toAccountPerson,
         "ExpCatName": expCatName,
         "staff_name": staffName,
+         "is_verified": isVerified,
     };
 }

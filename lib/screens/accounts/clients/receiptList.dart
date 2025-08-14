@@ -127,84 +127,89 @@ class _ReceiptListState extends State<ReceiptList> {
     getList();
   }
 
-void _showFilters() {
-  setState(() {
-    _ignoreWidgetDates = false;
-  });
-  
-  // Helper function to validate and parse dates
-  DateTime? parseAndValidateDate(String? dateString) {
-    if (dateString == null) return null;
-    try {
-      final date = DateTime.parse(dateString);
-      // Check if year is reasonable (between 2000 and 2100)
-      if (date.year < 2000 || date.year > 2100) return null;
-      return date;
-    } catch (e) {
-      return null;
+  void _showFilters() {
+    setState(() {
+      _ignoreWidgetDates = false;
+    });
+
+    // Helper function to validate and parse dates
+    DateTime? parseAndValidateDate(String? dateString) {
+      if (dateString == null) return null;
+      try {
+        final date = DateTime.parse(dateString);
+        // Check if year is reasonable (between 2000 and 2100)
+        if (date.year < 2000 || date.year > 2100) return null;
+        return date;
+      } catch (e) {
+        return null;
+      }
     }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Process dates from currentFilters
+            final createdFrom =
+                parseAndValidateDate(currentFilters['created_from']);
+            final createdTo =
+                parseAndValidateDate(currentFilters['created_to']);
+
+            // Use widget dates if not ignoring them and current filter dates are invalid
+            final fromDate = !_ignoreWidgetDates && createdFrom == null
+                ? widget.fdate
+                : createdFrom?.toIso8601String();
+            final toDate = !_ignoreWidgetDates && createdTo == null
+                ? widget.tdate
+                : createdTo?.toIso8601String();
+
+            final initialFilters = {
+              if (fromDate != null) 'created_from': fromDate,
+              if (toDate != null) 'created_to': toDate,
+              ...currentFilters
+                ..remove('created_from')
+                ..remove('created_to'),
+            };
+
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: ReceiptListFilterWidget(
+                  pageId: 2,
+                  initialFilters: initialFilters,
+                  onApplyFilters: (filters) {
+                    setState(() {
+                      currentFilters = Map.from(filters);
+
+                      // Handle date formatting with validation
+                      final from =
+                          parseAndValidateDate(filters['created_from']);
+                      final to = parseAndValidateDate(filters['created_to']);
+
+                      fDate = from != null
+                          ? DateFormat('dd-MM-yyyy').format(from)
+                          : "From Date";
+                      tDate = to != null
+                          ? DateFormat('dd-MM-yyyy').format(to)
+                          : "To Date";
+
+                      page = 1;
+                      items.clear();
+                    });
+                    getList();
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-          // Process dates from currentFilters
-          final createdFrom = parseAndValidateDate(currentFilters['created_from']);
-          final createdTo = parseAndValidateDate(currentFilters['created_to']);
-
-          // Use widget dates if not ignoring them and current filter dates are invalid
-          final fromDate = !_ignoreWidgetDates && createdFrom == null 
-              ? widget.fdate 
-              : createdFrom?.toIso8601String();
-          final toDate = !_ignoreWidgetDates && createdTo == null 
-              ? widget.tdate 
-              : createdTo?.toIso8601String();
-
-          final initialFilters = {
-            if (fromDate != null) 'created_from': fromDate,
-            if (toDate != null) 'created_to': toDate,
-            ...currentFilters..remove('created_from')..remove('created_to'),
-          };
-
-          return SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: ReceiptListFilterWidget(
-                pageId: 2,
-                initialFilters: initialFilters,
-                onApplyFilters: (filters) {
-                  setState(() {
-                    currentFilters = Map.from(filters);
-                    
-                    // Handle date formatting with validation
-                    final from = parseAndValidateDate(filters['created_from']);
-                    final to = parseAndValidateDate(filters['created_to']);
-                    
-                    fDate = from != null 
-                        ? DateFormat('dd-MM-yyyy').format(from)
-                        : "From Date";
-                    tDate = to != null 
-                        ? DateFormat('dd-MM-yyyy').format(to)
-                        : "To Date";
-                    
-                    page = 1;
-                    items.clear();
-                  });
-                  getList();
-                },
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
 
   getDetails() async {
     expenseMasterData = await HttpService.expenseMasterData();
@@ -484,10 +489,10 @@ void _showFilters() {
                                             //         .size
                                             //         .height *
                                             //     .76,
-                                            child:
-                                                ScrollablePositionedList.builder(
-                                               padding: EdgeInsets.only(bottom: 20),
-                                              
+                                            child: ScrollablePositionedList
+                                                .builder(
+                                              padding:
+                                                  EdgeInsets.only(bottom: 20),
                                               shrinkWrap: true,
                                               itemScrollController:
                                                   itemScrollController,
@@ -528,17 +533,20 @@ void _showFilters() {
                                                       },
                                                       child: Padding(
                                                         padding:
-                                                            const EdgeInsets.only(
+                                                            const EdgeInsets
+                                                                .only(
                                                                 bottom: 8.0),
                                                         child: Container(
                                                           decoration:
                                                               BoxDecoration(
                                                             boxShadow: [
                                                               BoxShadow(
-                                                                color: Colors.grey
+                                                                color: Colors
+                                                                    .grey
                                                                     .withOpacity(
                                                                         0.1),
-                                                                spreadRadius: 0.5,
+                                                                spreadRadius:
+                                                                    0.5,
                                                                 blurRadius: 1,
                                                                 offset:
                                                                     const Offset(
@@ -547,7 +555,8 @@ void _showFilters() {
                                                             ],
                                                             borderRadius:
                                                                 BorderRadius
-                                                                    .circular(5),
+                                                                    .circular(
+                                                                        5),
                                                             color: Colors.white,
                                                           ),
                                                           child: Padding(
@@ -583,8 +592,7 @@ void _showFilters() {
                                                                                     )),
                                                                           ).then(
                                                                               (_) {
-                                                                            items
-                                                                                .clear();
+                                                                            items.clear();
                                                                             page =
                                                                                 1;
                                                                             add =
@@ -610,26 +618,22 @@ void _showFilters() {
                                                                       ),
                                                                     ),
                                                                     const SizedBox(
-                                                                        width: 8),
+                                                                        width:
+                                                                            8),
                                                                     Row(
                                                                         children: [
                                                                           Container(
-                                                                            padding: const EdgeInsets
-                                                                                .symmetric(
-                                                                                horizontal: 8,
-                                                                                vertical: 4),
+                                                                            padding:
+                                                                                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                                             decoration:
                                                                                 BoxDecoration(
-                                                                              borderRadius:
-                                                                                  BorderRadius.circular(2),
-                                                                              color:
-                                                                                  const Color(0xffe6fbec),
+                                                                              borderRadius: BorderRadius.circular(2),
+                                                                              color: const Color(0xffe6fbec),
                                                                             ),
                                                                             child:
                                                                                 Text(
                                                                               items[index].recieptAmount.toString(),
-                                                                              style:
-                                                                                  const TextStyle(
+                                                                              style: const TextStyle(
                                                                                 color: Colors.green,
                                                                                 fontSize: 13,
                                                                                 fontWeight: FontWeight.w600,
@@ -642,8 +646,7 @@ void _showFilters() {
                                                                                 EdgeInsets.zero,
                                                                             onSelected:
                                                                                 (value) {
-                                                                              if (value ==
-                                                                                  'print') {
+                                                                              if (value == 'print') {
                                                                                 Navigator.push(
                                                                                   context,
                                                                                   MaterialPageRoute(
@@ -654,75 +657,107 @@ void _showFilters() {
                                                                                             items[index].receiptNumber.toString(),
                                                                                           )),
                                                                                 );
-                                                                              } else if (value ==
-                                                                                  'edit') {
-                                                                                Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
+                                                                              } else if (value == 'edit') {
+                                                                                if (items[index].isVerified == "N") {
+                                                                                  Navigator.push(
+                                                                                    context,
+                                                                                    MaterialPageRoute(
                                                                                       builder: (context) => EditReceipt(
-                                                                                            widget.token,
-                                                                                            items[index].id.toString(),
-                                                                                          )),
-                                                                                ).then((_) {
-                                                                                  items.clear();
-                                                                                  page = 1;
-                                                                                  add = 1;
-                                                                                  getData();
-                                                                                });
-                                                                              } else if (value ==
-                                                                                  'delete') {
-                                                                                showDialog(
-                                                                                  context: context,
-                                                                                  builder: (BuildContext context) {
-                                                                                    return AlertDialog(
-                                                                                      title: const Text('Please Confirm'),
-                                                                                      content: const Text('Are you sure to Delete?'),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                          onPressed: () => Navigator.pop(context),
-                                                                                          child: const Text('No'),
-                                                                                        ),
-                                                                                        TextButton(
-                                                                                          onPressed: () async {
-                                                                                            Common.showProgressDialog(context, "Loading..");
-                                                                                            ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
-                                                                                            if (deleteReceipt.data == true) {
-                                                                                              Common.toastMessaage(deleteReceipt.message, Colors.green);
-                                                                                              if (context.mounted) {
-                                                                                                getData();
-                                                                                                Navigator.pop(context);
-                                                                                                Navigator.pop(context);
+                                                                                        widget.token,
+                                                                                        items[index].id.toString(),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ).then((_) {
+                                                                                    items.clear();
+                                                                                    page = 1;
+                                                                                    add = 1;
+                                                                                    getData();
+                                                                                  });
+                                                                                } else {
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text("Cannot Edit"),
+                                                                                        content: const Text("This receipt is already verified and cannot be edited."),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                            child: const Text("OK"),
+                                                                                            onPressed: () {
+                                                                                              Navigator.pop(context);
+                                                                                            },
+                                                                                          )
+                                                                                        ],
+                                                                                      );
+                                                                                    },
+                                                                                  );
+                                                                                }
+                                                                              } else if (value == 'delete') {
+                                                                                if (items[index].isVerified == "N") {
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (BuildContext context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text('Please Confirm'),
+                                                                                        content: const Text('Are you sure to Delete?'),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                            onPressed: () => Navigator.pop(context),
+                                                                                            child: const Text('No'),
+                                                                                          ),
+                                                                                          TextButton(
+                                                                                            onPressed: () async {
+                                                                                              Common.showProgressDialog(context, "Loading..");
+                                                                                              ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                                                                              if (deleteReceipt.data == true) {
+                                                                                                Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                                                                                if (context.mounted) {
+                                                                                                  getData();
+                                                                                                  Navigator.pop(context);
+                                                                                                  Navigator.pop(context);
+                                                                                                }
+                                                                                              } else {
+                                                                                                Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                                                                                if (context.mounted) {
+                                                                                                  Navigator.pop(context);
+                                                                                                }
                                                                                               }
-                                                                                            } else {
-                                                                                              Common.toastMessaage(deleteReceipt.message, Colors.red);
-                                                                                              if (context.mounted) {
-                                                                                                Navigator.pop(context);
-                                                                                              }
-                                                                                            }
-                                                                                          },
-                                                                                          child: const Text('Yes'),
-                                                                                        ),
-                                                                                      ],
-                                                                                    );
-                                                                                  },
-                                                                                );
+                                                                                            },
+                                                                                            child: const Text('Yes'),
+                                                                                          ),
+                                                                                        ],
+                                                                                      );
+                                                                                    },
+                                                                                  );
+                                                                                } else {
+                                                                                  showDialog(
+                                                                                    context: context,
+                                                                                    builder: (context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text("Cannot Edit"),
+                                                                                        content: const Text("This receipt is already verified and cannot be edited."),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                            child: const Text("OK"),
+                                                                                            onPressed: () {
+                                                                                              Navigator.pop(context);
+                                                                                            },
+                                                                                          )
+                                                                                        ],
+                                                                                      );
+                                                                                    },
+                                                                                  );
+                                                                                }
                                                                               }
                                                                             },
-                                                                            itemBuilder:
-                                                                                (context) => [
-                                                                              const PopupMenuItem(
-                                                                                  value: 'print',
-                                                                                  child: Text('Print')),
-                                                                              const PopupMenuItem(
-                                                                                  value: 'edit',
-                                                                                  child: Text('Edit')),
-                                                                              const PopupMenuItem(
-                                                                                  value: 'delete',
-                                                                                  child: Text('Delete')),
+                                                                            itemBuilder: (context) =>
+                                                                                [
+                                                                              const PopupMenuItem(value: 'print', child: Text('Print')),
+                                                                              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                                                              const PopupMenuItem(value: 'delete', child: Text('Delete')),
                                                                             ],
-                                                                            icon: const Icon(
-                                                                                Icons.more_vert,
-                                                                                size: 18),
+                                                                            icon:
+                                                                                const Icon(Icons.more_vert, size: 18),
                                                                           ),
                                                                         ]),
                                                                   ],
@@ -771,9 +806,7 @@ void _showFilters() {
                                                           ),
                                                         ),
                                                       ),
-                                                      
                                                     );
-                                                  
                                                   } else {
                                                     return Padding(
                                                       padding:
@@ -783,7 +816,8 @@ void _showFilters() {
                                                         decoration: BoxDecoration(
                                                             boxShadow: [
                                                               BoxShadow(
-                                                                color: Colors.grey
+                                                                color: Colors
+                                                                    .grey
                                                                     .withOpacity(
                                                                         0.2),
                                                                 spreadRadius: 1,
@@ -795,8 +829,10 @@ void _showFilters() {
                                                             ],
                                                             borderRadius:
                                                                 BorderRadius
-                                                                    .circular(5),
-                                                            color: Colors.white),
+                                                                    .circular(
+                                                                        5),
+                                                            color:
+                                                                Colors.white),
                                                         child: Padding(
                                                           padding:
                                                               const EdgeInsets
@@ -812,27 +848,27 @@ void _showFilters() {
                                                                         .spaceBetween,
                                                                 children: [
                                                                   SizedBox(
-                                                                    width: MediaQuery.of(
-                                                                                context)
+                                                                    width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
                                                                         0.6,
                                                                     child:
                                                                         InkWell(
-                                                                      onTap: () {
+                                                                      onTap:
+                                                                          () {
                                                                         Navigator
                                                                             .push(
                                                                           context,
                                                                           MaterialPageRoute(
-                                                                              builder: (context) =>
-                                                                                  ClientDetails(widget.token, items[index].clientId.toString())),
+                                                                              builder: (context) => ClientDetails(widget.token, items[index].clientId.toString())),
                                                                         ).then(
                                                                             (_) {
                                                                           items
                                                                               .clear();
                                                                           page =
                                                                               1;
-                                                                          add = 1;
+                                                                          add =
+                                                                              1;
                                                                           getData();
                                                                         });
                                                                       },
@@ -840,9 +876,8 @@ void _showFilters() {
                                                                           items[index]
                                                                               .customerName
                                                                               .toString(),
-                                                                          overflow:
-                                                                              TextOverflow
-                                                                                  .ellipsis,
+                                                                          overflow: TextOverflow
+                                                                              .ellipsis,
                                                                           style:
                                                                               const TextStyle(
                                                                             fontSize:
@@ -859,10 +894,12 @@ void _showFilters() {
                                                                                 2),
                                                                         color: const Color(
                                                                             0xffe6fbec)),
-                                                                    child: Center(
+                                                                    child:
+                                                                        Center(
                                                                       child:
                                                                           Padding(
-                                                                        padding: const EdgeInsets.only(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
                                                                             left:
                                                                                 12,
                                                                             right:
@@ -877,12 +914,9 @@ void _showFilters() {
                                                                                 .toString(),
                                                                             style:
                                                                                 const TextStyle(
-                                                                              color:
-                                                                                  Colors.green,
-                                                                              fontSize:
-                                                                                  14,
-                                                                              fontWeight:
-                                                                                  FontWeight.w600,
+                                                                              color: Colors.green,
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w600,
                                                                             )),
                                                                       ),
                                                                     ),
@@ -897,8 +931,7 @@ void _showFilters() {
                                                                         .spaceBetween,
                                                                 children: [
                                                                   SizedBox(
-                                                                    width: MediaQuery.of(
-                                                                                context)
+                                                                    width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
                                                                         0.6,
@@ -912,8 +945,7 @@ void _showFilters() {
                                                                         fontSize:
                                                                             14,
                                                                         fontWeight:
-                                                                            FontWeight
-                                                                                .w400,
+                                                                            FontWeight.w400,
                                                                       ),
                                                                     ),
                                                                   ),
@@ -955,7 +987,8 @@ void _showFilters() {
                                                                         .start,
                                                                 children: [
                                                                   const Icon(
-                                                                    Icons.person,
+                                                                    Icons
+                                                                        .person,
                                                                     color: Colors
                                                                         .grey,
                                                                     size: 20,
@@ -968,22 +1001,17 @@ void _showFilters() {
                                                                             .spaceBetween,
                                                                     children: [
                                                                       SizedBox(
-                                                                        width: MediaQuery.of(context)
-                                                                                .size
-                                                                                .width *
+                                                                        width: MediaQuery.of(context).size.width *
                                                                             0.6,
                                                                         child: Text(
                                                                             "Collected by : ${items[index].collectedStaff} ",
                                                                             maxLines:
                                                                                 1,
-                                                                            overflow: TextOverflow
-                                                                                .ellipsis,
-                                                                            style:
-                                                                                const TextStyle(
-                                                                              fontSize:
-                                                                                  14,
-                                                                              fontWeight:
-                                                                                  FontWeight.w400,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: const TextStyle(
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w400,
                                                                             )),
                                                                       ),
                                                                     ],
@@ -1001,12 +1029,10 @@ void _showFilters() {
                                                                     children: [
                                                                       Column(
                                                                         crossAxisAlignment:
-                                                                            CrossAxisAlignment
-                                                                                .start,
+                                                                            CrossAxisAlignment.start,
                                                                         children: [
                                                                           const SizedBox(
-                                                                              height:
-                                                                                  5),
+                                                                              height: 5),
                                                                           Row(
                                                                             children: [
                                                                               const Icon(
@@ -1036,23 +1062,20 @@ void _showFilters() {
                                                                           Navigator
                                                                               .push(
                                                                             context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => ViewReceipt(widget.token, items[index].id.toString(), items[index].clientId.toString(), items[index].receiptNumber.toString())),
+                                                                            MaterialPageRoute(builder: (context) => ViewReceipt(widget.token, items[index].id.toString(), items[index].clientId.toString(), items[index].receiptNumber.toString())),
                                                                           );
                                                                         },
                                                                         child:
                                                                             Container(
                                                                           decoration: BoxDecoration(
-                                                                              borderRadius:
-                                                                                  BorderRadius.circular(2),
+                                                                              borderRadius: BorderRadius.circular(2),
                                                                               color: const Color(0xffe9d9fd)),
                                                                           child:
                                                                               const Padding(
                                                                             padding:
                                                                                 EdgeInsets.all(8.0),
-                                                                            child: Icon(
-                                                                                Icons.local_print_shop_outlined,
-                                                                                color: Color(0xff9747FF)),
+                                                                            child:
+                                                                                Icon(Icons.local_print_shop_outlined, color: Color(0xff9747FF)),
                                                                           ),
                                                                         ),
                                                                       ),
@@ -1062,35 +1085,53 @@ void _showFilters() {
                                                                       InkWell(
                                                                         onTap:
                                                                             () {
-                                                                          Navigator
-                                                                              .push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => EditReceipt(widget.token, items[index].id.toString())),
-                                                                          ).then(
-                                                                              (_) {
-                                                                            items
-                                                                                .clear();
-                                                                            page =
-                                                                                1;
-                                                                            add =
-                                                                                1;
-                                                                            getData();
-                                                                          });
+                                                                          if (items[index].isVerified ==
+                                                                              "N") {
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => EditReceipt(
+                                                                                  widget.token,
+                                                                                  items[index].id.toString(),
+                                                                                ),
+                                                                              ),
+                                                                            ).then((_) {
+                                                                              items.clear();
+                                                                              page = 1;
+                                                                              add = 1;
+                                                                              getData();
+                                                                            });
+                                                                          } else {
+                                                                            showDialog(
+                                                                              context: context,
+                                                                              builder: (context) {
+                                                                                return AlertDialog(
+                                                                                  title: const Text("Cannot Edit"),
+                                                                                  content: const Text("This receipt is already verified and cannot be edited."),
+                                                                                  actions: [
+                                                                                    TextButton(
+                                                                                      child: const Text("OK"),
+                                                                                      onPressed: () {
+                                                                                        Navigator.pop(context);
+                                                                                      },
+                                                                                    )
+                                                                                  ],
+                                                                                );
+                                                                              },
+                                                                            );
+                                                                          }
                                                                         },
                                                                         child:
                                                                             Container(
                                                                           decoration: BoxDecoration(
-                                                                              borderRadius:
-                                                                                  BorderRadius.circular(2),
+                                                                              borderRadius: BorderRadius.circular(2),
                                                                               color: const Color(0xffaedcf4)),
                                                                           child:
                                                                               const Padding(
                                                                             padding:
                                                                                 EdgeInsets.all(8.0),
-                                                                            child: Icon(
-                                                                                Icons.mode_edit_outlined,
-                                                                                color: Colors.blue),
+                                                                            child:
+                                                                                Icon(Icons.mode_edit_outlined, color: Colors.blue),
                                                                           ),
                                                                         ),
                                                                       ),
@@ -1100,57 +1141,74 @@ void _showFilters() {
                                                                       InkWell(
                                                                         onTap:
                                                                             () {
-                                                                          showDialog(
-                                                                              context:
-                                                                                  context,
-                                                                              builder:
-                                                                                  (BuildContext context) {
+                                                                          if (items[index].isVerified ==
+                                                                              "N") {
+                                                                            showDialog(
+                                                                                context: context,
+                                                                                builder: (BuildContext context) {
+                                                                                  return AlertDialog(
+                                                                                    scrollable: true,
+                                                                                    title: const Text('Please Confirm'),
+                                                                                    content: const Text('Are you sure to Delete?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            Navigator.of(context).pop();
+                                                                                          },
+                                                                                          child: const Text('No')),
+                                                                                      TextButton(
+                                                                                          onPressed: () async {
+                                                                                            Common.showProgressDialog(context, "Loading..");
+                                                                                            ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
+                                                                                            if (deleteReceipt.data == true) {
+                                                                                              Common.toastMessaage(deleteReceipt.message, Colors.green);
+                                                                                              if (context.mounted) {
+                                                                                                getData();
+                                                                                                Navigator.pop(context);
+                                                                                                Navigator.pop(context);
+                                                                                              }
+                                                                                            } else {
+                                                                                              Common.toastMessaage(deleteReceipt.message, Colors.red);
+                                                                                              if (context.mounted) {
+                                                                                                Navigator.of(context).pop();
+                                                                                              }
+                                                                                            }
+                                                                                          },
+                                                                                          child: const Text('Yes')),
+                                                                                    ],
+                                                                                  );
+                                                                                });
+                                                                          } else {
+                                                                            showDialog(
+                                                                              context: context,
+                                                                              builder: (context) {
                                                                                 return AlertDialog(
-                                                                                  scrollable: true,
-                                                                                  title: const Text('Please Confirm'),
-                                                                                  content: const Text('Are you sure to Delete?'),
+                                                                                  title: const Text("Cannot Edit"),
+                                                                                  content: const Text("This receipt is already verified and cannot be deleted."),
                                                                                   actions: [
                                                                                     TextButton(
-                                                                                        onPressed: () {
-                                                                                          Navigator.of(context).pop();
-                                                                                        },
-                                                                                        child: const Text('No')),
-                                                                                    TextButton(
-                                                                                        onPressed: () async {
-                                                                                          Common.showProgressDialog(context, "Loading..");
-                                                                                          ReceiptDeleteModel deleteReceipt = await HttpService.deleteReceipt(widget.token, items[index].id);
-                                                                                          if (deleteReceipt.data == true) {
-                                                                                            Common.toastMessaage(deleteReceipt.message, Colors.green);
-                                                                                            if (context.mounted) {
-                                                                                              getData();
-                                                                                              Navigator.pop(context);
-                                                                                              Navigator.pop(context);
-                                                                                            }
-                                                                                          } else {
-                                                                                            Common.toastMessaage(deleteReceipt.message, Colors.red);
-                                                                                            if (context.mounted) {
-                                                                                              Navigator.of(context).pop();
-                                                                                            }
-                                                                                          }
-                                                                                        },
-                                                                                        child: const Text('Yes')),
+                                                                                      child: const Text("OK"),
+                                                                                      onPressed: () {
+                                                                                        Navigator.pop(context);
+                                                                                      },
+                                                                                    )
                                                                                   ],
                                                                                 );
-                                                                              });
+                                                                              },
+                                                                            );
+                                                                          }
                                                                         },
                                                                         child:
                                                                             Container(
                                                                           decoration: BoxDecoration(
-                                                                              borderRadius:
-                                                                                  BorderRadius.circular(2),
+                                                                              borderRadius: BorderRadius.circular(2),
                                                                               color: const Color(0xfffcbcbc)),
                                                                           child:
                                                                               const Padding(
                                                                             padding:
                                                                                 EdgeInsets.all(8.0),
-                                                                            child: Icon(
-                                                                                Icons.delete_outline,
-                                                                                color: Colors.red),
+                                                                            child:
+                                                                                Icon(Icons.delete_outline, color: Colors.red),
                                                                           ),
                                                                         ),
                                                                       ),
@@ -1160,15 +1218,13 @@ void _showFilters() {
                                                                       items[index].uploadedFile !=
                                                                               ''
                                                                           ? InkWell(
-                                                                              onTap:
-                                                                                  () {
+                                                                              onTap: () {
                                                                                 Navigator.push(
                                                                                   context,
                                                                                   MaterialPageRoute(builder: (context) => WebViewPage('image', items[index].uploadedFile.toString())),
                                                                                 );
                                                                               },
-                                                                              child:
-                                                                                  Container(
+                                                                              child: Container(
                                                                                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), color: Colors.green.shade100),
                                                                                 child: const Padding(
                                                                                   padding: EdgeInsets.all(8.0),
@@ -1186,15 +1242,13 @@ void _showFilters() {
                                                         ),
                                                       ),
                                                     );
-                                  
+
                                                     // Helper Widget for Action Buttons
                                                   }
-                                                  
                                                 }
                                               },
                                             ),
                                           )
-                                          
                                         : Center(
                                             child: Column(
                                               mainAxisAlignment:

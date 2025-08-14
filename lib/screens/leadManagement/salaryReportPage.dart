@@ -11,7 +11,7 @@ class SalaryReportPage extends StatefulWidget {
 }
 
 class _SalaryReportPageState extends State<SalaryReportPage> {
-  DateTime selectedDate = DateTime.now();
+  DateTime selectedDate = DateTime(DateTime.now().year, DateTime.now().month - 1);
   final List<String> months = List.generate(
     12,
     (index) => DateFormat.MMMM().format(DateTime(0, index + 1)),

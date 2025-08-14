@@ -50,11 +50,12 @@ class Data {
                 json["attendance"].map((x) => AttendanceItem.fromJson(x)))
             : [],
         leave: json["leave"] != null
-            ? List<LeaveItem>.from(json["leave"].map((x) => LeaveItem.fromJson(x)))
+            ? List<LeaveItem>.from(
+                json["leave"].map((x) => LeaveItem.fromJson(x)))
             : [],
       );
 
- // bool get isNotEmpty => null;
+  // bool get isNotEmpty => null;
 
   Map<String, dynamic> toJson() => {
         "attendance": List<dynamic>.from(attendance.map((x) => x.toJson())),
@@ -66,23 +67,38 @@ class AttendanceItem {
   String staffId;
   String staffName;
   String status;
-
+  String loginTime;
+  String logoutTime;
+  String workingHours;
+  String workTime;
   AttendanceItem({
     required this.staffId,
     required this.staffName,
     required this.status,
+    required this.loginTime,
+    required this.logoutTime,
+    required this.workingHours,
+      required this.workTime,
   });
 
   factory AttendanceItem.fromJson(Map<String, dynamic> json) => AttendanceItem(
         staffId: json["staff_id"] ?? '',
         staffName: json["staff_name"] ?? '',
         status: json["status"] ?? '',
+        loginTime: json["login_time"] ?? '',
+        logoutTime: json["logout_time"] ?? '',
+        workingHours: json["working_hours"] ?? '',
+           workTime: json["work_time"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
         "staff_id": staffId,
         "staff_name": staffName,
         "status": status,
+        "login_time": loginTime,
+        "logout_time": logoutTime,
+        "working_hours": workingHours,
+          "work_time": workTime,
       };
 }
 

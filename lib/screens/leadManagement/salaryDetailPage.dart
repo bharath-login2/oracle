@@ -17,7 +17,8 @@ class SalaryDetailPage extends StatelessWidget {
     return HttpService.getSalaryDetails(Id);
   }
 
-  Widget buildSectionCard(String title, IconData icon, List<Map<String, String>> items, Color color) {
+  Widget buildSectionCard(String title, IconData icon,
+      List<Map<String, String>> items, Color color) {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -47,15 +48,17 @@ class SalaryDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ...items.map((item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(item['label']!, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text(item['value']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            )),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(item['label']!,
+                          style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Text(item['value']!,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                )),
           ],
         ),
       ),
@@ -77,6 +80,8 @@ class SalaryDetailPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data == null) {
+            debugPrint("❌ Snapshot error: ${snapshot.error}");
+            debugPrint("❌ Snapshot data: ${snapshot.data}");
             return const Center(child: Text("Failed to load salary details"));
           }
 
@@ -89,30 +94,75 @@ class SalaryDetailPage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 12),
-                buildSectionCard("Working Details", LucideIcons.briefcase, [
-                  {"label": "Total Working Days", "value": working.totalWorkingDays.toString()},
-                  {"label": "Full Day", "value": working.fullDays.toString()},
-                  {"label": "Half Day", "value": working.halfDays.toString()},
-                  {"label": "Total Worked Days", "value": working.totalWorkedDays.toStringAsFixed(2)},
-                ], Colors.indigo),
-
-                buildSectionCard("Leave Details", LucideIcons.calendarX, [
-                  {"label": "Available Leave", "value": leave.availableLeave.toString()},
-                  {"label": "Casual Leave", "value": leave.casualLeave.toString()},
-                  {"label": "Saturday Leave", "value": leave.saturdayLeave.toString()},
-                  {"label": "Total Leave", "value": leave.totalLeave.toStringAsFixed(2)},
-                  {"label": "LOP", "value": leave.lop.toStringAsFixed(2)},
-                ], Colors.orange),
-
-                buildSectionCard("Salary Details", LucideIcons.wallet, [
-                  {"label": "Salary Credit Days", "value": salary.salaryCreditDays.toStringAsFixed(2)},
-                  {"label": "Monthly Salary", "value": "₹${salary.monthlySalary}"},
-                  {"label": "Per Day", "value": "₹${salary.perDaySalary}"},
-                  {"label": "Incentives/Addons", "value": "₹${salary.incentives}"},
-                  {"label": "Deductions", "value": "₹${salary.deductions}"},
-                  {"label": "Total Salary", "value": "₹${salary.netSalary}"},
-                ], Colors.purple),
-
+                buildSectionCard(
+                    "Working Details",
+                    LucideIcons.briefcase,
+                    [
+                      {
+                        "label": "Total Working Days",
+                        "value": working.totalWorkingDays.toString()
+                      },
+                      {
+                        "label": "Full Day",
+                        "value": working.fullDays.toString()
+                      },
+                      {
+                        "label": "Half Day",
+                        "value": working.halfDays.toString()
+                      },
+                      {
+                        "label": "Total Worked Days",
+                        "value": working.totalWorkedDays.toStringAsFixed(2)
+                      },
+                    ],
+                    Colors.indigo),
+                buildSectionCard(
+                    "Leave Details",
+                    LucideIcons.calendarX,
+                    [
+                      {
+                        "label": "Available Leave",
+                        "value": leave.availableLeave.toString()
+                      },
+                      {
+                        "label": "Casual Leave",
+                        "value": leave.casualLeave.toString()
+                      },
+                      {
+                        "label": "Saturday Leave",
+                        "value": leave.saturdayLeave.toString()
+                      },
+                      {
+                        "label": "Total Leave",
+                        "value": leave.totalLeave.toStringAsFixed(2)
+                      },
+                      {"label": "LOP", "value": leave.lop.toStringAsFixed(2)},
+                    ],
+                    Colors.orange),
+                buildSectionCard(
+                    "Salary Details",
+                    LucideIcons.wallet,
+                    [
+                      {
+                        "label": "Salary Credit Days",
+                        "value": salary.salaryCreditDays.toStringAsFixed(2)
+                      },
+                      {
+                        "label": "Monthly Salary",
+                        "value": "₹${salary.monthlySalary}"
+                      },
+                      {"label": "Per Day", "value": "₹${salary.perDaySalary}"},
+                      {
+                        "label": "Incentives/Addons",
+                        "value": "₹${salary.incentives}"
+                      },
+                      {"label": "Deductions", "value": "₹${salary.deductions}"},
+                      {
+                        "label": "Total Salary",
+                        "value": "₹${salary.netSalary}"
+                      },
+                    ],
+                    Colors.purple),
                 const SizedBox(height: 20),
               ],
             ),

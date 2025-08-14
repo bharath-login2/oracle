@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/attendanceAllmodel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
+import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../models/expense/staffListModel.dart';
@@ -18,6 +19,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
     with TickerProviderStateMixin {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  DateTime? selected_day;
   List<Staff> _staffList = [];
   final Map<DateTime, String> _holidays = {};
   final Set<DateTime> _markedDates = {};
@@ -26,6 +28,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   CalendarDataAllModel? CalendarDetails;
   List<DailyItem> _dailyList = [];
   final bool _showHolidays = true;
+  String ?isFutureDate;
 
   @override
   void initState() {
@@ -86,15 +89,15 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
     });
     await _fetchAttendanceData(selectedDay);
     await fetchDailyCount(selectedDay);
-    final isHoliday = _holidays.containsKey(
-        DateTime(selectedDay.year, selectedDay.month, selectedDay.day));
-    if (isHoliday) {
-      _showDayActionDialog(context, selectedDay, showHolidayInitially: true);
-    } else if (_attendanceList.isNotEmpty || _leaveList.isNotEmpty) {
-      _showAttendanceLeaveViewDialog(context, selectedDay);
-    } else {
-      _showDayActionDialog(context, selectedDay);
-    }
+    // final isHoliday = _holidays.containsKey(
+    //     DateTime(selectedDay.year, selectedDay.month, selectedDay.day));
+    // if (isHoliday) {
+    //   _showDayActionDialog(context, selectedDay, showHolidayInitially: true);
+    // } else if (_attendanceList.isNotEmpty || _leaveList.isNotEmpty) {
+    //   _showAttendanceLeaveViewDialog(context, selectedDay);
+    // } else {
+    //   _showDayActionDialog(context, selectedDay);
+    // }
   }
 
   void _showDayActionDialog(BuildContext context, DateTime date,
@@ -102,6 +105,11 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
     final holidayNameController = TextEditingController();
     final holidayDescController = TextEditingController();
     final reasonController = TextEditingController();
+    final today = DateTime.now();
+    final selectedDateOnly = DateTime(date.year, date.month, date.day);
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final isFutureDate = selectedDateOnly.isAfter(todayOnly);
+
     if (showHolidayInitially) {
       final holidayKey = DateTime(date.year, date.month, date.day);
       holidayNameController.text = _holidays[holidayKey] ?? '';
@@ -171,7 +179,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                             ),
                           ),
                         ],
-                        if (showHolidaySection) ...[
+                        if ( showHolidaySection) ...[
                           TextField(
                             controller: holidayNameController,
                             decoration: const InputDecoration(
@@ -211,9 +219,10 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                           ),
                           const Divider(thickness: 1),
                         ],
-                        if (!showHolidaySection) ...[
+                       
+                        if (isFutureDate != true && !showHolidaySection) ...[
                           const Text(
-                            "Select Type",
+                            "Select Typesss",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 15),
                           ),
@@ -387,9 +396,10 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               elevation: 3,
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: Colors.orange.shade100,
+                                  backgroundColor:
+                                      const Color.fromARGB(255, 231, 161, 161),
                                   child: const Icon(Icons.beach_access,
-                                      color: Colors.orange),
+                                      color: Color.fromARGB(255, 245, 19, 11)),
                                 ),
                                 title: Text(item.staffName,
                                     style: const TextStyle(
@@ -424,6 +434,18 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               elevation: 3,
                               child: ListTile(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ViewWorkPage(
+                                        staffId: item.staffId,
+                                        selectedDate: _selectedDay,
+                                      ),
+                                    ),
+                                  );
+                                },
                                 leading: CircleAvatar(
                                   backgroundColor: Colors.green.shade100,
                                   child: Icon(
@@ -433,11 +455,38 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                                         : Colors.orange,
                                   ),
                                 ),
-                                title: Text(item.staffName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                subtitle: Text("Status: ${item.status}",
-                                    style: const TextStyle(fontSize: 12)),
+                                title: Text(
+                                  item.staffName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Status: ${item.status}",
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            "Login: ${item.loginTime} - ${item.logoutTime} (${item.workingHours})",
+                                            style:
+                                                const TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      "Work time: ${item.workTime}",
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -456,6 +505,25 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
         ),
       ),
     );
+  }
+
+  String calculateWorkingHours(String loginTime, String logoutTime) {
+    try {
+      final format = DateFormat("HH:mm");
+
+      final login = format.parse(loginTime);
+      final logout = format.parse(logoutTime);
+
+      final diff = logout.difference(login);
+
+      // Format difference as hours:minutes
+      final hours = diff.inHours;
+      final minutes = diff.inMinutes % 60;
+
+      return "${hours}h ${minutes}m";
+    } catch (e) {
+      return "";
+    }
   }
 
   Future<void> fetchWorkCalendar(DateTime date) async {
@@ -574,164 +642,333 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Calendar")),
-      body: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: _onDaySelected,
-            onPageChanged: (focusedDay) {
-              setState(() {
-                _focusedDay = focusedDay;
-              });
-              fetchWorkCalendar(focusedDay);
-            },
-        
-            calendarStyle: CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: Colors.orange.shade600,
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: BoxDecoration(
-                color: Colors.blue.shade700,
-                shape: BoxShape.circle,
-              ),
-              holidayDecoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.red,
-                  width: 2,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            TableCalendar(
+              firstDay: DateTime.utc(2020, 1, 1),
+              lastDay: DateTime.utc(2030, 12, 31),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              onDaySelected: _onDaySelected,
+              onPageChanged: (focusedDay) {
+                setState(() {
+                  _focusedDay = focusedDay;
+                });
+                fetchWorkCalendar(focusedDay);
+              },
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: Colors.orange.shade600,
+                  shape: BoxShape.circle,
                 ),
-              ),
-              holidayTextStyle: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            holidayPredicate: (day) =>
-                _holidays.containsKey(DateTime(day.year, day.month, day.day)),
-            calendarBuilders:
-                CalendarBuilders(markerBuilder: (context, day, events) {
-              final key = DateTime(day.year, day.month, day.day);
-
-              if (_holidays.containsKey(key)) {
-                return Stack(
-                  children: [
-                    Positioned(
-                      bottom: 1,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 233, 104, 104),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          _holidays[key] ?? '',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              color: Color.fromARGB(255, 255, 255, 255),
-                              fontSize: 10),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: GestureDetector(
-                        onTap: () {
-                          _showDeleteHolidayDialog(context, key);
-                        },
-                        child: const Icon(
-                          Icons.cancel,
-                          size: 16,
-                          color: Color.fromARGB(255, 233, 100, 100),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              } else if (_markedDates.contains(key)) {
-                return const Positioned(
-                  bottom: 1,
-                  child:
-                      Icon(Icons.check_circle, size: 16, color: Colors.green),
-                );
-              }
-
-              return null;
-            }),
-            headerStyle: const HeaderStyle(
-                formatButtonVisible: false, titleCentered: true),
-          ),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                LegendDot(color: Colors.orange, label: "Today"),
-                LegendDot(color: Colors.blue, label: "Selected"),
-                LegendDot(
-                    color: Color.fromARGB(255, 238, 51, 38), label: "Holiday"),
-                LegendDot(color: Colors.green, label: "Attendance/Leave"),
-              ],
-            ),
-          ),
-          const SizedBox(height: 25),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_month,
-                    size: 18, color: Colors.deepPurple),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('EEEE, MMM d, yyyy')
-                      .format(_selectedDay ?? _focusedDay),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                selectedDecoration: BoxDecoration(
+                  color: Colors.blue.shade700,
+                  shape: BoxShape.circle,
+                ),
+                holidayDecoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.red,
+                    width: 2,
                   ),
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _enhancedLegendCard(
-                  icon: Icons.check_circle,
-                  label: "Present Today",
-                  count:
-                      _dailyList.isNotEmpty ? _dailyList.first.presentCount : 0,
-                  color: Colors.green.shade600,
+                holidayTextStyle: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
                 ),
-                _enhancedLegendCard(
-                  icon: Icons.beach_access,
-                  label: "Leave Today",
-                  count:
-                      _dailyList.isNotEmpty ? _dailyList.first.absentCount : 0,
-                  color: Colors.redAccent,
-                ),
-              ],
+              ),
+              holidayPredicate: (day) =>
+                  _holidays.containsKey(DateTime(day.year, day.month, day.day)),
+              calendarBuilders:
+                  CalendarBuilders(markerBuilder: (context, day, events) {
+                final key = DateTime(day.year, day.month, day.day);
+
+                if (_holidays.containsKey(key)) {
+                  return Stack(
+                    children: [
+                      Positioned(
+                        bottom: 1,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 233, 104, 104),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _holidays[key] ?? '',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Color.fromARGB(255, 255, 255, 255),
+                                fontSize: 10),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: GestureDetector(
+                          onTap: () {
+                            _showDeleteHolidayDialog(context, key);
+                          },
+                          child: const Icon(
+                            Icons.cancel,
+                            size: 16,
+                            color: Color.fromARGB(255, 233, 100, 100),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else if (_markedDates.contains(key)) {
+                  return const Positioned(
+                    bottom: 1,
+                    child:
+                        Icon(Icons.check_circle, size: 16, color: Colors.green),
+                  );
+                }
+
+                return null;
+              }),
+              headerStyle: const HeaderStyle(
+                  formatButtonVisible: false, titleCentered: true),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  LegendDot(color: Colors.orange, label: "Today"),
+                  LegendDot(color: Colors.blue, label: "Selected"),
+                  LegendDot(
+                      color: Color.fromARGB(255, 238, 51, 38),
+                      label: "Holiday"),
+                  LegendDot(color: Colors.green, label: "Attendance/Leave"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month,
+                      size: 18, color: Colors.deepPurple),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('EEEE, MMM d, yyyy')
+                        .format(_selectedDay ?? _focusedDay),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                  //const SizedBox(width: 6),
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: TextButton.icon(
+                  //     onPressed: () {
+                  //       final selectedDay = _selectedDay ?? _focusedDay;
+                  //       final isHoliday = _holidays.containsKey(DateTime(
+                  //           selectedDay.year,
+                  //           selectedDay.month,
+                  //           selectedDay.day));
+                  //       if (isHoliday) {
+                  //         _showDayActionDialog(context, selectedDay,
+                  //             showHolidayInitially: true);
+                  //       } else if (_attendanceList.isNotEmpty ||
+                  //           _leaveList.isNotEmpty) {
+                  //         _showAttendanceLeaveViewDialog(context, selectedDay);
+                  //       } else {
+                  //         _showDayActionDialog(context, selectedDay);
+                  //       }
+                  //     },
+                  //     icon: const Icon(Icons.remove_red_eye, size: 18),
+                  //     label: const Text("View & Add"),
+                  //     style: TextButton.styleFrom(
+                  //       foregroundColor: Colors.blue,
+                  //     ),
+                  //   ),
+                  // ),
+                ],
+              ),
+            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 16),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //     children: [
+            //       _enhancedLegendCard(
+            //         icon: Icons.check_circle,
+            //         label: "Present Today",
+            //         count:
+            //             _dailyList.isNotEmpty ? _dailyList.first.presentCount : 0,
+            //         color: Colors.green.shade600,
+            //       ),
+            //       _enhancedLegendCard(
+            //         icon: Icons.beach_access,
+            //         label: "Leave Today",
+            //         count:
+            //             _dailyList.isNotEmpty ? _dailyList.first.absentCount : 0,
+            //         color: Colors.redAccent,
+            //       ),
+            //     ],
+            //   ),
+            // ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: TextButton.icon(
+                  //     onPressed: () {
+                  //       final selectedDay = _selectedDay ?? _focusedDay;
+                  //       final isHoliday = _holidays.containsKey(DateTime(
+                  //           selectedDay.year,
+                  //           selectedDay.month,
+                  //           selectedDay.day));
+                  //       if (isHoliday) {
+                  //         _showDayActionDialog(context, selectedDay,
+                  //             showHolidayInitially: true);
+                  //       } else if (_attendanceList.isNotEmpty ||
+                  //           _leaveList.isNotEmpty) {
+                  //         _showAttendanceLeaveViewDialog(context, selectedDay);
+                  //       } else {
+                  //         _showDayActionDialog(context, selectedDay);
+                  //       }
+                  //     },
+                  //     icon: const Icon(Icons.remove_red_eye, size: 18),
+                  //     label: const Text("View Details"),
+                  //     style: TextButton.styleFrom(
+                  //       foregroundColor: Colors.blue,
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _enhancedLegendCard(
+                        icon: Icons.check_circle,
+                        label: "Present Today",
+                        count: _dailyList.isNotEmpty
+                            ? _dailyList.first.presentCount
+                            : 0,
+                        color: Colors.green.shade600,
+                      ),
+                      _enhancedLegendCard(
+                        icon: Icons.beach_access,
+                        label: "Leave Today",
+                        count: _dailyList.isNotEmpty
+                            ? _dailyList.first.absentCount
+                            : 0,
+                        color: Colors.redAccent,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  _attendanceList.isNotEmpty
+                      ? Column(
+                          children: [
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  final selectedDay =
+                                      _selectedDay ?? _focusedDay;
+                                  final isHoliday = _holidays.containsKey(
+                                      DateTime(selectedDay.year,
+                                          selectedDay.month, selectedDay.day));
+                                  if (isHoliday) {
+                                    _showDayActionDialog(context, selectedDay,
+                                        showHolidayInitially: true);
+                                  } else if (_attendanceList.isNotEmpty ||
+                                      _leaveList.isNotEmpty) {
+                                    _showAttendanceLeaveViewDialog(
+                                        context, selectedDay);
+                                  } else {
+                                    _showDayActionDialog(context, selectedDay);
+                                  }
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.blue,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "View Details",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  final selectedDay =
+                                      _selectedDay ?? _focusedDay;
+                                  final isHoliday = _holidays.containsKey(
+                                      DateTime(selectedDay.year,
+                                          selectedDay.month, selectedDay.day));
+                                  if (isHoliday) {
+                                    _showDayActionDialog(context, selectedDay,
+                                        showHolidayInitially: true);
+                                  } else if (_attendanceList.isNotEmpty ||
+                                      _leaveList.isNotEmpty) {
+                                    _showAttendanceLeaveViewDialog(
+                                        context, selectedDay);
+                                  } else {
+                                    _showDayActionDialog(context, selectedDay);
+                                  }
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.blue,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Add Attendance",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
 class LegendDot extends StatelessWidget {
   final Color color;
   final String label;

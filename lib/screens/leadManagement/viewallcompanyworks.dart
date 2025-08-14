@@ -200,6 +200,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                       MaterialPageRoute(
                         builder: (context) => AssignReport(
                           workId: "",
+                          sectionId:""
                         ),
                       ),
                     );

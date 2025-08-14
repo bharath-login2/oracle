@@ -34,6 +34,8 @@ class _FilterWidgetState extends State<FilterWidget> {
   List<PrioState> prioList = [];
   List<TaskState> statusList = [];
   List<Staff> staffList = [];
+  bool shouldSortSelectedFirst = false;
+  String? lastAppliedCategory;
 
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
@@ -84,6 +86,7 @@ class _FilterWidgetState extends State<FilterWidget> {
         if (widget.initialFilters?['created_to'] != null) {
           createdTo = DateTime.parse(widget.initialFilters?['created_to']);
         }
+        shouldSortSelectedFirst = true; // Only for initial load with filters
       });
     }
   }
@@ -162,35 +165,41 @@ class _FilterWidgetState extends State<FilterWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // TextButton(
-              //   onPressed: _resetFilters,
-              //   child: const Text(
-              //     'Reset Filters',
-              //     style: TextStyle(
-              //       color: Color(0xFF3366FF),
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              Padding(
-                padding: const EdgeInsets.only(left: 170),
-                child: ElevatedButton(
-                  onPressed: _applyFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3366FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+              ElevatedButton(
+                onPressed: _resetFilters,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE4E9F2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Apply Filters',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text(
+                  'Reset Filters',
+                  style: TextStyle(
+                    color: Color(0xFF3366FF),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _applyFilters,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3366FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text(
+                  'Apply Filters',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -201,39 +210,9 @@ class _FilterWidgetState extends State<FilterWidget> {
     );
   }
 
-  // Widget _buildFilterCategory(String title, IconData icon) {
-  //   final isSelected = selectedCategory == title;
-  //   return GestureDetector(
-  //     onTap: () => setState(() => selectedCategory = title),
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(vertical: 8),
-  //       decoration: BoxDecoration(
-  //         color: isSelected ? const Color(0xFFE3F2FD) : Colors.transparent,
-  //         borderRadius: BorderRadius.circular(8),
-  //       ),
-  //       child: Row(
-  //         children: [
-  //           Icon(icon, size: 18, color: const Color(0xFF3366FF)),
-  //           const SizedBox(width: 8),
-  //           Expanded(
-  //             child: Text(
-  //               title,
-  //               style: const TextStyle(
-  //                 fontSize: 14,
-  //                 color: Color(0xFF2E3A59),
-  //                 fontWeight: FontWeight.w600,
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
   Widget _buildFilterCategory(String title, IconData icon) {
     final isSelected = selectedCategory == title;
 
-    // ✅ Determine if a filter is applied for this category
     bool isFiltered = false;
     switch (title) {
       case 'Priority':
@@ -257,7 +236,12 @@ class _FilterWidgetState extends State<FilterWidget> {
     }
 
     return GestureDetector(
-      onTap: () => setState(() => selectedCategory = title),
+      onTap: () {
+        setState(() {
+          selectedCategory = title;
+          shouldSortSelectedFirst = title == lastAppliedCategory;
+        });
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
@@ -370,28 +354,48 @@ class _FilterWidgetState extends State<FilterWidget> {
     required String Function(T) displayProperty,
     required String Function(T) getId,
   }) {
-    // final filteredItems = items.where((item) {
-    //   final searchTerm = _searchController.text.toLowerCase();
-    //   return displayProperty(item).toLowerCase().contains(searchTerm);
-    // }).toList();
     final searchTerm = _searchController.text.toLowerCase();
 
-    final filteredItems = items.where((item) {
+    var filteredItems = items.where((item) {
       return displayProperty(item).toLowerCase().contains(searchTerm);
     }).toList();
 
-// Move selected items to top
-    filteredItems.sort((a, b) {
-      final aSelected = selectedIds.contains(getId(a));
-      final bSelected = selectedIds.contains(getId(b));
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return displayProperty(a)
-          .compareTo(displayProperty(b)); 
-    });
+    if (shouldSortSelectedFirst) {
+      filteredItems.sort((a, b) {
+        final aSelected = selectedIds.contains(getId(a));
+        final bSelected = selectedIds.contains(getId(b));
+
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return displayProperty(a).compareTo(displayProperty(b));
+      });
+    } else {
+      filteredItems
+          .sort((a, b) => displayProperty(a).compareTo(displayProperty(b)));
+    }
 
     return Column(
       children: [
+        if (selectedCategory == 'Assigned By' ||
+            selectedCategory == 'Assigned to')
+          Column(
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  isDense: true,
+                ),
+                onChanged: (value) => setState(() {}),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         Container(
           height: 250,
           decoration: BoxDecoration(
@@ -414,6 +418,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                     } else {
                       selectedIds.add(id);
                     }
+                    shouldSortSelectedFirst = false;
                   });
                 },
                 child: SizedBox(
@@ -433,6 +438,8 @@ class _FilterWidgetState extends State<FilterWidget> {
                             } else {
                               selectedIds.remove(id);
                             }
+                            // Never sort immediately after selection
+                            shouldSortSelectedFirst = false;
                           });
                         },
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -465,21 +472,24 @@ class _FilterWidgetState extends State<FilterWidget> {
   Widget _buildStaffSelectionList({
     required Set<String> selectedIds,
   }) {
-    // final filteredStaff = staffList.where((staff) {
-    //   final searchTerm = _searchController.text.toLowerCase();
-    //   return staff.name.toLowerCase().contains(searchTerm);
-    // }).toList();
     final searchTerm = _searchController.text.toLowerCase();
-    final filteredStaff = staffList.where((staff) {
+
+    var filteredStaff = staffList.where((staff) {
       return staff.name.toLowerCase().contains(searchTerm);
     }).toList();
-    filteredStaff.sort((a, b) {
-      final aSelected = selectedIds.contains(a.userIdStaff);
-      final bSelected = selectedIds.contains(b.userIdStaff);
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return a.name.compareTo(b.name); 
-    });
+
+    if (shouldSortSelectedFirst) {
+      filteredStaff.sort((a, b) {
+        final aSelected = selectedIds.contains(a.userIdStaff);
+        final bSelected = selectedIds.contains(b.userIdStaff);
+
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return a.name.compareTo(b.name);
+      });
+    } else {
+      filteredStaff.sort((a, b) => a.name.compareTo(b.name));
+    }
 
     return Column(
       children: [
@@ -519,6 +529,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                     } else {
                       selectedIds.add(id);
                     }
+                    shouldSortSelectedFirst = false;
                   });
                 },
                 child: SizedBox(
@@ -538,6 +549,7 @@ class _FilterWidgetState extends State<FilterWidget> {
                             } else {
                               selectedIds.remove(id);
                             }
+                            shouldSortSelectedFirst = false;
                           });
                         },
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -614,6 +626,9 @@ class _FilterWidgetState extends State<FilterWidget> {
       'created_from': createdFrom?.toIso8601String(),
       'created_to': createdTo?.toIso8601String(),
     });
+    setState(() {
+      lastAppliedCategory = selectedCategory;
+    });
     Navigator.pop(context);
   }
 
@@ -627,6 +642,8 @@ class _FilterWidgetState extends State<FilterWidget> {
       dueDateTo = null;
       createdFrom = null;
       createdTo = null;
+      shouldSortSelectedFirst = false;
+      lastAppliedCategory = null;
     });
   }
 }
