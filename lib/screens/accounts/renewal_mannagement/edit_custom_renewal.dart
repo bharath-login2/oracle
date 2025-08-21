@@ -651,7 +651,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                       children: [
                         const SizedBox(
                           child: Text(
-                            "Sub Total :",
+                            "Total :",
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
@@ -688,52 +688,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         ),
                       ],
                     ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const SizedBox(
-                          child: Text(
-                            "Total Tax  :",
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.3,
-                          height: 35,
-                          child: TextFormField(
-                            readOnly: true,
-                            controller: totalTax,
-                            decoration: InputDecoration(
-                                border: const OutlineInputBorder(
-                                  // width: 0.0 produces a thin "hairline" border
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5)),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                //labelText: 'Invoice Number',
-                                fillColor: Colors.grey[300],
-                                filled: true,
-                                // border: const OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.grey.shade300),
-                                ),
-                                labelStyle:
-                                    const TextStyle(color: Colors.black)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
+                      const SizedBox(
                       height: 10,
                     ),
                     Row(
@@ -787,6 +742,52 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         ),
                       ],
                     ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(
+                          child: Text(
+                            "Tax  :",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          height: 35,
+                          child: TextFormField(
+                            readOnly: true,
+                            controller: totalTax,
+                            decoration: InputDecoration(
+                                border: const OutlineInputBorder(
+                                  // width: 0.0 produces a thin "hairline" border
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                //labelText: 'Invoice Number',
+                                fillColor: Colors.grey[300],
+                                filled: true,
+                                // border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  
                     const SizedBox(
                       height: 10,
                     ),
@@ -850,12 +851,12 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                       height: 5,
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(right: 10),
+                      padding: const EdgeInsets.only(left: 109),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            'Total :',
+                            'Grand Total:',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w500),
                           ),
@@ -867,7 +868,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                             child: Text(
                               totalAmount.text,
                               style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
+                                  fontSize: 18, fontWeight: FontWeight.w500,overflow: TextOverflow.ellipsis),
                             ),
                           )
                         ],
@@ -1440,7 +1441,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(8),
                           labelText: 'Product *',
-                          prefixIcon: Icon(Icons.person, color: Colors.grey),
+                        //  prefixIcon: Icon(Icons.person, color: Colors.grey),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -1461,8 +1462,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                               decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(8),
                                   labelText: 'Rate *',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
+                                  // prefixIcon: Icon(Icons.currency_rupee,
+                                  //     color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),
@@ -1491,16 +1492,16 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                                   child: Container(
                                     height: 45,
                                     width: 30,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: const BorderRadius.only(
-                                            bottomLeft: Radius.circular(8),
-                                            topLeft: Radius.circular(8))),
-                                    child: const Center(
-                                        child: Icon(
-                                      Icons.arrow_left,
-                                      size: 30,
-                                    )),
+                                    // decoration: BoxDecoration(
+                                    //     border: Border.all(color: Colors.grey),
+                                    //     borderRadius: const BorderRadius.only(
+                                    //         bottomLeft: Radius.circular(8),
+                                    //         topLeft: Radius.circular(8))),
+                                    // child: const Center(
+                                    //     child: Icon(
+                                    //   Icons.arrow_left,
+                                    //   size: 30,
+                                    // )),
                                   ),
                                 ),
                                 Expanded(
@@ -1548,16 +1549,16 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                                   child: Container(
                                     height: 45,
                                     width: 30,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: const BorderRadius.only(
-                                            bottomRight: Radius.circular(8),
-                                            topRight: Radius.circular(8))),
-                                    child: const Center(
-                                        child: Icon(
-                                      Icons.arrow_right,
-                                      size: 30,
-                                    )),
+                                    // decoration: BoxDecoration(
+                                    //     border: Border.all(color: Colors.grey),
+                                    //     borderRadius: const BorderRadius.only(
+                                    //         bottomRight: Radius.circular(8),
+                                    //         topRight: Radius.circular(8))),
+                                    // child: const Center(
+                                    //     child: Icon(
+                                    //   Icons.arrow_right,
+                                    //   size: 30,
+                                    // )),
                                   ),
                                 ),
                               ],
@@ -1578,8 +1579,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                               decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(8),
                                   labelText: 'Tax(in %)',
-                                  prefixIcon:
-                                      Icon(Icons.percent, color: Colors.grey),
+                                  // prefixIcon:
+                                  //     Icon(Icons.percent, color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),
@@ -1597,8 +1598,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                               decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(8),
                                   labelText: 'Amount',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
+                                  // prefixIcon: Icon(Icons.currency_rupee,
+                                  //     color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),
@@ -1618,8 +1619,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                               decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.all(8),
                                   labelText: 'Details',
-                                  prefixIcon: Icon(Icons.receipt_long,
-                                      color: Colors.grey),
+                                  // prefixIcon: Icon(Icons.receipt_long,
+                                  //     color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(color: Colors.grey),

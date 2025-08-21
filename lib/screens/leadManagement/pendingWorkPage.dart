@@ -256,7 +256,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                     physics: const ClampingScrollPhysics(),
                     child: Column(
                       children: [
-                        ...?summary.projects.map((project) {
+                        ...summary.projects.map((project) {
                           final projectName =
                               project.projectName ?? 'Unnamed Project';
                           final customerName =
@@ -287,7 +287,7 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                       fontSize: 13, color: Colors.grey),
                                 ),
                               ),
-                              ...?project.tasks.asMap().entries.map((entry) {
+                              ...project.tasks.asMap().entries.map((entry) {
                                 final task = entry.value;
                                 final taskName =
                                     task.taskName ?? 'Unnamed Task';

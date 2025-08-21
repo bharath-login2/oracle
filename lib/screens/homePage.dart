@@ -1,17 +1,29 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/models/lead_management/leadDashboardModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
+import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
+import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
+import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
@@ -50,19 +62,39 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String name = '';
   String role = '';
+    String token = '';
   String ProjectDashboardPermission = '';
+    String MenuDashboard = '';
   String LeadDashboard = '';
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
   String phoneCallLogPermission = '';
   String viewWorkReportPermission = '';
-
+  String startAndStopWorkPermission = '';
+   bool isLoading = false;
+     int notificationCount = 0;
+       var fromdate = DateTime.now();
+  var todate = DateTime.now();
+  var fromdate1 =
+      DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
+  var todate1 = DateTime.now();
+  var outputFormat = DateFormat('dd-MM-yyyy');
+    LeadDashboardModel? leadDashboard;
+      bool createLeadCategory1 = false;
+  bool updateLeadCategory1 = false;
+  bool deleteLeadCategory1 = false;
+    String createLeadCategory = '';
+  String updateLeadCategory = '';
+  String deleteLeadCategory = '';
+  CommonResponse? loginOrNot;
+    bool isWorkStarted = false;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getData();
+     _loadWorkStatus();
   }
 
   @override
@@ -73,12 +105,12 @@ class _HomePageState extends State<HomePage> {
 
   getData() async {
     //
-
+   token = await Common.getSharedPref("token");
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
      ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
       LeadDashboard = await Common.getSharedPref("LeadDashboard");
-      
+           MenuDashboard = await Common.getSharedPref("MenuDashboard");
     log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
@@ -86,6 +118,15 @@ class _HomePageState extends State<HomePage> {
         await Common.getSharedPref("phoneCallLogPermission");
          viewWorkReportPermission =
         await Common.getSharedPref("viewWorkReportPermission");
+            startAndStopWorkPermission =
+          await Common.getSharedPref("startAndStopWorkPermission");
+           createLeadCategory = await Common.getSharedPref("createLeadCategory");
+      updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
+      deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+
+         createLeadCategory1 = createLeadCategory == 'true';
+      updateLeadCategory1 = updateLeadCategory == 'true';
+      deleteLeadCategory1 = deleteLeadCategory == 'true';
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -98,7 +139,10 @@ class _HomePageState extends State<HomePage> {
         result = false;
       });
     }
+      
     userDashboard = await HttpService.mainDashboard(widget.token);
+     Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+        
     if (userDashboard != null) {
       setState(() {
         _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
@@ -121,6 +165,70 @@ class _HomePageState extends State<HomePage> {
     if (configure != null) {
       setState(() {});
     }
+     leadDashboard = await HttpService.leadDashboard(
+            token, fromdate, todate, fromdate1, todate1);
+            setState(() {
+          notificationCount = leadDashboard!.data.unreadNotification;
+        });
+         final prefs = await SharedPreferences.getInstance();
+      final dismissedDate = prefs.getString('loginPromptDismissedDate');
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+         if (dismissedDate != today) {
+          loginOrNot = await HttpService.getLoginorNot(widget.token);
+          if (loginOrNot?.data != true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showLoginPrompt(context);
+            });
+          }
+        }
+
+  }
+
+    void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+
+   void _loadWorkStatus() async {
+    String? status = await Common.getSharedPref("is_work_started");
+    setState(() {
+      isWorkStarted = status == "true";
+    });
+  }
+
+   Future<String?> generateFaceHash(File faceImageFile) async {
+    final faceDetector = FaceDetector(
+      options: FaceDetectorOptions(
+        enableLandmarks: true,
+        enableContours: true,
+        enableClassification: false,
+      ),
+    );
+    final inputImage = InputImage.fromFile(faceImageFile);
+    final faces = await faceDetector.processImage(inputImage);
+    if (faces.isEmpty) return null;
+    final face = faces.first;
+    final landmarks = face.landmarks;
+    final serialized = [
+      landmarks[FaceLandmarkType.leftEye]?.position,
+      landmarks[FaceLandmarkType.rightEye]?.position,
+      landmarks[FaceLandmarkType.noseBase]?.position,
+      landmarks[FaceLandmarkType.leftCheek]?.position,
+      landmarks[FaceLandmarkType.rightCheek]?.position,
+    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+    final lipData =
+        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+
+    faceDetector.close();
+
+    final combined = '$serialized;$lipData';
+    return base64Encode(utf8.encode(combined));
   }
 
   final PageController _pageController = PageController(
@@ -213,21 +321,100 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                           ),
-                          InkWell(
-                            onTap: () {
-                              _scaffoldKey.currentState!.openEndDrawer();
-                            },
-                            child: SizedBox(
-                              width: 35,
-                              height: 35,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.asset(
-                                  "assets/icons/menu.png",
-                                ),
-                              ),
-                            ),
-                          )
+                          Row(
+                children: [
+                  userDashboard != null && startAndStopWorkPermission == "true"
+                      ?
+                      // StartStopToggle(
+                      //     initialStatus: userDashboard!.data.loginCheck,
+                      //     onToggle: (bool started) {
+                      //       setState(() {
+                      //         userDashboard!.data.loginCheck = started;
+                      //       });
+                      //     },
+                      //   )
+                      StartStopToggle(
+                          initialStatus: userDashboard!.data.loginCheck,
+                          onToggle: (bool started) {
+                            setState(() {
+                              userDashboard!.data.loginCheck = started;
+                            });
+                          },
+                          setDashboardLoading: (bool loading) {
+                            setState(() {
+                              isLoading =
+                                  loading; // This changes the dashboard loader state
+                            });
+                          },
+                        )
+                      : const SizedBox(),
+                  const SizedBox(width: 20),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationPage(
+                                token,
+                                createLeadCategory1,
+                                updateLeadCategory1,
+                                deleteLeadCategory1)),
+                      ).then((r) {
+                        getData();
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Stack(
+                        children: [
+                          Image.asset("assets/icons/notification.png",
+                              width: 20, color: Colors.white),
+                          notificationCount > 0
+                              ? Positioned(
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 12,
+                                      minHeight: 12,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox()
+                        ],
+                      ),
+                    ),
+                  ),
+                     InkWell(
+                  onTap: () {
+                    _scaffoldKey.currentState!.openEndDrawer();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Image.asset("assets/icons/menu.png", width: 20),
+                  ),
+                ),
+                ],
+              ),
+                          // InkWell(
+                          //   onTap: () {
+                          //     _scaffoldKey.currentState!.openEndDrawer();
+                          //   },
+                          //   child: SizedBox(
+                          //     width: 35,
+                          //     height: 35,
+                          //     child: Padding(
+                          //       padding: const EdgeInsets.all(8.0),
+                          //       child: Image.asset(
+                          //         "assets/icons/menu.png",
+                          //       ),
+                          //     ),
+                          //   ),
+                          // )
                         ],
                       ),
                     ),
@@ -967,6 +1154,15 @@ class _HomePageState extends State<HomePage> {
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const ComplaintListScreen()));
+                                            } 
+                                            else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Attendance') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const SalaryReportPage()));
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'renewal') {
@@ -1036,11 +1232,11 @@ class _HomePageState extends State<HomePage> {
                 floatingActionButton: FloatingActionButton(
                   backgroundColor: Colors.black,
                   onPressed: () {
-                    ProjectDashboardPermission =="true"?
+                    MenuDashboard =="true"?
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => ProjectDashboard()),
+                          builder: (context) => HomePage(widget.token)),
                     ): Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1111,6 +1307,229 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )),
       ),
+    );
+  }
+
+
+
+    void showLoginPrompt(BuildContext context) {
+    String? faceBase64;
+    String faceDetection = "true";
+    String companyLocation = "true";
+
+    Future<void> captureFace() async {
+      final faceImage = await Navigator.of(context).push<File>(
+        MaterialPageRoute(
+          builder: (_) => FaceDetectionCamera(
+            onFaceCaptured: (File imageFile) {
+              Navigator.of(context).pop(imageFile);
+            },
+          ),
+        ),
+      );
+
+      if (faceImage != null && context.mounted) {
+        final faceHash = await generateFaceHash(faceImage);
+        if (faceHash == null) {
+          Common.toastMessaage('Face hash failed', Colors.red);
+          return;
+        }
+        faceBase64 = faceHash;
+      }
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Not logged in today"),
+          content: const Text("Do you want to log in now?"),
+          actions: [
+            TextButton(
+              child: const Text("Not now"),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final today = DateTime.now().toIso8601String().substring(0, 10);
+                await prefs.setString('loginPromptDismissedDate', today);
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Yes"),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  barrierColor: Colors.black.withOpacity(0.3), // Dim background
+                  builder: (_) => Dialog(
+                    backgroundColor:
+                        Colors.white.withOpacity(0.8), // Transparent white
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Lottie.asset(
+                              'assets/lottie/location_loader.json',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            "Logging In...",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+
+                try {
+                  faceDetection =
+                      await Common.getSharedPref("faceDetection") ?? "false";
+                  companyLocation =
+                      await Common.getSharedPref("companyLocation") ?? "false";
+                  LocationPermission permission =
+                      await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied) {
+                    permission = await Geolocator.requestPermission();
+                    if (permission == LocationPermission.denied) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Location permission denied.")),
+                      );
+                      return;
+                    }
+                  }
+                  if (permission == LocationPermission.deniedForever) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              "Location permission permanently denied. Please enable from settings.")),
+                    );
+                    return;
+                  }
+
+                  final position = await Geolocator.getCurrentPosition(
+                    desiredAccuracy: LocationAccuracy.high,
+                  );
+                  if (companyLocation == "true") {
+                    final companyResponse =
+                        await HttpService.getCompanyLocations();
+                    if (companyResponse == null ||
+                        companyResponse.status != true) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text("Failed to fetch company locations.")),
+                      );
+                      return;
+                    }
+
+                    final String rawLocations = companyResponse.data.location;
+                    final List<String> locationStrings = rawLocations
+                        .replaceAll('{', '')
+                        .split('},')
+                        .map((e) => e.replaceAll('}', '').trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList();
+
+                    bool isWithinRange = false;
+                    const double maxDistanceMeters = 100;
+
+                    for (final locStr in locationStrings) {
+                      final parts = locStr.split(',');
+                      if (parts.length == 2) {
+                        final double? lat = double.tryParse(parts[0].trim());
+                        final double? lng = double.tryParse(parts[1].trim());
+                        if (lat != null && lng != null) {
+                          final double distance = Geolocator.distanceBetween(
+                              position.latitude, position.longitude, lat, lng);
+                          if (distance <= maxDistanceMeters) {
+                            isWithinRange = true;
+                            break;
+                          }
+                        }
+                      }
+                    }
+
+                    if (!isWithinRange) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                "You are not within $maxDistanceMeters meters of company location.")),
+                      );
+                      return;
+                    }
+                  }
+                  if (faceDetection == "true") {
+                    await captureFace();
+                    if (faceBase64 == null || faceBase64!.isEmpty) {
+                      Navigator.of(context).pop();
+                      Common.toastMessaage(
+                          'Face capture required for login', Colors.red);
+                      return;
+                    }
+                  }
+                  final now = DateTime.now();
+                  final res = await HttpService.startWork(
+                    now,
+                    latitude: position.latitude,
+                    longitude: position.longitude,
+                    faceData: faceBase64,
+                  );
+                  Navigator.of(context).pop();
+                  if (res != null && res.status == true) {
+                    await Common.saveSharedPref("is_work_started", "true");
+
+                    setState(() => isWorkStarted = true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            "Log in at ${DateFormat('hh:mm a').format(now)}"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    if (!context.mounted) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => Dashboard(widget.token)),
+                    );
+                  } else {
+                    showError(res?.message ?? "Failed to start work");
+                  }
+                } catch (e) {
+                  Navigator.of(context).pop();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: $e")),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

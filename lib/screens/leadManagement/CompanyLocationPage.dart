@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/service/service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,6 +14,7 @@ class CompanyLocationPage extends StatefulWidget {
 class _CompanyLocationPageState extends State<CompanyLocationPage> {
   String? companyName;
   String? companyId;
+  String? roleId;
   List<Map<String, dynamic>> selectedLocations = [];
   bool isLoading = true;
   bool isSubmitting = false;
@@ -39,6 +41,7 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
   }
 
   Future<void> fetchCompanyLocation() async {
+    roleId = await Common.getSharedPref("roleId");
     final data = await HttpService.getCompanyLocations();
     if (data != null && mounted) {
       setState(() {
@@ -77,6 +80,15 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
   }
 
   Future<void> _submitLocationToServer() async {
+    // ignore: unrelated_type_equality_checks
+    if (roleId != 1 && roleId != 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No permission to add location')),
+        );
+      }
+      return;
+    }
     if (selectedLocations.isEmpty || companyId == null) return;
 
     setState(() => isSubmitting = true);
@@ -252,6 +264,14 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
   }
 
   Future<void> removeLocation(int index) async {
+    if (roleId != 1 && roleId != 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No permission to delete location')),
+        );
+      }
+      return;
+    }
     final location = selectedLocations[index];
     final nickname = location['nickname'] ?? 'null';
     final lat = location['lat'];
@@ -337,11 +357,44 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
                         children: [
                           Text("Picked Locations",
                               style: Theme.of(context).textTheme.titleMedium),
+                          // IconButton(
+                          //   icon: const Icon(Icons.add_location_alt_rounded),
+                          //   tooltip: "Add Current Location",
+                          //   onPressed:
+                          //       isSubmitting ? null : pickLocationWithNickname,
+                          // ),
                           IconButton(
-                            icon: const Icon(Icons.add_location_alt_rounded),
+                            icon: const Icon(
+                              Icons.add_location_alt_rounded,
+                              color: Color.fromARGB(255, 19, 18, 18),
+                            ),
                             tooltip: "Add Current Location",
-                            onPressed:
-                                isSubmitting ? null : pickLocationWithNickname,
+                            onPressed: isSubmitting
+                                ? null
+                                : () {
+                                    if (roleId != 1 && roleId != 2) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text("Permission Denied",
+                                              style:
+                                                  TextStyle(color: Colors.red)),
+                                          content: const Text(
+                                              "You do not have permission to add location."),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text("OK"),
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    } else {
+                                      // ✅ Allowed
+                                      pickLocationWithNickname();
+                                    }
+                                  },
                           ),
                         ],
                       ),
@@ -411,6 +464,37 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
                                         onPressed: isSubmitting
                                             ? null
                                             : () async {
+                                                if (roleId != 1 &&
+                                                    roleId != 2) {
+                                                  // 🚫 No permission popup
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                          'Permission Denied',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.red),
+                                                        ),
+                                                        content: const Text(
+                                                            'You do not have permission to remove locations.'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                    context),
+                                                            child: const Text(
+                                                                'OK'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                  return; // stop execution
+                                                }
+
+                                                // ✅ Allowed → ask for confirmation
                                                 final confirm =
                                                     await showDialog<bool>(
                                                   context: context,
@@ -433,8 +517,14 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
                                                           style: ElevatedButton
                                                               .styleFrom(
                                                             backgroundColor:
-                                                                const Color.fromARGB(255, 218, 132, 126),
-                                                                foregroundColor: Colors.white
+                                                                const Color
+                                                                    .fromARGB(
+                                                                    255,
+                                                                    218,
+                                                                    132,
+                                                                    126),
+                                                            foregroundColor:
+                                                                Colors.white,
                                                           ),
                                                           onPressed: () =>
                                                               Navigator.pop(

@@ -28,7 +28,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   CalendarDataAllModel? CalendarDetails;
   List<DailyItem> _dailyList = [];
   final bool _showHolidays = true;
-  String ?isFutureDate;
+  String? isFutureDate;
 
   @override
   void initState() {
@@ -179,7 +179,48 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                             ),
                           ),
                         ],
-                        if ( showHolidaySection) ...[
+                        // if ( showHolidaySection) ...[
+                        //   TextField(
+                        //     controller: holidayNameController,
+                        //     decoration: const InputDecoration(
+                        //       labelText: 'Holiday Name',
+                        //       prefixIcon: Icon(Icons.celebration),
+                        //     ),
+                        //   ),
+                        //   const SizedBox(height: 10),
+                        //   TextField(
+                        //     controller: holidayDescController,
+                        //     maxLines: 3,
+                        //     decoration: const InputDecoration(
+                        //       labelText: 'Description',
+                        //       prefixIcon: Icon(Icons.description),
+                        //     ),
+                        //   ),
+                        //   const SizedBox(height: 10),
+                        //   Align(
+                        //     alignment: Alignment.centerRight,
+                        //     child: ElevatedButton.icon(
+                        //       onPressed: () async {
+                        //         await HttpService.markHoliday(
+                        //           date: DateFormat('yyyy-MM-dd').format(date),
+                        //           name: holidayNameController.text,
+                        //           description: holidayDescController.text,
+                        //         );
+                        //         setState(() {
+                        //           _holidays[DateTime(
+                        //                   date.year, date.month, date.day)] =
+                        //               holidayNameController.text;
+                        //         });
+                        //         Navigator.pop(context);
+                        //       },
+                        //       icon: const Icon(Icons.save),
+                        //       label: const Text('Save Holiday'),
+                        //     ),
+                        //   ),
+                        //   const Divider(thickness: 1),
+                        // ],
+
+                        if (showHolidaySection) ...[
                           TextField(
                             controller: holidayNameController,
                             decoration: const InputDecoration(
@@ -187,6 +228,26 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               prefixIcon: Icon(Icons.celebration),
                             ),
                           ),
+
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              ActionChip(
+                                label: const Text("Saturday"),
+                                onPressed: () {
+                                  holidayNameController.text = "Saturday";
+                                },
+                              ),
+                              ActionChip(
+                                label: const Text("Sunday"),
+                                onPressed: () {
+                                  holidayNameController.text = "Sunday";
+                                },
+                              ),
+                            ],
+                          ),
+
                           const SizedBox(height: 10),
                           TextField(
                             controller: holidayDescController,
@@ -196,7 +257,9 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               prefixIcon: Icon(Icons.description),
                             ),
                           ),
+
                           const SizedBox(height: 10),
+
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton.icon(
@@ -219,7 +282,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                           ),
                           const Divider(thickness: 1),
                         ],
-                       
+
                         if (isFutureDate != true && !showHolidaySection) ...[
                           const Text(
                             "Select Typesss",

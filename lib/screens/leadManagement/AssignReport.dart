@@ -41,9 +41,9 @@ class _AssignReportState extends State<AssignReport> {
   bool isLoading = true;
   bool isRemarkExpanded = false;
   List<String> participantIds = [];
-  String _selectedFilter = 'all';
+  final String _selectedFilter = 'all';
   String? _currentUserId;
-  Set<String> _selectedFilters = {};
+  final Set<String> _selectedFilters = {};
   // @override
   // void initState() {
   //   super.initState();
@@ -101,7 +101,7 @@ class _AssignReportState extends State<AssignReport> {
         .then((assignedList) {
       List<AssignedWork> filteredList = assignedList.where((item) {
         bool matchesAssignedByMe = _selectedFilters.contains('assignedByMe')
-            ? item.assignedBy?.toLowerCase() == name?.toLowerCase()
+            ? item.assignedBy.toLowerCase() == name?.toLowerCase()
             : true;
 
         bool matchesPending = _selectedFilters.contains('pending')
@@ -112,11 +112,11 @@ class _AssignReportState extends State<AssignReport> {
       }).toList();
 
       if (widget.workId.isNotEmpty) {
-        final AssignedWork? matchedItem = filteredList.firstWhere(
+        final AssignedWork matchedItem = filteredList.firstWhere(
           (item) => item.id.toString() == widget.workId,
           orElse: () => null as AssignedWork,
         );
-        if (matchedItem != null && mounted) {
+        if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showTaskDetails(context, matchedItem);
           });
@@ -219,55 +219,196 @@ class _AssignReportState extends State<AssignReport> {
           : null,
       body: Column(
         children: [
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: Row(
+          //     children: [
+          //       Expanded(
+          //         child: ElevatedButton(
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: _selectedFilters.contains('assignedByMe')
+          //                 ? Colors.blue
+          //                 : Colors.grey.shade300,
+          //             foregroundColor: _selectedFilters.contains('assignedByMe')
+          //                 ? Colors.white
+          //                 : Colors.black,
+          //           ),
+          //           onPressed: () {
+          //             setState(() {
+          //               if (_selectedFilters.contains('assignedByMe')) {
+          //                 _selectedFilters.remove('assignedByMe');
+          //               } else {
+          //                 _selectedFilters.add('assignedByMe');
+          //               }
+          //               _loadData();
+          //             });
+          //           },
+          //           child: const Text('Assigned By Me',
+          //               style: TextStyle(fontSize: 14)),
+          //         ),
+          //       ),
+          //       const SizedBox(width: 8),
+          //       Expanded(
+          //         child: ElevatedButton(
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: _selectedFilters.contains('pending')
+          //                 ? Colors.blue
+          //                 : Colors.grey.shade300,
+          //             foregroundColor: _selectedFilters.contains('pending')
+          //                 ? Colors.white
+          //                 : Colors.black,
+          //           ),
+          //           onPressed: () {
+          //             setState(() {
+          //               if (_selectedFilters.contains('pending')) {
+          //                 _selectedFilters.remove('pending');
+          //               } else {
+          //                 _selectedFilters.add('pending');
+          //               }
+          //               _loadData();
+          //             });
+          //           },
+          //           child: const Text('Pending'),
+          //         ),
+          //       ),
+          //       const SizedBox(width: 8),
+          //       Expanded(
+          //         child: ElevatedButton(
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: _selectedFilters.contains('pending')
+          //                 ? Colors.blue
+          //                 : Colors.grey.shade300,
+          //             foregroundColor: _selectedFilters.contains('pending')
+          //                 ? Colors.white
+          //                 : Colors.black,
+          //           ),
+          //           onPressed: () {
+          //             setState(() {
+          //               if (_selectedFilters.contains('pending')) {
+          //                 _selectedFilters.remove('pending');
+          //               } else {
+          //                 _selectedFilters.add('pending');
+          //               }
+          //               _loadData();
+          //             });
+          //           },
+          //           child: const Text('To-Do'),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedFilters.contains('assignedByMe')
-                          ? Colors.blue
-                          : Colors.grey.shade300,
-                      foregroundColor: _selectedFilters.contains('assignedByMe')
-                          ? Colors.white
-                          : Colors.black,
+                Flexible(
+                  child: SizedBox(
+                    width: double.infinity, 
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _selectedFilters.contains('assignedByMe')
+                                ? Colors.blue
+                                : Colors.grey.shade300,
+                        foregroundColor:
+                            _selectedFilters.contains('assignedByMe')
+                                ? Colors.white
+                                : Colors.black,
+                        minimumSize: const Size(0, 36),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8), 
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (_selectedFilters.contains('assignedByMe')) {
+                            _selectedFilters.remove('assignedByMe');
+                          } else {
+                            _selectedFilters.add('assignedByMe');
+                          }
+                          _loadData();
+                        });
+                      },
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Assigned By Me',
+                          style: TextStyle(fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        if (_selectedFilters.contains('assignedByMe')) {
-                          _selectedFilters.remove('assignedByMe');
-                        } else {
-                          _selectedFilters.add('assignedByMe');
-                        }
-                        _loadData();
-                      });
-                    },
-                    child: const Text('Assigned By Me'),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedFilters.contains('pending')
-                          ? Colors.blue
-                          : Colors.grey.shade300,
-                      foregroundColor: _selectedFilters.contains('pending')
-                          ? Colors.white
-                          : Colors.black,
+                Flexible(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _selectedFilters.contains('pending')
+                            ? Colors.blue
+                            : Colors.grey.shade300,
+                        foregroundColor: _selectedFilters.contains('pending')
+                            ? Colors.white
+                            : Colors.black,
+                        minimumSize: const Size(0, 36),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (_selectedFilters.contains('pending')) {
+                            _selectedFilters.remove('pending');
+                          } else {
+                            _selectedFilters.add('pending');
+                          }
+                          _loadData();
+                        });
+                      },
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Pending',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        if (_selectedFilters.contains('pending')) {
-                          _selectedFilters.remove('pending');
-                        } else {
-                          _selectedFilters.add('pending');
-                        }
-                        _loadData();
-                      });
-                    },
-                    child: const Text('Pending'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _selectedFilters.contains('todo')
+                            ? Colors.blue
+                            : Colors.grey.shade300,
+                        foregroundColor: _selectedFilters.contains('todo')
+                            ? Colors.white
+                            : Colors.black,
+                        minimumSize: const Size(0, 36),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (_selectedFilters.contains('todo')) {
+                            _selectedFilters.remove('todo');
+                          } else {
+                            _selectedFilters.add('todo');
+                          }
+                          _loadData();
+                        });
+                      },
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'To-Do',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -285,7 +426,7 @@ class _AssignReportState extends State<AssignReport> {
               child: Row(
                 children: [
                   const Icon(Icons.filter_alt, size: 16, color: Colors.orange),
-                  const SizedBox(width: 8),
+                  const SizedBox(width:8),
                   const Text('Filters applied',
                       style: TextStyle(color: Colors.orange)),
                   const Spacer(),
@@ -474,7 +615,8 @@ class _AssignReportState extends State<AssignReport> {
                         backgroundColor: item.startStatus == "Started"
                             ? const Color.fromARGB(255, 122, 121, 121)
                             : const Color.fromARGB(255, 32, 179, 67),
-                        disabledBackgroundColor: const Color.fromARGB(255, 236, 167, 18), // for null onPressed
+                        disabledBackgroundColor: const Color.fromARGB(
+                            255, 236, 167, 18), // for null onPressed
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

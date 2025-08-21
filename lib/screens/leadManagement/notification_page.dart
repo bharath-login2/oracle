@@ -339,6 +339,11 @@ class _NotificationPageState extends State<NotificationPage> {
                                               ),
                                             );
                                           }
+                                        } else if (leadNotification!
+                                                .data[i].type ==
+                                            "16") {
+                                          debugPrint(
+                                              "Notification type 16 clicked – no navigation.");
                                         } else {
                                           if (context.mounted) {
                                             Navigator.push(

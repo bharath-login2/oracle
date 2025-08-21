@@ -33,7 +33,6 @@ import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.da
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
-import 'package:login2/screens/leadManagement/setDashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
@@ -41,6 +40,7 @@ import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
+import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
@@ -154,7 +154,7 @@ class _DashboardState extends State<Dashboard> {
   String createLeadCategory = '';
   String updateLeadCategory = '';
   String deleteLeadCategory = '';
-   String startAndStopWork = '';
+  String startAndStopWork = '';
   String accessCallRecordingPermission = '';
   String visibleP = '';
   bool updateLeadPermission1 = false;
@@ -188,10 +188,11 @@ class _DashboardState extends State<Dashboard> {
   int stfClosed = 0;
   String thisMonth = "";
   String prevMonth = "";
-   String? _faceBase64;
+  String? _faceBase64;
   LeadProgressbarModel? object1;
   bool isLoading = true;
   AccountDashboardModel? accountDashboard;
+
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy')
@@ -377,7 +378,7 @@ class _DashboardState extends State<Dashboard> {
         await HttpService.leadProgressbar(token, fromDate, toDate, callStatus);
   }
 
-    Future<String?> generateFaceHash(File faceImageFile) async {
+  Future<String?> generateFaceHash(File faceImageFile) async {
     final faceDetector = FaceDetector(
       options: FaceDetectorOptions(
         enableLandmarks: true,
@@ -398,12 +399,22 @@ class _DashboardState extends State<Dashboard> {
       landmarks[FaceLandmarkType.rightCheek]?.position,
     ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
     final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
-    final lipData = lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+    final lipData =
+        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
 
     faceDetector.close();
 
     final combined = '$serialized;$lipData';
     return base64Encode(utf8.encode(combined));
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> captureFace() async {
@@ -427,7 +438,6 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-
   getData(token, fromDate, toDate) async {
     renewalPermission = await Common.getSharedPref("renewalPermission");
     accPermission = await Common.getSharedPref("accPermission");
@@ -441,14 +451,6 @@ class _DashboardState extends State<Dashboard> {
       final dismissedDate = prefs.getString('loginPromptDismissedDate');
       final today = DateTime.now().toIso8601String().substring(0, 10);
 
-      if (dismissedDate != today) {
-        loginOrNot = await HttpService.getLoginorNot(widget.token);
-        if (loginOrNot?.data != true ) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-          showLoginPrompt(context);
-          });
-        }
-      }
       await Permission.notification.request();
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
@@ -471,7 +473,8 @@ class _DashboardState extends State<Dashboard> {
       viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
       viewAllWorkPermission =
           await Common.getSharedPref("viewAllWorkPermission");
-           viewTargetReportPermission = await Common.getSharedPref("viewTargetReportPermission");
+      viewTargetReportPermission =
+          await Common.getSharedPref("viewTargetReportPermission");
       addWorkPermission = await Common.getSharedPref("addWorkPermission");
       viewWorkReportPermission =
           await Common.getSharedPref("viewWorkReportPermission");
@@ -483,7 +486,7 @@ class _DashboardState extends State<Dashboard> {
       hasPhonecallAccess = await Common.getSharedPref("hasPhonecallAccess");
       updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
       deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
-        //  startAndStopWork = await Common.getSharedPref("startAndStopWork");
+      //  startAndStopWork = await Common.getSharedPref("startAndStopWork");
       phoneCallLogPermission =
           await Common.getSharedPref("phoneCallLogPermission");
       accessCallHistoryPermission =
@@ -570,6 +573,14 @@ class _DashboardState extends State<Dashboard> {
         });
         Common.saveSharedPref(
             "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
+        if (dismissedDate != today) {
+          loginOrNot = await HttpService.getLoginorNot(widget.token);
+          if (loginOrNot?.data != true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showLoginPrompt(context);
+            });
+          }
+        }
         getAccountDash();
         getRenewalDashboard();
       }
@@ -594,7 +605,147 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  // void showLoginPrompt(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext dialogContext) {
+  //       return AlertDialog(
+  //         title: const Text("Not logged in today"),
+  //         content: const Text("Do you want to log in now?"),
+  //         actions: [
+  //           TextButton(
+  //             child: const Text("Not now"),
+  //             onPressed: () async {
+  //               final prefs = await SharedPreferences.getInstance();
+  //               final today = DateTime.now().toIso8601String().substring(0, 10);
+  //               await prefs.setString('loginPromptDismissedDate', today);
+  //               Navigator.of(dialogContext).pop();
+  //             },
+  //           ),
+  //           ElevatedButton(
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: Colors.green,
+  //               ),
+  //               child: const Text("Yes"),
+  //               onPressed: () async {
+  //                 Navigator.of(dialogContext).pop();
+  //               showDialog(
+  //           context: context,
+  //           barrierDismissible: false,
+  //           builder: (_) => AlertDialog(
+  //             content: Row(
+  //               children: [
+  //                 SizedBox(
+  //                   height: 50,
+  //                   width: 50,
+  //                   child: Lottie.asset(
+  //                     'assets/lottie/loading.json',
+  //                     fit: BoxFit.cover,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 16),
+  //                 const Text(
+  //                   "Logging In...",
+  //                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+
+  //                 try {
+  //                   LocationPermission permission =
+  //                       await Geolocator.checkPermission();
+  //                   if (permission == LocationPermission.denied) {
+  //                     permission = await Geolocator.requestPermission();
+  //                     if (permission == LocationPermission.denied) {
+  //                       Navigator.of(context).pop();
+  //                       ScaffoldMessenger.of(context).showSnackBar(
+  //                         const SnackBar(
+  //                             content: Text("Location permission denied.")),
+  //                       );
+  //                       return;
+  //                     }
+  //                   }
+
+  //                   if (permission == LocationPermission.deniedForever) {
+  //                     Navigator.of(context).pop();
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                           content: Text(
+  //                               "Location permission permanently denied. Please enable it from settings.")),
+  //                     );
+  //                     return;
+  //                   }
+  //                   final position = await Geolocator.getCurrentPosition(
+  //                     desiredAccuracy: LocationAccuracy.high,
+  //                   );
+
+  //                   final now = DateTime.now();
+  //                   final res = await HttpService.startWork(
+  //                     now,
+  //                     latitude: position.latitude,
+  //                     longitude: position.longitude,
+  //                     faceData: _faceBase64,
+  //                   );
+
+  //                   Navigator.of(context).pop();
+
+  //                   if (res != null && res.status == true) {
+  //                     if (!context.mounted) return;
+  //                     Navigator.push(
+  //                       context,
+  //                       MaterialPageRoute(
+  //                         builder: (_) => Dashboard(widget.token),
+  //                       ),
+  //                     );
+  //                   } else {
+  //                     if (!context.mounted) return;
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(content: Text("Failed to start work.")),
+  //                     );
+  //                   }
+  //                 } catch (e) {
+  //                   Navigator.of(context).pop();
+  //                   if (!context.mounted) return;
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(content: Text("Location error: $e")),
+  //                   );
+  //                 }
+  //               }),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
   void showLoginPrompt(BuildContext context) {
+    String? faceBase64;
+    String faceDetection = "true";
+    String companyLocation = "true";
+
+    Future<void> captureFace() async {
+      final faceImage = await Navigator.of(context).push<File>(
+        MaterialPageRoute(
+          builder: (_) => FaceDetectionCamera(
+            onFaceCaptured: (File imageFile) {
+              Navigator.of(context).pop(imageFile);
+            },
+          ),
+        ),
+      );
+
+      if (faceImage != null && context.mounted) {
+        final faceHash = await generateFaceHash(faceImage);
+        if (faceHash == null) {
+          Common.toastMessaage('Face hash failed', Colors.red);
+          return;
+        }
+        faceBase64 = faceHash;
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -613,147 +764,177 @@ class _DashboardState extends State<Dashboard> {
               },
             ),
             ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
-                child: const Text("Yes"),
-                // onPressed: () async {
-                //   Navigator.of(dialogContext).pop();
-                //   final now = DateTime.now();
-                //   final res = await HttpService.startWork(now);
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Yes"),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
 
-                //   if (res != null && res.status == true) {
-                //     if (!context.mounted) return;
-                //       Navigator.push(
-                //         context,
-                //         MaterialPageRoute(
-                //           builder: (_) =>  Dashboard(widget.token),
-                //         ),
-                //       );
-                //   } else {
-                //     if (!context.mounted) return;
-
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       const SnackBar(content: Text("Failed to start work.")),
-                //     );
-                //   }
-                // },
-
-                // onPressed: () async {
-                //   Navigator.of(dialogContext).pop();
-
-                //   try {
-
-                //     final position = await Geolocator.getCurrentPosition(
-                //       desiredAccuracy: LocationAccuracy.high,
-                //     );
-
-                //     final now = DateTime.now();
-
-                //     final res = await HttpService.startWork(
-                //       now,
-                //       latitude: position.latitude,
-                //       longitude: position.longitude,
-                //     );
-
-                //     if (res != null && res.status == true) {
-                //       if (!context.mounted) return;
-                //       Navigator.push(
-                //         context,
-                //         MaterialPageRoute(
-                //           builder: (_) => Dashboard(widget.token),
-                //         ),
-                //       );
-                //     } else {
-                //       if (!context.mounted) return;
-                //       ScaffoldMessenger.of(context).showSnackBar(
-                //         const SnackBar(content: Text("Failed to start work.")),
-                //       );
-                //     }
-                //   } catch (e) {
-                //     if (!context.mounted) return;
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       SnackBar(content: Text("Location error: $e")),
-                //     );
-                //   }
-                // },
-                onPressed: () async {
-                  Navigator.of(dialogContext).pop();
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => const AlertDialog(
-                      content: Row(
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  barrierColor: Colors.black.withOpacity(0.3), // Dim background
+                  builder: (_) => Dialog(
+                    backgroundColor:
+                        Colors.white.withOpacity(0.8), // Transparent white
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(),
-                          SizedBox(width: 16),
-                          Text("Fetching Location..."),
+                          SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Lottie.asset(
+                              'assets/lottie/location_loader.json',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            "Logging In...",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  );
+                  ),
+                );
 
-                  try {
-                    LocationPermission permission =
-                        await Geolocator.checkPermission();
+                try {
+                  faceDetection =
+                      await Common.getSharedPref("faceDetection") ?? "false";
+                  companyLocation =
+                      await Common.getSharedPref("companyLocation") ?? "false";
+                  LocationPermission permission =
+                      await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied) {
+                    permission = await Geolocator.requestPermission();
                     if (permission == LocationPermission.denied) {
-                      permission = await Geolocator.requestPermission();
-                      if (permission == LocationPermission.denied) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Location permission denied.")),
-                        );
-                        return;
-                      }
-                    }
-
-                    if (permission == LocationPermission.deniedForever) {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text(
-                                "Location permission permanently denied. Please enable it from settings.")),
+                            content: Text("Location permission denied.")),
                       );
                       return;
                     }
-                    final position = await Geolocator.getCurrentPosition(
-                      desiredAccuracy: LocationAccuracy.high,
-                    );
-
-                    final now = DateTime.now();
-                    final res = await HttpService.startWork(
-                      now,
-                      latitude: position.latitude,
-                      longitude: position.longitude,
-                       faceData:_faceBase64,
-                      
-                    );
-
-                    Navigator.of(context).pop();
-
-                    if (res != null && res.status == true) {
-                      if (!context.mounted) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Dashboard(widget.token),
-                        ),
-                      );
-                    } else {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Failed to start work.")),
-                      );
-                    }
-                  } catch (e) {
-                    Navigator.of(context).pop();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Location error: $e")),
-                    );
                   }
-                }),
+                  if (permission == LocationPermission.deniedForever) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              "Location permission permanently denied. Please enable from settings.")),
+                    );
+                    return;
+                  }
+
+                  final position = await Geolocator.getCurrentPosition(
+                    desiredAccuracy: LocationAccuracy.high,
+                  );
+                  if (companyLocation == "true") {
+                    final companyResponse =
+                        await HttpService.getCompanyLocations();
+                    if (companyResponse == null ||
+                        companyResponse.status != true) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text("Failed to fetch company locations.")),
+                      );
+                      return;
+                    }
+
+                    final String rawLocations = companyResponse.data.location;
+                    final List<String> locationStrings = rawLocations
+                        .replaceAll('{', '')
+                        .split('},')
+                        .map((e) => e.replaceAll('}', '').trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList();
+
+                    bool isWithinRange = false;
+                    const double maxDistanceMeters = 100;
+
+                    for (final locStr in locationStrings) {
+                      final parts = locStr.split(',');
+                      if (parts.length == 2) {
+                        final double? lat = double.tryParse(parts[0].trim());
+                        final double? lng = double.tryParse(parts[1].trim());
+                        if (lat != null && lng != null) {
+                          final double distance = Geolocator.distanceBetween(
+                              position.latitude, position.longitude, lat, lng);
+                          if (distance <= maxDistanceMeters) {
+                            isWithinRange = true;
+                            break;
+                          }
+                        }
+                      }
+                    }
+
+                    if (!isWithinRange) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                "You are not within $maxDistanceMeters meters of company location.")),
+                      );
+                      return;
+                    }
+                  }
+                  if (faceDetection == "true") {
+                    await captureFace();
+                    if (faceBase64 == null || faceBase64!.isEmpty) {
+                      Navigator.of(context).pop();
+                      Common.toastMessaage(
+                          'Face capture required for login', Colors.red);
+                      return;
+                    }
+                  }
+                  final now = DateTime.now();
+                  final res = await HttpService.startWork(
+                    now,
+                    latitude: position.latitude,
+                    longitude: position.longitude,
+                    faceData: faceBase64,
+                  );
+                  Navigator.of(context).pop();
+                  if (res != null && res.status == true) {
+                    await Common.saveSharedPref("is_work_started", "true");
+
+                    setState(() => isWorkStarted = true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            "Log in at ${DateFormat('hh:mm a').format(now)}"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    if (!context.mounted) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => Dashboard(widget.token)),
+                    );
+                  } else {
+                    showError(res?.message ?? "Failed to start work");
+                  }
+                } catch (e) {
+                  Navigator.of(context).pop();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: $e")),
+                  );
+                }
+              },
+            ),
           ],
         );
       },
@@ -1237,7 +1418,7 @@ class _DashboardState extends State<Dashboard> {
       startTime,
       latitude: latitude,
       longitude: longitude,
-       faceData:_faceBase64,
+      faceData: _faceBase64,
     );
   }
 
@@ -1254,7 +1435,7 @@ class _DashboardState extends State<Dashboard> {
                   .substring(log.callType.toString().indexOf('.') + 1),
               "time":
                   DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
-                      .toString(), 
+                      .toString(),
               "duration": log.duration,
               "simName": log.simSlot ?? "NIL",
               "timeStamp": log.timeStamp,
@@ -2042,10 +2223,10 @@ class _DashboardState extends State<Dashboard> {
                               MaterialPageRoute(
                                 builder: (context) => ExpenseList(
                                   // fdate: DateFormat('dd-MM-yyyy')
-                                    fdate: DateFormat('yyyy-MM-dd')
+                                  fdate: DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                                   // tdate: DateFormat('dd-MM-yyyy')
-                                     tdate: DateFormat('yyyy-MM-dd')
+                                  tdate: DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                                 ),
                               ));
@@ -2110,10 +2291,10 @@ class _DashboardState extends State<Dashboard> {
                               MaterialPageRoute(
                                 builder: (context) => ExpenseList(
                                   // fdate: DateFormat('dd-MM-yyyy').format(
-                                    fdate: DateFormat('yyyy-MM-dd').format(
+                                  fdate: DateFormat('yyyy-MM-dd').format(
                                       DateTime(DateTime.now().year,
                                           DateTime.now().month, 1)),
-                                 // tdate: DateFormat('dd-MM-yyyy')
+                                  // tdate: DateFormat('dd-MM-yyyy')
                                   tdate: DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                                 ),
@@ -3961,9 +4142,9 @@ class _DashboardState extends State<Dashboard> {
                                                         MaterialPageRoute(
                                                           builder: (context) =>
                                                               AssignReport(
-                                                            workId: "",
-                                                            sectionId:""
-                                                          ),
+                                                                  workId: "",
+                                                                  sectionId:
+                                                                      ""),
                                                         ),
                                                       );
                                                     },
@@ -3976,29 +4157,33 @@ class _DashboardState extends State<Dashboard> {
                                                       ],
                                                     ),
                                                   ),
-                                                  viewTargetReportPermission =='true'?
-                                                  PopupMenuItem<int>(
-                                                    onTap: () async {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              ViewAllTargetReportPage(
-                                                                  id: userId),
-                                                        ),
-                                                      );
-                                                    },
-                                                    child: const Row(
-                                                      children: [
-                                                        Icon(
-                                                            Icons.track_changes,
-                                                            size: 20),
-                                                        SizedBox(width: 10),
-                                                        Text(
-                                                            'View Target Report'),
-                                                      ],
-                                                    ),
-                                                  ):const PopupMenuItem<
+                                                  viewTargetReportPermission ==
+                                                          'true'
+                                                      ? PopupMenuItem<int>(
+                                                          onTap: () async {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    ViewAllTargetReportPage(
+                                                                        id: userId),
+                                                              ),
+                                                            );
+                                                          },
+                                                          child: const Row(
+                                                            children: [
+                                                              Icon(
+                                                                  Icons
+                                                                      .track_changes,
+                                                                  size: 20),
+                                                              SizedBox(
+                                                                  width: 10),
+                                                              Text(
+                                                                  'View Target Report'),
+                                                            ],
+                                                          ),
+                                                        )
+                                                      : const PopupMenuItem<
                                                           int>(
                                                           enabled: false,
                                                           height: 0,
@@ -8445,7 +8630,7 @@ class _DashboardState extends State<Dashboard> {
             Row(
               children: [
                 InkWell(
-                //   onTap: () => logout(context),
+                    //   onTap: () => logout(context),
                     onTap: () async {
                       try {
                         final result = await HttpService.getWorkStatus();
@@ -8528,12 +8713,27 @@ class _DashboardState extends State<Dashboard> {
             ),
             Row(
               children: [
-                userDashboard != null && startAndStopWorkPermission =="true"
-                    ? StartStopToggle(
+                userDashboard != null && startAndStopWorkPermission == "true"
+                    ?
+                    //  StartStopToggle(
+                    //     initialStatus: userDashboard!.data.loginCheck,
+                    //     onToggle: (bool started) {
+                    //       setState(() {
+                    //         userDashboard!.data.loginCheck = started;
+                    //       });
+                    //     },
+                    //   )
+                    StartStopToggle(
                         initialStatus: userDashboard!.data.loginCheck,
                         onToggle: (bool started) {
                           setState(() {
                             userDashboard!.data.loginCheck = started;
+                          });
+                        },
+                        setDashboardLoading: (bool loading) {
+                          setState(() {
+                            isLoading =
+                                true; // This changes the dashboard loader state
                           });
                         },
                       )

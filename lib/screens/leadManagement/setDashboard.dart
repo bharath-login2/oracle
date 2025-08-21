@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
 
 class SetDashboardPage extends StatefulWidget {
   final String id; // userId
-  const SetDashboardPage({Key? key, required this.id}) : super(key: key);
+  const SetDashboardPage({super.key, required this.id});
 
   @override
   State<SetDashboardPage> createState() => _SetDashboardPageState();
@@ -46,21 +52,49 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
     }
   }
 
-  Future<void> _updateSelectedDashboard() async {
-    if (selectedDashboardId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a dashboard")),
-      );
-      return;
-    }
+  // Future<void> _updateSelectedDashboard() async {
+  //   if (selectedDashboardId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Please select a dashboard")),
+  //     );
+  //     return;
+  //   }
 
    
-    final res = await HttpService.updateSelectedDashboard(
-      widget.id,
-      selectedDashboardId!,
+  //   final res = await HttpService.updateSelectedDashboard(
+  //     widget.id,
+  //     selectedDashboardId!,
+  //   );
+  //   if (res?['status'] == true) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text(
+  //         "Dashboard updated successfully",
+  //         style: TextStyle(color: Colors.white),
+  //       ),
+  //       backgroundColor: Colors.green,
+  //     ),
+  //   );
+
+  //     //Navigator.pop(context, true);
+  //   }
+  // }
+
+ Future<void> _updateSelectedDashboard() async {
+  if (selectedDashboardId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please select a dashboard")),
     );
-    if (res?['status'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    return;
+  }
+
+  final res = await HttpService.updateSelectedDashboard(
+    widget.id,
+    selectedDashboardId!,
+  );
+
+  if (res?['status'] == true) {
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
           "Dashboard updated successfully",
@@ -70,9 +104,74 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
       ),
     );
 
-      //Navigator.pop(context, true);
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token != null) {
+        final object1 = await HttpService.userPermissionCheck(token);
+
+        if (object1.status == true) {
+          // save updated permissions in shared prefs
+          Common.saveSharedPref("ProjectDashboardPermission",
+              object1.data!.ProjectDashboard.toString());
+          Common.saveSharedPref("LeadDashboard",
+              object1.data!.LeadDashboard.toString());
+          Common.saveSharedPref("AccountsDashboardPermission",
+              object1.data!.AccountsDashboard.toString());
+          Common.saveSharedPref("MenuDashboard",
+              object1.data!.MenuDashboard.toString());
+          Common.saveSharedPref("RenewalDashboardPermission",
+              object1.data!.RenewalDashboard.toString());
+          if (object1.data!.ProjectDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const ProjectDashboard()),
+              (route) => false,
+            );
+            return;
+          } else if (object1.data!.LeadDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+              (route) => false,
+            );
+            return;
+          } else if (object1.data!.AccountsDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) =>  AccountsDashboard(token:token)),
+              (route) => false,
+            );
+            return;
+          } else if (object1.data!.RenewalDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const RenewalDashboard()),
+              (route) => false,
+            );
+            return;
+          } else if (object1.data!.MenuDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) =>  HomePage(token)),
+              (route) => false,
+            );
+            return;
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+              (route) => false,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print("Error refreshing permissions after dashboard update: $e");
     }
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {

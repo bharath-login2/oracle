@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/workDetailsCompanyModel.dart';
+import 'package:login2/screens/leadManagement/AttendanceHistory.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/staff_reports/timeline_page.dart';
 import 'package:login2/service/service.dart';
@@ -80,6 +81,10 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
             "status": status,
             "login": item.loginTime.isNotEmpty ? item.loginTime : "--",
             "logout": item.logoutTime.isNotEmpty ? item.logoutTime : "--",
+            "totalDuration":
+                item.totalDuration.isNotEmpty ? item.totalDuration : "--",
+            "ideal_time": item.idealTime.isNotEmpty ? item.idealTime : "--",
+            "work_time": item.workTime.isNotEmpty ? item.workTime : "--",
           };
         }
         final firstDay = DateTime.utc(_focusedDay.year, _focusedDay.month, 1);
@@ -97,6 +102,9 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                 "status": "absent",
                 "login": "--",
                 "logout": "--",
+                "totalDuration": "--",
+                "ideal_time": "--",
+                "work_time": "--",
               };
             } else {
               parsedData[date] = {
@@ -104,6 +112,9 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                 "status": "not_added",
                 "login": "--",
                 "logout": "--",
+                "totalDuration": "--",
+                "ideal_time": "--",
+                "work_time": "--",
               };
             }
           }
@@ -142,79 +153,83 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
 
   void _showLoginLogoutPopup(DateTime day) {
     final now = DateTime.now();
-    if (day.isAfter(now)) {
-      return;
-    }
-
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final selectedDay = DateTime(day.year, day.month, day.day);
+    if (!selectedDay.isBefore(tomorrow)) return;
     final key = DateTime.utc(day.year, day.month, day.day);
     final data = attendanceMap[key];
-
     final title = data?["title"] ?? "Not Added";
     final status = data?["status"] ?? "Not Added";
     final login = data?["login"] ?? "--";
     final logout = data?["logout"] ?? "--";
-
+    final totalDuration = data?["totalDuration"] ?? "--";
+    final ideal_time = data?["ideal_time"] ?? "--";
+    final work_time = data?["work_time"] ?? "--";
     bool isLeave = false;
     bool isHalfDay = false;
     bool isEditing = false;
     String selectedLeaveType = '';
     String selectedWorkStatus = 'Full Day';
-
     List<String> leaveTypes = ["Sick Leave", "Casual Leave", "Other"];
     List<String> workStatusOptions = ["Full Day", "Half Day"];
-
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text(
-                "Attendance Action - ${day.day.toString().padLeft(2, '0')}-${day.month.toString().padLeft(2, '0')}-${day.year}",
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              titlePadding: const EdgeInsets.all(16),
+              contentPadding: const EdgeInsets.all(16),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    DateFormat('dd-MM-yyyy').format(day),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isEditing || title == "Absent") ...[
-                      const Text("Select Action",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Wrap(
-                        spacing: 10,
+                      const Text(
+                        "Select Action",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
                         children: [
-                          GestureDetector(
-                            onTap: () => setState(() => isLeave = true),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Radio<bool>(
-                                  value: true,
-                                  groupValue: isLeave,
-                                  onChanged: (val) =>
-                                      setState(() => isLeave = true),
-                                ),
-                                const Text("Mark Leave"),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => setState(() => isLeave = false),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Radio<bool>(
-                                  value: false,
-                                  groupValue: isLeave,
-                                  onChanged: (val) =>
-                                      setState(() => isLeave = false),
-                                ),
-                                const Text("Mark Attendance"),
-                              ],
+                          Expanded(
+                            child: RadioListTile<bool>(
+                              title: const Text("Mark Leave"),
+                              value: true,
+                              groupValue: isLeave,
+                              onChanged: (val) =>
+                                  setState(() => isLeave = true),
                             ),
                           ),
                         ],
                       ),
+                      Row(children: [
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: const Text("Mark Attendance"),
+                            value: false,
+                            groupValue: isLeave,
+                            onChanged: (val) => setState(() => isLeave = false),
+                          ),
+                        ),
+                      ]),
                       const SizedBox(height: 12),
                       if (isLeave) ...[
                         DropdownButtonFormField<String>(
@@ -233,7 +248,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                           onChanged: (value) =>
                               setState(() => selectedLeaveType = value ?? ''),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           title: const Text("Half Day Leave"),
@@ -258,8 +273,15 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      Center(
+                      SizedBox(
+                        width: double.infinity,
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                           onPressed: () async {
                             final dateStr =
                                 "${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
@@ -275,167 +297,189 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                                     date: dateStr,
                                     workStatus: selectedWorkStatus,
                                   );
-
                             Navigator.pop(context);
                             fetchAttendanceData(_focusedDay);
-
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   success
                                       ? (isLeave
-                                          ? "Leave Marked Successfully."
+                                          ? "Leave marked successfully."
                                           : "Work status updated successfully.")
-                                      : "Failed to save ${isLeave ? 'leave' : 'work status'}.",
+                                      : "Failed to save.",
                                 ),
                                 backgroundColor:
                                     success ? Colors.green : Colors.red,
                               ),
                             );
                           },
-                          child:
-                              Text(isLeave ? "Save Leave" : "Save Work Status"),
+                          child: Text(
+                            isLeave ? "Save Leave" : "Save Work Status",
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(),
+                      const Divider(height: 24),
                     ],
-                    Row(
-                      children: [
-                        const Text("Existing Info",
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                            if (!isEditing && title != "Absent")
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => setState(() => isEditing = true),
+                    if (!isEditing) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Existing Info",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _infoRow("Title", title.toUpperCase()),
-                    _infoRow("Status", status.toUpperCase()),
-                    _infoRow("Login", login),
-                    _infoRow("Logout", logout),
-                    const SizedBox(height: 16),
-
-                    // Action buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey[800],
-                            textStyle:
-                                const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Cancel"),
-                        ),
-                        
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            final filteredList = workStatusDetails?.data
-                                    .where((staff) => staff.name
-                                        .toLowerCase()
-                                        .contains(searchText.toLowerCase()))
-                                    .toList() ??
-                                [];
-
-                            if (filteredList.isNotEmpty) {
-                              final staff = filteredList.firstWhere(
-                                (s) => s.staffId == widget.staffId,
-                                orElse: () => WorkCompany(
-                                  staffId: widget.staffId,
-                                  name: '',
-                                  taskName: '',
-                                  firstLoginTime: '',
-                                  lastLogoutTime: '',
-                                  status: '',
-                                  multiple: 'false',
+                          if (title != "Absent")
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => setState(() => isEditing = true),
+                            ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AttendanceHistory(
+                                    staffId: widget.staffId,
+                                    selectedDate: day,
+                                  ),
                                 ),
                               );
-
-                              if (staff.multiple == "true") {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("Phone Call Log"),
-                                      content:
-                                          const Text("Choose an action below"),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => ViewWorkPage(
-                                                  staffId: staff.staffId,
-                                                  selectedDate: day,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text("Works"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const TimelinePage(),
-                                                settings: RouteSettings(
-                                                  arguments: {
-                                                    "staffId": staff.staffId,
-                                                    "selectedDate": day,
-                                                  },
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text("Call Log"),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              } else if (staff.taskName.isEmpty) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ViewWorkPage(
-                                      staffId: staff.staffId,
-                                      selectedDate: day,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const TimelinePage(),
-                                    settings: RouteSettings(
-                                      arguments: {
-                                        "staffId": staff.staffId,
-                                        "selectedDate": day,
-                                      },
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          child: const Text("View Works"),
-                        ),
-                      ],
-                    ),
+                            },
+                            child: const Text(
+                              "View History",
+                              style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          _infoRow("Title", title.toUpperCase()),
+                          _infoRow("Status", status.toUpperCase()),
+                          _infoRow(
+                              "Login", "$login - $logout ($totalDuration)"),
+                          _infoRow("Ideal Time", ideal_time),
+                          _infoRow("Work Time", work_time),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final filteredList = workStatusDetails?.data
+                            .where((staff) => staff.name
+                                .toLowerCase()
+                                .contains(searchText.toLowerCase()))
+                            .toList() ??
+                        [];
+
+                    if (filteredList.isNotEmpty) {
+                      final staff = filteredList.firstWhere(
+                        (s) => s.staffId == widget.staffId,
+                        orElse: () => WorkCompany(
+                          staffId: widget.staffId,
+                          name: '',
+                          taskName: '',
+                          firstLoginTime: '',
+                          lastLogoutTime: '',
+                          status: '',
+                          multiple: 'false',
+                        ),
+                      );
+                      if (staff.multiple == "true") {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text("Phone Call Log"),
+                              content: const Text("Choose an action below"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ViewWorkPage(
+                                          staffId: staff.staffId,
+                                          selectedDate: day,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text("Works"),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const TimelinePage(),
+                                        settings: RouteSettings(
+                                          arguments: {
+                                            "staffId": staff.staffId,
+                                            "selectedDate": day,
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text("Call Log"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else if (staff.taskName.isEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ViewWorkPage(
+                              staffId: staff.staffId,
+                              selectedDate: day,
+                            ),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TimelinePage(),
+                            settings: RouteSettings(
+                              arguments: {
+                                "staffId": staff.staffId,
+                                "selectedDate": day,
+                              },
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 25, 180, 241),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text("View Works"),
+                ),
+              ],
             );
           },
         );
@@ -554,45 +598,144 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                                 const BoxDecoration(shape: BoxShape.circle),
                             outsideDaysVisible: false,
                           ),
+                          // calendarBuilders: CalendarBuilders(
+                          //   defaultBuilder: (context, day, _) {
+                          //     final color = _getDayColor(day);
+                          //     return Container(
+                          //       margin: const EdgeInsets.all(6.0),
+                          //       decoration: BoxDecoration(
+                          //         color: color,
+                          //         shape: BoxShape.circle,
+                          //       ),
+                          //       alignment: Alignment.center,
+                          //       child: Text(
+                          //         '${day.day}',
+                          //         style: TextStyle(
+                          //           color: color == Colors.transparent
+                          //               ? Colors.black
+                          //               : Colors.white,
+                          //         ),
+                          //       ),
+                          //     );
+                          //   },
+                          //   todayBuilder: (context, day, _) {
+                          //     return Container(
+                          //       margin: const EdgeInsets.all(6.0),
+                          //       decoration: BoxDecoration(
+                          //         shape: BoxShape.circle,
+                          //         border: Border.all(
+                          //           color: Colors.green,
+                          //           width: 2.0,
+                          //         ),
+                          //       ),
+                          //       alignment: Alignment.center,
+                          //       child: Text(
+                          //         '${day.day}',
+                          //         style: const TextStyle(
+                          //           color: Colors.green,
+                          //           fontWeight: FontWeight.bold,
+                          //         ),
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
                           calendarBuilders: CalendarBuilders(
                             defaultBuilder: (context, day, _) {
+                              final key =
+                                  DateTime.utc(day.year, day.month, day.day);
+                              final data = attendanceMap[key];
+                              final isHoliday =
+                                  data != null && data["status"] == "holiday";
                               final color = _getDayColor(day);
-                              return Container(
-                                margin: const EdgeInsets.all(6.0),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${day.day}',
-                                  style: TextStyle(
-                                    color: color == Colors.transparent
-                                        ? Colors.black
-                                        : Colors.white,
+
+                              if (isHoliday) {
+                                // Holiday: Blue circle with red border
+                                return Container(
+                                  margin: const EdgeInsets.all(6.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade400,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.red,
+                                      width: 2.0,
+                                    ),
                                   ),
-                                ),
-                              );
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                // Normal day
+                                return Container(
+                                  margin: const EdgeInsets.all(6.0),
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${day.day}',
+                                    style: TextStyle(
+                                      color: color == Colors.transparent
+                                          ? Colors.black
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                );
+                              }
                             },
                             todayBuilder: (context, day, _) {
-                              return Container(
-                                margin: const EdgeInsets.all(6.0),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.green,
-                                    width: 2.0,
+                              final key =
+                                  DateTime.utc(day.year, day.month, day.day);
+                              final data = attendanceMap[key];
+                              final isHoliday =
+                                  data != null && data["status"] == "holiday";
+
+                              if (isHoliday) {
+                                return Container(
+                                  margin: const EdgeInsets.all(6.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade400,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.red,
+                                      width: 2.0,
+                                    ),
                                   ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${day.day}',
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              } else {
+                                // Normal today
+                                return Container(
+                                  margin: const EdgeInsets.all(6.0),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.green,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${day.day}',
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),
@@ -613,21 +756,30 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                             SizedBox(height: 12),
                             LegendRow(
-                                color: Colors.green,
-                                text: "Present",
-                                icon: Icons.check_circle),
+                              color: Colors.green,
+                                borderColor: Colors.white,
+                              text: "Present",
+                              icon: Icons.check_circle,
+                            ),
                             LegendRow(
-                                color: Colors.orange,
-                                text: "Half Day",
-                                icon: Icons.timelapse),
+                              color: Colors.orange,
+                                borderColor: Colors.white,
+                              text: "Half Day",
+                              icon: Icons.timelapse,
+                            ),
                             LegendRow(
-                                color: Colors.blue,
-                                text: "Holiday",
-                                icon: Icons.beach_access),
+                              color: Colors.blue,
+                              borderColor: Colors.red,
+                              text: "Holiday",
+                              icon: Icons.beach_access,
+                              hasBorder: true,
+                            ),
                             LegendRow(
-                                color: Colors.red,
-                                text: "Absent/Leave",
-                                icon: Icons.cancel),
+                              color: Colors.red,
+                                borderColor: Colors.white,
+                              text: "Absent/Leave",
+                              icon: Icons.cancel,
+                            ),
                           ],
                         ),
                       ),
@@ -642,27 +794,44 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
 
 class LegendRow extends StatelessWidget {
   final Color color;
+  final Color borderColor;
   final String text;
   final IconData icon;
+  final bool hasBorder;
 
   const LegendRow({
-    super.key,
+    Key? key,
     required this.color,
+    required this.borderColor,
     required this.text,
     required this.icon,
-  });
+    this.hasBorder = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Text(text),
-        ],
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            border: hasBorder
+                ? Border.all(
+                    color: borderColor, width: 2) // ✅ apply borderColor
+                : null,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Icon(
+            icon,
+            size: 14,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(text),
+      ],
     );
   }
 }

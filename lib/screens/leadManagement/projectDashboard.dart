@@ -36,6 +36,7 @@ import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/staff_reports/timeline_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -119,6 +120,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   bool toggle = false;
   int notificationCount = 0;
 
+  bool isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -147,6 +150,15 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     setState(() {
       isWorkStarted = status == "true";
     });
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   getLeadProgressbar(token, fromDate, toDate, callStatus) async {
@@ -221,7 +233,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
       if (dismissedDate != today) {
         loginOrNot = await HttpService.getLoginorNot(token);
-        if (loginOrNot?.data != true ) {
+        if (loginOrNot?.data != true) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             showLoginPrompt(context);
           });
@@ -250,7 +262,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
       hasPhonecallAccess = await Common.getSharedPref("hasPhonecallAccess");
       updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
       deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
-     
+
       phoneCallLogPermission =
           await Common.getSharedPref("phoneCallLogPermission");
       accessCallHistoryPermission =
@@ -292,8 +304,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
           isExpired = configure!.data!.isExpired!;
           setState(() {});
         }
-        leadDashboard = await HttpService.leadDashboard(
-            token, fromdate, todate, fromdate1, todate1);
+       
         projectList = await HttpService.getProjectList();
         workStatus = await HttpService.getWorkStatus();
         if (workStatus!.data.isNotEmpty) {
@@ -302,12 +313,16 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
         userDashboard = await HttpService.mainDashboard(token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
-        setState(() {
-          notificationCount = leadDashboard!.data.unreadNotification;
-        });
+       
         Common.saveSharedPref(
             "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
+             leadDashboard = await HttpService.leadDashboard(
+            token, fromdate, todate, fromdate1, todate1);
+             setState(() {
+          notificationCount = leadDashboard!.data.unreadNotification;
+        });
       }
+
       setState(() {
         timeOut = false;
       });
@@ -348,7 +363,137 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     }
   }
 
+  // void showLoginPrompt(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext dialogContext) {
+  //       return AlertDialog(
+  //         title: const Text("Not logged in today"),
+  //         content: const Text("Do you want to log in now?"),
+  //         actions: [
+  //           TextButton(
+  //             child: const Text("Not now"),
+  //             onPressed: () async {
+  //               final prefs = await SharedPreferences.getInstance();
+  //               final today = DateTime.now().toIso8601String().substring(0, 10);
+  //               await prefs.setString('loginPromptDismissedDate', today);
+  //               Navigator.of(dialogContext).pop();
+  //             },
+  //           ),
+  //           ElevatedButton(
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.green,
+  //             ),
+  //             child: const Text("Yes"),
+  //             onPressed: () async {
+  //               Navigator.of(dialogContext).pop();
+  //               showDialog(
+  //                 context: context,
+  //                 barrierDismissible: false,
+  //                 builder: (_) => const AlertDialog(
+  //                   content: Row(
+  //                     children: [
+  //                       CircularProgressIndicator(),
+  //                       SizedBox(width: 16),
+  //                       Text("Fetching Location..."),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               );
+
+  //               try {
+  //                 LocationPermission permission =
+  //                     await Geolocator.checkPermission();
+  //                 if (permission == LocationPermission.denied) {
+  //                   permission = await Geolocator.requestPermission();
+  //                   if (permission == LocationPermission.denied) {
+  //                     Navigator.of(context).pop();
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                           content: Text("Location permission denied.")),
+  //                     );
+  //                     return;
+  //                   }
+  //                 }
+
+  //                 if (permission == LocationPermission.deniedForever) {
+  //                   Navigator.of(context).pop();
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     const SnackBar(
+  //                         content: Text(
+  //                             "Location permission permanently denied. Please enable it from settings.")),
+  //                   );
+  //                   return;
+  //                 }
+  //                 final position = await Geolocator.getCurrentPosition(
+  //                   desiredAccuracy: LocationAccuracy.high,
+  //                 );
+
+  //                 final now = DateTime.now();
+  //                 final res = await HttpService.startWork(
+  //                   now,
+  //                   latitude: position.latitude,
+  //                   longitude: position.longitude,
+  //                   faceData: _faceBase64,
+  //                 );
+
+  //                 Navigator.of(context).pop();
+
+  //                 if (res != null && res.status == true) {
+  //                   if (!context.mounted) return;
+  //                   Navigator.push(
+  //                     context,
+  //                     MaterialPageRoute(
+  //                       builder: (_) => Dashboard(token),
+  //                     ),
+  //                   );
+  //                 } else {
+  //                   if (!context.mounted) return;
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     const SnackBar(content: Text("Failed to start work.")),
+  //                   );
+  //                 }
+  //               } catch (e) {
+  //                 Navigator.of(context).pop();
+  //                 if (!context.mounted) return;
+  //                 ScaffoldMessenger.of(context).showSnackBar(
+  //                   SnackBar(content: Text("Location error: $e")),
+  //                 );
+  //               }
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
   void showLoginPrompt(BuildContext context) {
+    String? faceBase64;
+    String faceDetection = "true";
+    String companyLocation = "true";
+
+    Future<void> captureFace() async {
+      final faceImage = await Navigator.of(context).push<File>(
+        MaterialPageRoute(
+          builder: (_) => FaceDetectionCamera(
+            onFaceCaptured: (File imageFile) {
+              Navigator.of(context).pop(imageFile);
+            },
+          ),
+        ),
+      );
+
+      if (faceImage != null && context.mounted) {
+        final faceHash = await generateFaceHash(faceImage);
+        if (faceHash == null) {
+          Common.toastMessaage('Face hash failed', Colors.red);
+          return;
+        }
+        faceBase64 = faceHash;
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -367,27 +512,53 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
+
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const AlertDialog(
-                    content: Row(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(width: 16),
-                        Text("Fetching Location..."),
-                      ],
+                  barrierColor: Colors.black.withOpacity(0.3), // Dim background
+                  builder: (_) => Dialog(
+                    backgroundColor:
+                        Colors.white.withOpacity(0.8), // Transparent white
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Lottie.asset(
+                              'assets/lottie/location_loader.json',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            "Logging In...",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
-
                 try {
+                  faceDetection =
+                      await Common.getSharedPref("faceDetection") ?? "false";
+                  companyLocation =
+                      await Common.getSharedPref("companyLocation") ?? "false";
                   LocationPermission permission =
                       await Geolocator.checkPermission();
                   if (permission == LocationPermission.denied) {
@@ -401,49 +572,107 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                       return;
                     }
                   }
-
                   if (permission == LocationPermission.deniedForever) {
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text(
-                              "Location permission permanently denied. Please enable it from settings.")),
+                              "Location permission permanently denied. Please enable from settings.")),
                     );
                     return;
                   }
                   final position = await Geolocator.getCurrentPosition(
                     desiredAccuracy: LocationAccuracy.high,
                   );
+                  if (companyLocation == "true") {
+                    final companyResponse =
+                        await HttpService.getCompanyLocations();
+                    if (companyResponse == null ||
+                        companyResponse.status != true) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text("Failed to fetch company locations.")),
+                      );
+                      return;
+                    }
+                    final String rawLocations = companyResponse.data.location;
+                    final List<String> locationStrings = rawLocations
+                        .replaceAll('{', '')
+                        .split('},')
+                        .map((e) => e.replaceAll('}', '').trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList();
 
+                    bool isWithinRange = false;
+                    const double maxDistanceMeters = 100;
+
+                    for (final locStr in locationStrings) {
+                      final parts = locStr.split(',');
+                      if (parts.length == 2) {
+                        final double? lat = double.tryParse(parts[0].trim());
+                        final double? lng = double.tryParse(parts[1].trim());
+                        if (lat != null && lng != null) {
+                          final double distance = Geolocator.distanceBetween(
+                              position.latitude, position.longitude, lat, lng);
+                          if (distance <= maxDistanceMeters) {
+                            isWithinRange = true;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                    if (!isWithinRange) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                "You are not within $maxDistanceMeters meters of company location.")),
+                      );
+                      return;
+                    }
+                  }
+                  if (faceDetection == "true") {
+                    await captureFace();
+                    if (faceBase64 == null || faceBase64!.isEmpty) {
+                      Navigator.of(context).pop();
+                      Common.toastMessaage(
+                          'Face capture required for login', Colors.red);
+                      return;
+                    }
+                  }
                   final now = DateTime.now();
                   final res = await HttpService.startWork(
                     now,
                     latitude: position.latitude,
                     longitude: position.longitude,
-                    faceData: _faceBase64,
+                    faceData: faceBase64,
                   );
-
                   Navigator.of(context).pop();
-
                   if (res != null && res.status == true) {
+                    await Common.saveSharedPref("is_work_started", "true");
+                    setState(() => isWorkStarted = true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            "Log in at ${DateFormat('hh:mm a').format(now)}"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                     if (!context.mounted) return;
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => Dashboard(token),
-                      ),
+                      MaterialPageRoute(builder: (_) => ProjectDashboard()),
                     );
                   } else {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Failed to start work.")),
-                    );
+                    showError(res?.message ?? "Failed to start work");
                   }
                 } catch (e) {
                   Navigator.of(context).pop();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Location error: $e")),
+                    SnackBar(content: Text("Error: $e")),
                   );
                 }
               },
@@ -664,14 +893,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                       ),
                                     )
                                   : const SizedBox(),
-                              IconButton(
-                                icon: const Icon(Icons.calendar_month),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.notifications_none),
-                                onPressed: () {},
-                              ),
+                              
                             ],
                           ),
                         ],
@@ -994,360 +1216,6 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     );
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return WillPopScope(
-  //     onWillPop: () async {
-  //      if (ProjectDashboardPermission == "true") {
-  //       final shouldExit = await showDialog(
-  //         context: context,
-  //         builder: (context) => AlertDialog(
-  //           title: const Text('Exit App'),
-  //           content: const Text('Do you want to exit the application?'),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () => Navigator.of(context).pop(false),
-  //               child: const Text('No'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-
-  //                 Navigator.of(context).pop(true);
-  //               },
-  //               child: const Text('Yes'),
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //       return shouldExit ?? false;
-  //     }else{
-  //      return true;
-  //     }
-  //     },
-
-  //     child: Scaffold(
-  //       backgroundColor: Colors.blue.shade50,
-  //       key: _scaffoldKey,
-  //       appBar: appBarWidget(context, "lead"),
-  //       body: SingleChildScrollView(
-  //         child: Padding(
-  //           padding: const EdgeInsets.all(12),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   ElevatedButton.icon(
-  //                     onPressed: () async {
-  //                       if (isLoggedIn == true) {
-  //                         final workStatusModel =
-  //                             await HttpService.getWorkStatus();
-  //                         WorkStatus? newExistingWork;
-
-  //                         if (workStatusModel != null &&
-  //                             workStatusModel.data.isNotEmpty) {
-  //                           newExistingWork = workStatusModel.data.first;
-  //                         }
-
-  //                         Navigator.push(
-  //                           context,
-  //                           MaterialPageRoute(
-  //                             builder: (context) => AddWorkPage(
-  //                               workId: "",
-  //                               existingWork: newExistingWork,
-  //                               onSuccess: () {},
-  //                             ),
-  //                           ),
-  //                         );
-  //                       } else {
-  //                         showDialog(
-  //                           context: context,
-  //                           builder: (BuildContext context) {
-  //                             return AlertDialog(
-  //                               title: const Text('Login Required'),
-  //                               content:
-  //                                   const Text('Please login to add work.'),
-  //                               actions: [
-  //                                 TextButton(
-  //                                   child: const Text('OK'),
-  //                                   onPressed: () {
-  //                                     Navigator.of(context).pop();
-  //                                   },
-  //                                 ),
-  //                               ],
-  //                             );
-  //                           },
-  //                         );
-  //                       }
-  //                     },
-  //                     icon: const Icon(Icons.add),
-  //                     label: const Text("Add Work"),
-  //                     style: ElevatedButton.styleFrom(
-  //                       backgroundColor: Colors.white,
-  //                       foregroundColor: Colors.black,
-  //                       shadowColor: Colors.black26,
-  //                       elevation: 4,
-  //                     ),
-  //                   ),
-  //                   Row(
-  //                     children: [
-  //                       IconButton(
-  //                         icon: const Icon(Icons.calendar_month),
-  //                         onPressed: () {},
-  //                       ),
-  //                       IconButton(
-  //                         icon: const Icon(Icons.notifications_none),
-  //                         onPressed: () {},
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-  //               const SizedBox(height: 16),
-  //               Wrap(
-  //                 spacing: 29,
-  //                 runSpacing: 12,
-  //                 children: projectCounts.map((countData) {
-  //                   Color bgColor;
-
-  //                   switch (countData.label.toLowerCase()) {
-  //                     case 'to do':
-  //                       bgColor = Colors.purple.shade100;
-  //                       break;
-  //                     case 'pending':
-  //                       bgColor = Colors.orange.shade100;
-  //                       break;
-  //                     case 'completed':
-  //                       bgColor = Colors.green.shade100;
-  //                       break;
-  //                     case 'overdue':
-  //                       bgColor = Colors.pink.shade100;
-  //                       break;
-  //                     default:
-  //                       bgColor = Colors.grey.shade200;
-  //                   }
-
-  //                   return GestureDetector(
-  //                     onTap: () {
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (_) => AssignReport(
-  //                             workId: "",
-  //                             sectionId: countData.id.toString(),
-  //                           ),
-  //                         ),
-  //                       );
-  //                     },
-  //                     child: _buildStatusCard(
-  //                       countData.label,
-  //                       countData.count.toString(),
-  //                       bgColor,
-  //                     ),
-  //                   );
-  //                 }).toList(),
-  //               ),
-  //               const SizedBox(height: 24),
-  //               Container(
-  //                 width: double.infinity,
-  //                 padding: const EdgeInsets.all(12),
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.white,
-  //                   borderRadius: BorderRadius.circular(8),
-  //                 ),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Container(
-  //                       padding: const EdgeInsets.symmetric(
-  //                           vertical: 6, horizontal: 12),
-  //                       margin: const EdgeInsets.only(bottom: 8),
-  //                       decoration: BoxDecoration(
-  //                         color: Colors.blue.shade400,
-  //                         borderRadius: BorderRadius.circular(4),
-  //                       ),
-  //                       child: const Text(
-  //                         "Quick Links",
-  //                         style: TextStyle(
-  //                           color: Colors.white,
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 12),
-  //                     GridView.count(
-  //                       crossAxisCount: 2,
-  //                       mainAxisSpacing: 12,
-  //                       crossAxisSpacing: 12,
-  //                       shrinkWrap: true,
-  //                       physics: const NeverScrollableScrollPhysics(),
-  //                       childAspectRatio: 2.8,
-  //                       children: [
-  //                         _buildQuickLinkCard(
-  //                           "Total work summery",
-  //                           Colors.cyan.shade100,
-  //                           () => Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) => const TotalSummeryPage(),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         _buildQuickLinkCard(
-  //                           "Assign work",
-  //                           Colors.red.shade100,
-  //                           () => Navigator.push(
-  //                               context,
-  //                               MaterialPageRoute(
-  //                                   builder: (_) => AssignReport(
-  //                                       workId: "", sectionId: ""))),
-  //                         ),
-  //                         _buildQuickLinkCard(
-  //                           "View work",
-  //                           Colors.amber.shade100,
-  //                           adminCheckPermission == "false"
-  //                               ? () async {
-  //                                   final workStatusModel =
-  //                                       await HttpService.getWorkStatus();
-  //                                   WorkStatus? existingWork;
-
-  //                                   if (workStatusModel != null &&
-  //                                       workStatusModel.data.isNotEmpty) {
-  //                                     existingWork = workStatusModel.data.first;
-  //                                   }
-
-  //                                   if (multipleWorksCheck == "true") {
-  //                                     showDialog(
-  //                                       context: context,
-  //                                       builder: (context) {
-  //                                         return AlertDialog(
-  //                                           title: const Text("Phone Call Log"),
-  //                                           content: const Text(
-  //                                               "Choose an action below"),
-  //                                           actions: [
-  //                                             TextButton(
-  //                                               onPressed: () {
-  //                                                 Navigator.pop(context);
-  //                                                 Navigator.push(
-  //                                                   context,
-  //                                                   MaterialPageRoute(
-  //                                                     builder: (_) =>
-  //                                                         ViewWorkPage(
-  //                                                             staffId: staffId),
-  //                                                   ),
-  //                                                 );
-  //                                               },
-  //                                               child: const Text("Works"),
-  //                                             ),
-  //                                             TextButton(
-  //                                               onPressed: () {
-  //                                                 Navigator.pop(context);
-  //                                                 Navigator.push(
-  //                                                   context,
-  //                                                   MaterialPageRoute(
-  //                                                     builder: (_) =>
-  //                                                         const TimelinePage(),
-  //                                                     settings: RouteSettings(
-  //                                                       arguments: {
-  //                                                         "staffId": userId
-  //                                                       },
-  //                                                     ),
-  //                                                   ),
-  //                                                 );
-  //                                               },
-  //                                               child: const Text("Call Log"),
-  //                                             ),
-  //                                           ],
-  //                                         );
-  //                                       },
-  //                                     );
-  //                                   } else if (multipleWorksCheck == "phone") {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (_) => const TimelinePage(),
-  //                                         settings: RouteSettings(
-  //                                           arguments: {"staffId": staffId},
-  //                                         ),
-  //                                       ),
-  //                                     );
-  //                                   } else {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (_) =>
-  //                                             ViewWorkPage(staffId: staffId),
-  //                                       ),
-  //                                     );
-  //                                   }
-  //                                 }
-  //                               : () async {
-  //                                   final workStatusModel =
-  //                                       await HttpService.getWorkStatus();
-  //                                   WorkStatus? existingWork;
-
-  //                                   if (workStatusModel != null &&
-  //                                       workStatusModel.data.isNotEmpty) {
-  //                                     existingWork = workStatusModel.data.first;
-  //                                   }
-
-  //                                   Navigator.push(
-  //                                     context,
-  //                                     MaterialPageRoute(
-  //                                       builder: (context) =>
-  //                                           const ViewCompanyWorkPage(),
-  //                                       settings:
-  //                                           const RouteSettings(arguments: {
-  //                                         // "staffId": staffId
-  //                                       }),
-  //                                     ),
-  //                                   );
-  //                                 },
-  //                         ),
-  //                         _buildQuickLinkCard(
-  //                           "Add attendance",
-  //                           Colors.purple.shade100,
-  //                           () => Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) => const ViewCalendarPage(),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         _buildQuickLinkCard(
-  //                           "Add project",
-  //                           Colors.blue.shade100,
-  //                           () => Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) => const AddProjectPage(),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         _buildQuickLinkCard(
-  //                           "Payroll",
-  //                           Colors.green.shade100,
-  //                           () => Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) => const SalaryReportPage(),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildStatusCard(String title, String count, Color color) {
     return Container(
       width: 150,
@@ -1476,11 +1344,26 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
               Row(
                 children: [
                   userDashboard != null && startAndStopWorkPermission == "true"
-                      ? StartStopToggle(
+                      ?
+                      // StartStopToggle(
+                      //     initialStatus: userDashboard!.data.loginCheck,
+                      //     onToggle: (bool started) {
+                      //       setState(() {
+                      //         userDashboard!.data.loginCheck = started;
+                      //       });
+                      //     },
+                      //   )
+                      StartStopToggle(
                           initialStatus: userDashboard!.data.loginCheck,
                           onToggle: (bool started) {
                             setState(() {
                               userDashboard!.data.loginCheck = started;
+                            });
+                          },
+                          setDashboardLoading: (bool loading) {
+                            setState(() {
+                              isLoading =
+                                  loading; // This changes the dashboard loader state
                             });
                           },
                         )
@@ -1526,6 +1409,15 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                       ),
                     ),
                   ),
+                     InkWell(
+                  onTap: () {
+                    _scaffoldKey.currentState!.openEndDrawer();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Image.asset("assets/icons/menu.png", width: 20),
+                  ),
+                ),
                 ],
               ),
             ],

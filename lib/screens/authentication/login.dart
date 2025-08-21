@@ -75,6 +75,33 @@ class _LoginState extends State<Login> {
     }
   }
 
+  // getData() async {
+  //   setState(() {
+  //     timeOut = false;
+  //   });
+  //   try {
+  //     final connectivityResult = await (Connectivity().checkConnectivity());
+  //     if (connectivityResult == ConnectivityResult.mobile ||
+  //         connectivityResult == ConnectivityResult.wifi) {
+  //       result = true;
+  //     } else {
+  //       result = false;
+  //     }
+  //     updatedata = await HttpService.forceUpdate();
+  //     setState(() {
+  //       if (updatedata!.data!.server!.length == 1) {
+  //         Common.saveSharedPref(
+  //             "url", updatedata!.data!.server![0].url.toString());
+  //         serverChoose = true;
+  //       }
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       timeOut = true;
+  //       _loading = false;
+  //     });
+  //   }
+  // }
   getData() async {
     setState(() {
       timeOut = false;
@@ -88,11 +115,19 @@ class _LoginState extends State<Login> {
         result = false;
       }
       updatedata = await HttpService.forceUpdate();
+      String? savedUrl = await Common.getSharedPref("url");
+
       setState(() {
         if (updatedata!.data!.server!.length == 1) {
           Common.saveSharedPref(
               "url", updatedata!.data!.server![0].url.toString());
+          selectedUrl = updatedata!.data!.server![0].url.toString();
           serverChoose = true;
+        } else if (savedUrl != null && savedUrl.isNotEmpty) {
+          selectedUrl = savedUrl;
+          serverChoose = true;
+        } else {
+          serverChoose = false;
         }
       });
     } catch (e) {
@@ -215,8 +250,14 @@ class _LoginState extends State<Login> {
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
         } else if (serverChoose == false) {
-          Common.toastMessaage('Choose a Server', Colors.red);
-          openPopupMenu();
+          // Common.toastMessaage('Choose a Server', Colors.red);
+          // openPopupMenu();
+          if (updatedata!.data!.server!.length > 1) {
+            Common.toastMessaage('Choose a Server', Colors.red);
+            openPopupMenu();
+          } else {
+            Common.toastMessaage('Server configuration error', Colors.red);
+          }
         } else {
           setState(() {
             _loading = true;
@@ -315,7 +356,7 @@ class _LoginState extends State<Login> {
                   object1.data!.whatsappUnofficial.toString());
               Common.saveSharedPref(
                   "transferLeads", object1.data!.transferLead.toString());
-            
+
               Common.saveSharedPref(
                   "uploadCallLog", object1.data!.uploadCallLog.toString());
             }
@@ -332,18 +373,18 @@ class _LoginState extends State<Login> {
                 "faceDetection", object1.data!.faceDetection.toString());
             Common.saveSharedPref(
                 "companyLocation", object1.data!.companyLocation.toString());
-                Common.saveSharedPref(
+            Common.saveSharedPref(
                 "assignWork", object1.data!.assignWork.toString());
-                 Common.saveSharedPref(
-                "ProjectDashboardPermission", object1.data!.ProjectDashboard.toString());
-                 Common.saveSharedPref(
+            Common.saveSharedPref("ProjectDashboardPermission",
+                object1.data!.ProjectDashboard.toString());
+            Common.saveSharedPref(
                 "LeadDashboard", object1.data!.LeadDashboard.toString());
-                 Common.saveSharedPref(
-                "AccountsDashboardPermission", object1.data!.AccountsDashboard.toString());
-                 Common.saveSharedPref(
+            Common.saveSharedPref("AccountsDashboardPermission",
+                object1.data!.AccountsDashboard.toString());
+            Common.saveSharedPref(
                 "MenuDashboard", object1.data!.MenuDashboard.toString());
-                 Common.saveSharedPref(
-                "RenewalDashboardPermission", object1.data!.RenewalDashboard.toString());
+            Common.saveSharedPref("RenewalDashboardPermission",
+                object1.data!.RenewalDashboard.toString());
 
             // Common.saveSharedPref("callLogPermission", 'false');
             //  Common.saveSharedPref(
@@ -359,14 +400,16 @@ class _LoginState extends State<Login> {
             } else if (leadDash == "true") {
               dashboardToOpen = Dashboard(object.data!.token.toString());
             } else if (accountsDash == "true") {
-              dashboardToOpen = AccountsDashboard(token: object.data!.token.toString());
+              dashboardToOpen =
+                  AccountsDashboard(token: object.data!.token.toString());
             } else if (menuDash == "true") {
               dashboardToOpen = HomePage(object.data!.token.toString());
             } else if (renewalDash == "true") {
               dashboardToOpen = RenewalDashboard();
             } else {
-              dashboardToOpen = Dashboard(object.data!.token.toString()); // fallback
-               }
+              dashboardToOpen =
+                  Dashboard(object.data!.token.toString()); // fallback
+            }
 
             if (object.status == true) {
               if (mounted) {
@@ -378,7 +421,7 @@ class _LoginState extends State<Login> {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => dashboardToOpen),
                 );
-                            }
+              }
             } else {}
 
             Common.toastMessaage(object.message, Colors.green);

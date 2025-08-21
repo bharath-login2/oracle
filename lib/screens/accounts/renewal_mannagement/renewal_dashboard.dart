@@ -1,18 +1,26 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/commonConfigureModel.dart';
+import 'package:login2/models/dashboardModel.dart';
+import 'package:login2/models/lead_management/leadDashboardModel.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/hidden_clients.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/payment_reports.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/quck_renewal.dart';
+import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/widgets/renewal_grid_widget.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/grid_shimmer.dart';
+import 'package:login2/widgets/togglebutton_start.dart';
+import 'package:shimmer/shimmer.dart';
 
 class RenewalDashboard extends StatefulWidget {
   const RenewalDashboard({super.key});
@@ -26,13 +34,59 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
   bool isLoading = true;
   String token = "";
   String? RenewalDashboardPermission;
+  String phoneCallLogPermission = '';
+  LeadDashboardModel? leadDashboard;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String name = '';
+  String userId = '';
+  String role = '';
+  String startAndStopWorkPermission = '';
+  CommonConfigureModel? configure;
+  DashboardModel? userDashboard;
+  String createLeadCategory = '';
+  String updateLeadCategory = '';
+  String deleteLeadCategory = '';
+  bool createLeadCategory1 = false;
+  bool updateLeadCategory1 = false;
+  bool deleteLeadCategory1 = false;
+  int notificationCount = 0;
+  var fromdate = DateTime.now();
+  var todate = DateTime.now();
+  var fromdate1 =
+      DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
+  var todate1 = DateTime.now();
+  var outputFormat = DateFormat('dd-MM-yyyy');
   getDashboard() async {
     setState(() {
       isLoading = true;
     });
+
+    token = await Common.getSharedPref("token");
     renewalDashboard = await HttpService.renewalDashboard();
-    String? RenewalDashboardPermission =
+    configure = await HttpService.configure(token);
+    RenewalDashboardPermission =
         await Common.getSharedPref("RenewalDashboardPermission");
+    name = await Common.getSharedPref("name");
+    userId = await Common.getSharedPref("userId");
+
+    role = await Common.getSharedPref("role");
+    startAndStopWorkPermission =
+        await Common.getSharedPref("startAndStopWorkPermission");
+    createLeadCategory = await Common.getSharedPref("createLeadCategory");
+    updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
+    deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+
+    createLeadCategory1 = createLeadCategory == 'true';
+    updateLeadCategory1 = updateLeadCategory == 'true';
+    deleteLeadCategory1 = deleteLeadCategory == 'true';
+
+    userDashboard = await HttpService.mainDashboard(token);
+    leadDashboard = await HttpService.leadDashboard(
+        token, fromdate, todate, fromdate1, todate1);
+    setState(() {
+      notificationCount = leadDashboard!.data.unreadNotification;
+    });
+    Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
     if (renewalDashboard != null && renewalDashboard!.status == true) {
       setState(() {
         isLoading = false;
@@ -78,131 +132,133 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
         return shouldExit ?? false;
       },
       child: Scaffold(
+          key: _scaffoldKey,
         backgroundColor: Colors.grey.shade100,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              // color: Color(0xFF2a86c9),
-              // image: DecorationImage(
-              //   fit: BoxFit.cover,
-              //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        RenewalDashboardPermission == "false"
-                            ? InkWell(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  height: 25,
-                                  width: 25,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.white),
-                                      shape: BoxShape.circle),
-                                  child: const Icon(
-                                    Icons.arrow_back_ios_outlined,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                              )
-                            : SizedBox(),
-                        const SizedBox(
-                          width: 25,
-                        ),
-                        const Text(
-                          "Renewal Management",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    PopupMenuButton<String>(
-                      iconColor: Colors.white,
-                      color: Colors.white,
-                      onSelected: (value) async {
-                        if (value == "1") {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const HiddenCilientsScreen(),
-                              )).then((_) {
-                            getDashboard();
-                          });
-                        } else if (value == "2") {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PaymentReport(),
-                              )).then((_) {
-                            getDashboard();
-                          });
-                        } else {
-                          try {
-                            final result = await HttpService.getWorkStatus();
-                            if (result != null && result.data.isNotEmpty) {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Logout Blocked'),
-                                  content: const Text(
-                                      'Work is in progress. Please close all work before logging out.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else {
-                              logout(context);
-                            }
-                          } catch (e) {
-                            print('Error checking work status: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Failed to check work status')),
-                            );
-                          }
-                        }
-                      },
-                      itemBuilder: (BuildContext context) {
-                        return [
-                          const PopupMenuItem<String>(
-                            value: '1',
-                            child: Text('Hidden Clients'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: '2',
-                            child: Text('Payment Report'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: '3',
-                            child: Text('Logout'),
-                          ),
-                        ];
-                      },
-                    ),
-                  ]),
-            ),
-          ),
-        ),
+        appBar: appBarWidget(context, "lead"),
+        // appBar: PreferredSize(
+        //   preferredSize:
+        //       Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+        //   child: Container(
+        //     padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        //     decoration: const BoxDecoration(
+        //       // color: Color(0xFF2a86c9),
+        //       // image: DecorationImage(
+        //       //   fit: BoxFit.cover,
+        //       //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
+        //       gradient: LinearGradient(
+        //           colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+        //     ),
+        //     child: Padding(
+        //       padding: const EdgeInsets.only(
+        //           left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+        //       child: Row(
+        //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //           children: [
+        //             Row(
+        //               mainAxisAlignment: MainAxisAlignment.center,
+        //               crossAxisAlignment: CrossAxisAlignment.center,
+        //               children: [
+        //                 RenewalDashboardPermission == "false"
+        //                     ? InkWell(
+        //                         onTap: () {
+        //                           Navigator.pop(context);
+        //                         },
+        //                         child: Container(
+        //                           height: 25,
+        //                           width: 25,
+        //                           decoration: BoxDecoration(
+        //                               border: Border.all(color: Colors.white),
+        //                               shape: BoxShape.circle),
+        //                           child: const Icon(
+        //                             Icons.arrow_back_ios_outlined,
+        //                             color: Colors.white,
+        //                             size: 16,
+        //                           ),
+        //                         ),
+        //                       )
+        //                     : SizedBox(),
+        //                 const SizedBox(
+        //                   width: 25,
+        //                 ),
+        //                 const Text(
+        //                   "Renewal Management",
+        //                   style: TextStyle(color: Colors.white, fontSize: 18),
+        //                 ),
+        //               ],
+        //             ),
+        //             PopupMenuButton<String>(
+        //               iconColor: Colors.white,
+        //               color: Colors.white,
+        //               onSelected: (value) async {
+        //                 if (value == "1") {
+        //                   Navigator.push(
+        //                       context,
+        //                       MaterialPageRoute(
+        //                         builder: (context) =>
+        //                             const HiddenCilientsScreen(),
+        //                       )).then((_) {
+        //                     getDashboard();
+        //                   });
+        //                 } else if (value == "2") {
+        //                   Navigator.push(
+        //                       context,
+        //                       MaterialPageRoute(
+        //                         builder: (context) => const PaymentReport(),
+        //                       )).then((_) {
+        //                     getDashboard();
+        //                   });
+        //                 } else {
+        //                   try {
+        //                     final result = await HttpService.getWorkStatus();
+        //                     if (result != null && result.data.isNotEmpty) {
+        //                       showDialog(
+        //                         context: context,
+        //                         builder: (context) => AlertDialog(
+        //                           title: const Text('Logout Blocked'),
+        //                           content: const Text(
+        //                               'Work is in progress. Please close all work before logging out.'),
+        //                           actions: [
+        //                             TextButton(
+        //                               onPressed: () =>
+        //                                   Navigator.of(context).pop(),
+        //                               child: const Text('OK'),
+        //                             ),
+        //                           ],
+        //                         ),
+        //                       );
+        //                     } else {
+        //                       logout(context);
+        //                     }
+        //                   } catch (e) {
+        //                     print('Error checking work status: $e');
+        //                     ScaffoldMessenger.of(context).showSnackBar(
+        //                       const SnackBar(
+        //                           content: Text('Failed to check work status')),
+        //                     );
+        //                   }
+        //                 }
+        //               },
+        //               itemBuilder: (BuildContext context) {
+        //                 return [
+        //                   const PopupMenuItem<String>(
+        //                     value: '1',
+        //                     child: Text('Hidden Clients'),
+        //                   ),
+        //                   const PopupMenuItem<String>(
+        //                     value: '2',
+        //                     child: Text('Payment Report'),
+        //                   ),
+        //                   const PopupMenuItem<String>(
+        //                     value: '3',
+        //                     child: Text('Logout'),
+        //                   ),
+        //                 ];
+        //               },
+        //             ),
+        //           ]),
+        //     ),
+        //   ),
+        // ),
         body: SafeArea(
             child: SingleChildScrollView(
           child: Padding(
@@ -570,23 +626,206 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                   ),
           ),
         )),
-        // floatingActionButton: FloatingActionButton.extended(
-        //     backgroundColor: Colors.blue.shade700,
-        //     foregroundColor: Colors.white,
-        //     onPressed: () {
-        //       Navigator.push(
-        //           context,
-        //           MaterialPageRoute(
-        //             builder: (context) => CustomRenewal(),
-        //           )).then((_) {
-        //         getDashboard();
-        //       });
-        //       // renewalAddDialog(context);
-        //     },
-        //     label: const Row(
-        //     //  children: [Icon(Icons.add), Text(" Renewal")],
-        //     )
-        //     ),
+        endDrawer: DraweScreen(token),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.black,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RenewalDashboard()),
+            );
+          },
+          child: Image.asset("assets/icons/menu.png", width: 25),
+        ),
+        bottomNavigationBar: configure != null
+            ? BottomNavigation(
+                token,
+                phoneCallLogPermission: phoneCallLogPermission,
+                name: name,
+                userId: userId,
+              )
+            : const SizedBox(),
+      ),
+    );
+  }
+
+  PreferredSizeWidget appBarWidget(BuildContext context, String type) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(80),
+      child: Container(
+        decoration: const BoxDecoration(color: Colors.blue),
+        child: Padding(
+          padding: EdgeInsets.only(
+              left: 20, top: type == "lead" ? 55 : 15, bottom: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      try {
+                        final result = await HttpService.getWorkStatus();
+                        if (result != null && result.data.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Logout Blocked'),
+                              content: const Text(
+                                  'Work is in progress. Please close all work before logging out.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          logout(context);
+                        }
+                      } catch (e) {
+                        print('Error checking work status: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to check work status')),
+                        );
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 2,
+                              color: Colors.grey.shade800,
+                              offset: const Offset(0, 2.0),
+                            )
+                          ],
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF2191ce)),
+                      child: userDashboard != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                userDashboard!.data.profilePic,
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              enabled: true,
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: const CircleAvatar()),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        role,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  userDashboard != null && startAndStopWorkPermission == "true"
+                      ?
+                      // StartStopToggle(
+                      //     initialStatus: userDashboard!.data.loginCheck,
+                      //     onToggle: (bool started) {
+                      //       setState(() {
+                      //         userDashboard!.data.loginCheck = started;
+                      //       });
+                      //     },
+                      //   )
+                      StartStopToggle(
+                          initialStatus: userDashboard!.data.loginCheck,
+                          onToggle: (bool started) {
+                            setState(() {
+                              userDashboard!.data.loginCheck = started;
+                            });
+                          },
+                          setDashboardLoading: (bool loading) {
+                            setState(() {
+                              isLoading =
+                                  loading; // This changes the dashboard loader state
+                            });
+                          },
+                        )
+                      : const SizedBox(),
+                  const SizedBox(width: 20),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationPage(
+                                token,
+                                createLeadCategory1,
+                                updateLeadCategory1,
+                                deleteLeadCategory1)),
+                      ).then((r) {
+                        getDashboard();
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Stack(
+                        children: [
+                          Image.asset("assets/icons/notification.png",
+                              width: 20, color: Colors.white),
+                          notificationCount > 0
+                              ? Positioned(
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 12,
+                                      minHeight: 12,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox()
+                        ],
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      if (_scaffoldKey.currentState != null) {
+                        _scaffoldKey.currentState!.openEndDrawer();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Image.asset("assets/icons/menu.png", width: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

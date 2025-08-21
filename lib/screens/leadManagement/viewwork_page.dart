@@ -1263,16 +1263,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                 //   Icons.timer,
                 //   Colors.purple,
                 // ),
-                _buildTimeSummaryItem(
-                  "Work Time",
-                  (workStatusDetails != null &&
-                          workStatusDetails!.data.isNotEmpty)
-                      ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
-                      : "--",
-                  Icons.timer,
-                  Colors.deepPurpleAccent,
-                  isHighlight: true,
-                ),
+                
 
                 _buildTimeSummaryItem(
                   "Ideal",
@@ -1311,6 +1302,16 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                       : "--",
                   Icons.logout,
                   Colors.redAccent,
+                ),
+                _buildTimeSummaryItem(
+                  "Work Time",
+                  (workStatusDetails != null &&
+                          workStatusDetails!.data.isNotEmpty)
+                      ? workStatusDetails!.data.first.totalWorkingTime ?? "--"
+                      : "--",
+                  Icons.timer,
+                  Colors.deepPurpleAccent,
+                  isHighlight: true,
                 ),
                 // _buildTimeSummaryItem(
                 //   "Total",

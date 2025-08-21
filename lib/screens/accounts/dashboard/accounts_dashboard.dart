@@ -4,7 +4,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/commonConfigureModel.dart';
+import 'package:login2/models/dashboardModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
+import 'package:login2/models/lead_management/leadDashboardModel.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
@@ -13,8 +16,11 @@ import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
+import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:shimmer/shimmer.dart';
 
 class AccountsDashboard extends StatefulWidget {
@@ -28,13 +34,36 @@ class AccountsDashboard extends StatefulWidget {
 class _AccountsDashboardState extends State<AccountsDashboard> {
   bool result = true;
   bool isLoading = true;
+  String token = '';
+  String name = '';
+  String userId = '';
+  String startAndStopWorkPermission = '';
+  var fromdate = DateTime.now();
+  var todate = DateTime.now();
+  var fromdate1 =
+      DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
+  var todate1 = DateTime.now();
+  var outputFormat = DateFormat('dd-MM-yyyy');
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String role = '';
+  String phoneCallLogPermission = '';
   String? AccountsDashboardPermission;
+  LeadDashboardModel? leadDashboard;
+  DashboardModel? userDashboard;
+  CommonConfigureModel? configure;
   AccountDashboardModel? dashboard;
+  bool createLeadCategory1 = false;
+  bool updateLeadCategory1 = false;
+  bool deleteLeadCategory1 = false;
+  String createLeadCategory = '';
+  String updateLeadCategory = '';
+  String deleteLeadCategory = '';
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month + 1, 0));
   bool toggle = false;
+  int notificationCount = 0;
   List list = [
     "Invoices",
     "Pending Invoices",
@@ -62,6 +91,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     const Color(0xFFf3e8d3),
   ];
   getData() async {
+    token = await Common.getSharedPref("token") ?? "";
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -73,13 +103,35 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
         result = false;
       });
     }
-   AccountsDashboardPermission = await Common.getSharedPref("AccountsDashboardPermission") ?? "";
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission") ?? "";
     getList();
+    configure = await HttpService.configure(token);
+   
+    startAndStopWorkPermission =
+        await Common.getSharedPref("startAndStopWorkPermission");
+    createLeadCategory = await Common.getSharedPref("createLeadCategory");
+    updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
+    deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+    name = await Common.getSharedPref("name");
+    userId = await Common.getSharedPref("userId");
+
+    role = await Common.getSharedPref("role");
+    createLeadCategory1 = createLeadCategory == 'true';
+    updateLeadCategory1 = updateLeadCategory == 'true';
+    deleteLeadCategory1 = deleteLeadCategory == 'true';
+     leadDashboard = await HttpService.leadDashboard(
+        token, fromdate, todate, fromdate1, todate1);
+    userDashboard = await HttpService.mainDashboard(token);
+    Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+    setState(() {
+      notificationCount = leadDashboard!.data.unreadNotification;
+    });
   }
 
   getList() async {
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
-   
+
     toggle = tog == "true" ? true : false;
     dashboard = await HttpService.accountsDashboard(fDate, tDate);
     if (dashboard != null && dashboard!.status == true) {
@@ -127,102 +179,104 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
               return shouldExit ?? false;
             },
             child: Scaffold(
-              appBar: PreferredSize(
-                preferredSize:
-                    Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
-                child: Container(
-                  padding:
-                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        left: 10.0, top: 10.0, bottom: 10.0, right: 10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            AccountsDashboardPermission == "false"
-                                ? InkWell(
-                                    onTap: () => Navigator.pop(context),
-                                    child: Container(
-                                      height: 25,
-                                      width: 25,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.white),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.arrow_back_ios_outlined,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    ),
-                                  )
-                                : const SizedBox(),
-                            const SizedBox(width: 25),
-                            const Text(
-                              "Account Management",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        AccountsDashboardPermission =="true"?
-                        PopupMenuButton<String>(
-                          icon:
-                              const Icon(Icons.more_vert, color: Colors.white),
-                          itemBuilder: (context) => [
-                            const PopupMenuItem<String>(
-                              value: 'logout',
-                              child: Text('Logout'),
-                            ),
-                          ],
-                          onSelected: (value) async {
-                            if (value == 'logout') {
-                              try {
-                                final result =
-                                    await HttpService.getWorkStatus();
-                                if (result != null && result.data.isNotEmpty) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Logout Blocked'),
-                                      content: const Text(
-                                          'Work is in progress. Please close all work before logging out.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                          child: const Text('OK'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                } else {
-                                  logout(context);
-                                }
-                              } catch (e) {
-                                print('Error checking work status: $e');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Failed to check work status')),
-                                );
-                              }
-                            }
-                          },
-                        ):SizedBox(),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              key: _scaffoldKey,
+              appBar: appBarWidget(context, "lead"),
+              // appBar: PreferredSize(
+              //   preferredSize:
+              //       Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
+              //   child: Container(
+              //     padding:
+              //         EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+              //     decoration: const BoxDecoration(
+              //       gradient: LinearGradient(
+              //           colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+              //     ),
+              //     child: Padding(
+              //       padding: const EdgeInsets.only(
+              //           left: 10.0, top: 10.0, bottom: 10.0, right: 10.0),
+              //       child: Row(
+              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //         children: [
+              //           Row(
+              //             mainAxisAlignment: MainAxisAlignment.center,
+              //             crossAxisAlignment: CrossAxisAlignment.center,
+              //             children: [
+              //               AccountsDashboardPermission == "false"
+              //                   ? InkWell(
+              //                       onTap: () => Navigator.pop(context),
+              //                       child: Container(
+              //                         height: 25,
+              //                         width: 25,
+              //                         decoration: BoxDecoration(
+              //                           border: Border.all(color: Colors.white),
+              //                           shape: BoxShape.circle,
+              //                         ),
+              //                         child: const Icon(
+              //                           Icons.arrow_back_ios_outlined,
+              //                           color: Colors.white,
+              //                           size: 16,
+              //                         ),
+              //                       ),
+              //                     )
+              //                   : const SizedBox(),
+              //               const SizedBox(width: 25),
+              //               const Text(
+              //                 "Account Management",
+              //                 style:
+              //                     TextStyle(color: Colors.white, fontSize: 16),
+              //               ),
+              //             ],
+              //           ),
+              //           AccountsDashboardPermission =="true"?
+              //           PopupMenuButton<String>(
+              //             icon:
+              //                 const Icon(Icons.more_vert, color: Colors.white),
+              //             itemBuilder: (context) => [
+              //               const PopupMenuItem<String>(
+              //                 value: 'logout',
+              //                 child: Text('Logout'),
+              //               ),
+              //             ],
+              //             onSelected: (value) async {
+              //               if (value == 'logout') {
+              //                 try {
+              //                   final result =
+              //                       await HttpService.getWorkStatus();
+              //                   if (result != null && result.data.isNotEmpty) {
+              //                     showDialog(
+              //                       context: context,
+              //                       builder: (context) => AlertDialog(
+              //                         title: const Text('Logout Blocked'),
+              //                         content: const Text(
+              //                             'Work is in progress. Please close all work before logging out.'),
+              //                         actions: [
+              //                           TextButton(
+              //                             onPressed: () =>
+              //                                 Navigator.of(context).pop(),
+              //                             child: const Text('OK'),
+              //                           ),
+              //                         ],
+              //                       ),
+              //                     );
+              //                   } else {
+              //                     logout(context);
+              //                   }
+              //                 } catch (e) {
+              //                   print('Error checking work status: $e');
+              //                   ScaffoldMessenger.of(context).showSnackBar(
+              //                     const SnackBar(
+              //                         content:
+              //                             Text('Failed to check work status')),
+              //                   );
+              //                 }
+              //               }
+              //             },
+              //           ):SizedBox(),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
               body: isLoading == true
                   ? buildLoaderListItem()
                   : RefreshIndicator(
@@ -533,9 +587,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => ExpenseList(
-                                                fdate: DateFormat('dd-MM-yyyy')
+                                                // fdate: DateFormat('dd-MM-yyyy')
+                                                //     .format(DateTime.now()),
+                                                // tdate: DateFormat('dd-MM-yyyy')
+                                                //     .format(DateTime.now()),
+                                                fdate: DateFormat('yyyy-MM-dd')
                                                     .format(DateTime.now()),
-                                                tdate: DateFormat('dd-MM-yyyy')
+                                                // tdate: DateFormat('dd-MM-yyyy')
+                                                tdate: DateFormat('yyyy-MM-dd')
                                                     .format(DateTime.now()),
                                               ),
                                             ));
@@ -575,12 +634,20 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => ExpenseList(
-                                                fdate: DateFormat('dd-MM-yyyy')
+                                                // fdate: DateFormat('dd-MM-yyyy')
+                                                //     .format(DateTime(
+                                                //         DateTime.now().year,
+                                                //         DateTime.now().month,
+                                                //         1)),
+                                                // tdate: DateFormat('dd-MM-yyyy')
+                                                //     .format(DateTime.now()),
+                                                fdate: DateFormat('yyyy-MM-dd')
                                                     .format(DateTime(
                                                         DateTime.now().year,
                                                         DateTime.now().month,
                                                         1)),
-                                                tdate: DateFormat('dd-MM-yyyy')
+                                                // tdate: DateFormat('dd-MM-yyyy')
+                                                tdate: DateFormat('yyyy-MM-dd')
                                                     .format(DateTime.now()),
                                               ),
                                             ));
@@ -946,6 +1013,28 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                         ),
                       ),
                     ),
+              endDrawer: DraweScreen(token),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerDocked,
+              floatingActionButton: FloatingActionButton(
+                backgroundColor: Colors.black,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AccountsDashboard(token: token)),
+                  );
+                },
+                child: Image.asset("assets/icons/menu.png", width: 25),
+              ),
+              bottomNavigationBar: configure != null
+                  ? BottomNavigation(
+                      token,
+                      phoneCallLogPermission: phoneCallLogPermission,
+                      name: name,
+                      userId: userId,
+                    )
+                  : const SizedBox(),
             ),
           )
         : Scaffold(
@@ -1075,6 +1164,186 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                 color: amountColor, fontWeight: FontWeight.bold, fontSize: 20),
           ),
         ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget appBarWidget(BuildContext context, String type) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(80),
+      child: Container(
+        decoration: const BoxDecoration(color: Colors.blue),
+        child: Padding(
+          padding: EdgeInsets.only(
+              left: 20, top: type == "lead" ? 55 : 15, bottom: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      try {
+                        final result = await HttpService.getWorkStatus();
+                        if (result != null && result.data.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Logout Blocked'),
+                              content: const Text(
+                                  'Work is in progress. Please close all work before logging out.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          logout(context);
+                        }
+                      } catch (e) {
+                        print('Error checking work status: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to check work status')),
+                        );
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 2,
+                              color: Colors.grey.shade800,
+                              offset: const Offset(0, 2.0),
+                            )
+                          ],
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF2191ce)),
+                      child: userDashboard != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                userDashboard!.data.profilePic,
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              enabled: true,
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: const CircleAvatar()),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        role,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  userDashboard != null && startAndStopWorkPermission == "true"
+                      ?
+                      // StartStopToggle(
+                      //     initialStatus: userDashboard!.data.loginCheck,
+                      //     onToggle: (bool started) {
+                      //       setState(() {
+                      //         userDashboard!.data.loginCheck = started;
+                      //       });
+                      //     },
+                      //   )
+                      StartStopToggle(
+                          initialStatus: userDashboard!.data.loginCheck,
+                          onToggle: (bool started) {
+                            setState(() {
+                              userDashboard!.data.loginCheck = started;
+                            });
+                          },
+                          setDashboardLoading: (bool loading) {
+                            setState(() {
+                              isLoading =
+                                  loading; // This changes the dashboard loader state
+                            });
+                          },
+                        )
+                      : const SizedBox(),
+                  const SizedBox(width: 20),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationPage(
+                                token,
+                                createLeadCategory1,
+                                updateLeadCategory1,
+                                deleteLeadCategory1)),
+                      ).then((r) {
+                        getData();
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Stack(
+                        children: [
+                          Image.asset("assets/icons/notification.png",
+                              width: 20, color: Colors.white),
+                          notificationCount > 0
+                              ? Positioned(
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 12,
+                                      minHeight: 12,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox()
+                        ],
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      if (_scaffoldKey.currentState != null) {
+                        _scaffoldKey.currentState!.openEndDrawer();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Image.asset("assets/icons/menu.png", width: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

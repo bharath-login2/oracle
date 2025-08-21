@@ -443,8 +443,7 @@ class _AddLeadsState extends State<AddLeads> {
                                           onTap: () {
                                             showDialog(
                                                 context: context,
-                                                builder:
-                                                    (BuildContext context) {
+                                                builder: (BuildContext context) {
                                                   return AlertDialog(
                                                     scrollable: true,
                                                     title: const Text(
