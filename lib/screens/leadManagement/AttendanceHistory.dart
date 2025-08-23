@@ -22,6 +22,9 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   AttendanceHistoryModel? historyData;
   bool isLoading = true;
 
+  final timeFormat = DateFormat('hh:mm a');
+  final dateFormat = DateFormat('dd MMM yyyy');
+
   @override
   void initState() {
     super.initState();
@@ -84,57 +87,107 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                   itemBuilder: (context, index) {
                     final item = historyData!.data[index];
                     final isLast = index == historyData!.data.length - 1;
+
+                    // Colors & icons based on action
                     final color = item.action == "create"
                         ? Colors.green
                         : Colors.orange;
                     final icon = item.action == "create"
                         ? Icons.login
                         : Icons.update;
+
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Timeline indicator
                         Column(
                           children: [
-                            Container(
-                              width: 20,
-                              alignment: Alignment.center,
-                              child: CircleAvatar(
-                                radius: 8,
-                                backgroundColor: color,
-                              ),
+                            CircleAvatar(
+                              radius: 10,
+                              backgroundColor: color.withOpacity(0.2),
+                              child: Icon(icon, size: 14, color: color),
                             ),
                             if (!isLast)
                               Container(
                                 width: 2,
-                                height: 60,
-                                color: Colors.grey.shade400,
+                                height: 70,
+                                color: Colors.grey.shade300,
                               ),
                           ],
                         ),
                         const SizedBox(width: 12),
+
+                        // Card
                         Expanded(
                           child: Card(
+                            margin: const EdgeInsets.only(bottom: 20),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            elevation: 3,
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: color.withOpacity(0.15),
-                                child: Icon(icon, color: color),
-                              ),
-                              title: Text(
-                                item.action.toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              subtitle: Text("Updated by: ${item.updatedBy}"),
-                              trailing: Text(
-                                "At: ${item.updatedTime}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w500),
+                            elevation: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Left content
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.action.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: color,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          item.description,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          "Updated by: ${item.updatedBy}",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Right content (time + date)
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        timeFormat.format(item.updatedDate),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        dateFormat.format(item.updatedDate),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ),

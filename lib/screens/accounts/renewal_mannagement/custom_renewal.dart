@@ -146,6 +146,76 @@ class _CustomRenewalState extends State<CustomRenewal> {
     if (branchList != null) {}
   }
 
+  Future<void> _selectContact(BuildContext context, String fieldType) async {
+    try {
+      // Request contact permission
+      final status = await Permission.contacts.request();
+      if (status != PermissionStatus.granted) {
+        if (await Permission.contacts.isPermanentlyDenied) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('Permission Required'),
+              content: const Text(
+                  'Please enable contact permissions in app settings to select contacts.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    openAppSettings();
+                  },
+                  child: const Text('Open Settings'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      final contact = await FlutterContacts.openExternalPick();
+
+      if (contact == null) return;
+      if (contact.phones.isNotEmpty) {
+        String phoneNumber = contact.phones.first.number;
+        String formattedNumber = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+        if (formattedNumber.startsWith('+$phCodeNew') ||
+            formattedNumber.startsWith(phCodeNew)) {
+          formattedNumber =
+              formattedNumber.replaceFirst(RegExp('^\\+?$phCodeNew'), '');
+        } else if (formattedNumber.startsWith('+91') ||
+            formattedNumber.startsWith('91')) {
+          formattedNumber = formattedNumber.replaceFirst(RegExp('^\\+?91'), '');
+        }
+        setState(() {
+          if (fieldType == 'new') {
+            numberNew.text = formattedNumber;
+            if (contact.name.first.isNotEmpty || contact.name.last.isNotEmpty) {
+              customerNameNew.text =
+                  '${contact.name.first} ${contact.name.last}'.trim();
+            }
+            if (contact.emails.isNotEmpty) {
+              email.text = contact.emails.first.address;
+            }
+          } else if (fieldType == 'whatsapp') {
+            whatsappNumber.text = formattedNumber;
+          }
+        });
+        if (fieldType == 'new' && formattedNumber.length == 10) {
+          isCustomerExists();
+        }
+      }
+    } catch (e) {
+      log('Error selecting contact: $e');
+      Common.toastMessaage(
+          'Error accessing contacts. Please check permissions.', Colors.red);
+    }
+  }
+
   isCustomerExists() async {
     isExist = await HttpService.isCustomerExists("", numberNew.text);
     if (isExist != null) {
@@ -1724,6 +1794,53 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   ),
                 ),
                 const SizedBox(height: 14.0),
+                // TextFormField(
+                //   keyboardType: TextInputType.phone,
+                //   controller: numberNew,
+                //   onChanged: ((value) {
+                //     if (value.length == 10) {
+                //       isCustomerExists();
+                //     }
+                //   }),
+                //   validator: (value) {
+                //     if (value!.isEmpty) {
+                //       return "Please Enter Customer Number";
+                //     } else if (isExists == true) {
+                //       return "This number is Already Exists";
+                //     }
+                //     return null;
+                //   },
+                //   decoration: InputDecoration(
+                //     contentPadding: const EdgeInsets.all(8),
+                //     labelText: 'Number *',
+                //     prefix: Padding(
+                //       padding: const EdgeInsets.only(right: 10),
+                //       child: GestureDetector(
+                //           onTap: () {
+                //             showCountryPicker(
+                //               context: context,
+                //               searchAutofocus: false,
+                //               showPhoneCode: true,
+                //               // optional. Shows phone code before the country name.
+                //               onSelect: (Country country) {
+                //                 setState(() {
+                //                   phCodeNew = country.phoneCode;
+                //                 });
+                //               },
+                //             );
+                //           },
+                //           child: Text(
+                //             "+ $phCodeNew",
+                //             style: const TextStyle(color: Colors.black),
+                //           )),
+                //     ),
+                //     border: const OutlineInputBorder(),
+                //     focusedBorder: const OutlineInputBorder(
+                //       borderSide: BorderSide(color: Colors.grey),
+                //     ),
+                //     labelStyle: const TextStyle(color: Colors.grey),
+                //   ),
+                // ),
                 TextFormField(
                   keyboardType: TextInputType.phone,
                   controller: numberNew,
@@ -1735,6 +1852,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   validator: (value) {
                     if (value!.isEmpty) {
                       return "Please Enter Customer Number";
+                    } else if (value.length != 10) {
+                      return "Please enter a valid 10-digit number";
                     } else if (isExists == true) {
                       return "This number is Already Exists";
                     }
@@ -1746,23 +1865,27 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     prefix: Padding(
                       padding: const EdgeInsets.only(right: 10),
                       child: GestureDetector(
-                          onTap: () {
-                            showCountryPicker(
-                              context: context,
-                              searchAutofocus: false,
-                              showPhoneCode: true,
-                              // optional. Shows phone code before the country name.
-                              onSelect: (Country country) {
-                                setState(() {
-                                  phCodeNew = country.phoneCode;
-                                });
-                              },
-                            );
-                          },
-                          child: Text(
-                            "+ $phCodeNew",
-                            style: const TextStyle(color: Colors.black),
-                          )),
+                        onTap: () {
+                          showCountryPicker(
+                            context: context,
+                            searchAutofocus: false,
+                            showPhoneCode: true,
+                            onSelect: (Country country) {
+                              setState(() {
+                                phCodeNew = country.phoneCode;
+                              });
+                            },
+                          );
+                        },
+                        child: Text(
+                          "+$phCodeNew",
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.contacts, color: Colors.grey),
+                      onPressed: () => _selectContact(context, 'new'),
                     ),
                     border: const OutlineInputBorder(),
                     focusedBorder: const OutlineInputBorder(
@@ -1786,7 +1909,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               context: context,
                               searchAutofocus: false,
                               showPhoneCode: true,
-                              // optional. Shows phone code before the country name.
                               onSelect: (Country country) {
                                 setState(() {
                                   whCodeNew = country.phoneCode;

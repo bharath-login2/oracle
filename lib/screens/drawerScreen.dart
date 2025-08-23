@@ -684,6 +684,7 @@ void logout(BuildContext context) {
 
                   // Common.clearSharedPref();
                   await Common.clearSharedPref(excludeKeys: [
+                    'url',
                     'callTypes',
                     'callLogsStartingTime',
                     'callLogPermission'

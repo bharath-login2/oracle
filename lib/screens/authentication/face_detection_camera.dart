@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/service/service.dart';
-
+import 'package:vector_math/vector_math.dart' as vm;
 
 class FaceDetectionCamera extends StatefulWidget {
   final Function(File)? onFaceCaptured;
@@ -23,7 +24,8 @@ class FaceDetectionCamera extends StatefulWidget {
   _FaceDetectionCameraState createState() => _FaceDetectionCameraState();
 }
 
-class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTickerProviderStateMixin {
+class _FaceDetectionCameraState extends State<FaceDetectionCamera> 
+    with TickerProviderStateMixin {
   late CameraController _cameraController;
   late FaceDetector _faceDetector;
   bool _isInitialized = false;
@@ -32,6 +34,7 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
   bool _isProcessing = false;
   Face? _currentFace;
   late AnimationController _animationController;
+  late AnimationController _verificationController;
   late Animation<double> _pulseAnimation;
   late Animation<Color?> _colorAnimation;
   bool _faceVerified = false;
@@ -41,41 +44,122 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
   CommonResponse? _verificationResponse;
   String? _verificationError;
   Position? _currentPosition;
+  List<FaceDetectionStep> _verificationSteps = [];
+  int _currentStepIndex = 0;
+  bool _isStepCompleted = false;
+  double _faceTiltAngle = 0.0;
+  bool _showTiltGuide = false;
+  bool _showDistanceGuide = false;
+
+  // Particle system for background effects
+  final List<Particle> _particles = [];
+  late AnimationController _particleController;
 
   @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-    _faceDetector = FaceDetector(
-      options: FaceDetectorOptions(
-        performanceMode: FaceDetectorMode.accurate,
-        enableLandmarks: true,
-        enableContours: true,
-        enableClassification: true,
-        enableTracking: true,
-        minFaceSize: 0.3,
+void initState() {
+  super.initState();
+  _initializeCamera();
+  _faceDetector = FaceDetector(
+    options: FaceDetectorOptions(
+      performanceMode: FaceDetectorMode.accurate,
+      enableLandmarks: true,
+      enableContours: true,
+      enableClassification: true,
+      enableTracking: true,
+      minFaceSize: 0.3,
+    ),
+  );
+  
+  // Main animation controller
+  _animationController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2000),
+  );
+  
+  // Verification steps animation controller
+  _verificationController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  );
+  
+  // Particle animation controller - simplified
+  _particleController = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 10),
+  )..repeat();
+  
+  _pulseAnimation = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween<double>(begin: 0.95, end: 1.05), weight: 1),
+    TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 0.95), weight: 1),
+  ]).animate(CurvedAnimation(
+    parent: _animationController,
+    curve: Curves.easeInOut,
+  ));
+  
+  _colorAnimation = ColorTweenSequence([
+    ColorTweenSequenceItem(
+      tween: ColorTween(
+        begin: Colors.white.withOpacity(0.8),
+        end: Colors.blue.withOpacity(0.9),
       ),
-    );
-    
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
+      weight: 1
+    ),
+    ColorTweenSequenceItem(
+      tween: ColorTween(
+        begin: Colors.blue.withOpacity(0.9),
+        end: Colors.white.withOpacity(0.8),
       ),
-    );
+      weight: 1
+    ),
+  ]).animate(_animationController);
+  
+  _animationController.repeat(reverse: true);
+  
+  // Initialize verification steps
+  _verificationSteps = [
+    FaceDetectionStep(
+      title: "Center Your Face",
+      instruction: "Position your face in the circle",
+      icon: Icons.face,
+      checkFunction: _isFaceCentered,
+    ),
+    FaceDetectionStep(
+      title: "Tilt Your Head Left",
+      instruction: "Slowly tilt your head to the left",
+      icon: Icons.arrow_back,
+      checkFunction: _isFaceTiltedLeft,
+    ),
+    FaceDetectionStep(
+      title: "Tilt Your Head Right",
+      instruction: "Slowly tilt your head to the right",
+      icon: Icons.arrow_forward,
+      checkFunction: _isFaceTiltedRight,
+    ),
+    FaceDetectionStep(
+      title: "Move Closer",
+      instruction: "Move a bit closer to the camera",
+      icon: Icons.zoom_in,
+      checkFunction: _isFaceAtProperDistance,
+    ),
+  ];
+  
+  _getCurrentLocation();
+  // _initializeParticles(); // Consider removing this if still having issues
+}
+
+  void _initializeParticles() {
+    for (int i = 0; i < 30; i++) {
+      _particles.add(Particle());
+    }
     
-    _colorAnimation = ColorTween(
-      begin: Colors.white.withOpacity(0.8),
-      end: Colors.green,
-    ).animate(_animationController);
-    
-    _animationController.repeat(reverse: true);
-    _getCurrentLocation();
+    _particleController.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        for (var particle in _particles) {
+          particle.update();
+        }
+      });
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -103,13 +187,15 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     }
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _cameraController.dispose();
-    _faceDetector.close();
-    super.dispose();
-  }
+ @override
+void dispose() {
+  _animationController.dispose();
+  _verificationController.dispose();
+  _particleController.dispose();
+  _cameraController.dispose();
+  _faceDetector.close();
+  super.dispose();
+}
 
   Future<void> _initializeCamera() async {
     try {
@@ -149,16 +235,34 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
       final faces = await _faceDetector.processImage(inputImage);
       if (faces.isNotEmpty) {
         final face = faces.first;
-        setState(() => _currentFace = face);
+        setState(() {
+          _currentFace = face;
+          _faceTiltAngle = face.headEulerAngleY ?? 0.0;
+        });
         
-        if (_isFaceProperlyPositioned(face)) {
-          if (!_faceDetected && !_isVerificationComplete) {
-            setState(() => _faceDetected = true);
-            await Future.delayed(const Duration(milliseconds: 500));
-            await _captureImage();
+        // Check current verification step
+        if (_currentStepIndex < _verificationSteps.length) {
+          final currentStep = _verificationSteps[_currentStepIndex];
+          final isStepComplete = currentStep.checkFunction(face);
+          
+          if (isStepComplete && !_isStepCompleted) {
+            setState(() => _isStepCompleted = true);
+            await _verificationController.forward();
+            await Future.delayed(const Duration(milliseconds: 800));
+            
+            if (_currentStepIndex < _verificationSteps.length - 1) {
+              setState(() {
+                _currentStepIndex++;
+                _isStepCompleted = false;
+              });
+              _verificationController.reset();
+            } else {
+              // All steps completed, capture the image
+              setState(() => _faceDetected = true);
+              await Future.delayed(const Duration(milliseconds: 500));
+              await _captureImage();
+            }
           }
-        } else {
-          if (_faceDetected) setState(() => _faceDetected = false);
         }
       } else {
         if (_faceDetected) setState(() => _faceDetected = false);
@@ -171,27 +275,33 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     }
   }
 
-  bool _isFaceProperlyPositioned(Face face) {
+  bool _isFaceCentered(Face face) {
     if (_imageSize == null) return false;
     
     final faceRect = face.boundingBox;
     final centerX = _imageSize!.width / 2;
     final centerY = _imageSize!.height / 2;
     
-    final isCentered = 
-        (faceRect.center.dx - centerX).abs() < _imageSize!.width * 0.25 &&
-        (faceRect.center.dy - centerY).abs() < _imageSize!.height * 0.25;
-    
-    final faceWidthRatio = faceRect.width / _imageSize!.width;
-    final faceHeightRatio = faceRect.height / _imageSize!.height;
-    final isProperSize = 
-        faceWidthRatio > 0.3 && faceWidthRatio < 0.7 &&
-        faceHeightRatio > 0.3 && faceHeightRatio < 0.7;
-    
+    return (faceRect.center.dx - centerX).abs() < _imageSize!.width * 0.15 &&
+           (faceRect.center.dy - centerY).abs() < _imageSize!.height * 0.15;
+  }
+
+  bool _isFaceTiltedLeft(Face face) {
     final headAngleY = face.headEulerAngleY ?? 0;
-    final isUpright = headAngleY.abs() < 15;
+    return headAngleY < -20 && headAngleY > -45;
+  }
+
+  bool _isFaceTiltedRight(Face face) {
+    final headAngleY = face.headEulerAngleY ?? 0;
+    return headAngleY > 20 && headAngleY < 45;
+  }
+
+  bool _isFaceAtProperDistance(Face face) {
+    if (_imageSize == null) return false;
     
-    return isCentered && isProperSize && isUpright;
+    final faceRect = face.boundingBox;
+    final faceWidthRatio = faceRect.width / _imageSize!.width;
+    return faceWidthRatio > 0.4 && faceWidthRatio < 0.6;
   }
 
   Future<String?> _generateFaceHash(File imageFile) async {
@@ -316,6 +426,8 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
           _verificationFailed = false;
           _isProcessing = false;
           _isVerificationComplete = false;
+          _currentStepIndex = 0;
+          _isStepCompleted = false;
         });
       }
     } catch (e) {
@@ -359,7 +471,19 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     if (!_isInitialized) {
       return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 20),
+              Text(
+                "Initializing Camera...",
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -370,45 +494,30 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
           Positioned.fill(
             child: CameraPreview(_cameraController),
           ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.15,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.25,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
+          
+          // Background effects with particles
+          // if (_faceDetected || _isVerificationComplete)
+          //   CustomPaint(
+          //     painter: ParticlePainter(_particles),
+          //     size: Size.infinite,
+          //   ),
+          
+          // Gradient overlays
+          _buildGradientOverlays(),
+          
+          // Face detection overlay
           if (_imageSize != null) _buildDetectionOverlay(),
+          
+          // Verification steps
+          _buildVerificationSteps(),
+          
+          // Instructions and guidance
           _buildInstructionText(),
-          _buildCornerCircles(),
+          
+          // Corner decorations
+          _buildCornerDecorations(),
+          
+          // Verification results
           if (_verificationFailed) _buildVerificationFailed(),
           if (_faceVerified) _buildVerificationSuccess(),
         ],
@@ -416,73 +525,46 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     );
   }
 
-  Widget _buildVerificationFailed() {
-    return Center(
-      child: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error, color: Colors.red, size: 50),
-            SizedBox(height: 10),
-            Text(
-              _verificationMessage ?? "Verification failed",
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            if (_verificationError != null) ...[
-              SizedBox(height: 10),
-              Text(
-                _verificationError!,
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+  Widget _buildGradientOverlays() {
+    return Stack(
+      children: [
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: MediaQuery.of(context).size.height * 0.15,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  Colors.transparent,
+                ],
               ),
-            ],
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _verificationFailed = false;
-                  _isVerificationComplete = false;
-                });
-              },
-              child: Text("Try Again"),
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildVerificationSuccess() {
-    return Center(
-      child: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 50),
-            SizedBox(height: 10),
-            Text(
-              _verificationMessage ?? "Verification successful!",
-              style: TextStyle(color: Colors.white, fontSize: 18),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: MediaQuery.of(context).size.height * 0.25,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Colors.black.withOpacity(0.7),
+                  Colors.transparent,
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Continue"),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -492,27 +574,49 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     final radius = (_imageSize!.width / 2.5) * scale;
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
+          // Outer circle with animated particles
           AnimatedBuilder(
-            animation: _pulseAnimation,
+            animation: _animationController,
+            builder: (context, child) {
+              return Container(
+                width: radius * 2.2,
+                height: radius * 2.2,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _colorAnimation.value!.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: CustomPaint(
+                  painter: CircleParticlePainter(_animationController.value),
+                ),
+              );
+            },
+          ),
+          
+          // Main detection circle
+          AnimatedBuilder(
+            animation: _animationController,
             builder: (context, child) {
               return Transform.scale(
-                scale: _faceDetected ? 1.0 : _pulseAnimation.value,
+                scale: _isStepCompleted ? 1.0 : _pulseAnimation.value,
                 child: Container(
                   width: radius * 2,
                   height: radius * 2,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _faceDetected 
+                      color: _isStepCompleted 
                           ? Colors.green 
                           : _colorAnimation.value!,
-                      width: _faceDetected ? 4 : 3,
+                      width: _isStepCompleted ? 4 : 3,
                     ),
                   ),
-                  child: _faceDetected
+                  child: _isStepCompleted
                       ? Icon(Icons.check_circle, 
                           color: Colors.green, 
                           size: 50)
@@ -521,22 +625,133 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
               );
             },
           ),
-          if (_currentFace != null && !_faceDetected)
+          
+          // Face outline when detected
+          if (_currentFace != null && !_isStepCompleted)
             Positioned.fill(
               child: CustomPaint(
                 painter: FaceOutlinePainter(
                   face: _currentFace!,
                   imageSize: _imageSize!,
-                  color: Colors.red.withOpacity(0.7),
+                  color: _colorAnimation.value!,
                 ),
               ),
             ),
+          
+          // Tilt guidance indicator
+          if (_showTiltGuide && _currentFace != null)
+            _buildTiltGuidance(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTiltGuidance() {
+    final headAngleY = _currentFace!.headEulerAngleY ?? 0;
+    final double arrowAngle;
+    final IconData arrowIcon;
+    
+    if (headAngleY < 0) {
+      // Tilted left, show right arrow
+      arrowAngle = 0;
+      arrowIcon = Icons.arrow_forward;
+    } else {
+      // Tilted right, show left arrow
+      arrowAngle = pi;
+      arrowIcon = Icons.arrow_back;
+    }
+    
+    return Positioned(
+      top: 100,
+      child: Transform.rotate(
+        angle: arrowAngle,
+        child: Icon(
+          arrowIcon,
+          color: Colors.white,
+          size: 40,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationSteps() {
+    return Positioned(
+      top: 50,
+      left: 0,
+      right: 0,
+      child: Column(
+        children: [
+          Text(
+            "Face Verification",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+          Container(
+            height: 60,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _verificationSteps.length,
+              itemBuilder: (context, index) {
+                final step = _verificationSteps[index];
+                final isCurrent = index == _currentStepIndex;
+                final isCompleted = index < _currentStepIndex;
+                
+                return AnimatedBuilder(
+                  animation: _verificationController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: isCurrent && !_isStepCompleted 
+                          ? 1.0 + _verificationController.value * 0.2 
+                          : 1.0,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 8),
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isCompleted 
+                              ? Colors.green 
+                              : isCurrent 
+                                  ? Colors.blue 
+                                  : Colors.grey.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              step.icon,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              step.title,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildInstructionText() {
+    final currentStep = _currentStepIndex < _verificationSteps.length 
+        ? _verificationSteps[_currentStepIndex] 
+        : null;
+        
     return Positioned(
       bottom: 60,
       left: 0,
@@ -550,9 +765,7 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              _faceDetected 
-                  ? 'Perfect! Capturing...'
-                  : 'Align your face in the circle',
+              currentStep?.instruction ?? 'Processing...',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -562,9 +775,9 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
             ),
           ),
           SizedBox(height: 16),
-          if (!_faceDetected)
+          if (_currentFace != null && !_isStepCompleted)
             AnimatedOpacity(
-              opacity: _currentFace == null ? 0.6 : 1.0,
+              opacity: 0.8,
               duration: Duration(milliseconds: 300),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -573,7 +786,7 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
                       color: Colors.yellow, size: 16),
                   SizedBox(width: 8),
                   Text(
-                    'Make sure your face is well-lit',
+                    _getAdditionalGuidance(),
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -587,72 +800,196 @@ class _FaceDetectionCameraState extends State<FaceDetectionCamera> with SingleTi
     );
   }
 
-  Widget _buildCornerCircles() {
+  String _getAdditionalGuidance() {
+    if (_currentFace == null) return "Position your face in frame";
+    
+    final currentStep = _verificationSteps[_currentStepIndex];
+    
+    if (currentStep.checkFunction == _isFaceTiltedLeft) {
+      if (_faceTiltAngle > -20) return "Tilt further to the left";
+      if (_faceTiltAngle < -45) return "Tilt a little less";
+    }
+    
+    if (currentStep.checkFunction == _isFaceTiltedRight) {
+      if (_faceTiltAngle < 20) return "Tilt further to the right";
+      if (_faceTiltAngle > 45) return "Tilt a little less";
+    }
+    
+    if (currentStep.checkFunction == _isFaceAtProperDistance) {
+      final faceRect = _currentFace!.boundingBox;
+      final faceWidthRatio = faceRect.width / _imageSize!.width;
+      
+      if (faceWidthRatio <= 0.4) return "Move closer to the camera";
+      if (faceWidthRatio >= 0.6) return "Move slightly away from the camera";
+    }
+    
+    return "Make sure your face is well-lit";
+  }
+
+  Widget _buildCornerDecorations() {
     return Stack(
       children: [
+        // Top-left corner
         Positioned(
           top: 30,
           left: 20,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withOpacity(0.5),
-                width: 1,
-              ),
+          child: CustomPaint(
+            painter: CornerPainter(
+              position: CornerPosition.topLeft,
+              color: Colors.white.withOpacity(0.7),
             ),
+            size: Size(40, 40),
           ),
         ),
+        
+        // Top-right corner
         Positioned(
           top: 30,
           right: 20,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withOpacity(0.5),
-                width: 1,
-              ),
+          child: CustomPaint(
+            painter: CornerPainter(
+              position: CornerPosition.topRight,
+              color: Colors.white.withOpacity(0.7),
             ),
+            size: Size(40, 40),
           ),
         ),
+        
+        // Bottom-left corner
         Positioned(
           bottom: 100,
           left: 20,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withOpacity(0.5),
-                width: 1,
-              ),
+          child: CustomPaint(
+            painter: CornerPainter(
+              position: CornerPosition.bottomLeft,
+              color: Colors.white.withOpacity(0.7),
             ),
+            size: Size(40, 40),
           ),
         ),
+        
+        // Bottom-right corner
         Positioned(
           bottom: 100,
           right: 20,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withOpacity(0.5),
-                width: 1,
-              ),
+          child: CustomPaint(
+            painter: CornerPainter(
+              position: CornerPosition.bottomRight,
+              color: Colors.white.withOpacity(0.7),
             ),
+            size: Size(40, 40),
           ),
         ),
       ],
     );
   }
+
+  Widget _buildVerificationFailed() {
+    return Center(
+      child: ScaleTransition(
+        scale: CurvedAnimation(
+          parent: _verificationController,
+          curve: Curves.elasticOut,
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error, color: Colors.red, size: 50),
+              SizedBox(height: 10),
+              Text(
+                _verificationMessage ?? "Verification failed",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              if (_verificationError != null) ...[
+                SizedBox(height: 10),
+                Text(
+                  _verificationError!,
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _verificationFailed = false;
+                    _isVerificationComplete = false;
+                    _currentStepIndex = 0;
+                    _isStepCompleted = false;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text("Try Again"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationSuccess() {
+    return Center(
+      child: ScaleTransition(
+        scale: CurvedAnimation(
+          parent: _verificationController,
+          curve: Curves.elasticOut,
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 50),
+              SizedBox(height: 10),
+              Text(
+                _verificationMessage ?? "Verification successful!",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text("Continue"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FaceDetectionStep {
+  final String title;
+  final String instruction;
+  final IconData icon;
+  final bool Function(Face) checkFunction;
+
+  FaceDetectionStep({
+    required this.title,
+    required this.instruction,
+    required this.icon,
+    required this.checkFunction,
+  });
 }
 
 class FaceOutlinePainter extends CustomPainter {
@@ -680,8 +1017,10 @@ class FaceOutlinePainter extends CustomPainter {
       face.boundingBox.bottom,
     );
 
+    // Draw face bounding box
     canvas.drawRect(faceRect, paint);
     
+    // Draw crosshair at face center
     final center = faceRect.center;
     final crosshairPaint = Paint()
       ..color = color.withOpacity(0.8)
@@ -698,8 +1037,173 @@ class FaceOutlinePainter extends CustomPainter {
       Offset(center.dx, center.dy + 15),
       crosshairPaint,
     );
+    
+    // Draw facial landmarks
+    final landmarkPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+    
+    void drawLandmark(FaceLandmark? landmark) {
+      if (landmark != null) {
+        canvas.drawCircle(
+          Offset(landmark.position.x.toDouble(), landmark.position.y.toDouble()),
+          3,
+          landmarkPaint,
+        );
+      }
+    }
+    
+    drawLandmark(face.landmarks[FaceLandmarkType.leftEye]);
+    drawLandmark(face.landmarks[FaceLandmarkType.rightEye]);
+    drawLandmark(face.landmarks[FaceLandmarkType.noseBase]);
   }
 
   @override
   bool shouldRepaint(FaceOutlinePainter oldDelegate) => true;
+}
+
+class CornerPainter extends CustomPainter {
+  final CornerPosition position;
+  final Color color;
+
+  CornerPainter({required this.position, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    
+    switch (position) {
+      case CornerPosition.topLeft:
+        path.moveTo(0, size.height / 2);
+        path.lineTo(0, 0);
+        path.lineTo(size.width / 2, 0);
+        break;
+      case CornerPosition.topRight:
+        path.moveTo(size.width / 2, 0);
+        path.lineTo(size.width, 0);
+        path.lineTo(size.width, size.height / 2);
+        break;
+      case CornerPosition.bottomLeft:
+        path.moveTo(0, size.height / 2);
+        path.lineTo(0, size.height);
+        path.lineTo(size.width / 2, size.height);
+        break;
+      case CornerPosition.bottomRight:
+        path.moveTo(size.width / 2, size.height);
+        path.lineTo(size.width, size.height);
+        path.lineTo(size.width, size.height / 2);
+        break;
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CornerPainter oldDelegate) => 
+      oldDelegate.position != position || oldDelegate.color != color;
+}
+
+enum CornerPosition { topLeft, topRight, bottomLeft, bottomRight }
+
+class Particle {
+  double x = Random().nextDouble() * 400;
+  double y = Random().nextDouble() * 400;
+  double radius = Random().nextDouble() * 3 + 1;
+  double dx = Random().nextDouble() * 2 - 1;
+  double dy = Random().nextDouble() * 2 - 1;
+  Color color = Colors.accents[Random().nextInt(Colors.accents.length)];
+
+  void update() {
+    x += dx;
+    y += dy;
+    
+    if (x < 0 || x > 400) dx = -dx;
+    if (y < 0 || y > 400) dy = -dy;
+  }
+}
+
+class ParticlePainter extends CustomPainter {
+  final List<Particle> particles;
+
+  ParticlePainter(this.particles);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var particle in particles) {
+      final paint = Paint()..color = particle.color.withOpacity(0.6);
+      canvas.drawCircle(
+        Offset(particle.x, particle.y),
+        particle.radius,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(ParticlePainter oldDelegate) => true;
+}
+
+class CircleParticlePainter extends CustomPainter {
+  final double animationValue;
+
+  CircleParticlePainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final radius = size.width / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    
+    // Draw animated particles around the circle
+    for (int i = 0; i < 12; i++) {
+      final angle = 2 * pi * i / 12 + animationValue * 2 * pi;
+      final x = center.dx + radius * cos(angle);
+      final y = center.dy + radius * sin(angle);
+      
+      final particleSize = 2 + sin(angle * 5 + animationValue * 2 * pi) * 2;
+      canvas.drawCircle(Offset(x, y), particleSize, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CircleParticlePainter oldDelegate) => 
+      oldDelegate.animationValue != animationValue;
+}
+
+class ColorTweenSequence extends Animatable<Color?> {
+  final List<ColorTweenSequenceItem> items;
+
+  ColorTweenSequence(this.items);
+
+  @override
+  Color? transform(double t) {
+    final totalWeight = items.fold(0.0, (sum, item) => sum + item.weight);
+    var cumulative = 0.0;
+    
+    for (var item in items) {
+      final itemT = (t - cumulative) / (item.weight / totalWeight);
+      if (itemT <= 1.0) {
+        return item.tween.transform(itemT.clamp(0.0, 1.0));
+      }
+      cumulative += item.weight / totalWeight;
+    }
+    
+    return items.last.tween.end;
+  }
+}
+
+class ColorTweenSequenceItem {
+  final ColorTween tween;
+  final double weight;
+
+  ColorTweenSequenceItem({required this.tween, required this.weight});
 }
