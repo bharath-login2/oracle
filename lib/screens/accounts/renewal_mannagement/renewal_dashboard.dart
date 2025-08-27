@@ -7,6 +7,7 @@ import 'package:login2/models/commonConfigureModel.dart';
 import 'package:login2/models/dashboardModel.dart';
 import 'package:login2/models/lead_management/leadDashboardModel.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/hidden_clients.dart';
@@ -14,7 +15,10 @@ import 'package:login2/screens/accounts/renewal_mannagement/payment_reports.dart
 import 'package:login2/screens/accounts/renewal_mannagement/quck_renewal.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/widgets/renewal_grid_widget.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/service/service.dart';
@@ -31,9 +35,13 @@ class RenewalDashboard extends StatefulWidget {
 
 class _RenewalDashboardState extends State<RenewalDashboard> {
   RenewalDashboardModel? renewalDashboard;
+  String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
   bool isLoading = true;
   String token = "";
-  String? RenewalDashboardPermission;
+
   String phoneCallLogPermission = '';
   LeadDashboardModel? leadDashboard;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -64,6 +72,11 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
     token = await Common.getSharedPref("token");
     renewalDashboard = await HttpService.renewalDashboard();
     configure = await HttpService.configure(token);
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
     RenewalDashboardPermission =
         await Common.getSharedPref("RenewalDashboardPermission");
     name = await Common.getSharedPref("name");
@@ -132,7 +145,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
         return shouldExit ?? false;
       },
       child: Scaffold(
-          key: _scaffoldKey,
+        key: _scaffoldKey,
         backgroundColor: Colors.grey.shade100,
         appBar: appBarWidget(context, "lead"),
         // appBar: PreferredSize(
@@ -631,10 +644,39 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.black,
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => RenewalDashboard()),
-            );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => RenewalDashboard()),
+            // );
+            ProjectDashboardPermission == "true"
+                ? Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProjectDashboard()),
+                  )
+                : AccountsDashboardPermission == "true"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                AccountsDashboard(token: token)),
+                      )
+                    : MenuDashboard == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomePage(token)),
+                          )
+                        : RenewalDashboardPermission == "true"
+                            ? Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => RenewalDashboard()),
+                              )
+                            : Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Dashboard(token)),
+                              );
           },
           child: Image.asset("assets/icons/menu.png", width: 25),
         ),

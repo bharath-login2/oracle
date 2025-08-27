@@ -228,7 +228,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               prefixIcon: Icon(Icons.celebration),
                             ),
                           ),
-
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
@@ -247,7 +246,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 10),
                           TextField(
                             controller: holidayDescController,
@@ -257,9 +255,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               prefixIcon: Icon(Icons.description),
                             ),
                           ),
-
                           const SizedBox(height: 10),
-
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton.icon(
@@ -917,27 +913,85 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                   //   ),
                   // ),
                   // const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Stack(
                     children: [
-                      _enhancedLegendCard(
-                        icon: Icons.check_circle,
-                        label: "Present Today",
-                        count: _dailyList.isNotEmpty
-                            ? _dailyList.first.presentCount
-                            : 0,
-                        color: Colors.green.shade600,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _enhancedLegendCard(
+                              icon: Icons.check_circle,
+                              label: "Present Today",
+                              count: _dailyList.isNotEmpty
+                                  ? _dailyList.first.presentCount
+                                  : 0,
+                              color: Colors.green.shade600,
+                            ),
+                            const SizedBox(width: 12),
+                            _enhancedLegendCard(
+                              icon: Icons.beach_access,
+                              label: "Leave Today",
+                              count: _dailyList.isNotEmpty
+                                  ? _dailyList.first.halfDayCount
+                                  : 0,
+                              color: Colors.redAccent,
+                            ),
+                            const SizedBox(width: 12),
+                            _enhancedLegendCard(
+                              icon: Icons.access_time,
+                              label: "Half Day",
+                              count: 0,
+                              color: Colors.orange.shade600,
+                            ),
+                            const SizedBox(
+                                width:
+                                    40), // extra space so arrow doesn’t overlap
+                          ],
+                        ),
                       ),
-                      _enhancedLegendCard(
-                        icon: Icons.beach_access,
-                        label: "Leave Today",
-                        count: _dailyList.isNotEmpty
-                            ? _dailyList.first.absentCount
-                            : 0,
-                        color: Colors.redAccent,
+
+                      // Arrow indicator
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 30,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white
+                                    .withOpacity(0.0), // transparent left side
+                                Colors.white, // solid right side
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
                     ],
                   ),
+
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //   children: [
+                  //     _enhancedLegendCard(
+                  //       icon: Icons.check_circle,
+                  //       label: "Present Today",
+                  //       count: _dailyList.isNotEmpty
+                  //           ? _dailyList.first.presentCount
+                  //           : 0,
+                  //       color: Colors.green.shade600,
+                  //     ),
+
+                  //   ],
+                  // ),
                   const SizedBox(height: 15),
                   _attendanceList.isNotEmpty
                       ? Column(

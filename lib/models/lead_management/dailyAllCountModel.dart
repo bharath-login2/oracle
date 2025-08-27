@@ -37,11 +37,13 @@ class DailyDataModel {
 class DailyItem {
   String date;
   int presentCount;
+    int halfDayCount;
   int absentCount;
 
   DailyItem({
     required this.date,
     required this.presentCount,
+     required this.halfDayCount,
     required this.absentCount,
   });
 
@@ -49,13 +51,16 @@ class DailyItem {
         date: json["date"] ?? '',
         presentCount:
             int.tryParse(json["present_count"].toString()) ?? 0,
+            halfDayCount:
+            int.tryParse(json["halfday_count"].toString()) ?? 0,
         absentCount:
-            int.tryParse(json["absent_count"].toString()) ?? 0,
+            int.tryParse(json["leave_count"].toString()) ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
         "date": date,
         "present_count": presentCount,
-        "absent_count": absentCount,
+         "halfday_count": halfDayCount,
+        "leave_count": absentCount,
       };
 }

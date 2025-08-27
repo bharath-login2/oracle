@@ -2582,11 +2582,11 @@ class _AddFollowupState extends State<AddFollowup> {
                           if (callResultId == '4' &&
                               createOrder &&
                               commonDetails!.data.isRenewal)
-                            CheckboxListTile(
+                            CheckboxListTile( 
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
                                 value:
-                                    createRenewal, // initial value of the checkbox
+                                    createRenewal,
                                 onChanged: (bool? value) {
                                   setState(() {
                                     createRenewal = value!;
@@ -3653,8 +3653,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Rate',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3679,8 +3679,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Qty',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3710,8 +3710,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Tax Percent',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3734,8 +3734,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Tax Amount',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3760,8 +3760,8 @@ class _AddFollowupState extends State<AddFollowup> {
                             labelText: 'Total Amount',
                             fillColor: Colors.white,
                             filled: true,
-                            prefixIcon:
-                                Icon(Icons.arrow_right, color: Colors.grey),
+                            // prefixIcon:
+                            //     Icon(Icons.arrow_right, color: Colors.grey),
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.grey),

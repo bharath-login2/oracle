@@ -2558,8 +2558,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 labelText: 'Rate',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -2584,8 +2584,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 labelText: 'Qty',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -2615,8 +2615,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 labelText: 'Tax Percent',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -2639,8 +2639,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 labelText: 'Tax Amount',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -2665,8 +2665,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             labelText: 'Total Amount',
                             fillColor: Colors.white,
                             filled: true,
-                            prefixIcon:
-                                Icon(Icons.arrow_right, color: Colors.grey),
+                            // prefixIcon:
+                            //     Icon(Icons.arrow_right, color: Colors.grey),
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.grey),

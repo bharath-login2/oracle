@@ -4,6 +4,7 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
 
@@ -131,7 +132,8 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
           } else if (object1.data!.LeadDashboard == "true") {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+             // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+             MaterialPageRoute(builder: (_) =>  MinimalDashboard(token)),
               (route) => false,
             );
             return;

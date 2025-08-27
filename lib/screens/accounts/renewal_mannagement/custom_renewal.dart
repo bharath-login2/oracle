@@ -19,6 +19,7 @@ class CustomRenewal extends StatefulWidget {
   CustomRenewal({super.key, this.custId, this.custName});
   String? custId;
   String? custName;
+
   @override
   State<CustomRenewal> createState() => _CustomRenewalState();
 }
@@ -29,7 +30,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
   RenewalDetailslModel? detailsResponse;
   PostRenewalModel? postExistingResponse;
   AddCustomerModel? postNewResponse;
+  bool _formSubmittedExisting = false;
+  bool _formSubmittedNew = false;
   bool isLoading = true;
+
   List<Product> filteredProducts = [];
   List filteredNames = [];
   String customerIdExisting = "";
@@ -67,8 +71,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
   List productsNew = [];
   List productNameListExisting = [];
   List productNameListNew = [];
-  double totalProductCostExisting = 0;
-  double totalProductCostNew = 0;
+  double totalProductCostExisting = 0; // Sum of rate*qty
+    double totalCostExisting = 0; 
+  double totalProductCostNew = 0;      // Sum of rate*qty
   double totalProductTaxExisting = 0;
   double totalProductTaxNew = 0;
   bool uploading = false;
@@ -122,8 +127,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController prodAmountNew = TextEditingController();
   TextEditingController prodDetailsExisting = TextEditingController();
   TextEditingController prodDetailsNew = TextEditingController();
-  TextEditingController productQuantityExisting =
-      TextEditingController(text: '1');
+  TextEditingController productQuantityExisting = TextEditingController(text: '1');
   TextEditingController productQuantityNew = TextEditingController(text: '1');
   TextEditingController subTotalNew = TextEditingController();
   TextEditingController totalTaxNew = TextEditingController();
@@ -144,6 +148,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
     String token = await Common.getSharedPref("token");
     branchList = await HttpService.getBranchList(token);
     if (branchList != null) {}
+  }
+
+  void _forceRemoveFocus() {
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _selectContact(BuildContext context, String fieldType) async {
@@ -587,6 +595,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     ),
                     GestureDetector(
                       onTap: () {
+                        _forceRemoveFocus();
                         addProductsDialogExisting(context);
                       },
                       child: Container(
@@ -805,9 +814,12 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                     for (int i = 0;
                                         i < productsExisting.length;
                                         i++) {
-                                      totalProductCostExisting += double.parse(
+                                      // totalProductCostExisting += double.parse(
+                                      //     (await productsExisting[i])[
+                                      //         "total_amount"]);
+                                                totalProductCostExisting += double.parse(
                                           (await productsExisting[i])[
-                                              "total_amount"]);
+                                              "product_rate"]);
                                       totalProductTaxExisting += double.parse(
                                           (await productsExisting[i])[
                                               "total_tax_amount"]);
@@ -1139,6 +1151,54 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         const SizedBox(
                           width: 10,
                         ),
+                        // Container(
+                        //   width: MediaQuery.of(context).size.width * 0.5,
+                        //   height: 35,
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.grey.shade300,
+                        //     borderRadius:
+                        //         const BorderRadius.all(Radius.circular(5)),
+                        //   ),
+                        //   child: DropdownButtonFormField(
+                        //     isExpanded: true,
+                        //     decoration: const InputDecoration(
+                        //         border: InputBorder.none,
+                        //         contentPadding:
+                        //             EdgeInsets.only(right: 5.0, bottom: 10)),
+                        //     hint: const Padding(
+                        //       padding: EdgeInsets.only(left: 20),
+                        //       child: Text('Status'),
+                        //     ),
+                        //     validator: (val) {
+                        //       if (val == "" || val == null) {
+                        //         return "Add payment status";
+                        //       }
+                        //       return null;
+                        //     },
+                        //     value: payStatExisting,
+                        //     onChanged: (value) async {
+                        //       payStatExisting = value.toString();
+                        //       setState(() {});
+                        //     },
+                        //     items:
+                        //         detailsResponse!.data.paymentStatus.map((data) {
+                        //       return DropdownMenuItem(
+                        //         value: data.paymentStatus.toString(),
+                        //         child: Padding(
+                        //           padding: const EdgeInsets.only(left: 10),
+                        //           child: SizedBox(
+                        //             width:
+                        //                 MediaQuery.of(context).size.width * 0.5,
+                        //             child: Text(
+                        //               data.displaySts.toString(),
+                        //               overflow: TextOverflow.ellipsis,
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     }).toList(),
+                        //   ),
+                        // ),
                         Container(
                           width: MediaQuery.of(context).size.width * 0.5,
                           height: 35,
@@ -1158,7 +1218,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               child: Text('Status'),
                             ),
                             validator: (val) {
-                              if (val == "" || val == null) {
+                              if (_formSubmittedExisting &&
+                                  (val == "" || val == null)) {
                                 return "Add payment status";
                               }
                               return null;
@@ -1166,7 +1227,13 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             value: payStatExisting,
                             onChanged: (value) async {
                               payStatExisting = value.toString();
-                              setState(() {});
+                              setState(() {
+                                _formSubmittedExisting =
+                                    false; // Reset form submitted state
+                              });
+                              if (existingFormKey.currentState != null) {
+                                existingFormKey.currentState!.validate();
+                              }
                             },
                             items:
                                 detailsResponse!.data.paymentStatus.map((data) {
@@ -1205,12 +1272,53 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             const SizedBox(
                               width: 10,
                             ),
+                            // SizedBox(
+                            //   height: 35,
+                            //   width: MediaQuery.of(context).size.width * 0.5,
+                            //   child: TextFormField(
+                            //     validator: (value) {
+                            //       if (payStatExisting == "partial") {
+                            //         double val = double.parse(value!);
+                            //         if (value == "" || val == 0) {
+                            //           return "Enter Amount";
+                            //         } else if (val >=
+                            //             totalProductCostExisting) {
+                            //           return "Paid amount cannot be greater than or equal to total cost";
+                            //         }
+                            //       }
+                            //       return null;
+                            //     },
+                            //     readOnly:
+                            //         payStatExisting != "partial" ? true : false,
+                            //     keyboardType: TextInputType.number,
+                            //     controller: totalPaidAmountExisting,
+                            //     decoration: InputDecoration(
+                            //         contentPadding: const EdgeInsets.only(
+                            //             left: 10, top: 2, bottom: 2),
+                            //         //labelText: 'Invoice Number',
+                            //         fillColor: Colors.grey[300],
+                            //         filled: true,
+                            //         border: const OutlineInputBorder(
+                            //           // width: 0.0 produces a thin "hairline" border
+                            //           borderRadius:
+                            //               BorderRadius.all(Radius.circular(5)),
+                            //           borderSide: BorderSide.none,
+                            //         ),
+                            //         focusedBorder: OutlineInputBorder(
+                            //           borderSide: BorderSide(
+                            //               color: Colors.grey.shade300),
+                            //         ),
+                            //         labelStyle:
+                            //             const TextStyle(color: Colors.black)),
+                            //   ),
+                            // ),
                             SizedBox(
                               height: 35,
                               width: MediaQuery.of(context).size.width * 0.5,
                               child: TextFormField(
                                 validator: (value) {
-                                  if (payStatExisting == "partial") {
+                                  if (_formSubmittedExisting &&
+                                      payStatExisting == "partial") {
                                     double val = double.parse(value!);
                                     if (value == "" || val == 0) {
                                       return "Enter Amount";
@@ -1225,14 +1333,20 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                     payStatExisting != "partial" ? true : false,
                                 keyboardType: TextInputType.number,
                                 controller: totalPaidAmountExisting,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _formSubmittedExisting = false;
+                                  });
+                                  if (existingFormKey.currentState != null) {
+                                    existingFormKey.currentState!.validate();
+                                  }
+                                },
                                 decoration: InputDecoration(
                                     contentPadding: const EdgeInsets.only(
                                         left: 10, top: 2, bottom: 2),
-                                    //labelText: 'Invoice Number',
                                     fillColor: Colors.grey[300],
                                     filled: true,
                                     border: const OutlineInputBorder(
-                                      // width: 0.0 produces a thin "hairline" border
                                       borderRadius:
                                           BorderRadius.all(Radius.circular(5)),
                                       borderSide: BorderSide.none,
@@ -1251,10 +1365,54 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Text('Pay Methord * :'),
+                            const Text('Pay Method * :'),
                             const SizedBox(
                               width: 10,
                             ),
+                            // Container(
+                            //   width: MediaQuery.of(context).size.width * 0.5,
+                            //   height: 35,
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.grey.shade300,
+                            //     borderRadius:
+                            //         const BorderRadius.all(Radius.circular(5)),
+                            //   ),
+                            //   child: DropdownButtonFormField(
+                            //     isExpanded: true,
+                            //     decoration: const InputDecoration(
+                            //         border: InputBorder.none,
+                            //         contentPadding: EdgeInsets.only(
+                            //             left: 8.0, right: 5.0, bottom: 10)),
+                            //     hint: const Padding(
+                            //       padding: EdgeInsets.only(left: 20),
+                            //       child: Text('Payment Methord'),
+                            //     ),
+                            //     validator: (value) {
+                            //       if (payStatExisting == "partial" ||
+                            //           payStatExisting == "paid") {
+                            //         if (value == "" || value == null) {
+                            //           return "Select a payment method";
+                            //         }
+                            //       }
+                            //       return null;
+                            //     },
+                            //     value: payMethodExisting,
+                            //     onChanged: (value) async {
+                            //       setState(() {
+                            //         payMethodExisting = value.toString();
+                            //       });
+                            //     },
+                            //     items: detailsResponse!.data.paymentMethods
+                            //         .map((data) {
+                            //       return DropdownMenuItem<String>(
+                            //         value: data.id.toString(),
+                            //         child: Text(
+                            //           data.name.toString(),
+                            //         ),
+                            //       );
+                            //     }).toList(),
+                            //   ),
+                            // ),
                             Container(
                               width: MediaQuery.of(context).size.width * 0.5,
                               height: 35,
@@ -1271,11 +1429,12 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                         left: 8.0, right: 5.0, bottom: 10)),
                                 hint: const Padding(
                                   padding: EdgeInsets.only(left: 20),
-                                  child: Text('Payment Methord'),
+                                  child: Text('Payment Method'),
                                 ),
                                 validator: (value) {
-                                  if (payStatExisting == "partial" ||
-                                      payStatExisting == "paid") {
+                                  if (_formSubmittedExisting &&
+                                      (payStatExisting == "partial" ||
+                                          payStatExisting == "paid")) {
                                     if (value == "" || value == null) {
                                       return "Select a payment method";
                                     }
@@ -1286,15 +1445,17 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 onChanged: (value) async {
                                   setState(() {
                                     payMethodExisting = value.toString();
+                                    _formSubmittedExisting = false;
                                   });
+                                  if (existingFormKey.currentState != null) {
+                                    existingFormKey.currentState!.validate();
+                                  }
                                 },
                                 items: detailsResponse!.data.paymentMethods
                                     .map((data) {
                                   return DropdownMenuItem<String>(
                                     value: data.id.toString(),
-                                    child: Text(
-                                      data.name.toString(),
-                                    ),
+                                    child: Text(data.name.toString()),
                                   );
                                 }).toList(),
                               ),
@@ -1309,16 +1470,58 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             const SizedBox(
                               width: 10,
                             ),
+                            // SizedBox(
+                            //   height: 35,
+                            //   width: MediaQuery.of(context).size.width * 0.5,
+                            //   child: TextFormField(
+                            //     readOnly: true,
+                            //     validator: (value) {
+                            //       if (payStatExisting == "partial" ||
+                            //           payStatExisting == "paid") {
+                            //         if (value == "" || value == null) {
+                            //           return "Select a staff";
+                            //         }
+                            //       }
+                            //       return null;
+                            //     },
+                            //     onTap: () {
+                            //       collectedStaffDialog(context, "existing")
+                            //           .then((_) {
+                            //         setState(() {});
+                            //       });
+                            //     },
+                            //     controller: collectedExisting,
+                            //     decoration: InputDecoration(
+                            //         contentPadding: const EdgeInsets.only(
+                            //             left: 10, top: 2, bottom: 2),
+                            //         //labelText: 'Invoice Number',
+                            //         fillColor: Colors.grey[300],
+                            //         filled: true,
+                            //         border: const OutlineInputBorder(
+                            //           // width: 0.0 produces a thin "hairline" border
+                            //           borderRadius:
+                            //               BorderRadius.all(Radius.circular(5)),
+                            //           borderSide: BorderSide.none,
+                            //         ),
+                            //         focusedBorder: OutlineInputBorder(
+                            //           borderSide: BorderSide(
+                            //               color: Colors.grey.shade300),
+                            //         ),
+                            //         labelStyle:
+                            //             const TextStyle(color: Colors.black)),
+                            //   ),
+                            // ),
                             SizedBox(
                               height: 35,
                               width: MediaQuery.of(context).size.width * 0.5,
                               child: TextFormField(
                                 readOnly: true,
                                 validator: (value) {
-                                  if (payStatExisting == "partial" ||
-                                      payStatExisting == "paid") {
+                                  if (_formSubmittedExisting &&
+                                      (payStatExisting == "partial" ||
+                                          payStatExisting == "paid")) {
                                     if (value == "" || value == null) {
-                                      return "Select a staff";
+                                      return "Select Account Head";
                                     }
                                   }
                                   return null;
@@ -1326,18 +1529,29 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 onTap: () {
                                   collectedStaffDialog(context, "existing")
                                       .then((_) {
-                                    setState(() {});
+                                    setState(() {
+                                      _formSubmittedExisting = false;
+                                    });
+                                    if (existingFormKey.currentState != null) {
+                                      existingFormKey.currentState!.validate();
+                                    }
                                   });
+                                },
+                                onChanged: (value) {
+                                  setState(() {
+                                    _formSubmittedExisting = false;
+                                  });
+                                  if (existingFormKey.currentState != null) {
+                                    existingFormKey.currentState!.validate();
+                                  }
                                 },
                                 controller: collectedExisting,
                                 decoration: InputDecoration(
                                     contentPadding: const EdgeInsets.only(
                                         left: 10, top: 2, bottom: 2),
-                                    //labelText: 'Invoice Number',
                                     fillColor: Colors.grey[300],
                                     filled: true,
                                     border: const OutlineInputBorder(
-                                      // width: 0.0 produces a thin "hairline" border
                                       borderRadius:
                                           BorderRadius.all(Radius.circular(5)),
                                       borderSide: BorderSide.none,
@@ -1673,6 +1887,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   child: RawMaterialButton(
                     onPressed: () {
                       if (uploading == false) {
+                        setState(() {
+                          _formSubmittedExisting = true;
+                        });
+
                         if (existingFormKey.currentState!.validate() &&
                             productsExisting.isNotEmpty) {
                           setState(() {
@@ -2077,6 +2295,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     ),
                     GestureDetector(
                       onTap: () {
+                        _forceRemoveFocus();
                         addProductsDialogNew(context);
                       },
                       child: Container(
@@ -2614,6 +2833,54 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         const SizedBox(
                           width: 10,
                         ),
+                        // Container(
+                        //   width: MediaQuery.of(context).size.width * 0.5,
+                        //   height: 35,
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.grey.shade300,
+                        //     borderRadius:
+                        //         const BorderRadius.all(Radius.circular(5)),
+                        //   ),
+                        //   child: DropdownButtonFormField(
+                        //     isExpanded: true,
+                        //     decoration: const InputDecoration(
+                        //         border: InputBorder.none,
+                        //         contentPadding:
+                        //             EdgeInsets.only(right: 5.0, bottom: 10)),
+                        //     hint: const Padding(
+                        //       padding: EdgeInsets.only(left: 20),
+                        //       child: Text('Status'),
+                        //     ),
+                        //     validator: (val) {
+                        //       if (val == "" || val == null) {
+                        //         return "Add payment status";
+                        //       }
+                        //       return null;
+                        //     },
+                        //     value: payStatNew,
+                        //     onChanged: (value) async {
+                        //       payStatNew = value.toString();
+                        //       setState(() {});
+                        //     },
+                        //     items:
+                        //         detailsResponse!.data.paymentStatus.map((data) {
+                        //       return DropdownMenuItem(
+                        //         value: data.paymentStatus.toString(),
+                        //         child: Padding(
+                        //           padding: const EdgeInsets.only(left: 10),
+                        //           child: SizedBox(
+                        //             width:
+                        //                 MediaQuery.of(context).size.width * 0.5,
+                        //             child: Text(
+                        //               data.displaySts.toString(),
+                        //               overflow: TextOverflow.ellipsis,
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     }).toList(),
+                        //   ),
+                        // ),
                         Container(
                           width: MediaQuery.of(context).size.width * 0.5,
                           height: 35,
@@ -2633,7 +2900,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               child: Text('Status'),
                             ),
                             validator: (val) {
-                              if (val == "" || val == null) {
+                              if (_formSubmittedExisting &&
+                                  (val == "" || val == null)) {
                                 return "Add payment status";
                               }
                               return null;
@@ -2641,7 +2909,12 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             value: payStatNew,
                             onChanged: (value) async {
                               payStatNew = value.toString();
-                              setState(() {});
+                              setState(() {
+                                _formSubmittedExisting = false;
+                              });
+                              if (existingFormKey.currentState != null) {
+                                existingFormKey.currentState!.validate();
+                              }
                             },
                             items:
                                 detailsResponse!.data.paymentStatus.map((data) {
@@ -2679,16 +2952,57 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             const SizedBox(
                               width: 10,
                             ),
+                            // SizedBox(
+                            //   height: 35,
+                            //   width: MediaQuery.of(context).size.width * 0.5,
+                            //   child: TextFormField(
+                            //     validator: (value) {
+                            //       if (payStatNew == "partial") {
+                            //         double val = double.parse(value!);
+                            //         if (value == "" || val == 0) {
+                            //           return "Enter Amount";
+                            //         } else if (val >= totalProductCostNew) {
+                            //           return "Paid amount cannot be greater than or equal to total cost";
+                            //         }
+                            //       }
+                            //       return null;
+                            //     },
+                            //     readOnly:
+                            //         payStatNew != "partial" ? true : false,
+                            //     keyboardType: TextInputType.number,
+                            //     controller: totalPaidAmountNew,
+                            //     decoration: InputDecoration(
+                            //         contentPadding: const EdgeInsets.only(
+                            //             left: 10, top: 2, bottom: 2),
+                            //         //labelText: 'Invoice Number',
+                            //         fillColor: Colors.grey[300],
+                            //         filled: true,
+                            //         border: const OutlineInputBorder(
+                            //           // width: 0.0 produces a thin "hairline" border
+                            //           borderRadius:
+                            //               BorderRadius.all(Radius.circular(5)),
+                            //           borderSide: BorderSide.none,
+                            //         ),
+                            //         focusedBorder: OutlineInputBorder(
+                            //           borderSide: BorderSide(
+                            //               color: Colors.grey.shade300),
+                            //         ),
+                            //         labelStyle:
+                            //             const TextStyle(color: Colors.black)),
+                            //   ),
+                            // ),
                             SizedBox(
                               height: 35,
                               width: MediaQuery.of(context).size.width * 0.5,
                               child: TextFormField(
                                 validator: (value) {
-                                  if (payStatNew == "partial") {
+                                  if (_formSubmittedExisting &&
+                                      payStatNew == "partial") {
                                     double val = double.parse(value!);
                                     if (value == "" || val == 0) {
                                       return "Enter Amount";
-                                    } else if (val >= totalProductCostNew) {
+                                    } else if (val >=
+                                        totalProductCostExisting) {
                                       return "Paid amount cannot be greater than or equal to total cost";
                                     }
                                   }
@@ -2698,14 +3012,21 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                     payStatNew != "partial" ? true : false,
                                 keyboardType: TextInputType.number,
                                 controller: totalPaidAmountNew,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _formSubmittedExisting =
+                                        false; // Reset form submitted state
+                                  });
+                                  if (existingFormKey.currentState != null) {
+                                    existingFormKey.currentState!.validate();
+                                  }
+                                },
                                 decoration: InputDecoration(
                                     contentPadding: const EdgeInsets.only(
                                         left: 10, top: 2, bottom: 2),
-                                    //labelText: 'Invoice Number',
                                     fillColor: Colors.grey[300],
                                     filled: true,
                                     border: const OutlineInputBorder(
-                                      // width: 0.0 produces a thin "hairline" border
                                       borderRadius:
                                           BorderRadius.all(Radius.circular(5)),
                                       borderSide: BorderSide.none,
@@ -3468,7 +3789,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
     parseRateExisting = double.parse(prodRateExisting.text);
     parseQtyExisting = double.parse(productQuantityExisting.text);
     parseTaxExisting = double.parse(prodTaxExisting.text);
-
     productTaxExisting =
         ((parseRateExisting * parseQtyExisting) * parseTaxExisting / 100);
     prodAmountExisting.text =
@@ -3499,14 +3819,17 @@ class _CustomRenewalState extends State<CustomRenewal> {
         prodAmountExisting.text = "";
         prodDetailsExisting.text = "";
         totalProductCostExisting = 0;
+        totalCostExisting = 0;
         totalProductTaxExisting = 0;
         for (int i = 0; i < productsExisting.length; i++) {
           totalProductCostExisting +=
               double.parse((await productsExisting[i])["total_amount"]);
+               totalCostExisting +=
+              double.parse((await productsExisting[i])["product_rate"]);
           totalProductTaxExisting +=
               double.parse((await productsExisting[i])["total_tax_amount"]);
         }
-        subTotalExisting.text = totalProductCostExisting.toString();
+        subTotalExisting.text = totalCostExisting.toString();
         totalTaxExisting.text = totalProductTaxExisting.toString();
         discountAmtExisting = double.parse(
             discountExisting.text == "" ? "0" : discountExisting.text);
@@ -4069,6 +4392,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   }
 
   Future<Object?> addProductsDialogNew(BuildContext context) {
+    _forceRemoveFocus();
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
       barrierDismissible: true,

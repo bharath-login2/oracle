@@ -62,39 +62,40 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String name = '';
   String role = '';
-    String token = '';
-  String ProjectDashboardPermission = '';
-    String MenuDashboard = '';
-  String LeadDashboard = '';
+  String token = '';
+  String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
   String phoneCallLogPermission = '';
   String viewWorkReportPermission = '';
   String startAndStopWorkPermission = '';
-   bool isLoading = false;
-     int notificationCount = 0;
-       var fromdate = DateTime.now();
+  bool isLoading = false;
+  int notificationCount = 0;
+  var fromdate = DateTime.now();
   var todate = DateTime.now();
   var fromdate1 =
       DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
   var todate1 = DateTime.now();
   var outputFormat = DateFormat('dd-MM-yyyy');
-    LeadDashboardModel? leadDashboard;
-      bool createLeadCategory1 = false;
+  LeadDashboardModel? leadDashboard;
+  bool createLeadCategory1 = false;
   bool updateLeadCategory1 = false;
   bool deleteLeadCategory1 = false;
-    String createLeadCategory = '';
+  String createLeadCategory = '';
   String updateLeadCategory = '';
   String deleteLeadCategory = '';
   CommonResponse? loginOrNot;
-    bool isWorkStarted = false;
+  bool isWorkStarted = false;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getData();
-     _loadWorkStatus();
+    _loadWorkStatus();
   }
 
   @override
@@ -105,28 +106,32 @@ class _HomePageState extends State<HomePage> {
 
   getData() async {
     //
-   token = await Common.getSharedPref("token");
+    token = await Common.getSharedPref("token");
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
-     ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
-      LeadDashboard = await Common.getSharedPref("LeadDashboard");
-           MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
     log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
-         viewWorkReportPermission =
+    viewWorkReportPermission =
         await Common.getSharedPref("viewWorkReportPermission");
-            startAndStopWorkPermission =
-          await Common.getSharedPref("startAndStopWorkPermission");
-           createLeadCategory = await Common.getSharedPref("createLeadCategory");
-      updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
-      deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+    startAndStopWorkPermission =
+        await Common.getSharedPref("startAndStopWorkPermission");
+    createLeadCategory = await Common.getSharedPref("createLeadCategory");
+    updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
+    deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
 
-         createLeadCategory1 = createLeadCategory == 'true';
-      updateLeadCategory1 = updateLeadCategory == 'true';
-      deleteLeadCategory1 = deleteLeadCategory == 'true';
+    createLeadCategory1 = createLeadCategory == 'true';
+    updateLeadCategory1 = updateLeadCategory == 'true';
+    deleteLeadCategory1 = deleteLeadCategory == 'true';
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -139,10 +144,10 @@ class _HomePageState extends State<HomePage> {
         result = false;
       });
     }
-      
+
     userDashboard = await HttpService.mainDashboard(widget.token);
-     Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
-        
+    Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+
     if (userDashboard != null) {
       setState(() {
         _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
@@ -165,26 +170,25 @@ class _HomePageState extends State<HomePage> {
     if (configure != null) {
       setState(() {});
     }
-     leadDashboard = await HttpService.leadDashboard(
-            token, fromdate, todate, fromdate1, todate1);
-            setState(() {
-          notificationCount = leadDashboard!.data.unreadNotification;
+    leadDashboard = await HttpService.leadDashboard(
+        token, fromdate, todate, fromdate1, todate1);
+    setState(() {
+      notificationCount = leadDashboard!.data.unreadNotification;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final dismissedDate = prefs.getString('loginPromptDismissedDate');
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    if (dismissedDate != today) {
+      loginOrNot = await HttpService.getLoginorNot(widget.token);
+      if (loginOrNot?.data != true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showLoginPrompt(context);
         });
-         final prefs = await SharedPreferences.getInstance();
-      final dismissedDate = prefs.getString('loginPromptDismissedDate');
-      final today = DateTime.now().toIso8601String().substring(0, 10);
-         if (dismissedDate != today) {
-          loginOrNot = await HttpService.getLoginorNot(widget.token);
-          if (loginOrNot?.data != true) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              showLoginPrompt(context);
-            });
-          }
-        }
-
+      }
+    }
   }
 
-    void showError(String message) {
+  void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -193,15 +197,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-   void _loadWorkStatus() async {
+  void _loadWorkStatus() async {
     String? status = await Common.getSharedPref("is_work_started");
     setState(() {
       isWorkStarted = status == "true";
     });
   }
 
-   Future<String?> generateFaceHash(File faceImageFile) async {
+  Future<String?> generateFaceHash(File faceImageFile) async {
     final faceDetector = FaceDetector(
       options: FaceDetectorOptions(
         enableLandmarks: true,
@@ -322,84 +325,93 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                           Row(
-                children: [
-                  userDashboard != null && startAndStopWorkPermission == "true"
-                      ?
-                      // StartStopToggle(
-                      //     initialStatus: userDashboard!.data.loginCheck,
-                      //     onToggle: (bool started) {
-                      //       setState(() {
-                      //         userDashboard!.data.loginCheck = started;
-                      //       });
-                      //     },
-                      //   )
-                      StartStopToggle(
-                          initialStatus: userDashboard!.data.loginCheck,
-                          onToggle: (bool started) {
-                            setState(() {
-                              userDashboard!.data.loginCheck = started;
-                            });
-                          },
-                          setDashboardLoading: (bool loading) {
-                            setState(() {
-                              isLoading =
-                                  loading; // This changes the dashboard loader state
-                            });
-                          },
-                        )
-                      : const SizedBox(),
-                  const SizedBox(width: 20),
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => NotificationPage(
-                                token,
-                                createLeadCategory1,
-                                updateLeadCategory1,
-                                deleteLeadCategory1)),
-                      ).then((r) {
-                        getData();
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Stack(
-                        children: [
-                          Image.asset("assets/icons/notification.png",
-                              width: 20, color: Colors.white),
-                          notificationCount > 0
-                              ? Positioned(
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(1),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 12,
-                                      minHeight: 12,
-                                    ),
+                            children: [
+                              userDashboard != null &&
+                                      startAndStopWorkPermission == "true"
+                                  ?
+                                  // StartStopToggle(
+                                  //     initialStatus: userDashboard!.data.loginCheck,
+                                  //     onToggle: (bool started) {
+                                  //       setState(() {
+                                  //         userDashboard!.data.loginCheck = started;
+                                  //       });
+                                  //     },
+                                  //   )
+                                  StartStopToggle(
+                                      initialStatus:
+                                          userDashboard!.data.loginCheck,
+                                      onToggle: (bool started) {
+                                        setState(() {
+                                          userDashboard!.data.loginCheck =
+                                              started;
+                                        });
+                                      },
+                                      setDashboardLoading: (bool loading) {
+                                        setState(() {
+                                          isLoading =
+                                              loading; // This changes the dashboard loader state
+                                        });
+                                      },
+                                    )
+                                  : const SizedBox(),
+                              const SizedBox(width: 20),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => NotificationPage(
+                                            token,
+                                            createLeadCategory1,
+                                            updateLeadCategory1,
+                                            deleteLeadCategory1)),
+                                  ).then((r) {
+                                    getData();
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: Stack(
+                                    children: [
+                                      Image.asset(
+                                          "assets/icons/notification.png",
+                                          width: 20,
+                                          color: Colors.white),
+                                      notificationCount > 0
+                                          ? Positioned(
+                                              right: 0,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(1),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                constraints:
+                                                    const BoxConstraints(
+                                                  minWidth: 12,
+                                                  minHeight: 12,
+                                                ),
+                                              ),
+                                            )
+                                          : const SizedBox()
+                                    ],
                                   ),
-                                )
-                              : const SizedBox()
-                        ],
-                      ),
-                    ),
-                  ),
-                     InkWell(
-                  onTap: () {
-                    _scaffoldKey.currentState!.openEndDrawer();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Image.asset("assets/icons/menu.png", width: 20),
-                  ),
-                ),
-                ],
-              ),
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  _scaffoldKey.currentState!.openEndDrawer();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: Image.asset("assets/icons/menu.png",
+                                      width: 20),
+                                ),
+                              ),
+                            ],
+                          ),
                           // InkWell(
                           //   onTap: () {
                           //     _scaffoldKey.currentState!.openEndDrawer();
@@ -1154,8 +1166,7 @@ class _HomePageState extends State<HomePage> {
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const ComplaintListScreen()));
-                                            } 
-                                            else if (userDashboard!
+                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Attendance') {
                                               Navigator.push(
@@ -1232,16 +1243,48 @@ class _HomePageState extends State<HomePage> {
                 floatingActionButton: FloatingActionButton(
                   backgroundColor: Colors.black,
                   onPressed: () {
-                    MenuDashboard =="true"?
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => HomePage(widget.token)),
-                    ): Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => Dashboard(widget.token)),
-                    );
+                    // MenuDashboard =="true"?
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //       builder: (context) => HomePage(widget.token)),
+                    // ): Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //       builder: (context) => Dashboard(widget.token)),
+                    // );
+                    ProjectDashboardPermission == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ProjectDashboard()),
+                          )
+                        : AccountsDashboardPermission == "true"
+                            ? Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        AccountsDashboard(token: token)),
+                              )
+                            : MenuDashboard == "true"
+                                ? Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => HomePage(token)),
+                                  )
+                                : RenewalDashboardPermission == "true"
+                                    ? Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                RenewalDashboard()),
+                                      )
+                                    : Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                Dashboard(token)),
+                                      );
                   },
                   child: Image.asset("assets/icons/menu.png",
                       width: 25), //icon inside button
@@ -1310,9 +1353,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
-    void showLoginPrompt(BuildContext context) {
+  void showLoginPrompt(BuildContext context) {
     String? faceBase64;
     String faceDetection = "true";
     String companyLocation = "true";

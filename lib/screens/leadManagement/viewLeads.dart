@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/models/lead_management/leadDetailsModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -79,6 +80,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   bool? result1 = true;
   DateTime? fromdate;
   DateTime? todate;
+  LeadDeatailsModel? leadDetails;
   var outputFormat = DateFormat('dd-MM-yyyy');
   dynamic status;
   dynamic staff;
@@ -312,7 +314,6 @@ class _ViewLeadsState extends State<ViewLeads> {
     }
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
-
   }
 
   @override
@@ -829,7 +830,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                               // await launchUrl(Uri.parse(url));
                                               // Common.dialPad(
                                               //     items[index].contactNumber1);
-                                                   await FlutterPhoneDirectCaller.callNumber( items[index].contactNumber1);
+                                              await FlutterPhoneDirectCaller
+                                                  .callNumber(items[index]
+                                                      .contactNumber1);
                                             }
                                           }
                                         }
@@ -1147,34 +1150,84 @@ class _ViewLeadsState extends State<ViewLeads> {
                       Navigator.of(context).pop();
                     },
                     child: const Text('No')),
+                // TextButton(
+                //     onPressed: () async {
+                //       Common.showProgressDialog(context, "Loading..");
+                //       Map<String, dynamic> body = {
+                //         "token": widget.token,
+                //         'leadMasterIds': selectedIUsers,
+                //         'staffId': staffId
+                //       };
+                //       BulkTransferLeadModel bulkTransfer =
+                //           await HttpService.bulkTransferLead(body);
+                //       if (bulkTransfer.data == true) {
+                //         Common.toastMessaage(
+                //             bulkTransfer.message, Colors.green);
+                //         if (context.mounted) {
+                //           Navigator.pop(context);
+                //           Navigator.pop(context);
+                //           page = 1;
+                //           items.clear();
+                //           getData('desc', false, status);
+                //         }
+                //       } else {
+                //         Common.toastMessaage(bulkTransfer.message, Colors.red);
+                //         if (context.mounted) {
+                //           Navigator.of(context).pop();
+                //         }
+                //       }
+                //     },
+                //     child: const Text('Yes')),
                 TextButton(
-                    onPressed: () async {
-                      Common.showProgressDialog(context, "Loading..");
-                      Map<String, dynamic> body = {
-                        "token": widget.token,
-                        'leadMasterIds': selectedIUsers,
-                        'staffId': staffId
-                      };
-                      BulkTransferLeadModel bulkTransfer =
-                          await HttpService.bulkTransferLead(body);
-                      if (bulkTransfer.data == true) {
-                        Common.toastMessaage(
-                            bulkTransfer.message, Colors.green);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                          page = 1;
-                          items.clear();
-                          getData('desc', false, status);
-                        }
-                      } else {
-                        Common.toastMessaage(bulkTransfer.message, Colors.red);
-                        if (context.mounted) {
-                          Navigator.of(context).pop();
+                  onPressed: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    Map<String, dynamic> body = {
+                      "token": widget.token,
+                      'leadMasterIds': selectedIUsers,
+                      'staffId': staffId
+                    };
+                    BulkTransferLeadModel bulkTransfer =
+                        await HttpService.bulkTransferLead(body);
+
+                    if (bulkTransfer.data == true) {
+                      Common.toastMessaage(bulkTransfer.message, Colors.green);
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+
+                        // CLEAR ALL SELECTION STATES
+                        setState(() {
+                          // Clear main selection lists
+                          selectedIUsers.clear();
+                          selectedUserNumbers.clear();
+
+                          // Also reset individual item selection states
+                          for (var item in items) {
+                            item.isSelected = false;
+                          }
+                        });
+                        int currentPage = page;
+                        items.clear();
+                        page = 1;
+                         getData('desc', false, status);
+
+                        if (itemScrollController.isAttached) {
+                          itemScrollController.scrollTo(
+                            index: (currentPage - 1) * pageSize,
+                             duration: const Duration(milliseconds: 500),
+                          );
                         }
                       }
-                    },
-                    child: const Text('Yes')),
+                    } else {
+                      Common.toastMessaage(bulkTransfer.message, Colors.red);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  },
+                  child: const Text('Yes'),
+                ),
               ],
             );
           });
@@ -1384,7 +1437,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         _colors.length
                                                 ? _colors[
                                                     items[index].callResultId]
-                                                : const Color.fromARGB(255, 245, 160, 34), 
+                                                : const Color.fromARGB(
+                                                    255, 245, 160, 34),
                                             borderRadius:
                                                 BorderRadius.circular(5)),
                                         child: Padding(
@@ -1567,7 +1621,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         const SizedBox(
                                                           height: 3,
                                                         ),
-                                                        Text(   
+                                                        Text(
                                                           items[index]
                                                               .scheduledDate
                                                               .toString(),
@@ -1708,7 +1762,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                   //     'tel:+${items[index].contactNumber1}';
                                   // await launchUrl(
                                   //     Uri.parse(url));
-                                 // Common.dialPad(items[index].contactNumber1);
+                                  // Common.dialPad(items[index].contactNumber1);
                                   await FlutterPhoneDirectCaller.callNumber(
                                       items[index].contactNumber1);
                                 }
@@ -3333,8 +3387,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                   // Common.dialPad(items[index].contactNumber1);
-                    await FlutterPhoneDirectCaller.callNumber(items[index].contactNumber1);
+                    // Common.dialPad(items[index].contactNumber1);
+                    await FlutterPhoneDirectCaller.callNumber(
+                        items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

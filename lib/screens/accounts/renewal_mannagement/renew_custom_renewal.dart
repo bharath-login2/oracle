@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class RenewCustomRenewal extends StatefulWidget {
 class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   bool isLoading = true;
   bool uploading = false;
+  bool _formSubmitted = false;
   final formKey = GlobalKey<FormState>();
   List filteredProducts = [];
   List filteredNames = [];
@@ -166,7 +168,12 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
       filteredStaff.addAll(renewalDetails!.data.staff);
       targets = renewalDetails!.data.targetGroups;
       filteredTargets.addAll(targets);
+
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
+        double rate = double.parse(renewalDetails!.data.invoiceLists[i].rate);
+        double qty = double.parse(renewalDetails!.data.invoiceLists[i].qty);
+        double rateTotal = rate * qty;
+
         productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
           "product_id": renewalDetails!.data.invoiceLists[i].productId,
@@ -176,9 +183,15 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
           "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
           "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
           "total_amount": renewalDetails!.data.invoiceLists[i].amount,
-          "description": renewalDetails!.data.invoiceLists[i].productDescription,
+          "rate_total": rateTotal.toString(),
+          "description":
+              renewalDetails!.data.invoiceLists[i].productDescription,
         });
       }
+
+      // Recalculate totals based on the new logic
+      recalculateTotals();
+
       setState(() {
         isLoading = false;
       });
@@ -187,6 +200,29 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
         isLoading = false;
       });
     }
+  }
+
+  void recalculateTotals() {
+    totalProductCost = 0;
+    totalProductTax = 0;
+    double totalRate = 0;
+
+    for (int i = 0; i < products.length; i++) {
+      totalProductCost += double.parse(products[i]["total_amount"]);
+      totalProductTax += double.parse(products[i]["total_tax_amount"]);
+      totalRate += double.parse(products[i]["rate_total"] ?? "0");
+    }
+
+    subTotal.text = totalRate.toStringAsFixed(2);
+    totalTax.text = totalProductTax.toStringAsFixed(2);
+    discountAmt = double.parse(discount.text.isEmpty ? "0.0" : discount.text);
+    shippingAmt =
+        double.parse(shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+
+    // Total = Subtotal + Tax - Discount + Shipping
+    totalAmount.text = (totalRate + totalProductTax - discountAmt + shippingAmt)
+        .toStringAsFixed(2);
+    totalPaidAmount.text = totalAmount.text;
   }
 
   @override
@@ -587,80 +623,49 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
-                                // GestureDetector(
-                                //   onTap: () async {
-                                //     products.removeAt(index);
-                                //     productName.removeAt(index);
-                                //     totalProductCost = 0;
-                                //     totalProductTax = 0;
-                                //     for (int i = 0; i < products.length; i++) {
-                                //       totalProductCost += double.parse(
-                                //           (await products[i])["total_amount"]);
-                                //       totalProductTax += double.parse(
-                                //           (await products[i])[
-                                //               "total_tax_amount"]);
-                                //     }
-                                //     subTotal.text = totalProductCost.toString();
-                                //     totalTax.text = totalProductTax.toString();
-                                //     shippingAmt = double.parse(
-                                //         shippingCharge.text == ""
-                                //             ? "0"
-                                //             : shippingCharge.text);
-                                //     totalAmount.text = (totalProductCost -
-                                //             discountAmt +
-                                //             shippingAmt)
-                                //         .toString();
-                                //     totalPaidAmount.text = totalAmount.text;
-                                //     setState(() {});
-                                //   },
-                                //   child: const Padding(
-                                //     padding: EdgeInsets.all(8.0),
-                                //     child: Icon(
-                                //       Icons.delete_outline,
-                                //       color: Colors.red,
-                                //     ),
-                                //   ),
-                                // ),
                                 PopupMenuButton<String>(
                                   onSelected: (value) async {
                                     if (value == 'edit') {
                                       _editProduct(context, index);
                                     } else if (value == 'delete') {
-                                      products.removeAt(index);
-                                      productName.removeAt(index);
-                                      totalProductCost = 0;
-                                      totalProductTax = 0;
-                                      for (int i = 0;
-                                          i < products.length;
-                                          i++) {
-                                        totalProductCost += double.parse(
-                                            products[i]["total_amount"]);
-                                        totalProductTax += double.parse(
-                                            products[i]["total_tax_amount"]);
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text("Confirm Delete"),
+                                          content: const Text(
+                                              "Are you sure you want to delete this product?"),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, false),
+                                              child: const Text("Cancel"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, true),
+                                              child: const Text("Delete",
+                                                  style: TextStyle(
+                                                      color: Colors.red)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (confirm == true) {
+                                        products.removeAt(index);
+                                        productName.removeAt(index);
+                                        recalculateTotals();
+                                        setState(() {});
                                       }
-                                      subTotal.text =
-                                          totalProductCost.toString();
-                                      totalTax.text =
-                                          totalProductTax.toString();
-                                      shippingAmt = double.parse(
-                                          shippingCharge.text.isEmpty
-                                              ? "0"
-                                              : shippingCharge.text);
-                                      totalAmount.text = (totalProductCost -
-                                              discountAmt +
-                                              shippingAmt)
-                                          .toString();
-                                      totalPaidAmount.text = totalAmount.text;
-                                      setState(() {});
                                     }
                                   },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
+                                  itemBuilder: (context) => const [
+                                    PopupMenuItem(
                                         value: 'edit', child: Text('Edit')),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                         value: 'delete', child: Text('Delete')),
                                   ],
-                                ),
+                                )
                               ],
                             ),
                           ],
@@ -679,7 +684,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                       children: [
                         const SizedBox(
                           child: Text(
-                            "Sub Total :",
+                            "Total :",
                             style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500),
                           ),
@@ -724,7 +729,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                       children: [
                         const SizedBox(
                           child: Text(
-                            "Total Tax  :",
+                            "Tax  :",
                             style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500),
                           ),
@@ -764,6 +769,53 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                     const SizedBox(
                       height: 10,
                     ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.end,
+                    //   children: [
+                    //     const SizedBox(
+                    //       child: Text(
+                    //         "Discount :",
+                    //         style: TextStyle(
+                    //             fontSize: 14, fontWeight: FontWeight.w500),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(
+                    //       width: 10,
+                    //     ),
+                    //     SizedBox(
+                    //       width: MediaQuery.of(context).size.width * 0.3,
+                    //       height: 35,
+                    //       child: TextFormField(
+                    //         onChanged: (val) {
+                    //           discountAmt = double.parse(
+                    //               discount.text == "" ? "0.0" : discount.text);
+                    //           recalculateTotals();
+                    //         },
+                    //         keyboardType: TextInputType.number,
+                    //         controller: discount,
+                    //         decoration: InputDecoration(
+                    //             border: const OutlineInputBorder(
+                    //               // width: 0.0 produces a thin "hairline" border
+                    //               borderRadius:
+                    //                   BorderRadius.all(Radius.circular(5)),
+                    //               borderSide: BorderSide.none,
+                    //             ),
+                    //             contentPadding: const EdgeInsets.only(
+                    //                 left: 10, top: 2, bottom: 2),
+                    //             //labelText: 'Invoice Number',
+                    //             fillColor: Colors.grey[300],
+                    //             filled: true,
+                    //             // border: const OutlineInputBorder(),
+                    //             focusedBorder: OutlineInputBorder(
+                    //               borderSide:
+                    //                   BorderSide(color: Colors.grey.shade300),
+                    //             ),
+                    //             labelStyle:
+                    //                 const TextStyle(color: Colors.black)),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -782,29 +834,22 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                           height: 35,
                           child: TextFormField(
                             onChanged: (val) {
-                              discountAmt = double.parse(
-                                  discount.text == "" ? "0.0" : discount.text);
-                              totalAmount.text =
-                                  (totalProductCost - discountAmt + shippingAmt)
-                                      .toString();
-
-                              totalPaidAmount.text = totalAmount.text;
+                              discountAmt = double.tryParse(val) ?? 0.0;
+                              recalculateTotals();
+                              setState(() {});
                             },
                             keyboardType: TextInputType.number,
                             controller: discount,
                             decoration: InputDecoration(
                                 border: const OutlineInputBorder(
-                                  // width: 0.0 produces a thin "hairline" border
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(5)),
                                   borderSide: BorderSide.none,
                                 ),
                                 contentPadding: const EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                //labelText: 'Invoice Number',
                                 fillColor: Colors.grey[300],
                                 filled: true,
-                                // border: const OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide:
                                       BorderSide(color: Colors.grey.shade300),
@@ -840,10 +885,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                   shippingCharge.text == ""
                                       ? "0"
                                       : shippingCharge.text);
-                              totalAmount.text =
-                                  (totalProductCost - discountAmt + shippingAmt)
-                                      .toString();
-                              totalPaidAmount.text = totalAmount.text;
+                              recalculateTotals();
                             },
                             keyboardType: TextInputType.number,
                             controller: shippingCharge,
@@ -878,12 +920,12 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                       height: 5,
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(right: 10),
+                      padding: const EdgeInsets.only(left: 95),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            'Total :',
+                            'Grand Total :',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w500),
                           ),
@@ -895,7 +937,9 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                             child: Text(
                               totalAmount.text,
                               style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  overflow: TextOverflow.ellipsis),
                             ),
                           )
                         ],
@@ -970,22 +1014,17 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                 width: 10,
                               ),
                               SizedBox(
-                                height: 35,
                                 width: MediaQuery.of(context).size.width * 0.5,
+                                height: (totalPaidAmount.text.isNotEmpty &&
+                                        double.tryParse(totalAmount.text) !=
+                                            null &&
+                                        double.tryParse(
+                                                totalPaidAmount.text)! >=
+                                            double.tryParse(totalAmount.text)!)
+                                    ? 80
+                                    : 55,
                                 child: TextFormField(
                                   validator: (value) {
-                                    // if (payStat == "partial") {
-                                    //   double val = double.parse(value!);
-                                    //   if (value == "" || val == 0) {
-                                    //     return "Enter Amount";
-                                    //   }
-                                    //   else if (val >= totalProductCost) {
-                                    //     return "Paid amount cannot be greater than or equal to total cost";
-                                    //   }
-                                    //   // else if (val >= totalProductCost) {
-                                    //   //   return "Paid amount cannot be greater than or equal to total cost";
-                                    //   // }
-                                    // }
                                     if (payStat == "partial") {
                                       final val = double.tryParse(value ?? "");
                                       final total =
@@ -994,7 +1033,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                         return "Enter Amount";
                                       } else if (total != null &&
                                           val >= total) {
-                                        return "Paid amount cannot be greater than or equal to total cost";
+                                        return "Paid amount cannot be greater than or equal to Sub Total";
                                       }
                                     }
                                     return null;
@@ -1002,24 +1041,29 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                   readOnly: payStat != "partial" ? true : false,
                                   keyboardType: TextInputType.number,
                                   controller: totalPaidAmount,
+                                  onChanged: (value) {
+                                    if (formKey.currentState != null) {
+                                      formKey.currentState!.validate();
+                                    }
+                                  },
                                   decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      //labelText: 'Invoice Number',
-                                      fillColor: Colors.grey[300],
-                                      filled: true,
-                                      border: const OutlineInputBorder(
-                                        // width: 0.0 produces a thin "hairline" border
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(5)),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.grey.shade300),
-                                      ),
-                                      labelStyle:
-                                          const TextStyle(color: Colors.black)),
+                                    contentPadding: const EdgeInsets.only(
+                                        left: 10, top: 2, bottom: 2),
+                                    fillColor: Colors.grey[300],
+                                    filled: true,
+                                    border: const OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(5)),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.shade300),
+                                    ),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.black),
+                                    errorMaxLines: 3,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1034,7 +1078,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                               ),
                               Container(
                                 width: MediaQuery.of(context).size.width * 0.5,
-                                height: 35,
+                                height: 45,
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade300,
                                   borderRadius: const BorderRadius.all(
@@ -1048,7 +1092,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                           left: 8.0, right: 5.0, bottom: 10)),
                                   hint: const Padding(
                                     padding: EdgeInsets.only(left: 20),
-                                    child: Text('Payment Methord'),
+                                    child: Text('Payment Method'),
                                   ),
                                   validator: (value) {
                                     if (payStat == "partial" ||
@@ -1064,14 +1108,15 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                     setState(() {
                                       payMethod = value.toString();
                                     });
+                                    if (formKey.currentState != null) {
+                                      formKey.currentState!.validate();
+                                    }
                                   },
                                   items: renewalDetails!.data.paymentMethods
                                       .map((data) {
                                     return DropdownMenuItem<String>(
                                       value: data.id.toString(),
-                                      child: Text(
-                                        data.name.toString(),
-                                      ),
+                                      child: Text(data.name.toString()),
                                     );
                                   }).toList(),
                                 ),
@@ -1083,45 +1128,62 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               const Text('Account Head * :'),
-                              const SizedBox(
-                                width: 10,
-                              ),
+                              const SizedBox(width: 10),
                               SizedBox(
-                                height: 35,
                                 width: MediaQuery.of(context).size.width * 0.5,
-                                child: TextFormField(
-                                  readOnly: true,
-                                  validator: (value) {
-                                    if (payStat == "partial" ||
-                                        payStat == "paid") {
-                                      if (value == "" || value == null) {
-                                        return "Select a staff";
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                  onTap: () {
-                                    collectedStaffDialog(context);
-                                  },
-                                  controller: staffName,
-                                  decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      //labelText: 'Invoice Number',
-                                      fillColor: Colors.grey[300],
-                                      filled: true,
-                                      border: const OutlineInputBorder(
-                                        // width: 0.0 produces a thin "hairline" border
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(5)),
-                                        borderSide: BorderSide.none,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: 55,
+                                      child: TextFormField(
+                                        readOnly: true,
+                                        validator: (value) {
+                                          if (_formSubmitted &&
+                                              (payStat == "partial" ||
+                                                  payStat == "paid")) {
+                                            if (value == "" || value == null) {
+                                              return "Select Account Head";
+                                            }
+                                          }
+                                          return null;
+                                        },
+                                        onTap: () {
+                                          collectedStaffDialog(context)
+                                              .then((_) {
+                                            if (formKey.currentState != null) {
+                                              formKey.currentState!.validate();
+                                            }
+                                          });
+                                        },
+                                        controller: staffName,
+                                        onChanged: (value) {
+                                          if (formKey.currentState != null) {
+                                            formKey.currentState!.validate();
+                                          }
+                                        },
+                                        decoration: InputDecoration(
+                                          contentPadding: const EdgeInsets.only(
+                                              left: 10, top: 2, bottom: 2),
+                                          fillColor: Colors.grey[300],
+                                          filled: true,
+                                          border: const OutlineInputBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(5)),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: Colors.grey.shade300),
+                                          ),
+                                          labelStyle: const TextStyle(
+                                              color: Colors.black),
+                                        ),
                                       ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.grey.shade300),
-                                      ),
-                                      labelStyle:
-                                          const TextStyle(color: Colors.black)),
+                                    ),
+                                    // Add space for validation message without affecting layout
+                                    const SizedBox(height: 20),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1449,6 +1511,10 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                   child: RawMaterialButton(
                     onPressed: () {
                       if (uploading == false) {
+                        setState(() {
+                          _formSubmitted = true;
+                        });
+
                         if (formKey.currentState!.validate() &&
                             products.isNotEmpty) {
                           setState(() {
@@ -1642,21 +1708,70 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
     prodAmount.text = (productTax + (parseRate * parseQty)).toString();
   }
 
+  // addProduct() async {
+  //   if (productName.contains(productNameController.text)) {
+  //     Common.toastMessaage('Already Added', Colors.red);
+  //   } else {
+  //     if (productNameController.text != "") {
+  //       products.add({
+  //         "product_id": productId,
+  //         "product_name": productNameController.text,
+  //         "product_rate": prodRate.text,
+  //         "quantity": productQuantity.text,
+  //         "tax_percent": prodTax.text,
+  //         "total_tax_amount": productTax.toString(),
+  //         "total_amount": prodAmount.text,
+  //         "description": prodDetails.text,
+  //       });
+  //       productName.add(productNameController.text);
+  //       productNameController.text = "";
+  //       prodRate.text = "";
+  //       productQuantity.text = "1";
+  //       prodTax.text = "";
+  //       prodAmount.text = "";
+  //       prodDetails.text = "";
+  //       totalProductCost = 0;
+  //       totalProductTax = 0;
+  //       for (int i = 0; i < products.length; i++) {
+  //         totalProductCost += double.parse((await products[i])["total_amount"]);
+  //         totalProductTax +=
+  //             double.parse((await products[i])["total_tax_amount"]);
+  //       }
+  //       subTotal.text = totalProductCost.toString();
+  //       totalTax.text = totalProductTax.toString();
+  //       discountAmt = double.parse(discount.text == "" ? "0.0" : discount.text);
+  //       shippingAmt =
+  //           double.parse(shippingCharge.text == "" ? "0" : shippingCharge.text);
+  //       totalAmount.text =
+  //           (totalProductCost - discountAmt + shippingAmt).toString();
+  //       totalPaidAmount.text = totalAmount.text;
+  //       Navigator.pop(context);
+  //       setState(() {});
+  //     } else {
+  //       Common.toastMessaage('Add a product', Colors.red);
+  //     }
+  //   }
+  // }
   addProduct() async {
     if (productName.contains(productNameController.text)) {
       Common.toastMessaage('Already Added', Colors.red);
     } else {
       if (productNameController.text != "") {
+        double rateTotal = parseRate * parseQty;
+        double taxTotal = ((parseRate * parseQty) * parseTax / 100);
+
         products.add({
           "product_id": productId,
           "product_name": productNameController.text,
           "product_rate": prodRate.text,
           "quantity": productQuantity.text,
           "tax_percent": prodTax.text,
-          "total_tax_amount": productTax.toString(),
-          "total_amount": prodAmount.text,
+          "total_tax_amount": taxTotal.toString(),
+          "total_amount": (rateTotal + taxTotal).toString(),
+          "rate_total": rateTotal.toString(),
           "description": prodDetails.text,
         });
+
         productName.add(productNameController.text);
         productNameController.text = "";
         prodRate.text = "";
@@ -1664,21 +1779,28 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
         prodTax.text = "";
         prodAmount.text = "";
         prodDetails.text = "";
+
+        // Recalculate totals
         totalProductCost = 0;
         totalProductTax = 0;
+        double totalRate = 0;
+
         for (int i = 0; i < products.length; i++) {
-          totalProductCost += double.parse((await products[i])["total_amount"]);
-          totalProductTax +=
-              double.parse((await products[i])["total_tax_amount"]);
+          totalProductCost += double.parse(products[i]["total_amount"]);
+          totalProductTax += double.parse(products[i]["total_tax_amount"]);
+          totalRate += double.parse(products[i]["rate_total"] ?? "0");
         }
-        subTotal.text = totalProductCost.toString();
+
+        subTotal.text = totalRate.toString();
         totalTax.text = totalProductTax.toString();
         discountAmt = double.parse(discount.text == "" ? "0.0" : discount.text);
         shippingAmt =
             double.parse(shippingCharge.text == "" ? "0" : shippingCharge.text);
         totalAmount.text =
-            (totalProductCost - discountAmt + shippingAmt).toString();
+            (totalRate - discountAmt + shippingAmt + totalProductTax)
+                .toString();
         totalPaidAmount.text = totalAmount.text;
+
         Navigator.pop(context);
         setState(() {});
       } else {
@@ -1719,82 +1841,418 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
     return formated;
   }
 
-  void _editProduct(BuildContext context, int index) {
-    final TextEditingController rateController =
-        TextEditingController(text: products[index]['product_rate']);
-    final TextEditingController qtyController =
-        TextEditingController(text: products[index]['quantity']);
-    final TextEditingController taxController =
-        TextEditingController(text: products[index]['total_tax_amount']);
+  // void _editProduct(BuildContext context, int index) {
+  //   double ratePerUnit = double.tryParse(products[index]['product_rate']) ?? 0;
+  //   double qty = double.tryParse(products[index]['quantity']) ?? 0;
+  //   double taxPerUnit =
+  //       double.tryParse(products[index]['total_tax_amount']) ?? 0;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Product'),
-          content: Column(
+  //   final TextEditingController rateController =
+  //       TextEditingController(text: (ratePerUnit * qty).toStringAsFixed(2));
+  //   final TextEditingController qtyController =
+  //       TextEditingController(text: qty.toStringAsFixed(0));
+  //   final TextEditingController taxController =
+  //       TextEditingController(text: (taxPerUnit * qty).toStringAsFixed(2));
+
+  //   void recalcFields() {
+  //     double newQty = double.tryParse(qtyController.text) ?? 0;
+  //     rateController.text = (ratePerUnit * newQty).toStringAsFixed(2);
+  //     taxController.text = (taxPerUnit * newQty).toStringAsFixed(2);
+  //   }
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: const Text('Edit Product'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               controller: rateController,
+  //               readOnly: false,
+  //               decoration: const InputDecoration(labelText: 'Total Rate'),
+  //               keyboardType: TextInputType.number,
+  //             ),
+  //             Row(
+  //               children: [
+  //                 IconButton(
+  //                   icon: const Icon(Icons.remove),
+  //                   onPressed: () {
+  //                     int currentQty = int.tryParse(qtyController.text) ?? 0;
+  //                     if (currentQty > 1) {
+  //                       qtyController.text = (currentQty - 1).toString();
+  //                       recalcFields();
+  //                     }
+  //                   },
+  //                 ),
+  //                 Expanded(
+  //                   child: TextField(
+  //                     controller: qtyController,
+  //                     decoration: const InputDecoration(labelText: 'Quantity'),
+  //                     keyboardType: TextInputType.number,
+  //                     onChanged: (_) => recalcFields(),
+  //                   ),
+  //                 ),
+  //                 IconButton(
+  //                   icon: const Icon(Icons.add),
+  //                   onPressed: () {
+  //                     int currentQty = int.tryParse(qtyController.text) ?? 0;
+  //                     qtyController.text = (currentQty + 1).toString();
+  //                     recalcFields();
+  //                   },
+  //                 ),
+  //               ],
+  //             ),
+  //             TextField(
+  //               controller: taxController,
+  //               readOnly: true,
+  //               decoration: const InputDecoration(labelText: 'Total Tax'),
+  //               keyboardType: TextInputType.number,
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: const Text('Cancel')),
+  //           TextButton(
+  //               onPressed: () {
+  //                 double finalQty = double.tryParse(qtyController.text) ?? 0;
+  //                 double finalRate = double.tryParse(rateController.text) ?? 0;
+  //                 double finalTax = double.tryParse(taxController.text) ?? 0;
+
+  //                 products[index]['quantity'] = finalQty.toStringAsFixed(0);
+  //                 products[index]['product_rate'] =
+  //                     ratePerUnit.toStringAsFixed(2); // keep per-unit rate
+  //                 products[index]['total_tax_amount'] =
+  //                     finalTax.toStringAsFixed(2);
+  //                 products[index]['total_amount'] =
+  //                     (finalRate + finalTax).toStringAsFixed(2);
+
+  //                 // Recalculate totals
+  //                 totalProductCost = 0;
+  //                 totalProductTax = 0;
+  //                 for (int i = 0; i < products.length; i++) {
+  //                   totalProductCost +=
+  //                       double.parse(products[i]["total_amount"]);
+  //                   totalProductTax +=
+  //                       double.parse(products[i]["total_tax_amount"]);
+  //                 }
+  //                 subTotal.text = totalProductCost.toString();
+  //                 totalTax.text = totalProductTax.toString();
+  //                 shippingAmt = double.parse(
+  //                     shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+  //                 totalAmount.text =
+  //                     (totalProductCost - discountAmt + shippingAmt).toString();
+  //                 totalPaidAmount.text = totalAmount.text;
+
+  //                 setState(() {});
+  //                 Navigator.pop(context);
+  //               },
+  //               child: const Text('Update')),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  // void _editProduct(BuildContext context, int index) {
+  //   double ratePerUnit = double.tryParse(products[index]['product_rate']) ?? 0;
+  //   double qty = double.tryParse(products[index]['quantity']) ?? 0;
+  //   double taxPercent = double.tryParse(products[index]['tax_percent']) ?? 0;
+
+  //   final TextEditingController rateController =
+  //       TextEditingController(text: (ratePerUnit * qty).toStringAsFixed(2));
+  //   final TextEditingController qtyController =
+  //       TextEditingController(text: qty.toStringAsFixed(0));
+  //   final TextEditingController taxController =
+  //       TextEditingController(text: taxPercent.toStringAsFixed(2));
+
+  //   void recalcFields() {
+  //     double newQty = double.tryParse(qtyController.text) ?? 0;
+  //     double newTaxPercent = double.tryParse(taxController.text) ?? 0;
+  //     rateController.text = (ratePerUnit * newQty).toStringAsFixed(2);
+  //   }
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: const Text('Edit Product'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               controller: rateController,
+  //               readOnly: false,
+  //               decoration: const InputDecoration(labelText: 'Total Rate'),
+  //             ),
+  //             Row(
+  //               children: [
+  //                 IconButton(
+  //                   icon: const Icon(Icons.remove),
+  //                   onPressed: () {
+  //                     int currentQty = int.tryParse(qtyController.text) ?? 0;
+  //                     if (currentQty > 1) {
+  //                       qtyController.text = (currentQty - 1).toString();
+  //                       recalcFields();
+  //                     }
+  //                   },
+  //                 ),
+  //                 Expanded(
+  //                   child: TextField(
+  //                     controller: qtyController,
+  //                     decoration: const InputDecoration(labelText: 'Quantity'),
+  //                     keyboardType: TextInputType.number,
+  //                     onChanged: (_) => recalcFields(),
+  //                   ),
+  //                 ),
+  //                 IconButton(
+  //                   icon: const Icon(Icons.add),
+  //                   onPressed: () {
+  //                     int currentQty = int.tryParse(qtyController.text) ?? 0;
+  //                     qtyController.text = (currentQty + 1).toString();
+  //                     recalcFields();
+  //                   },
+  //                 ),
+  //               ],
+  //             ),
+  //             TextField(
+  //               controller: taxController,
+  //               decoration: const InputDecoration(labelText: 'Tax %'),
+  //               keyboardType: TextInputType.number,
+  //               onChanged: (_) => recalcFields(),
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: const Text('Cancel')),
+  //           TextButton(
+  //               onPressed: () {
+  //                 double finalQty = double.tryParse(qtyController.text) ?? 0;
+  //                 double finalTaxPercent =
+  //                     double.tryParse(taxController.text) ?? 0;
+  //                 double rateTotal = ratePerUnit * finalQty;
+  //                 double taxTotal = (rateTotal * finalTaxPercent) / 100;
+
+  //                 products[index]['quantity'] = finalQty.toStringAsFixed(0);
+  //                 products[index]['tax_percent'] =
+  //                     finalTaxPercent.toStringAsFixed(2);
+  //                 products[index]['total_tax_amount'] =
+  //                     taxTotal.toStringAsFixed(2);
+  //                 products[index]['rate_total'] = rateTotal.toStringAsFixed(2);
+  //                 products[index]['total_amount'] =
+  //                     (rateTotal + taxTotal).toStringAsFixed(2);
+
+  //                 // Recalculate totals
+  //                 totalProductCost = 0;
+  //                 totalProductTax = 0;
+  //                 double totalRate = 0;
+
+  //                 for (int i = 0; i < products.length; i++) {
+  //                   totalProductCost +=
+  //                       double.parse(products[i]["total_amount"]);
+  //                   totalProductTax +=
+  //                       double.parse(products[i]["total_tax_amount"]);
+  //                   totalRate += double.parse(products[i]["rate_total"] ?? "0");
+  //                 }
+
+  //                 subTotal.text = totalRate.toString();
+  //                 totalTax.text = totalProductTax.toString();
+  //                 shippingAmt = double.parse(
+  //                     shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+  //                 totalAmount.text =
+  //                     (totalRate - discountAmt + shippingAmt + totalProductTax)
+  //                         .toString();
+  //                 totalPaidAmount.text = totalAmount.text;
+
+  //                 setState(() {});
+  //                 Navigator.pop(context);
+  //               },
+  //               child: const Text('Update')),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+void _editProduct(BuildContext context, int index) {
+  double ratePerUnit = double.tryParse(products[index]['product_rate']) ?? 0;
+  double qty = double.tryParse(products[index]['quantity']) ?? 0;
+  double taxPercent = double.tryParse(products[index]['tax_percent']) ?? 0;
+
+  // Controllers
+  final TextEditingController rateController =
+      TextEditingController(text: ratePerUnit.toStringAsFixed(2));
+  final TextEditingController qtyController =
+      TextEditingController(text: qty.toStringAsFixed(0));
+  final TextEditingController taxController =
+      TextEditingController(text: taxPercent.toStringAsFixed(2));
+  final TextEditingController totalController =
+      TextEditingController(text: (ratePerUnit * qty).toStringAsFixed(2));
+
+  void recalcFields() {
+    double newQty = double.tryParse(qtyController.text) ?? 0;
+    double newRate = double.tryParse(rateController.text) ?? 0;
+    totalController.text = (newRate * newQty).toStringAsFixed(2);
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Edit Product',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Rate per unit
               TextField(
                 controller: rateController,
-                decoration: const InputDecoration(labelText: 'Rate'),
+                decoration: const InputDecoration(
+                  labelText: 'Rate per Unit',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
                 keyboardType: TextInputType.number,
+                onChanged: (_) => recalcFields(),
               ),
-              TextField(
-                controller: qtyController,
-                decoration: const InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, size: 20),
+                            onPressed: () {
+                              int currentQty = int.tryParse(qtyController.text) ?? 0;
+                              if (currentQty > 1) {
+                                qtyController.text = (currentQty - 1).toString();
+                                recalcFields();
+                              }
+                            },
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: qtyController,
+                              textAlign: TextAlign.center,
+                              decoration: const InputDecoration(
+                                labelText: 'Qty',
+                                border: InputBorder.none,
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => recalcFields(),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add, size: 20),
+                            onPressed: () {
+                              int currentQty = int.tryParse(qtyController.text) ?? 0;
+                              qtyController.text = (currentQty + 1).toString();
+                              recalcFields();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    flex: 1,
+                    child: TextField(
+                      controller: taxController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tax %',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => recalcFields(),
+                    ),
+                  ),
+                ],
               ),
+
+              const SizedBox(height: 16),
+
+              // Total
               TextField(
-                controller: taxController,
-                decoration: const InputDecoration(labelText: 'Tax Amount'),
-                keyboardType: TextInputType.number,
+                controller: totalController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Total Rate',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
-            TextButton(
-                onPressed: () {
-                  // Update values
-                  double rate = double.tryParse(rateController.text) ?? 0;
-                  double qty = double.tryParse(qtyController.text) ?? 0;
-                  double tax = double.tryParse(taxController.text) ?? 0;
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              double finalQty = double.tryParse(qtyController.text) ?? 0;
+              double finalRatePerUnit = double.tryParse(rateController.text) ?? 0;
+              double finalTaxPercent = double.tryParse(taxController.text) ?? 0;
+              double rateTotal = finalRatePerUnit * finalQty;
+              double taxTotal = (rateTotal * finalTaxPercent) / 100;
 
-                  products[index]['product_rate'] = rate.toStringAsFixed(2);
-                  products[index]['quantity'] = qty.toStringAsFixed(2);
-                  products[index]['total_tax_amount'] = tax.toStringAsFixed(2);
-                  products[index]['total_amount'] =
-                      (rate * qty + tax).toStringAsFixed(2);
+              products[index]['product_rate'] = finalRatePerUnit.toStringAsFixed(2);
+              products[index]['quantity'] = finalQty.toStringAsFixed(0);
+              products[index]['tax_percent'] = finalTaxPercent.toStringAsFixed(2);
+              products[index]['total_tax_amount'] = taxTotal.toStringAsFixed(2);
+              products[index]['rate_total'] = rateTotal.toStringAsFixed(2);
+              products[index]['total_amount'] = (rateTotal + taxTotal).toStringAsFixed(2);
 
-                  // Recalculate totals
-                  totalProductCost = 0;
-                  totalProductTax = 0;
-                  for (int i = 0; i < products.length; i++) {
-                    totalProductCost +=
-                        double.parse(products[i]["total_amount"]);
-                    totalProductTax +=
-                        double.parse(products[i]["total_tax_amount"]);
-                  }
-                  subTotal.text = totalProductCost.toString();
-                  totalTax.text = totalProductTax.toString();
-                  shippingAmt = double.parse(
-                      shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
-                  totalAmount.text =
-                      (totalProductCost - discountAmt + shippingAmt).toString();
-                  totalPaidAmount.text = totalAmount.text;
+              totalProductCost = 0;
+              totalProductTax = 0;
+              double totalRate = 0;
+              for (int i = 0; i < products.length; i++) {
+                totalProductCost += double.parse(products[i]["total_amount"]);
+                totalProductTax += double.parse(products[i]["total_tax_amount"]);
+                totalRate += double.tryParse(products[i]["rate_total"] ?? "0") ?? 0;
+              }
 
-                  setState(() {});
-                  Navigator.pop(context);
-                },
-                child: const Text('Update')),
-          ],
-        );
-      },
-    );
-  }
+              subTotal.text = totalRate.toStringAsFixed(2);
+              totalTax.text = totalProductTax.toStringAsFixed(2);
+              shippingAmt = double.parse(shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+              totalAmount.text = (totalRate + totalProductTax - discountAmt + shippingAmt).toStringAsFixed(2);
+              totalPaidAmount.text = totalAmount.text;
+
+              setState(() {});
+              Navigator.pop(context);
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   Future<dynamic> collectedStaffDialog(BuildContext context) {
     TextEditingController localSearchController = TextEditingController();

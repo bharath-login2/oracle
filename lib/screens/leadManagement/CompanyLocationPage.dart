@@ -80,8 +80,7 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
   }
 
   Future<void> _submitLocationToServer() async {
-    // ignore: unrelated_type_equality_checks
-    if (roleId != 1 && roleId != 2) {
+    if (roleId != "2" ) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No permission to add location')),
@@ -89,6 +88,8 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
       }
       return;
     }
+
+    
     if (selectedLocations.isEmpty || companyId == null) return;
 
     setState(() => isSubmitting = true);
@@ -264,7 +265,7 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
   }
 
   Future<void> removeLocation(int index) async {
-    if (roleId != 1 && roleId != 2) {
+    if (roleId != "2" ) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No permission to delete location')),
@@ -372,7 +373,7 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
                             onPressed: isSubmitting
                                 ? null
                                 : () {
-                                    if (roleId != 1 && roleId != 2) {
+                                    if (roleId != "2" ) {
                                       showDialog(
                                         context: context,
                                         builder: (context) => AlertDialog(
@@ -464,9 +465,7 @@ class _CompanyLocationPageState extends State<CompanyLocationPage> {
                                         onPressed: isSubmitting
                                             ? null
                                             : () async {
-                                                if (roleId != 1 &&
-                                                    roleId != 2) {
-                                                  // 🚫 No permission popup
+                                                if (roleId != "2") {
                                                   showDialog(
                                                     context: context,
                                                     builder: (context) {

@@ -614,7 +614,6 @@ class _EditClientsState extends State<EditClients> {
                                                 0.10), // Using 30%
                                       },
                                       children: [
-                                        // Each TableRow represents a row in the Table
                                         TableRow(
                                           decoration: BoxDecoration(
                                             borderRadius:

@@ -114,8 +114,6 @@ void initState() {
   ]).animate(_animationController);
   
   _animationController.repeat(reverse: true);
-  
-  // Initialize verification steps
   _verificationSteps = [
     FaceDetectionStep(
       title: "Center Your Face",
@@ -124,14 +122,14 @@ void initState() {
       checkFunction: _isFaceCentered,
     ),
     FaceDetectionStep(
-      title: "Tilt Your Head Left",
-      instruction: "Slowly tilt your head to the left",
+      title: "Tilt Your Head Right",
+      instruction: "Slowly tilt your head to the Right",
       icon: Icons.arrow_back,
       checkFunction: _isFaceTiltedLeft,
     ),
     FaceDetectionStep(
-      title: "Tilt Your Head Right",
-      instruction: "Slowly tilt your head to the right",
+      title: "Tilt Your Head Left",
+      instruction: "Slowly tilt your head to the Left",
       icon: Icons.arrow_forward,
       checkFunction: _isFaceTiltedRight,
     ),
@@ -142,9 +140,7 @@ void initState() {
       checkFunction: _isFaceAtProperDistance,
     ),
   ];
-  
   _getCurrentLocation();
-  // _initializeParticles(); // Consider removing this if still having issues
 }
 
   void _initializeParticles() {
@@ -239,8 +235,6 @@ void dispose() {
           _currentFace = face;
           _faceTiltAngle = face.headEulerAngleY ?? 0.0;
         });
-        
-        // Check current verification step
         if (_currentStepIndex < _verificationSteps.length) {
           final currentStep = _verificationSteps[_currentStepIndex];
           final isStepComplete = currentStep.checkFunction(face);
@@ -257,7 +251,6 @@ void dispose() {
               });
               _verificationController.reset();
             } else {
-              // All steps completed, capture the image
               setState(() => _faceDetected = true);
               await Future.delayed(const Duration(milliseconds: 500));
               await _captureImage();
@@ -446,7 +439,6 @@ void dispose() {
         allBytes.putUint8List(plane.bytes);
       }
       final bytes = allBytes.done().buffer.asUint8List();
-
       final metadata = InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: InputImageRotationValue.fromRawValue(
@@ -455,7 +447,6 @@ void dispose() {
         format: InputImageFormat.nv21,
         bytesPerRow: image.planes.first.bytesPerRow,
       );
-
       return InputImage.fromBytes(
         bytes: bytes,
         metadata: metadata,
@@ -494,30 +485,11 @@ void dispose() {
           Positioned.fill(
             child: CameraPreview(_cameraController),
           ),
-          
-          // Background effects with particles
-          // if (_faceDetected || _isVerificationComplete)
-          //   CustomPaint(
-          //     painter: ParticlePainter(_particles),
-          //     size: Size.infinite,
-          //   ),
-          
-          // Gradient overlays
-          _buildGradientOverlays(),
-          
-          // Face detection overlay
+           _buildGradientOverlays(),
           if (_imageSize != null) _buildDetectionOverlay(),
-          
-          // Verification steps
           _buildVerificationSteps(),
-          
-          // Instructions and guidance
           _buildInstructionText(),
-          
-          // Corner decorations
           _buildCornerDecorations(),
-          
-          // Verification results
           if (_verificationFailed) _buildVerificationFailed(),
           if (_faceVerified) _buildVerificationSuccess(),
         ],
@@ -577,7 +549,6 @@ void dispose() {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer circle with animated particles
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -597,8 +568,6 @@ void dispose() {
               );
             },
           ),
-          
-          // Main detection circle
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
@@ -625,8 +594,6 @@ void dispose() {
               );
             },
           ),
-          
-          // Face outline when detected
           if (_currentFace != null && !_isStepCompleted)
             Positioned.fill(
               child: CustomPaint(
@@ -637,8 +604,6 @@ void dispose() {
                 ),
               ),
             ),
-          
-          // Tilt guidance indicator
           if (_showTiltGuide && _currentFace != null)
             _buildTiltGuidance(),
         ],
@@ -652,11 +617,9 @@ void dispose() {
     final IconData arrowIcon;
     
     if (headAngleY < 0) {
-      // Tilted left, show right arrow
       arrowAngle = 0;
       arrowIcon = Icons.arrow_forward;
     } else {
-      // Tilted right, show left arrow
       arrowAngle = pi;
       arrowIcon = Icons.arrow_back;
     }
@@ -802,9 +765,7 @@ void dispose() {
 
   String _getAdditionalGuidance() {
     if (_currentFace == null) return "Position your face in frame";
-    
     final currentStep = _verificationSteps[_currentStepIndex];
-    
     if (currentStep.checkFunction == _isFaceTiltedLeft) {
       if (_faceTiltAngle > -20) return "Tilt further to the left";
       if (_faceTiltAngle < -45) return "Tilt a little less";

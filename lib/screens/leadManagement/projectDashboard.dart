@@ -18,10 +18,13 @@ import 'package:login2/models/lead_management/projectList_model.dart';
 import 'package:login2/models/lead_management/workstatus_model.dart';
 import 'package:login2/models/loginCheckModel.dart';
 import 'package:login2/models/projectCountModel.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
@@ -52,10 +55,14 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   String staffId = '';
   String userId = '';
   String token = '';
-  String ProjectDashboardPermission = '';
+
   bool? isLoggedIn;
   bool? result = true;
   bool timeOut = false;
+  String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   LeadDashboardModel? leadDashboard;
   CommonConfigureModel? configure;
@@ -138,6 +145,11 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     token = await Common.getSharedPref("token");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
     adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
     setState(() {
       multipleWorksCheck = value ?? '';
@@ -334,19 +346,6 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     }
   }
 
-  Future<void> loginorNot() async {
-    final token = await Common.getSharedPref("token");
-    final response = await HttpService.getLoginorNot(token);
-
-    setState(() {
-      if (response != null && response.data == true) {
-        isLoggedIn = true;
-      } else {
-        isLoggedIn = false;
-      }
-    });
-  }
-
   Future<void> dashboardCounts() async {
     final token = await Common.getSharedPref("token");
     final response = await HttpService.dashboardCounts(token: token);
@@ -362,6 +361,21 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
       });
     }
   }
+
+  Future<void> loginorNot() async {
+    final token = await Common.getSharedPref("token");
+    final response = await HttpService.getLoginorNot(token);
+
+    setState(() {
+      if (response != null && response.data == true) {
+        isLoggedIn = true;
+      } else {
+        isLoggedIn = false;
+      }
+    });
+  }
+
+  
 
   // void showLoginPrompt(BuildContext context) {
   //   showDialog(
@@ -1196,10 +1210,38 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
           floatingActionButton: FloatingActionButton(
             backgroundColor: Colors.black,
             onPressed: () {
-              Navigator.push(
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
+              // );
+              ProjectDashboardPermission == "true"
+            ? Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => ProjectDashboard()),
-              );
+              )
+            : AccountsDashboardPermission == "true"
+                ? Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AccountsDashboard(token: token)),
+                  )
+                : MenuDashboard == "true"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => HomePage(token)),
+                      )
+                    : RenewalDashboardPermission == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => RenewalDashboard()),
+                          )
+                        : Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Dashboard(token)),
+                          );
             },
             child: Image.asset("assets/icons/menu.png", width: 25),
           ),

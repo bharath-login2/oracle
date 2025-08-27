@@ -16,9 +16,13 @@ import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:shimmer/shimmer.dart';
@@ -47,7 +51,10 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String role = '';
   String phoneCallLogPermission = '';
+  String? ProjectDashboardPermission;
   String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
   LeadDashboardModel? leadDashboard;
   DashboardModel? userDashboard;
   CommonConfigureModel? configure;
@@ -113,6 +120,13 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     createLeadCategory = await Common.getSharedPref("createLeadCategory");
     updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
     deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+     ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
     name = await Common.getSharedPref("name");
     userId = await Common.getSharedPref("userId");
 
@@ -1019,11 +1033,39 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
               floatingActionButton: FloatingActionButton(
                 backgroundColor: Colors.black,
                 onPressed: () {
-                  Navigator.push(
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //       builder: (context) => AccountsDashboard(token: token)),
+                  // );
+                  ProjectDashboardPermission == "true"
+            ? Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProjectDashboard()),
+              )
+            : AccountsDashboardPermission == "true"
+                ? Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                         builder: (context) => AccountsDashboard(token: token)),
-                  );
+                  )
+                : MenuDashboard == "true"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => HomePage(token)),
+                      )
+                    : RenewalDashboardPermission == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => RenewalDashboard()),
+                          )
+                        : Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Dashboard(token)),
+                          );
                 },
                 child: Image.asset("assets/icons/menu.png", width: 25),
               ),

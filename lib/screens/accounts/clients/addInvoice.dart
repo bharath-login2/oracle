@@ -68,6 +68,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
+  double notsubTotal = 0.00;
   double totalTaxAmount = 0.00;
   double allTotal = 0.00;
   bool isPaying = false;
@@ -1356,39 +1357,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Sub Total :'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child:
-                                            Text(subTotal.toStringAsFixed(2)),
-                                      ))
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text('Tax Amount:'),
+                                  const Text('Total :'),
                                   const SizedBox(
                                     width: 10,
                                   ),
@@ -1407,7 +1376,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             top: 5,
                                             bottom: 5),
                                         child: Text(
-                                            totalTaxAmount.toStringAsFixed(2)),
+                                            notsubTotal.toStringAsFixed(2)),
                                       ))
                                 ],
                               ),
@@ -1483,6 +1452,38 @@ class _AddInvoiceState extends State<AddInvoice> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
+                                  const Text('Tax:'),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.3,
+                                      height: 35,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                            top: 5,
+                                            bottom: 5),
+                                        child: Text(
+                                            totalTaxAmount.toStringAsFixed(2)),
+                                      ))
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
                                   const Text('Shipping Charge:'),
                                   const SizedBox(
                                     width: 10,
@@ -1546,12 +1547,12 @@ class _AddInvoiceState extends State<AddInvoice> {
                               height: 5,
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.only(left: 90),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text(
-                                    'Total :',
+                                    'Grand Total :',
                                     style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w500),
@@ -3048,8 +3049,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 labelText: 'Rate',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3074,8 +3075,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 labelText: 'Qty',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3104,8 +3105,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 labelText: 'Tax Percent',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3128,8 +3129,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 labelText: 'Tax Amount',
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon:
-                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                // prefixIcon:
+                                //     Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3153,8 +3154,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                             labelText: 'Total Amount',
                             fillColor: Colors.white,
                             filled: true,
-                            prefixIcon:
-                                Icon(Icons.arrow_right, color: Colors.grey),
+                            // prefixIcon:
+                            //     Icon(Icons.arrow_right, color: Colors.grey),
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.grey),
@@ -3229,6 +3230,14 @@ class _AddInvoiceState extends State<AddInvoice> {
 
                               subTotal = subTotal +
                                   double.parse(productTotalAmount.text);
+                              
+                              notsubTotal = 0.00;
+                              for (var product in products) {
+                                notsubTotal +=
+                                    double.parse(product['product_rate']) *
+                                        double.parse(product['quantity']);
+                              }
+                            
                               totalTaxAmount = totalTaxAmount +
                                   double.parse(productTaxAmount.text) *
                                       double.parse(productQty.text);

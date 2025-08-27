@@ -109,271 +109,278 @@ class _StartStopToggleState extends State<StartStopToggle> {
     }
   }
 
-void toggleSwitch({bool skipConfirmation = false}) async {
-  final now = DateTime.now();
+  void toggleSwitch({bool skipConfirmation = false}) async {
+    final now = DateTime.now();
 
-  if (!skipConfirmation) {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isWorkStarted ? "Logout" : "Login"),
-          content: Text(
-            "Are you sure you want to ${isWorkStarted ? "Logout" : "Login"}?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text("Cancel"),
+    if (!skipConfirmation) {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(isWorkStarted ? "Logout" : "Login"),
+            content: Text(
+              "Are you sure you want to ${isWorkStarted ? "Logout" : "Login"}?",
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text("Yes"),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-  }
-
-  if (!isWorkStarted) {
-    setState(() => isLoading = true);
-    widget.setDashboardLoading(true);
-
-    late BuildContext loaderContext;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.4),
-      builder: (ctx) {
-        loaderContext = ctx;
-        Future.delayed(const Duration(seconds: 12), () {
-          if (Navigator.of(loaderContext).canPop()) {
-            Navigator.of(loaderContext).pop();
-            showError("Location fetch timed out.");
-            setState(() => isLoading = false);
-            widget.setDashboardLoading(false);
-          }
-        });
-
-        return Center(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.0),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Lottie.asset(
-                  'assets/lottie/location_loader.json',
-                  width: 180,
-                  height: 180,
-                  repeat: true,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Logging In...",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (Navigator.of(loaderContext).canPop()) Navigator.of(loaderContext).pop();
-          showError("Location permission denied.");
-          setState(() => isLoading = false);
-          widget.setDashboardLoading(false);
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (Navigator.of(loaderContext).canPop()) Navigator.of(loaderContext).pop();
-        showError("Location permission permanently denied.");
-        setState(() => isLoading = false);
-        widget.setDashboardLoading(false);
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text("Yes"),
+              ),
+            ],
+          );
+        },
       );
 
-      if (Navigator.of(loaderContext).canPop()) Navigator.of(loaderContext).pop();
+      if (confirmed != true) return;
+    }
 
-      if (companyLocation == "true") {
-        final companyResponse = await HttpService.getCompanyLocations();
-        if (companyResponse == null || companyResponse.status != true) {
-          showError("Failed to fetch company locations.");
+    if (!isWorkStarted) {
+      setState(() => isLoading = true);
+      widget.setDashboardLoading(true);
+
+      late BuildContext loaderContext;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withOpacity(0.4),
+        builder: (ctx) {
+          loaderContext = ctx;
+          Future.delayed(const Duration(seconds: 12), () {
+            if (Navigator.of(loaderContext).canPop()) {
+              Navigator.of(loaderContext).pop();
+              showError("Location fetch timed out.");
+              setState(() => isLoading = false);
+              widget.setDashboardLoading(false);
+            }
+          });
+
+          return Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.0),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/location_loader.json',
+                    width: 180,
+                    height: 180,
+                    repeat: true,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Logging In...",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      try {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) {
+            if (Navigator.of(loaderContext).canPop())
+              Navigator.of(loaderContext).pop();
+            showError("Location permission denied.");
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            return;
+          }
+        }
+
+        if (permission == LocationPermission.deniedForever) {
+          if (Navigator.of(loaderContext).canPop())
+            Navigator.of(loaderContext).pop();
+          showError("Location permission permanently denied.");
           setState(() => isLoading = false);
           widget.setDashboardLoading(false);
           return;
         }
 
-        final String rawLocations = companyResponse.data.location;
-        final List<String> locationStrings = rawLocations
-            .replaceAll('{', '')
-            .split('},')
-            .map((e) => e.replaceAll('}', '').trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
 
-        bool isWithinRange = false;
-        const double maxDistanceMeters = 100;
-        for (final locStr in locationStrings) {
-          final parts = locStr.split(',');
-          if (parts.length == 2) {
-            final double? companyLat = double.tryParse(parts[0].trim());
-            final double? companyLng = double.tryParse(parts[1].trim());
-            if (companyLat != null && companyLng != null) {
-              final double distance = Geolocator.distanceBetween(
-                position.latitude,
-                position.longitude,
-                companyLat,
-                companyLng,
-              );
-              if (distance <= maxDistanceMeters) {
-                isWithinRange = true;
-                break;
+        if (Navigator.of(loaderContext).canPop())
+          Navigator.of(loaderContext).pop();
+
+        if (companyLocation == "true") {
+          final companyResponse = await HttpService.getCompanyLocations();
+          if (companyResponse == null || companyResponse.status != true) {
+            showError("Failed to fetch company locations.");
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            return;
+          }
+
+          final String rawLocations = companyResponse.data.location;
+          final List<String> locationStrings = rawLocations
+              .replaceAll('{', '')
+              .split('},')
+              .map((e) => e.replaceAll('}', '').trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+
+          bool isWithinRange = false;
+          const double maxDistanceMeters = 100;
+          for (final locStr in locationStrings) {
+            final parts = locStr.split(',');
+            if (parts.length == 2) {
+              final double? companyLat = double.tryParse(parts[0].trim());
+              final double? companyLng = double.tryParse(parts[1].trim());
+              if (companyLat != null && companyLng != null) {
+                final double distance = Geolocator.distanceBetween(
+                  position.latitude,
+                  position.longitude,
+                  companyLat,
+                  companyLng,
+                );
+                if (distance <= maxDistanceMeters) {
+                  isWithinRange = true;
+                  break;
+                }
               }
             }
           }
+
+          if (locationStrings.isEmpty ||
+              locationStrings.any((loc) => loc.trim().isEmpty)) {
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("No Location Found"),
+                  content: const Text(
+                      "Please add company location before you start to login"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CompanyLocationPage()),
+                        );
+                      },
+                      child: const Text("Add Location"),
+                    ),
+                  ],
+                );
+              },
+            );
+            return;
+          }
+
+          if (!isWithinRange) {
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Location Error"),
+                  content: Text(
+                    "You are not within $maxDistanceMeters meters of any company location.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        toggleSwitch(
+                            skipConfirmation: true); // skip confirmation
+                      },
+                      child: const Text("Retry"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                );
+              },
+            );
+            return;
+          }
         }
 
-        if (locationStrings.isEmpty ||
-            locationStrings.any((loc) => loc.trim().isEmpty)) {
-          setState(() => isLoading = false);
-          widget.setDashboardLoading(false);
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text("No Location Found"),
-                content: const Text(
-                    "Please add company location before you start to login"),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("OK"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CompanyLocationPage()),
-                      );
-                    },
-                    child: const Text("Add Location"),
-                  ),
-                ],
-              );
-            },
-          );
-          return;
+        if (faceDetection == "true") {
+          await captureFace();
+          if (_faceBase64 == null || _faceBase64!.isEmpty) {
+            Common.toastMessaage('Face capture required for login', Colors.red);
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            return;
+          }
         }
 
-        if (!isWithinRange) {
-          setState(() => isLoading = false);
-          widget.setDashboardLoading(false);
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text("Location Error"),
-                content: Text(
-                  "You are not within $maxDistanceMeters meters of any company location.",
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      toggleSwitch(skipConfirmation: true); // skip confirmation
-                    },
-                    child: const Text("Retry"),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("OK"),
-                  ),
-                ],
-              );
-            },
-          );
-          return;
-        }
-      }
-
-      if (faceDetection == "true") {
-        await captureFace();
-        if (_faceBase64 == null || _faceBase64!.isEmpty) {
-          Common.toastMessaage('Face capture required for login', Colors.red);
-          setState(() => isLoading = false);
-          widget.setDashboardLoading(false);
-          return;
-        }
-      }
-
-      final response = await HttpService.startWork(
-        now,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        faceData: _faceBase64,
-      );
-
-      if (response != null && response.status == true) {
-        await Common.saveSharedPref("is_work_started", "true");
-        widget.onToggle(true);
-        setState(() => isWorkStarted = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Log in at ${DateFormat('hh:mm a').format(now)}"),
-            backgroundColor: Colors.green,
-          ),
+        final response = await HttpService.startWork(
+          now,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          faceData: _faceBase64,
         );
-      } else {
-        showError(response?.message ?? "Failed to start work");
+        if (response != null && response.status == true) {
+          await Common.saveSharedPref("is_work_started", "true");
+          widget.onToggle(true);
+          setState(() => isWorkStarted = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Log in at ${DateFormat('hh:mm a').format(now)}"),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.only(bottom: 10, left: 16, right: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        } else {
+          showError(response?.message ?? "Failed to start work");
+        }
+      } catch (e) {
+        if (Navigator.of(loaderContext).canPop())
+          Navigator.of(loaderContext).pop();
+        showError("Error: $e");
+      } finally {
+        setState(() => isLoading = false);
+        widget.setDashboardLoading(false);
       }
-    } catch (e) {
-      if (Navigator.of(loaderContext).canPop()) Navigator.of(loaderContext).pop();
-      showError("Error: $e");
-    } finally {
-      setState(() => isLoading = false);
-      widget.setDashboardLoading(false);
-    }
-  } else {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const InfoCardExample(),
-        settings: RouteSettings(
-          arguments: {
-            "logoutTime": DateTime.now().toIso8601String(),
-          },
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const InfoCardExample(),
+          settings: RouteSettings(
+            arguments: {
+              "logoutTime": DateTime.now().toIso8601String(),
+            },
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
-
-
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

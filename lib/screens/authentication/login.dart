@@ -385,7 +385,6 @@ class _LoginState extends State<Login> {
                 "MenuDashboard", object1.data!.MenuDashboard.toString());
             Common.saveSharedPref("RenewalDashboardPermission",
                 object1.data!.RenewalDashboard.toString());
-
             // Common.saveSharedPref("callLogPermission", 'false');
             //  Common.saveSharedPref(
             //  "callLogPermission", 'true');

@@ -1,5 +1,9 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 
@@ -36,7 +40,10 @@ class _ViewUsersState extends State<ViewUsers> {
   String name = '';
   String role = '';
   String roleId = '';
-    String ProjectDashboardPermission = '';
+  String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
   String LeadDashboard = '';
   String? createStaffPermission;
   String? viewStaffPermission;
@@ -82,8 +89,14 @@ class _ViewUsersState extends State<ViewUsers> {
         await Common.getSharedPref("updateStaffPasswordPermission");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
-          ProjectDashboardPermission = await Common.getSharedPref("ProjectDashboardPermission");
-      LeadDashboard = await Common.getSharedPref("LeadDashboard");
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    LeadDashboard = await Common.getSharedPref("LeadDashboard");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -207,9 +220,9 @@ class _ViewUsersState extends State<ViewUsers> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => ViewAllTargetReportPage(id: userId),
-
-                                              ),
+                                        builder: (context) =>
+                                            ViewAllTargetReportPage(id: userId),
+                                      ),
                                     );
                                   }
                                 },
@@ -819,11 +832,28 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                     },
                                                                                   );
                                                                                 }
+
+                                                                                if (value == 'attendance') {
+                                                                                  Navigator.push(
+                                                                                    context,
+                                                                                    MaterialPageRoute(
+                                                                                      builder: (context) => StaffCalendarPage(
+                                                                                        staffId: filteredStaffs[i].staffId,
+                                                                                        selectedDate: DateTime.now(),
+                                                                                        staffName: filteredStaffs[i].name,
+                                                                                      ),
+                                                                                    ),
+                                                                                  );
+                                                                                }
                                                                               },
                                                                               itemBuilder: (context) => [
                                                                                 const PopupMenuItem(
                                                                                   value: 'disable',
                                                                                   child: Text('Disable'),
+                                                                                ),
+                                                                                const PopupMenuItem(
+                                                                                  value: 'attendance',
+                                                                                  child: Text('Attendance'),
                                                                                 ),
                                                                               ],
                                                                             ),
@@ -1061,17 +1091,52 @@ class _ViewUsersState extends State<ViewUsers> {
                 //   );
                 // },
                 onPressed: () {
-                    ProjectDashboardPermission =="true"?
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ProjectDashboard()),
-                    ): Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => Dashboard(widget.token)),
-                    );
-                  },
+                  // ProjectDashboardPermission == "true"
+                  //     ? Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //             builder: (context) => ProjectDashboard()),
+                  //       )
+                  //     : Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //             builder: (context) => Dashboard(widget.token)),
+                  //       );
+                  ProjectDashboardPermission == "true"
+                      ? Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ProjectDashboard()),
+                        )
+                      : AccountsDashboardPermission == "true"
+                          ? Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AccountsDashboard(
+                                    token: widget.token ?? ""),
+                              ),
+                            )
+                          : MenuDashboard == "true"
+                              ? Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          HomePage(widget.token)),
+                                )
+                              : RenewalDashboardPermission == "true"
+                                  ? Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              RenewalDashboard()),
+                                    )
+                                  : Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              Dashboard(widget.token)),
+                                    );
+                },
                 child: Image.asset("assets/icons/menu.png",
                     width: 25), //icon inside button
               ),

@@ -66,7 +66,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   String? priority;
   String? assignedTo;
   String? sectionId;
-    DateTime? currentDate;
+  DateTime? currentDate;
   String? ProjectDashboardPermission;
   final TextEditingController _searchController = TextEditingController();
   List<Projects> _filteredProjects = [];
@@ -122,7 +122,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   controller: TextEditingController(text: task.taskName),
                   status: task.status,
                   taskId: task.taskId,
-                    isChecked: task.status == '4', 
+                  isChecked: task.status == '4',
                   remarks: task.remarks
                       .map((remark) => TextEditingController(text: remark))
                       .toList(),
@@ -131,7 +131,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
         : [
             TaskForm(
               controller: TextEditingController(),
-               status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+              status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
               taskId: null,
               remarks: [TextEditingController()],
             )
@@ -177,6 +177,16 @@ class _AddWorkPageState extends State<AddWorkPage> {
   bool _validateTasks() {
     bool atLeastOneChecked =
         tasks.any((task) => task.status == '4' || task.isChecked);
+    if (tasks.isEmpty ||
+        !tasks.any((task) => task.controller.text.trim().isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one task to proceed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
 
     if (!atLeastOneChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -457,6 +467,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
   Future<void> _submitWork() async {
     if (!_validateTasks()) return;
+
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -546,16 +557,18 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ? Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                //  builder: (context) => ProjectDashboard(),
-                 builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  //  builder: (context) => ProjectDashboard(),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               )
             : Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                //  builder: (context) => Dashboard(token),
-                 builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  //  builder: (context) => Dashboard(token),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               );
@@ -731,16 +744,18 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ? Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                 // builder: (context) => ProjectDashboard(),
-                   builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  // builder: (context) => ProjectDashboard(),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               )
             : Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                 // builder: (context) => Dashboard(token),
-                   builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  // builder: (context) => Dashboard(token),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               );
@@ -854,8 +869,9 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ? Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-               //   builder: (context) => ProjectDashboard(),
-                 builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  //   builder: (context) => ProjectDashboard(),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               )
@@ -863,7 +879,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                 context,
                 MaterialPageRoute(
                   //builder: (context) => Dashboard(token),
-                    builder: (context) => ViewWorkPage(staffId:userId,selectedDate:currentDate),
+                  builder: (context) =>
+                      ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
                 (route) => false,
               );
@@ -1012,47 +1029,37 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               //       : tasks[taskIndex].isChecked,
                               //   onChanged: (value) {
                               //     setState(() {
-                              //       for (var i = 0; i < tasks.length; i++) {
-                              //         if (i != taskIndex) {
-                              //           tasks[i].isChecked = false;
-                              //           final toDoStatus =
-                              //               allTaskStates.firstWhere(
-                              //             (status) =>
-                              //                 status.status
-                              //                     .toLowerCase()
-                              //                     .contains('to-do') ||
-                              //                 status.status
-                              //                     .toLowerCase()
-                              //                     .contains('todo'),
-                              //             orElse: () => allTaskStates.first,
-                              //           );
-                              //           tasks[i].status = toDoStatus.id;
-                              //         }
-                              //       }
+                              //       // for (var i = 0; i < tasks.length; i++) {
+                              //       //   if (i != taskIndex) {
+                              //       //     tasks[i].isChecked = false;
+                              //       //     final toDoStatus =
+                              //       //         allTaskStates.firstWhere(
+                              //       //       (status) =>
+                              //       //           status.status
+                              //       //               .toLowerCase()
+                              //       //               .contains('to-do') ||
+                              //       //           status.status
+                              //       //               .toLowerCase()
+                              //       //               .contains('todo'),
+                              //       //       orElse: () => allTaskStates.first,
+                              //       //     );
+                              //       //     tasks[i].status = toDoStatus.id;
+                              //       //   }
+                              //       // }
 
                               //       tasks[taskIndex].isChecked = value ?? false;
-                              //       final targetStatus = tasks[taskIndex]
-                              //               .isChecked
-                              //           ? allTaskStates.firstWhere(
-                              //               (status) =>
-                              //                   status.id == '4' ||
-                              //                   status.status
-                              //                       .toLowerCase()
-                              //                       .contains('progress'),
-                              //               orElse: () => allTaskStates.first,
-                              //             )
-                              //           : allTaskStates.firstWhere(
-                              //               (status) =>
-                              //                   status.status
-                              //                       .toLowerCase()
-                              //                       .contains('to-do') ||
-                              //                   status.status
-                              //                       .toLowerCase()
-                              //                       .contains('todo'),
-                              //               orElse: () => allTaskStates.first,
-                              //             );
-
-                              //       tasks[taskIndex].status = targetStatus.id;
+                              //       if (value == true) {
+                              //         final targetStatus =
+                              //             allTaskStates.firstWhere(
+                              //           (status) =>
+                              //               status.id == '4' ||
+                              //               status.status
+                              //                   .toLowerCase()
+                              //                   .contains('progress'),
+                              //           orElse: () => allTaskStates.first,
+                              //         );
+                              //         tasks[taskIndex].status = targetStatus.id;
+                              //       }
                               //     });
                               //   },
                               // ),
@@ -1062,36 +1069,27 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                     : tasks[taskIndex].isChecked,
                                 onChanged: (value) {
                                   setState(() {
+                                    // Uncheck all other tasks
                                     for (var i = 0; i < tasks.length; i++) {
                                       if (i != taskIndex) {
                                         tasks[i].isChecked = false;
-                                        final toDoStatus =
-                                            allTaskStates.firstWhere(
-                                          (status) =>
-                                              status.status
-                                                  .toLowerCase()
-                                                  .contains('to-do') ||
-                                              status.status
-                                                  .toLowerCase()
-                                                  .contains('todo'),
-                                          orElse: () => allTaskStates.first,
-                                        );
-                                        tasks[i].status = toDoStatus.id;
                                       }
                                     }
-
                                     tasks[taskIndex].isChecked = value ?? false;
+
                                     if (value == true) {
-                                      final targetStatus =
+                                      final completedStatus =
                                           allTaskStates.firstWhere(
-                                        (status) =>
-                                            status.id == '4' ||
-                                            status.status
-                                                .toLowerCase()
-                                                .contains('progress'),
-                                        orElse: () => allTaskStates.first,
+                                        (status) => status.id == '4',
+                                        orElse: () => allTaskStates.firstWhere(
+                                          (status) => status.status
+                                              .toLowerCase()
+                                              .contains('complete'),
+                                          orElse: () => allTaskStates.first,
+                                        ),
                                       );
-                                      tasks[taskIndex].status = targetStatus.id;
+                                      tasks[taskIndex].status =
+                                          completedStatus.id;
                                     }
                                   });
                                 },
