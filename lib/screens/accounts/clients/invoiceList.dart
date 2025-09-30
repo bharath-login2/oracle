@@ -120,7 +120,7 @@ class _InvoiceListState extends State<InvoiceList> {
                         children: [
                           InkWell(
                             onTap: () {
-                              Navigator.pop(context); 
+                              Navigator.pop(context);
                             },
                             child: Container(
                               height: 25,
@@ -1053,6 +1053,20 @@ class _InvoiceListState extends State<InvoiceList> {
                                         shrinkWrap: true,
                                         itemBuilder: (context, index) {
                                           return ListTile(
+                                              // onTap: () {
+                                              //   customerName =
+                                              //       filteredCustomers[index]
+                                              //           .name;
+                                              //   customerId =
+                                              //       filteredCustomers[index].id;
+                                              //   search.clear();
+                                              //   filteredCustomers
+                                              //       .addAll(customers);
+                                              //   setState(() {});
+                                              //   if (context.mounted) {
+                                              //     Navigator.pop(context);
+                                              //   }
+                                              // },
                                               onTap: () {
                                                 customerName =
                                                     filteredCustomers[index]
@@ -1060,8 +1074,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                 customerId =
                                                     filteredCustomers[index].id;
                                                 search.clear();
-                                                filteredCustomers
-                                                    .addAll(customers);
+                                                filteredCustomers =
+                                                    List.from(customers);
                                                 setState(() {});
                                                 if (context.mounted) {
                                                   Navigator.pop(context);
@@ -1077,9 +1091,17 @@ class _InvoiceListState extends State<InvoiceList> {
                                 ),
                                 actions: [
                                   TextButton(
+                                      // onPressed: () {
+                                      //   search.clear();
+                                      //   filteredCustomers.addAll(customers);
+                                      //   if (context.mounted) {
+                                      //     Navigator.pop(context);
+                                      //   }
+                                      // },
                                       onPressed: () {
                                         search.clear();
-                                        filteredCustomers.addAll(customers);
+                                        filteredCustomers =
+                                            List.from(customers);
                                         if (context.mounted) {
                                           Navigator.pop(context);
                                         }
@@ -1117,54 +1139,6 @@ class _InvoiceListState extends State<InvoiceList> {
                         )),
                       ),
                     ),
-                    // Container(
-                    //   width: MediaQuery.of(context)
-                    //       .size
-                    //       .width *
-                    //       0.9,
-                    //   decoration: BoxDecoration(
-                    //       border: Border.all(
-                    //           color: Colors
-                    //               .grey.shade900,
-                    //           width:
-                    //           0),
-                    //       color: Colors
-                    //           .white,
-                    //       borderRadius: const BorderRadius
-                    //           .all(
-                    //           Radius.circular(5))),
-                    //   child:
-                    //   DropdownButtonHideUnderline(
-                    //     child: DropdownButton<
-                    //         String>(
-                    //       isExpanded:
-                    //       true,
-                    //       hint:
-                    //       const Padding(
-                    //         padding:
-                    //         EdgeInsets.only(left: 20),
-                    //         child:
-                    //         Text('Customer'),
-                    //       ),
-                    //       value: newClient,
-                    //       items:customerList!.data!.map((data) {
-                    //         return DropdownMenuItem(
-                    //           value: data.id.toString(),
-                    //           child: Padding(
-                    //             padding: const EdgeInsets.only(left: 20),
-                    //             child: Text(data.name.toString()),
-                    //           ),
-                    //         );
-                    //       }).toList(),
-                    //       onChanged:
-                    //           (newValue1) {
-                    //         setState(() {
-                    //           newClient = newValue1;
-                    //         });
-                    //       },
-                    //     ),
-                    //   ),
-                    // ),
                     const SizedBox(
                       height: 20,
                     ),

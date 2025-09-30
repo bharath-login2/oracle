@@ -72,6 +72,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
     currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
     print("Selected date passed to ViewWorkPage: ${widget.selectedDate}");
     _initData();
+    loginorNot();
   }
 
   Future<void> _initData() async {
@@ -217,7 +218,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
             //     await getWorkDuration(currentDate);
             //   }
             // },
-            // In the date picker onPressed handler:
+         
             onPressed: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,

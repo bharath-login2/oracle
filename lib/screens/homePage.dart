@@ -15,6 +15,7 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
@@ -67,6 +68,7 @@ class _HomePageState extends State<HomePage> {
   String? AccountsDashboardPermission;
   String? MenuDashboard;
   String? RenewalDashboardPermission;
+  String? NewleadDashboardPermission;
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
@@ -116,6 +118,8 @@ class _HomePageState extends State<HomePage> {
     MenuDashboard = await Common.getSharedPref("MenuDashboard");
     RenewalDashboardPermission =
         await Common.getSharedPref("RenewalDashboardPermission");
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
     log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
@@ -178,9 +182,9 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
     final dismissedDate = prefs.getString('loginPromptDismissedDate');
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    if (dismissedDate != today) {
+    if (dismissedDate != today && startAndStopWorkPermission == "true") {
       loginOrNot = await HttpService.getLoginorNot(widget.token);
-      if (loginOrNot?.data != true) {
+      if (loginOrNot?.data != true && startAndStopWorkPermission == "true") {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           showLoginPrompt(context);
         });
@@ -1279,12 +1283,19 @@ class _HomePageState extends State<HomePage> {
                                             builder: (context) =>
                                                 RenewalDashboard()),
                                       )
-                                    : Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                Dashboard(token)),
-                                      );
+                                    : NewleadDashboardPermission == "true"
+                                        ? Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                     MinimalDashboard(token)),
+                                          )
+                                        : Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    Dashboard(token)),
+                                          );
                   },
                   child: Image.asset("assets/icons/menu.png",
                       width: 25), //icon inside button

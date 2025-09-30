@@ -20,9 +20,9 @@ class GetWhatsappChat {
     });
 
     factory GetWhatsappChat.fromJson(Map<String, dynamic> json) => GetWhatsappChat(
-        data: json["data"],
-        status: json["status"],
-        message: json["message"],
+       data: json["data"] ?? "",    
+        status: json["status"] ?? false,
+        message: json["message"] ?? "",
     );
 
     Map<String, dynamic> toJson() => {

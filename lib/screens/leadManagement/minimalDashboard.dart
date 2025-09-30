@@ -14,6 +14,7 @@ import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/models/callLogs/callLogUploadModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
+import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
 import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
@@ -108,6 +109,14 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Map<String, double> data = {};
   LeadDashboardModel? leadDashboard;
+  // NewLeadDashboard? leadDashboardNew;
+  NewLeadDashboard? newLeadsDashboard;
+  NewLeadDashboard? followupLeadsDashboard;
+  NewLeadDashboard? closedLeadsDashboard;
+  NewLeadDashboard? totalCalledDashboard;
+  NewLeadDashboard? transferredLeadsDashboard;
+  NewLeadDashboard? missedLeadsDashboard;
+
   CommonConfigureModel? configure;
   LeadCategoryStaffWiseModel? staffWise;
   DashboardModel? userDashboard;
@@ -138,7 +147,10 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
   bool _showTotalCalledCount = false;
   bool _showTransferredLeadsCount = false;
   bool _showMissedLeadsCount = false;
-
+  bool _isLoadingFollowupLeads = false;
+  bool _isLoadingClosedLeads = false;
+  bool _isLoadingTotalCalled = false;
+  bool _isLoadingTransferredLeads = false;
   int id = 0;
   String navigationActionId = 'id_3';
   String createLeadPermission = '';
@@ -204,6 +216,11 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
   String? MenuDashboard;
   bool _showNewLeadsCount = false;
   bool _showFollowupLeadsCount = false;
+  //bool _showMissedLeadsCount = false;
+
+  bool _isLoadingNewLeads = false;
+
+  bool _isLoadingMissedLeads = false;
   String? RenewalDashboardPermission;
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
@@ -475,7 +492,8 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
           result = false;
         });
       }
-
+      // leadDashboardNew = await HttpService.leadDashboardNew(
+      //     token, fromdate, todate, fromdate1, todate1, "");
       name = await Common.getSharedPref("name");
       role = await Common.getSharedPref("role");
       userId = await Common.getSharedPref("userId");
@@ -519,6 +537,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
       accessCallRecordingPermission =
           await Common.getSharedPref("accessCallRecordingPermission");
       visibleP = await Common.getSharedPref("isVisible");
+
       if (visibleP == 'true') {
         // isVisible = true;
         isVisible = false;
@@ -550,6 +569,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
         accessCallRecordingPermission1 = true;
       }
       firebaseToken = await FirebaseMessaging.instance.getToken();
+
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
       log(firebaseToken.toString());
@@ -568,6 +588,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
         }
         leadDashboard = await HttpService.leadDashboard(
             token, fromdate, todate, fromdate1, todate1);
+
         projectList = await HttpService.getProjectList();
         workStatus = await HttpService.getWorkStatus();
         if (workStatus!.data.isNotEmpty) {
@@ -576,25 +597,18 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
           print("No work status data available.");
         }
 
-        // loginOrNot = await HttpService.getLoginorNot(widget.token);
-        // if (loginOrNot?.data == true) {
-        //   print("Logged in Today.");
-        // } else {
-        //   Future.delayed(Duration.zero, () {
-        //     showLoginPrompt(context);
-        //   });
-        // }
-
         userDashboard = await HttpService.mainDashboard(widget.token);
+        loginOrNot = await HttpService.getLoginorNot(widget.token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
         setState(() {
           notificationCount = leadDashboard!.data.unreadNotification;
         });
         Common.saveSharedPref(
             "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
-        if (dismissedDate != today) {
+        if (dismissedDate != today && startAndStopWorkPermission == "true") {
           loginOrNot = await HttpService.getLoginorNot(widget.token);
-          if (loginOrNot?.data != true) {
+          if (loginOrNot?.data != true &&
+              startAndStopWorkPermission == "true") {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               showLoginPrompt(context);
             });
@@ -623,121 +637,6 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
       setState(() {});
     }
   }
-
-  // void showLoginPrompt(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (BuildContext dialogContext) {
-  //       return AlertDialog(
-  //         title: const Text("Not logged in today"),
-  //         content: const Text("Do you want to log in now?"),
-  //         actions: [
-  //           TextButton(
-  //             child: const Text("Not now"),
-  //             onPressed: () async {
-  //               final prefs = await SharedPreferences.getInstance();
-  //               final today = DateTime.now().toIso8601String().substring(0, 10);
-  //               await prefs.setString('loginPromptDismissedDate', today);
-  //               Navigator.of(dialogContext).pop();
-  //             },
-  //           ),
-  //           ElevatedButton(
-  //               style: ElevatedButton.styleFrom(
-  //                 backgroundColor: Colors.green,
-  //               ),
-  //               child: const Text("Yes"),
-  //               onPressed: () async {
-  //                 Navigator.of(dialogContext).pop();
-  //               showDialog(
-  //           context: context,
-  //           barrierDismissible: false,
-  //           builder: (_) => AlertDialog(
-  //             content: Row(
-  //               children: [
-  //                 SizedBox(
-  //                   height: 50,
-  //                   width: 50,
-  //                   child: Lottie.asset(
-  //                     'assets/lottie/loading.json',
-  //                     fit: BoxFit.cover,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(width: 16),
-  //                 const Text(
-  //                   "Logging In...",
-  //                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         );
-
-  //                 try {
-  //                   LocationPermission permission =
-  //                       await Geolocator.checkPermission();
-  //                   if (permission == LocationPermission.denied) {
-  //                     permission = await Geolocator.requestPermission();
-  //                     if (permission == LocationPermission.denied) {
-  //                       Navigator.of(context).pop();
-  //                       ScaffoldMessenger.of(context).showSnackBar(
-  //                         const SnackBar(
-  //                             content: Text("Location permission denied.")),
-  //                       );
-  //                       return;
-  //                     }
-  //                   }
-
-  //                   if (permission == LocationPermission.deniedForever) {
-  //                     Navigator.of(context).pop();
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(
-  //                           content: Text(
-  //                               "Location permission permanently denied. Please enable it from settings.")),
-  //                     );
-  //                     return;
-  //                   }
-  //                   final position = await Geolocator.getCurrentPosition(
-  //                     desiredAccuracy: LocationAccuracy.high,
-  //                   );
-
-  //                   final now = DateTime.now();
-  //                   final res = await HttpService.startWork(
-  //                     now,
-  //                     latitude: position.latitude,
-  //                     longitude: position.longitude,
-  //                     faceData: _faceBase64,
-  //                   );
-
-  //                   Navigator.of(context).pop();
-
-  //                   if (res != null && res.status == true) {
-  //                     if (!context.mounted) return;
-  //                     Navigator.push(
-  //                       context,
-  //                       MaterialPageRoute(
-  //                         builder: (_) => Dashboard(widget.token),
-  //                       ),
-  //                     );
-  //                   } else {
-  //                     if (!context.mounted) return;
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(content: Text("Failed to start work.")),
-  //                     );
-  //                   }
-  //                 } catch (e) {
-  //                   Navigator.of(context).pop();
-  //                   if (!context.mounted) return;
-  //                   ScaffoldMessenger.of(context).showSnackBar(
-  //                     SnackBar(content: Text("Location error: $e")),
-  //                   );
-  //                 }
-  //               }),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   void showLoginPrompt(BuildContext context) {
     String? faceBase64;
@@ -2894,6 +2793,107 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
 
                       const SizedBox(width: 10),
                       InkWell(
+                        onTap: () async {
+                          setState(() {
+                            // Toggle visibility
+                            _showNewLeadsCount = !_showNewLeadsCount;
+                            _showFollowupLeadsCount = !_showFollowupLeadsCount;
+                            _showClosedLeadsCount = !_showClosedLeadsCount;
+                            _showTotalCalledCount = !_showTotalCalledCount;
+                            _showTransferredLeadsCount =
+                                !_showTransferredLeadsCount;
+                            _showMissedLeadsCount = !_showMissedLeadsCount;
+
+                            // Start loaders only if we are showing counts
+                            if (_showNewLeadsCount) _isLoadingNewLeads = true;
+                            if (_showFollowupLeadsCount)
+                              _isLoadingFollowupLeads = true;
+                            if (_showClosedLeadsCount)
+                              _isLoadingClosedLeads = true;
+                            if (_showTotalCalledCount)
+                              _isLoadingTotalCalled = true;
+                            if (_showTransferredLeadsCount)
+                              _isLoadingTransferredLeads = true;
+                            if (_showMissedLeadsCount)
+                              _isLoadingMissedLeads = true;
+                          });
+
+                          // Fetch data only if toggled to show
+                          if (_showNewLeadsCount ||
+                              _showFollowupLeadsCount ||
+                              _showClosedLeadsCount ||
+                              _showTotalCalledCount ||
+                              _showTransferredLeadsCount ||
+                              _showMissedLeadsCount) {
+                            try {
+                              var result = await HttpService.leadDashboardNew(
+                                widget.token,
+                                fromdate,
+                                todate,
+                                fromdate1,
+                                todate1,
+                                "all",
+                              );
+
+                              if (result != null) {
+                                setState(() {
+                                  newLeadsDashboard = result;
+                                  followupLeadsDashboard = result;
+                                  closedLeadsDashboard = result;
+                                  totalCalledDashboard = result;
+                                  transferredLeadsDashboard = result;
+                                  missedLeadsDashboard = result;
+
+                                  // Stop loaders
+                                  _isLoadingNewLeads = false;
+                                  _isLoadingFollowupLeads = false;
+                                  _isLoadingClosedLeads = false;
+                                  _isLoadingTotalCalled = false;
+                                  _isLoadingTransferredLeads = false;
+                                  _isLoadingMissedLeads = false;
+                                });
+                              }
+                            } catch (e) {
+                              setState(() {
+                                _isLoadingNewLeads = false;
+                                _isLoadingFollowupLeads = false;
+                                _isLoadingClosedLeads = false;
+                                _isLoadingTotalCalled = false;
+                                _isLoadingTransferredLeads = false;
+                                _isLoadingMissedLeads = false;
+                              });
+                              print("Error fetching all lead counts: $e");
+                            }
+                          }
+                        },
+                        child: Container(
+                          width: 50,
+                          height: 32,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 5),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white, width: 0),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.grey,
+                                blurRadius: 5,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                            color: Colors.white,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(5)),
+                          ),
+                          child: Icon(
+                            Icons.visibility,
+                            color: Colors.grey.shade700,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+                      InkWell(
                         onTap: () {
                           if (isVisible == true) {
                             Common.saveSharedPref("isVisible", 'false');
@@ -4703,270 +4703,280 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             const SizedBox(height: 20),
                             Row(
                               children: [
+                                // ────────────── New Leads ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => ViewLeads(
-                                                      widget.token,
-                                                      updateLeadPermission1,
-                                                      deleteLeadPermission1,
-                                                      cloudCallPermission1,
-                                                      pageName: 'New Leads',
-                                                      fromDate:
-                                                          fromdate.toString(),
-                                                      toDate: todate.toString(),
-                                                      status: '1',
-                                                    )),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'New Leads',
+                                            fromDate: fromdate.toString(),
+                                            toDate: todate.toString(),
+                                            status: '1',
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.42,
-                                      height:
-                                          MediaQuery.of(context).size.height *
-                                              0.15,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFf0ebef),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 10, right: 10, top: 10),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                const Text(
-                                                  "New Leads",
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 13,
-                                                      color: Colors.black),
+                                    width: MediaQuery.of(context).size.width *
+                                        0.42,
+                                    height: MediaQuery.of(context).size.height *
+                                        0.15,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFf0ebef),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                "New Leads",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13,
+                                                  color: Colors.black,
                                                 ),
-                                                Row(
-                                                  children: [
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          _showNewLeadsCount =
-                                                              !_showNewLeadsCount;
-                                                        });
-                                                      },
-                                                      child: Container(
-                                                        width: 20,
-                                                        height: 20,
-                                                        decoration:
-                                                            const BoxDecoration(
-                                                                shape: BoxShape
-                                                                    .circle,
-                                                                color: Colors
-                                                                    .white),
-                                                        child: Center(
-                                                            child: Icon(
-                                                          _showNewLeadsCount
-                                                              ? Icons
-                                                                  .visibility_off
-                                                              : Icons
-                                                                  .visibility,
-                                                          size: 13,
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  dynamic toolTip =
+                                                      _toolTipKey.currentState;
+                                                  toolTip
+                                                      .ensureTooltipVisible();
+                                                },
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  message:
+                                                      'The combined count of new leads \n and unattended leads',
+                                                  key: _toolTipKey,
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           color: Colors
                                                               .grey.shade700,
-                                                        )),
+                                                        ),
                                                       ),
                                                     ),
-                                                    // const SizedBox(width: 5),
-                                                    // GestureDetector(
-                                                    //   onTap: () {
-                                                    //     dynamic toolTip =
-                                                    //         _toolTipKey
-                                                    //             .currentState;
-                                                    //     toolTip
-                                                    //         .ensureTooltipVisible();
-                                                    //   },
-                                                    //   child: Tooltip(
-                                                    //     padding:
-                                                    //         const EdgeInsets
-                                                    //             .all(10),
-                                                    //     message:
-                                                    //         'The combined count of new leads \n and  unattended leads',
-                                                    //     key: _toolTipKey,
-                                                    //     child: Container(
-                                                    //       width: 20,
-                                                    //       height: 20,
-                                                    //       decoration:
-                                                    //           const BoxDecoration(
-                                                    //               shape: BoxShape
-                                                    //                   .circle,
-                                                    //               color: Colors
-                                                    //                   .white),
-                                                    //       child: Center(
-                                                    //           child: Text(
-                                                    //         '?',
-                                                    //         style: TextStyle(
-                                                    //             fontSize: 13,
-                                                    //             fontWeight:
-                                                    //                 FontWeight
-                                                    //                     .bold,
-                                                    //             color: Colors
-                                                    //                 .grey
-                                                    //                 .shade700),
-                                                    //       )),
-                                                    //     ),
-                                                    //   ),
-                                                    // )
-                                                  ],
+                                                  ),
                                                 ),
-                                              ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 35,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showNewLeadsCount) {
+                                                setState(() {
+                                                  _isLoadingNewLeads =
+                                                      true; // start loader
+                                                });
+
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "1",
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    newLeadsDashboard = result;
+                                                    _showNewLeadsCount = true;
+                                                    _isLoadingNewLeads =
+                                                        false; // stop loader
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    _isLoadingNewLeads =
+                                                        false; // stop loader on failure
+                                                  });
+                                                }
+                                              } else {
+                                                setState(() {
+                                                  _showNewLeadsCount = false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingNewLeads
+                                                  ? SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : _showNewLeadsCount &&
+                                                          newLeadsDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          newLeadsDashboard!
+                                                              .data.newLeads
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
                                             ),
                                           ),
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: _showNewLeadsCount &&
-                                                    leadDashboard != null
-                                                ? Text(
-                                                    leadDashboard!.data.newLeads
-                                                        .toString(),
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.black,
-                                                        fontSize: 20),
-                                                  )
-                                                : SizedBox(
-                                                    height: 0,
-                                                  ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 10, right: 10),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                const Text(
-                                                  "View Leads",
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.black),
+                                        ),
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                "View Leads",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.black,
                                                 ),
-                                                InkWell(
-                                                  onTap: () async {
-                                                    // Common.showProgressDialog(context, "Loading..");
-                                                    Common.saveSharedPref(
-                                                        "statusWise", 'no');
-                                                    await getLeadProgressbar(
-                                                        widget.token,
-                                                        fromdate,
-                                                        todate,
-                                                        '1');
-                                                    if (object1!.status ==
-                                                        true) {
-                                                      if (context.mounted) {
-                                                        Navigator.pop(context);
-                                                        leadProgressbarDialog(
-                                                            context,
-                                                            "New Leads",
-                                                            "1",
-                                                            "");
-                                                      }
-                                                    }
-                                                  },
-                                                  child: Container(
-                                                    width: 30,
-                                                    height: 30,
-                                                    decoration: BoxDecoration(
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                              color: Colors.grey
-                                                                  .shade500,
-                                                              offset:
-                                                                  const Offset(
-                                                                      0, 2.0))
-                                                        ],
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(5)),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              4),
-                                                      child: Center(
-                                                          child: Image.asset(
-                                                        "assets/icons/lineSegment.png",
-                                                      )),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  Common.saveSharedPref(
+                                                      "statusWise", 'no');
+                                                  await getLeadProgressbar(
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '1',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                        context,
+                                                        "New Leads",
+                                                        "1",
+                                                        "");
+                                                  }
+                                                },
+                                                child: Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  decoration: BoxDecoration(
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors
+                                                            .grey.shade500,
+                                                        offset: const Offset(
+                                                            0, 2.0),
+                                                        blurRadius: 2,
+                                                      ),
+                                                    ],
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    child: Center(
+                                                      child: Image.asset(
+                                                          "assets/icons/lineSegment.png"),
                                                     ),
                                                   ),
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(
-                                            height: 10,
-                                          )
-                                        ],
-                                      )),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
+
+                                const SizedBox(width: 15),
+
+                                // ────────────── Followup Leads ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                widget.token,
-                                                updateLeadPermission1,
-                                                deleteLeadPermission1,
-                                                cloudCallPermission1,
-                                                pageName: 'Followup Leads',
-                                                fromDate: DateTime(
-                                                        DateTime.now().year,
-                                                        DateTime.now().month -
-                                                            3,
-                                                        DateTime.now().day)
-                                                    .toString(),
-                                                toDate: todate.toString(),
-                                                status: '2',
-                                              ),
-                                            ),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'Followup Leads',
+                                            fromDate: DateTime(
+                                                    DateTime.now().year,
+                                                    DateTime.now().month - 3,
+                                                    DateTime.now().day)
+                                                .toString(),
+                                            toDate: todate.toString(),
+                                            status: '2',
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
                                     width: MediaQuery.of(context).size.width *
@@ -4978,15 +4988,12 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           255, 204, 211, 224),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Stack(
                                       children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, top: 10),
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -5001,27 +5008,36 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                               ),
                                               GestureDetector(
                                                 onTap: () {
-                                                  setState(() {
-                                                    _showFollowupLeadsCount =
-                                                        !_showFollowupLeadsCount;
-                                                  });
+                                                  dynamic toolTip1 =
+                                                      _toolTipKey1.currentState;
+                                                  toolTip1
+                                                      .ensureTooltipVisible();
                                                 },
-                                                child: Container(
-                                                  width: 20,
-                                                  height: 20,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: Center(
-                                                    child: Icon(
-                                                      _showFollowupLeadsCount
-                                                          ? Icons.visibility_off
-                                                          : Icons.visibility,
-                                                      size: 13,
-                                                      color:
-                                                          Colors.grey.shade700,
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  message:
+                                                      'The current count of leads \n assigned for today including \n missed follow up leads',
+                                                  key: _toolTipKey1,
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -5029,34 +5045,95 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                             ],
                                           ),
                                         ),
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 45,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showFollowupLeadsCount) {
+                                                setState(() {
+                                                  _isLoadingFollowupLeads =
+                                                      true; // start loader
+                                                });
 
-                                        // 👇 Only show count + spacing when visible
-                                        if (_showFollowupLeadsCount &&
-                                            leadDashboard != null) ...[
-                                          const SizedBox(height: 10),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: Text(
-                                              leadDashboard!.data.followupLeads
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                                fontSize: 20,
-                                              ),
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "2",
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    followupLeadsDashboard =
+                                                        result;
+                                                    _showFollowupLeadsCount =
+                                                        true;
+                                                    _isLoadingFollowupLeads =
+                                                        false; // stop loader
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    _isLoadingFollowupLeads =
+                                                        false; // stop loader on failure
+                                                  });
+                                                }
+                                              } else {
+                                                setState(() {
+                                                  _showFollowupLeadsCount =
+                                                      false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingFollowupLeads
+                                                  ? SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : _showFollowupLeadsCount &&
+                                                          followupLeadsDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          followupLeadsDashboard!
+                                                              .data
+                                                              .followupLeads
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
                                             ),
                                           ),
-                                        ],
-
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
+                                        ),
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                                CrossAxisAlignment.center,
                                             children: [
                                               const Text(
                                                 "View Leads",
@@ -5072,19 +5149,20 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   Common.saveSharedPref(
                                                       "statusWise", 'no');
                                                   await getLeadProgressbar(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      '2');
-                                                  if (object1!.status == true) {
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context);
-                                                      leadProgressbarDialog(
-                                                          context,
-                                                          "Followup Leads",
-                                                          "2",
-                                                          "");
-                                                    }
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '2',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                      context,
+                                                      "Followup Leads",
+                                                      "2",
+                                                      "",
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
@@ -5097,7 +5175,8 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                             .grey.shade500,
                                                         offset: const Offset(
                                                             0, 2.0),
-                                                      )
+                                                        blurRadius: 2,
+                                                      ),
                                                     ],
                                                     color: Colors.white,
                                                     borderRadius:
@@ -5117,7 +5196,6 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
                                       ],
                                     ),
                                   ),
@@ -5129,33 +5207,32 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             ),
                             Row(
                               children: [
-                                // -------- Closed Leads --------
+                                // ────────────── Closed Leads ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                widget.token,
-                                                updateLeadPermission1,
-                                                deleteLeadPermission1,
-                                                cloudCallPermission1,
-                                                pageName: 'Closed Leads',
-                                                fromDate: fromdate.toString(),
-                                                toDate: todate.toString(),
-                                                status: '4',
-                                              ),
-                                            ),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'Closed Leads',
+                                            fromDate: fromdate.toString(),
+                                            toDate: todate.toString(),
+                                            status: '4',
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
                                     width: MediaQuery.of(context).size.width *
@@ -5167,15 +5244,13 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           255, 206, 243, 240),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Stack(
                                       children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, top: 10),
+                                        // Header with tooltip
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -5183,33 +5258,43 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                               const Text(
                                                 "Closed Leads",
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 13,
-                                                    color: Colors.black),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               GestureDetector(
                                                 onTap: () {
-                                                  setState(() {
-                                                    _showClosedLeadsCount =
-                                                        !_showClosedLeadsCount;
-                                                  });
+                                                  dynamic toolTip2 =
+                                                      _toolTipKey2.currentState;
+                                                  toolTip2
+                                                      .ensureTooltipVisible();
                                                 },
-                                                child: Container(
-                                                  width: 20,
-                                                  height: 20,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: Center(
-                                                    child: Icon(
-                                                      _showClosedLeadsCount
-                                                          ? Icons.visibility_off
-                                                          : Icons.visibility,
-                                                      size: 13,
-                                                      color:
-                                                          Colors.grey.shade700,
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  message:
+                                                      'Closed leads can be filtered \n using a specific date range to \n determine the count of closed \n leads within that period',
+                                                  key: _toolTipKey2,
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -5218,39 +5303,103 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           ),
                                         ),
 
-                                        // 👇 Only show count + spacing when visible
-                                        if (_showClosedLeadsCount &&
-                                            leadDashboard != null) ...[
-                                          const SizedBox(height: 10),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: Text(
-                                              leadDashboard!.data.closedLeads
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                                fontSize: 20,
-                                              ),
+                                        // Count
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 35,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showClosedLeadsCount) {
+                                                setState(() {
+                                                  _isLoadingClosedLeads =
+                                                      true; // start loader
+                                                });
+
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "3", // leadType = 3 for Closed Leads
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    closedLeadsDashboard =
+                                                        result;
+                                                    _showClosedLeadsCount =
+                                                        true;
+                                                    _isLoadingClosedLeads =
+                                                        false; // stop loader
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    _isLoadingClosedLeads =
+                                                        false; // stop loader on failure
+                                                  });
+                                                }
+                                              } else {
+                                                setState(() {
+                                                  _showClosedLeadsCount = false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingClosedLeads
+                                                  ? SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : _showClosedLeadsCount &&
+                                                          closedLeadsDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          closedLeadsDashboard!
+                                                              .data.closedLeads
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
                                             ),
                                           ),
-                                        ],
+                                        ),
 
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
+                                        // View Leads button
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                                CrossAxisAlignment.center,
                                             children: [
                                               const Text(
                                                 "View Leads",
                                                 style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black),
+                                                  fontSize: 12,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               InkWell(
                                                 onTap: () async {
@@ -5259,19 +5408,20 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   Common.saveSharedPref(
                                                       "statusWise", 'no');
                                                   await getLeadProgressbar(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      '4');
-                                                  if (object1!.status == true) {
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context);
-                                                      leadProgressbarDialog(
-                                                          context,
-                                                          "Closed Leads",
-                                                          "4",
-                                                          "");
-                                                    }
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '4',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                      context,
+                                                      "Closed Leads",
+                                                      "4",
+                                                      "",
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
@@ -5280,10 +5430,12 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   decoration: BoxDecoration(
                                                     boxShadow: [
                                                       BoxShadow(
-                                                          color: Colors
-                                                              .grey.shade500,
-                                                          offset: const Offset(
-                                                              0, 2.0))
+                                                        color: Colors
+                                                            .grey.shade500,
+                                                        offset: const Offset(
+                                                            0, 2.0),
+                                                        blurRadius: 2,
+                                                      ),
                                                     ],
                                                     color: Colors.white,
                                                     borderRadius:
@@ -5303,7 +5455,6 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
                                       ],
                                     ),
                                   ),
@@ -5311,35 +5462,34 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
 
                                 const SizedBox(width: 15),
 
-                                // -------- Total Called --------
+                                // ────────────── Total Called ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                widget.token,
-                                                updateLeadPermission1,
-                                                deleteLeadPermission1,
-                                                cloudCallPermission1,
-                                                pageName: 'Total Called',
-                                                fromDate: fromdate.toString(),
-                                                toDate: todate.toString(),
-                                                leadType: "-1",
-                                                callStatus: "1",
-                                                status: '0',
-                                              ),
-                                            ),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'Total Called',
+                                            fromDate: fromdate.toString(),
+                                            toDate: todate.toString(),
+                                            leadType: "-1",
+                                            callStatus: "1",
+                                            status: '0',
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
                                     width: MediaQuery.of(context).size.width *
@@ -5350,16 +5500,13 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                       color: const Color(0xFFb4c2dd),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Stack(
                                       children: [
-                                        // -------- Header --------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, top: 10),
+                                        // Header + tooltip
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -5367,33 +5514,42 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                               const Text(
                                                 "Total Called",
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 13,
-                                                    color: Colors.black),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               GestureDetector(
                                                 onTap: () {
-                                                  setState(() {
-                                                    _showTotalCalledCount =
-                                                        !_showTotalCalledCount;
-                                                  });
+                                                  dynamic toolTip3 =
+                                                      _toolTipKey3.currentState;
+                                                  toolTip3
+                                                      .ensureTooltipVisible();
                                                 },
-                                                child: Container(
-                                                  width: 20,
-                                                  height: 20,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                          shape:
-                                                              BoxShape.circle,
-                                                          color: Colors.white),
-                                                  child: Center(
-                                                    child: Icon(
-                                                      _showTotalCalledCount
-                                                          ? Icons.visibility_off
-                                                          : Icons.visibility,
-                                                      size: 13,
-                                                      color:
-                                                          Colors.grey.shade700,
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  message:
+                                                      'Total called can be filtered \n using a specific date range to \n determine the count of total leads \n within that period',
+                                                  key: _toolTipKey3,
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -5402,39 +5558,103 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           ),
                                         ),
 
-                                        // -------- Count (only when visible) --------
-                                        if (_showTotalCalledCount &&
-                                            leadDashboard != null) ...[
-                                          const SizedBox(height: 10),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: Text(
-                                              leadDashboard!.data.totalCalled
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                  fontSize: 20),
+                                        // Count
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 35,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showTotalCalledCount) {
+                                                setState(() {
+                                                  _isLoadingTotalCalled =
+                                                      true; // start loader
+                                                });
+
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "4", // leadType = 4 for Total Called
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    totalCalledDashboard =
+                                                        result;
+                                                    _showTotalCalledCount =
+                                                        true;
+                                                    _isLoadingTotalCalled =
+                                                        false; // stop loader
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    _isLoadingTotalCalled =
+                                                        false; // stop loader on failure
+                                                  });
+                                                }
+                                              } else {
+                                                setState(() {
+                                                  _showTotalCalledCount = false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingTotalCalled
+                                                  ? SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : _showTotalCalledCount &&
+                                                          totalCalledDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          totalCalledDashboard!
+                                                              .data.totalCalled
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
                                             ),
                                           ),
-                                        ],
+                                        ),
 
-                                        // -------- Footer --------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, bottom: 10),
+                                        // View Leads button
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                                CrossAxisAlignment.center,
                                             children: [
                                               const Text(
                                                 "View Leads",
                                                 style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black),
+                                                  fontSize: 12,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               InkWell(
                                                 onTap: () async {
@@ -5443,54 +5663,57 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   Common.saveSharedPref(
                                                       "statusWise", 'no');
                                                   await getLeadProgressbar(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      '-1');
-                                                  if (object1!.status == true) {
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context);
-                                                      leadProgressbarDialog(
-                                                          context,
-                                                          "Total Called",
-                                                          "",
-                                                          "-1");
-                                                    }
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '-1',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                      context,
+                                                      "Total Called",
+                                                      "",
+                                                      "-1",
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
                                                   width: 30,
                                                   height: 30,
                                                   decoration: BoxDecoration(
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                            color: Colors
-                                                                .grey.shade500,
-                                                            offset:
-                                                                const Offset(
-                                                                    0, 2.0))
-                                                      ],
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5)),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors
+                                                            .grey.shade500,
+                                                        offset: const Offset(
+                                                            0, 2.0),
+                                                        blurRadius: 2,
+                                                      ),
+                                                    ],
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.all(4),
                                                     child: Center(
-                                                        child: Image.asset(
-                                                            "assets/icons/lineSegment.png")),
+                                                      child: Image.asset(
+                                                          "assets/icons/lineSegment.png"),
+                                                    ),
                                                   ),
                                                 ),
-                                              )
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
                                       ],
                                     ),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                             const SizedBox(
@@ -5498,32 +5721,31 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             ),
                             Row(
                               children: [
-                                // ----------------- Transferred Leads -----------------
+                                // ────────────── Transferred Leads ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => ViewLeads(
-                                                      widget.token,
-                                                      updateLeadPermission1,
-                                                      deleteLeadPermission1,
-                                                      cloudCallPermission1,
-                                                      pageName:
-                                                          'Transferred Leads',
-                                                      leadType: "2",
-                                                      callStatus: "-2",
-                                                    )),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'Transferred Leads',
+                                            leadType: "2",
+                                            callStatus: "-2",
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
                                     width: MediaQuery.of(context).size.width *
@@ -5535,16 +5757,13 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           255, 189, 226, 249),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Stack(
                                       children: [
-                                        // ------- Title + eye + tooltip -------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, top: 10),
+                                        // Header + tooltip
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -5552,119 +5771,148 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                               const Text(
                                                 "Transferred Leads",
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 13,
-                                                    color: Colors.black),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                ),
                                               ),
-                                              Row(
-                                                children: [
-                                                  // 👁️ Eye toggle
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        _showTransferredLeadsCount =
-                                                            !_showTransferredLeadsCount;
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width: 20,
-                                                      height: 20,
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              color:
-                                                                  Colors.white),
-                                                      child: Center(
-                                                          child: Icon(
-                                                        _showTransferredLeadsCount
-                                                            ? Icons
-                                                                .visibility_off
-                                                            : Icons.visibility,
-                                                        size: 13,
-                                                        color: Colors
-                                                            .grey.shade700,
-                                                      )),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  dynamic toolTip4 =
+                                                      _toolTipKey4.currentState;
+                                                  toolTip4
+                                                      .ensureTooltipVisible();
+                                                },
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  message:
+                                                      'Transferred leads can be filtered \n using a specific date range to \n determine the count of Transferred \n leads within that period',
+                                                  key: _toolTipKey4,
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                  // const SizedBox(width: 5),
-                                                  // GestureDetector(
-                                                  //   onTap: () {
-                                                  //     dynamic toolTip4 =
-                                                  //         _toolTipKey4
-                                                  //             .currentState;
-                                                  //     toolTip4
-                                                  //         .ensureTooltipVisible();
-                                                  //   },
-                                                  //   child: Tooltip(
-                                                  //     padding:
-                                                  //         const EdgeInsets.all(
-                                                  //             10),
-                                                  //     message:
-                                                  //         'Transferred leads can be filtered \n using a specific date range to \n determine the count of Transferred \n leads within that period',
-                                                  //     key: _toolTipKey4,
-                                                  //     child: Container(
-                                                  //       width: 20,
-                                                  //       height: 20,
-                                                  //       decoration:
-                                                  //           const BoxDecoration(
-                                                  //               shape: BoxShape
-                                                  //                   .circle,
-                                                  //               color: Colors
-                                                  //                   .white),
-                                                  //       child: Center(
-                                                  //           child: Text(
-                                                  //         '?',
-                                                  //         style: TextStyle(
-                                                  //             fontSize: 13,
-                                                  //             fontWeight:
-                                                  //                 FontWeight
-                                                  //                     .bold,
-                                                  //             color: Colors.grey
-                                                  //                 .shade700),
-                                                  //       )),
-                                                  //     ),
-                                                  //   ),
-                                                  // ),
-                                                ],
-                                              )
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
-                                        // ------- Count (only if 👁️ is on) -------
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10),
-                                          child: _showTransferredLeadsCount &&
-                                                  leadDashboard != null
-                                              ? Text(
-                                                  leadDashboard!
-                                                      .data.transferLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                )
-                                              : const SizedBox(height: 0),
+
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 35,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showTransferredLeadsCount) {
+                                                setState(() {
+                                                  _isLoadingTransferredLeads =
+                                                      true; // start loader
+                                                });
+
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "6", // leadType = 6 for Transferred Leads
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    transferredLeadsDashboard =
+                                                        result;
+                                                    _showTransferredLeadsCount =
+                                                        true;
+                                                    _isLoadingTransferredLeads =
+                                                        false; // stop loader
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    _isLoadingTransferredLeads =
+                                                        false; // stop loader on failure
+                                                  });
+                                                }
+                                              } else {
+                                                setState(() {
+                                                  _showTransferredLeadsCount =
+                                                      false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingTransferredLeads
+                                                  ? SizedBox(
+                                                      height: 20,
+                                                      width: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : _showTransferredLeadsCount &&
+                                                          transferredLeadsDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          transferredLeadsDashboard!
+                                                              .data
+                                                              .transferLeads
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
+                                            ),
+                                          ),
                                         ),
-                                        // ------- Footer -------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
+
+                                        // View Leads button
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                                CrossAxisAlignment.center,
                                             children: [
                                               const Text(
                                                 "View Leads",
                                                 style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black),
+                                                  fontSize: 12,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               InkWell(
                                                 onTap: () async {
@@ -5673,51 +5921,53 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   Common.saveSharedPref(
                                                       "statusWise", 'no');
                                                   await getLeadProgressbar(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      '-2');
-                                                  if (object1!.status == true) {
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context);
-                                                      leadProgressbarDialog(
-                                                          context,
-                                                          "Transferred Leads",
-                                                          "",
-                                                          "2");
-                                                    }
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '-2',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                      context,
+                                                      "Transferred Leads",
+                                                      "",
+                                                      "2",
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
                                                   width: 30,
                                                   height: 30,
                                                   decoration: BoxDecoration(
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                            color: Colors
-                                                                .grey.shade500,
-                                                            offset:
-                                                                const Offset(
-                                                                    0, 2.0))
-                                                      ],
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5)),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors
+                                                            .grey.shade500,
+                                                        offset: const Offset(
+                                                            0, 2.0),
+                                                        blurRadius: 2,
+                                                      ),
+                                                    ],
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.all(4),
                                                     child: Center(
-                                                        child: Image.asset(
-                                                      "assets/icons/lineSegment.png",
-                                                    )),
+                                                      child: Image.asset(
+                                                          "assets/icons/lineSegment.png"),
+                                                    ),
                                                   ),
                                                 ),
-                                              )
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
                                       ],
                                     ),
                                   ),
@@ -5725,31 +5975,31 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
 
                                 const SizedBox(width: 15),
 
-                                // ----------------- Missed Leads -----------------
+                                // ────────────── Missed Leads ──────────────
                                 InkWell(
                                   onTap: () {
                                     Common.saveSharedPref("statusWise", 'no');
-                                    viewLeadPermission == 'true'
-                                        ? Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => ViewLeads(
-                                                      widget.token,
-                                                      updateLeadPermission1,
-                                                      deleteLeadPermission1,
-                                                      cloudCallPermission1,
-                                                      pageName: 'Missed Leads',
-                                                      leadType: "1",
-                                                      callStatus: "-1",
-                                                    )),
-                                          ).then((r) {
-                                            getData(
-                                                widget.token, fromdate, todate);
-                                            if (loadmore == true) {
-                                              getStaffwise();
-                                            }
-                                          })
-                                        : _dialogue(context, 'View Leads');
+                                    if (viewLeadPermission == 'true') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                            widget.token,
+                                            updateLeadPermission1,
+                                            deleteLeadPermission1,
+                                            cloudCallPermission1,
+                                            pageName: 'Missed Leads',
+                                            leadType: "1",
+                                            callStatus: "-1",
+                                          ),
+                                        ),
+                                      ).then((r) {
+                                        getData(widget.token, fromdate, todate);
+                                        if (loadmore == true) getStaffwise();
+                                      });
+                                    } else {
+                                      _dialogue(context, 'View Leads');
+                                    }
                                   },
                                   child: Container(
                                     width: MediaQuery.of(context).size.width *
@@ -5761,16 +6011,13 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                           255, 239, 210, 214),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Stack(
                                       children: [
-                                        // ------- Title + eye + tooltip -------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10, top: 10),
+                                        // Header + tooltip
+                                        Positioned(
+                                          top: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -5778,119 +6025,145 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                               const Text(
                                                 "Missed Leads",
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 13,
-                                                    color: Colors.black),
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                ),
                                               ),
-                                              Row(
-                                                children: [
-                                                  // 👁️ Eye toggle
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        _showMissedLeadsCount =
-                                                            !_showMissedLeadsCount;
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width: 20,
-                                                      height: 20,
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              color:
-                                                                  Colors.white),
-                                                      child: Center(
-                                                          child: Icon(
-                                                        _showMissedLeadsCount
-                                                            ? Icons
-                                                                .visibility_off
-                                                            : Icons.visibility,
-                                                        size: 13,
-                                                        color: Colors
-                                                            .grey.shade700,
-                                                      )),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  dynamic toolTip5 =
+                                                      _toolTipKey5.currentState;
+                                                  toolTip5
+                                                      .ensureTooltipVisible();
+                                                },
+                                                child: Tooltip(
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  key: _toolTipKey5,
+                                                  message:
+                                                      'Missed Leads can be filtered \n using a specific date range to \n determine the count of missed \n leads within that period',
+                                                  child: Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                  // const SizedBox(width: 5),
-                                                  // GestureDetector(
-                                                  //   onTap: () {
-                                                  //     dynamic toolTip5 =
-                                                  //         _toolTipKey5
-                                                  //             .currentState;
-                                                  //     toolTip5
-                                                  //         .ensureTooltipVisible();
-                                                  //   },
-                                                  //   child: Tooltip(
-                                                  //     padding:
-                                                  //         const EdgeInsets.all(
-                                                  //             10),
-                                                  //     message:
-                                                  //         'Missed Leads can be filtered \n using a specific date range to \n determine the count of missed \n leads within that period',
-                                                  //     key: _toolTipKey5,
-                                                  //     child: Container(
-                                                  //       width: 20,
-                                                  //       height: 20,
-                                                  //       decoration:
-                                                  //           const BoxDecoration(
-                                                  //               shape: BoxShape
-                                                  //                   .circle,
-                                                  //               color: Colors
-                                                  //                   .white),
-                                                  //       child: Center(
-                                                  //           child: Text(
-                                                  //         '?',
-                                                  //         style: TextStyle(
-                                                  //             fontSize: 13,
-                                                  //             fontWeight:
-                                                  //                 FontWeight
-                                                  //                     .bold,
-                                                  //             color: Colors.grey
-                                                  //                 .shade700),
-                                                  //       )),
-                                                  //     ),
-                                                  //   ),
-                                                  // ),
-                                                ],
-                                              )
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
-                                        // ------- Count (only if 👁️ is on) -------
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10),
-                                          child: _showMissedLeadsCount &&
-                                                  leadDashboard != null
-                                              ? Text(
-                                                  leadDashboard!
-                                                      .data.missedLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                )
-                                              : const SizedBox(height: 0),
+
+                                        Positioned(
+                                          top: 35,
+                                          left: 0,
+                                          right: 35,
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              if (!_showMissedLeadsCount) {
+                                                setState(() {
+                                                  _isLoadingMissedLeads =
+                                                      true; // start loader
+                                                });
+
+                                                var result = await HttpService
+                                                    .leadDashboardNew(
+                                                  widget.token,
+                                                  fromdate,
+                                                  todate,
+                                                  fromdate1,
+                                                  todate1,
+                                                  "5",
+                                                );
+
+                                                if (result != null) {
+                                                  setState(() {
+                                                    missedLeadsDashboard =
+                                                        result;
+                                                    _showMissedLeadsCount =
+                                                        true;
+                                                  });
+                                                }
+
+                                                setState(() {
+                                                  _isLoadingMissedLeads =
+                                                      false; // stop loader
+                                                });
+                                              } else {
+                                                setState(() {
+                                                  _showMissedLeadsCount = false;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              alignment: Alignment.center,
+                                              child: _isLoadingMissedLeads
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : _showMissedLeadsCount &&
+                                                          missedLeadsDashboard !=
+                                                              null
+                                                      ? Text(
+                                                          missedLeadsDashboard!
+                                                              .data.missedLeads
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black,
+                                                            fontSize: 20,
+                                                          ),
+                                                        )
+                                                      : Icon(
+                                                          Icons.visibility,
+                                                          size: 22,
+                                                          color: Colors
+                                                              .grey.shade700,
+                                                        ),
+                                            ),
+                                          ),
                                         ),
-                                        // ------- Footer -------
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
+
+                                        // View Leads button
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10,
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                                CrossAxisAlignment.center,
                                             children: [
                                               const Text(
                                                 "View Leads",
                                                 style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black),
+                                                  fontSize: 12,
+                                                  color: Colors.black,
+                                                ),
                                               ),
                                               InkWell(
                                                 onTap: () async {
@@ -5899,51 +6172,53 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                   Common.saveSharedPref(
                                                       "statusWise", 'no');
                                                   await getLeadProgressbar(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      '-3');
-                                                  if (object1!.status == true) {
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context);
-                                                      leadProgressbarDialog(
-                                                          context,
-                                                          "Missed Leads",
-                                                          "",
-                                                          "1");
-                                                    }
+                                                    widget.token,
+                                                    fromdate,
+                                                    todate,
+                                                    '-3',
+                                                  );
+                                                  if (object1!.status == true &&
+                                                      context.mounted) {
+                                                    Navigator.pop(context);
+                                                    leadProgressbarDialog(
+                                                      context,
+                                                      "Missed Leads",
+                                                      "",
+                                                      "1",
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
                                                   width: 30,
                                                   height: 30,
                                                   decoration: BoxDecoration(
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                            color: Colors
-                                                                .grey.shade500,
-                                                            offset:
-                                                                const Offset(
-                                                                    0, 2.0))
-                                                      ],
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5)),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors
+                                                            .grey.shade500,
+                                                        offset: const Offset(
+                                                            0, 2.0),
+                                                        blurRadius: 2,
+                                                      ),
+                                                    ],
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.all(4),
                                                     child: Center(
-                                                        child: Image.asset(
-                                                      "assets/icons/lineSegment.png",
-                                                    )),
+                                                      child: Image.asset(
+                                                          "assets/icons/lineSegment.png"),
+                                                    ),
                                                   ),
                                                 ),
-                                              )
+                                              ),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
                                       ],
                                     ),
                                   ),
@@ -5956,7 +6231,6 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                           ],
                         )),
                     Visibility(
-                      //  visible: loadmore == false,
                       visible: loadmore == false,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16),

@@ -11,8 +11,10 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/push_notification_channel.dart';
+import 'package:login2/service/loggerservice.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
 import '../../models/loginCheckModel.dart';
@@ -81,7 +83,9 @@ class _SplashScreenState extends State<SplashScreen> {
       String? MenuDashboard = await Common.getSharedPref("MenuDashboard");
       String? RenewalDashboardPermission =
           await Common.getSharedPref("RenewalDashboardPermission");
-
+           String? NewleadDashboardPermission =
+          await Common.getSharedPref("NewleadDashboardPermission");
+       String? savedUrl = await Common.getSharedPref("url");
       Widget dashboardToOpen;
       if (ProjectDashboardPermission == "true") {
         dashboardToOpen = ProjectDashboard();
@@ -91,22 +95,23 @@ class _SplashScreenState extends State<SplashScreen> {
         if (token != null) {
           dashboardToOpen = AccountsDashboard(token: token);
         } else {
-          dashboardToOpen =
-                dashboardToOpen = Dashboard(token); 
+          dashboardToOpen = dashboardToOpen = Dashboard(token);
         }
       } else if (MenuDashboard == "true") {
         dashboardToOpen = HomePage(token);
       } else if (RenewalDashboardPermission == "true") {
         dashboardToOpen = RenewalDashboard();
+      }else if (NewleadDashboardPermission == "true") {
+        dashboardToOpen = MinimalDashboard(token);
       } else {
-        dashboardToOpen = Dashboard(token); // fallback
+        dashboardToOpen = Dashboard(token); 
       }
       if (mounted) {
         // Navigator.of(context)
         //     .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
-         Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => dashboardToOpen),
-                );
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => dashboardToOpen),
+        );
       }
     }
 
@@ -122,6 +127,7 @@ class _SplashScreenState extends State<SplashScreen> {
     String editLead = await Common.getSharedPref("updateLeadPermission");
     String deleteLead = await Common.getSharedPref("deleteLeadPermission");
     String cloudCall = await Common.getSharedPref("cloudCallPermission");
+   
     if (leadId == '0') {
       if (mounted) {
         Navigator.of(context).push(MaterialPageRoute(
@@ -158,6 +164,7 @@ class _SplashScreenState extends State<SplashScreen> {
         sound: true,
       );
       firebaseToken = await FirebaseMessaging.instance.getToken();
+      await LoggerService.log("Firebase token received: $firebaseToken");
       if (kDebugMode) {
         print("Firebase token : $firebaseToken");
       }
@@ -167,48 +174,235 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  getData() async {
-    setState(() {
-      timeOut = false;
-    });
-    try {
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        result = true;
-      } else {
-        result = false;
-      }
+  // getData() async {
+  //   setState(() {
+  //     timeOut = false;
+  //   });
+  //   try {
+  //     final connectivityResult = await (Connectivity().checkConnectivity());
+  //     if (connectivityResult == ConnectivityResult.mobile ||
+  //         connectivityResult == ConnectivityResult.wifi) {
+  //       result = true;
+  //     } else {
+  //       result = false;
+  //     }
 
-      updatedata = await HttpService.forceUpdate();
-      if (mounted) {
-        setState(() {
-          if (updatedata!.data!.server!.length == 1) {
-            Common.saveSharedPref(
-                "url", updatedata!.data!.server![0].url.toString());
-          }
-        });
-        final info = await PackageInfo.fromPlatform();
-        setState(() {
-          _packageInfo = info;
-        });
-        final appVersion = _packageInfo.version;
-        int versionCompare =
-            appVersion.compareTo(updatedata!.data!.minVersion.toString());
-        if (versionCompare < 0) {
-          _checkVersion();
-        } else {
-          _loadWidget();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          timeOut = true;
-        });
+  //     updatedata = await HttpService.forceUpdate();
+  //     if (mounted) {
+  //       setState(() {
+  //         if (updatedata!.data!.server!.length == 1) {
+  //           Common.saveSharedPref(
+  //               "url", updatedata!.data!.server![0].url.toString());
+  //         }
+  //       });
+  //       final info = await PackageInfo.fromPlatform();
+  //       setState(() {
+  //         _packageInfo = info;
+  //       });
+  //       final appVersion = _packageInfo.version;
+  //       int versionCompare =
+  //           appVersion.compareTo(updatedata!.data!.minVersion.toString());
+  //       if (versionCompare < 0) {
+  //         _checkVersion();
+  //       } else {
+  //         _loadWidget();
+  //       }
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         timeOut = true;
+  //       });
+  //     }
+  //   }
+  // }
+// working code by ansar
+  // getData() async {
+  //   setState(() {
+  //     timeOut = false;
+  //   });
+  //   try {
+  //     await LoggerService.log("Checking network connectivity...");
+  //     final connectivityResult = await (Connectivity().checkConnectivity());
+  //     await LoggerService.log("Connectivity: $connectivityResult");
+
+  //     if (connectivityResult == ConnectivityResult.mobile ||
+  //         connectivityResult == ConnectivityResult.wifi) {
+  //       result = true;
+  //     } else {
+  //       result = false;
+  //     }
+
+  //     await LoggerService.log("Fetching forceUpdate data...");
+  //     updatedata = await HttpService.forceUpdate();
+  //     await LoggerService.log(
+  //         "forceUpdate data received: ${updatedata?.data?.minVersion}");
+
+  //     if (mounted) {
+  //       setState(()  {
+  //         if (updatedata!.data!.server!.isNotEmpty) {
+  //           Common.saveSharedPref(
+  //               "url", updatedata!.data!.server![0].url.toString());
+  //           LoggerService.log(
+  //               "Server URL saved: ${updatedata!.data!.server![0].url}");
+  //         }
+        
+  //       });
+
+  //       final info = await PackageInfo.fromPlatform();
+  //       setState(() {
+  //         _packageInfo = info;
+  //       });
+  //       await LoggerService.log("App version: ${_packageInfo.version}");
+
+  //       int versionCompare = _packageInfo.version
+  //           .compareTo(updatedata!.data!.minVersion.toString());
+  //       await LoggerService.log("Version compare result: $versionCompare");
+
+  //       if (versionCompare < 0) {
+  //         await LoggerService.log(
+  //             "Version outdated, navigating to ForceUpdate");
+  //         _checkVersion();
+  //       } else {
+  //         await LoggerService.log("Version OK, proceeding to loadWidget");
+  //         _loadWidget();
+  //       }
+  //     }
+  //   } catch (e) {
+  //     await LoggerService.log("Error in getData: $e");
+  //     if (mounted) {
+  //       setState(() {
+  //         timeOut = true;
+  //       });
+  //     }
+  //   }
+  // }
+  // working code by ansar above
+
+  //code by sk
+
+//   getData() async {
+//   setState(() {
+//     timeOut = false;
+//   });
+
+//   try {
+//     await LoggerService.log("Checking network connectivity...");
+//     final connectivityResult = await (Connectivity().checkConnectivity());
+//     await LoggerService.log("Connectivity: $connectivityResult");
+//     bool hasNetwork = connectivityResult == ConnectivityResult.mobile ||
+//         connectivityResult == ConnectivityResult.wifi;
+//     result = hasNetwork;
+//     await LoggerService.log("Fetching forceUpdate data...");
+//     updatedata = await HttpService.forceUpdate();
+//     await LoggerService.log(
+//         "forceUpdate data received: ${updatedata?.data?.minVersion}");
+//     if (updatedata!.data!.server!.isNotEmpty) {
+//       String? savedUrl = await Common.getSharedPref("url");
+//       if (savedUrl == null || savedUrl.isEmpty) {
+//         await Common.saveSharedPref(
+//           "url",
+//           updatedata!.data!.server![0].url.toString(),
+//         );
+//         await LoggerService.log(
+//             "Server URL saved (initial): ${updatedata!.data!.server![0].url}");
+//       } else {
+//         await LoggerService.log("Keeping already saved URL: $savedUrl");
+//       }
+//     }
+//     final info = await PackageInfo.fromPlatform();
+
+//     if (mounted) {
+//       setState(() {
+//         _packageInfo = info;
+//       });
+//     }
+
+//     await LoggerService.log("App version: ${_packageInfo.version}");
+
+//     int versionCompare = _packageInfo.version
+//         .compareTo(updatedata!.data!.minVersion.toString());
+//     await LoggerService.log("Version compare result: $versionCompare");
+
+//     if (versionCompare < 0) {
+//       await LoggerService.log("Version outdated, navigating to ForceUpdate");
+//       _checkVersion();
+//     } else {
+//       await LoggerService.log("Version OK, proceeding to loadWidget");
+//       _loadWidget();
+//     }
+//   } catch (e) {
+//     await LoggerService.log("Error in getData: $e");
+//     if (mounted) {
+//       setState(() {
+//         timeOut = true;
+//       });
+//     }
+//   }
+// }
+
+getData() async {
+  setState(() {
+    timeOut = false;
+  });
+
+  try {
+    await LoggerService.log("Checking network connectivity...");
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    await LoggerService.log("Connectivity: $connectivityResult");
+
+    bool hasNetwork = connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi;
+    result = hasNetwork;
+
+    await LoggerService.log("Fetching forceUpdate data...");
+    updatedata = await HttpService.forceUpdate();
+    await LoggerService.log(
+        "forceUpdate data received: ${updatedata?.data?.minVersion}");
+
+    if (updatedata!.data!.server!.isNotEmpty) {
+      String? savedUrl = await Common.getSharedPref("url");
+
+      if (savedUrl == null || savedUrl.isEmpty) {
+        await Common.saveSharedPref("url", "");
+        await LoggerService.log("Cleared saved URL (was null/empty).");
+      } else {
+        await LoggerService.log("Keeping already saved URL: $savedUrl");
       }
     }
+
+    final info = await PackageInfo.fromPlatform();
+
+    if (mounted) {
+      setState(() {
+        _packageInfo = info;
+      });
+    }
+
+    await LoggerService.log("App version: ${_packageInfo.version}");
+
+    int versionCompare = _packageInfo.version
+        .compareTo(updatedata!.data!.minVersion.toString());
+    await LoggerService.log("Version compare result: $versionCompare");
+
+    if (versionCompare < 0) {
+      await LoggerService.log("Version outdated, navigating to ForceUpdate");
+      _checkVersion();
+    } else {
+      await LoggerService.log("Version OK, proceeding to loadWidget");
+      _loadWidget();
+    }
+  } catch (e) {
+    await LoggerService.log("Error in getData: $e");
+    if (mounted) {
+      setState(() {
+        timeOut = true;
+      });
+    }
   }
+}
+
+
 
   void _checkVersion() async {
     Navigator.of(context).pushAndRemoveUntil(
@@ -364,6 +558,52 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } else {}
   }
+  // routeTOHomePage() async {
+  //   await LoggerService.log("routeTOHomePage started, navigation=$navigation");
+
+  //   if (navigation == null) {
+  //     String? token = await Common.getSharedPref("token");
+  //     await LoggerService.log("Token from shared pref: $token");
+
+  //     if (firebaseToken == null) {
+  //       await LoggerService.log("Firebase token is null, retrying...");
+  //       firebaseToken = await FirebaseMessaging.instance.getToken();
+  //     }
+
+  //     if (firebaseToken == null) {
+  //       await LoggerService.log(
+  //           "Firebase token still null. Redirecting to Login.");
+  //       Common.toastMessaage(
+  //           'Unable to get Firebase token. Try restarting app.', Colors.red);
+  //       Navigator.of(context).pushAndRemoveUntil(
+  //           MaterialPageRoute(builder: (context) => const Login()),
+  //           (Route<dynamic> route) => false);
+  //       return;
+  //     }
+
+  //     try {
+  //       await LoggerService.log("Checking login status...");
+  //       LoginCheckModel? loginCheck =
+  //           await HttpService.loginCheck(token, firebaseToken!);
+  //       await LoggerService.log("Login check result: ${loginCheck?.data}");
+
+  //       if (loginCheck == null || loginCheck.data != true) {
+  //         Common.toastMessaage('Token Expired', Colors.red);
+  //         Navigator.of(context).pushAndRemoveUntil(
+  //             MaterialPageRoute(builder: (context) => const Login()),
+  //             (Route<dynamic> route) => false);
+  //       } else {
+  //         await LoggerService.log("Login successful, initializing deep links");
+  //         initDeepLinks();
+  //       }
+  //     } catch (e) {
+  //       await LoggerService.log("Error during loginCheck: $e");
+  //       Navigator.of(context).pushAndRemoveUntil(
+  //           MaterialPageRoute(builder: (context) => const Login()),
+  //           (Route<dynamic> route) => false);
+  //     }
+  //   }
+  // }
 }
 
 extension on String {

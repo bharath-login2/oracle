@@ -23,6 +23,7 @@ import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:phone_state/phone_state.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
@@ -234,7 +235,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   bool timeOut = false;
   String callMasterId = "";
   bool canPop = true;
-   String cloudCall = "";
+  String cloudCall = "";
   @override
   void initState() {
     super.initState();
@@ -247,7 +248,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   getData() async {
     contactPermission = await Common.getSharedPref("saveContactPermission");
     transferPermission = await Common.getSharedPref("transferLeads");
-       cloudCall = await Common.getSharedPref("cloudCallPermission");
+    cloudCall = await Common.getSharedPref("cloudCallPermission");
     setState(() {
       timeOut = false;
     });
@@ -444,7 +445,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 width: 25,
                               ),
                               const Text(
-                                'Lead Details',
+                                'Lead DetailsSSSS',
                                 style: TextStyle(
                                     color: Colors.white, fontSize: 18),
                               ),
@@ -701,12 +702,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       if (widget.cloudCall == true) {
                                         chooseCallDialog(context);
                                       } else {
-                                        // Common.dialPad(leadDetails!
-                                        //     .data!.contactNumber1
-                                        //     .toString());
-                                        await FlutterPhoneDirectCaller.callNumber(
-                                            leadDetails!.data!.contactNumber1
-                                                .toString());
+                                        Common.dialPad(leadDetails!
+                                            .data!.contactNumber1
+                                            .toString());
+                                        // await FlutterPhoneDirectCaller
+                                        //     .callNumber(leadDetails!
+                                        //         .data!.contactNumber1
+                                        //         .toString());
                                       }
                                     }
                                   } else {
@@ -952,11 +954,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         .data!
                                                                         .leadCategories!
                                                                         .length;
-
-
-
-
-                                                                        
                                                                 i++)
                                                               PopupMenuItem<
                                                                   int>(
@@ -1030,39 +1027,35 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         height:
                                                                             4),
                                                                     SingleChildScrollView(
-                                                                       scrollDirection: Axis.horizontal,
-                                                                      child: Row(
+                                                                      scrollDirection:
+                                                                          Axis.horizontal,
+                                                                      child:
+                                                                          Row(
                                                                         children: [
                                                                           Padding(
-                                                                            padding: const EdgeInsets
-                                                                                .only(
-                                                                                left: 25),
+                                                                            padding:
+                                                                                const EdgeInsets.only(left: 25),
                                                                             child:
                                                                                 Text(
                                                                               'Staff: ${leadDetails!.data!.leadCategories![i].staffName.toString()}',
-                                                                              style:
-                                                                                  const TextStyle(
+                                                                              style: const TextStyle(
                                                                                 fontSize: 11,
                                                                                 color: Colors.grey,
                                                                               ),
-                                                                              overflow:
-                                                                                  TextOverflow.ellipsis,
+                                                                              overflow: TextOverflow.ellipsis,
                                                                             ),
                                                                           ),
                                                                           Padding(
-                                                                            padding: const EdgeInsets
-                                                                                .only(
-                                                                                left: 10),
+                                                                            padding:
+                                                                                const EdgeInsets.only(left: 10),
                                                                             child:
                                                                                 Text(
                                                                               'Created Date: ${leadDetails!.data!.leadCategories![i].createdDate.toString()}',
-                                                                              style:
-                                                                                  const TextStyle(
+                                                                              style: const TextStyle(
                                                                                 fontSize: 11,
                                                                                 color: Colors.grey,
                                                                               ),
-                                                                              overflow:
-                                                                                  TextOverflow.ellipsis,
+                                                                              overflow: TextOverflow.ellipsis,
                                                                             ),
                                                                           ),
                                                                         ],
@@ -1297,16 +1290,20 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         );
                                                       });
                                                 } else {
-                                                 if (cloudCall.trim().toLowerCase() == "true") {
+                                                  if (cloudCall
+                                                          .trim()
+                                                          .toLowerCase() ==
+                                                      "true") {
                                                     chooseCallDialog(context);
                                                   } else {
-                                                    // Common.dialPad(leadDetails!
-                                                    //     .data!.contactNumber1
-                                                    //     .toString());
-                                                    await FlutterPhoneDirectCaller.callNumber(
-                                                        leadDetails!.data!
-                                                            .contactNumber1
-                                                            .toString());
+                                                    Common.dialPad(leadDetails!
+                                                        .data!.contactNumber1
+                                                        .toString());
+                                                    // await FlutterPhoneDirectCaller
+                                                    //     .callNumber(leadDetails!
+                                                    //         .data!
+                                                    //         .contactNumber1
+                                                    //         .toString());
                                                   }
                                                 }
                                               },
@@ -7580,9 +7577,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);
-                    // Common.dialPad(
+                    Common.dialPad(
+                        leadDetails!.data!.contactNumber1.toString());
+                    // await FlutterPhoneDirectCaller.callNumber(
                     //     leadDetails!.data!.contactNumber1.toString());
-                         await FlutterPhoneDirectCaller.callNumber( leadDetails!.data!.contactNumber1.toString());
                   },
                   child: SizedBox(
                       height: 50,
@@ -7769,30 +7767,27 @@ class _AudioItemState extends State<AudioItem> {
   bool audioPlayed = false;
   Duration duration = Duration.zero; // For total duration
   Duration position = Duration.zero; // For the current position
-   LeadDeatailsModel? leadDetails;
+  LeadDeatailsModel? leadDetails;
   @override
   void initState() {
     super.initState();
-    
 
     Future.delayed(Duration.zero, () async {
-       try {
-        leadDetails = await HttpService.leadDetails(widget.token, widget.callMasterId);
+      try {
+        leadDetails =
+            await HttpService.leadDetails(widget.token, widget.callMasterId);
         setState(() {});
       } catch (e) {
         print("Error fetching lead details: $e");
       }
       audioPlayer.onDurationChanged.listen((Duration d) {
-        //get the duration of audio
         maxDuration = d.inMilliseconds;
         setState(() {});
       });
 
       audioPlayer.onPositionChanged.listen((Duration p) {
         currentPos =
-            p.inMilliseconds; //get the current position of playing audio
-
-        //generating the duration label
+            p.inMilliseconds;
         int shours = Duration(milliseconds: currentPos).inHours;
         int sminutes = Duration(milliseconds: currentPos).inMinutes;
         int sseconds = Duration(milliseconds: currentPos).inSeconds;
@@ -7828,6 +7823,77 @@ class _AudioItemState extends State<AudioItem> {
       }
     });
   }
+//   @override
+// void initState() {
+//   super.initState();
+
+//   // ✅ Prevent auto-resume after interruptions
+//   audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+//   // ✅ Listen for phone call events
+//   PhoneState.phoneStateStream.listen((event) async {
+//     if (event == PhoneStateStatus.CALL_STARTED) {
+//       await audioPlayer.pause();
+//       if (mounted) setState(() => isPlaying = false);
+//     } else if (event == PhoneStateStatus.CALL_ENDED) {
+//       await audioPlayer.stop(); // stop to prevent auto-resume
+//       if (mounted) setState(() => isPlaying = false);
+//     }
+//   });
+
+//   Future.delayed(Duration.zero, () async {
+//     try {
+//       leadDetails =
+//           await HttpService.leadDetails(widget.token, widget.callMasterId);
+//       setState(() {});
+//     } catch (e) {
+//       print("Error fetching lead details: $e");
+//     }
+
+//     audioPlayer.onDurationChanged.listen((Duration d) {
+//       maxDuration = d.inMilliseconds;
+//       setState(() {});
+//     });
+
+//     audioPlayer.onPositionChanged.listen((Duration p) {
+//       currentPos = p.inMilliseconds;
+
+//       int shours = Duration(milliseconds: currentPos).inHours;
+//       int sminutes = Duration(milliseconds: currentPos).inMinutes;
+//       int sseconds = Duration(milliseconds: currentPos).inSeconds;
+//       int rminutes = sminutes - (shours * 60);
+//       int rseconds = sseconds - (sminutes * 60 + shours * 60 * 60);
+//       currentPostLabel = "$rminutes:$rseconds";
+
+//       setState(() {});
+//     });
+//   });
+
+//   audioPlayer.onDurationChanged.listen((newDuration) {
+//     if (mounted) {
+//       setState(() {
+//         duration = newDuration;
+//       });
+//     }
+//   });
+
+//   audioPlayer.onPositionChanged.listen((newPosition) {
+//     if (mounted) {
+//       setState(() {
+//         position = newPosition;
+//       });
+//     }
+//   });
+
+//   audioPlayer.onPlayerStateChanged.listen((state) {
+//     if (mounted) {
+//       setState(() {
+//         isPlaying = state == PlayerState.playing;
+//       });
+//     }
+//   });
+// }
+
 
   @override
   void dispose() {
@@ -7850,7 +7916,6 @@ class _AudioItemState extends State<AudioItem> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Stack(
       children: [
         Padding(
@@ -7955,13 +8020,25 @@ class _AudioItemState extends State<AudioItem> {
                               Row(
                                 children: [
                                   GestureDetector(
+                                    // onTap: () async {
+                                    //   log(widget.resourceUrl);
+                                    //   isPlaying == false
+                                    //       ? audioPlayer.play(
+                                    //           UrlSource(widget.resourceUrl))
+                                    //       : await audioPlayer.pause();
+                                    // },
                                     onTap: () async {
                                       log(widget.resourceUrl);
-                                      isPlaying == false
-                                          ? audioPlayer.play(
-                                              UrlSource(widget.resourceUrl))
-                                          : await audioPlayer.pause();
+                                      if (!isPlaying) {
+                                        await audioPlayer.play(
+                                            UrlSource(widget.resourceUrl));
+                                        setState(() => isPlaying = true);
+                                      } else {
+                                        await audioPlayer.pause();
+                                        setState(() => isPlaying = false);
+                                      }
                                     },
+
                                     child: CircleAvatar(
                                       backgroundColor: Colors.green,
                                       radius: 15,
@@ -8018,8 +8095,7 @@ class _AudioItemState extends State<AudioItem> {
                                           'Outgoing Call'
                                       ? Text(
                                           'Called By: ${leadDetails!.data!.staffName}')
-                                          
-                                      : const SizedBox(), 
+                                      : const SizedBox(),
                             ),
 
                             const SizedBox(

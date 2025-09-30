@@ -2475,7 +2475,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Sub Total :'),
+                                  const Text('Total :'),
                                   const SizedBox(
                                     width: 10,
                                   ),
@@ -2498,38 +2498,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 ],
                               ),
                             ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text('Tax Amount:'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child: Text(totalTaxAmount.toString()),
-                                      ))
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
+                               const SizedBox(
                               height: 5,
                             ),
                             Padding(
@@ -2598,6 +2567,38 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 ],
                               ),
                             ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Text('Tax:'),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.3,
+                                      height: 35,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                            top: 5,
+                                            bottom: 5),
+                                        child: Text(totalTaxAmount.toString()),
+                                      ))
+                                ],
+                              ),
+                            ),
+                         
                             const SizedBox(
                               height: 5,
                             ),
@@ -2679,7 +2680,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text(
-                                    'Total :',
+                                    'Grand Total :',
                                     style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w500),

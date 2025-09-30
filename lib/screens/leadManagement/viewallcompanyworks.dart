@@ -34,6 +34,8 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
   DateTime selectedDate = DateTime.now();
   String token = '';
   CommonResponse? loginOrNot;
+  String viewAttendanceSection = '';
+    String viewAttendance = '';
   bool? isLoggedIn;
   @override
   @override
@@ -45,6 +47,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
       checkExistingWorkStatus();
       _initMultipleWorksCheck();
       loginorNot();
+      _viewAttendanceSection();
     });
     searchController.addListener(() {
       setState(() {
@@ -55,8 +58,19 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
 
   Future<void> _initMultipleWorksCheck() async {
     final value = await Common.getSharedPref("multipleWorks");
+   
     setState(() {
       multipleWorksCheck = value ?? '';
+    });
+  }
+
+  
+  Future<void> _viewAttendanceSection() async {
+  
+     final viewAttendanceSection =
+        await Common.getSharedPref("viewAttendanceSection");
+    setState(() {
+      viewAttendance = viewAttendanceSection ?? '';
     });
   }
 
@@ -194,14 +208,12 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                         ),
                       ),
                     );
-                  }else if (value == 'assign_report') {
+                  } else if (value == 'assign_report') {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AssignReport(
-                          workId: "",
-                          sectionId:""
-                        ),
+                        builder: (context) =>
+                            AssignReport(workId: "", sectionId: ""),
                       ),
                     );
                   }
@@ -219,7 +231,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     value: 'pending_works',
                     child: Text('Pending Works'),
                   ),
-                   const PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: 'assign_works',
                     child: Text('Assign Works'),
                   ),
@@ -259,7 +271,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     final paused = await showDialog(
                       context: context,
                       builder: (context) => AddWorkPage(
-                          workId: "",
+                        workId: "",
                         existingWork: newExistingWork,
                         onSuccess: () {
                           setState(() {
@@ -311,7 +323,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddWorkPage(
-                          workId: "",
+                        workId: "",
                         existingWork: newExistingWork,
                         onSuccess: () {
                           setState(() {
@@ -660,26 +672,6 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                       ],
                                     ),
                                   ),
-                                  // Positioned(
-                                  //   top: 8,
-                                  //   right: 8,
-                                  //   child: Container(
-                                  //     width: 16,
-                                  //     height: 16,
-                                  //     decoration: BoxDecoration(
-                                  //       color: staff.status.toLowerCase() ==
-                                  //               "started"
-                                  //           ? Colors.green
-                                  //           : staff.status.toLowerCase() ==
-                                  //                   "ended"
-                                  //               ? const Color.fromARGB(
-                                  //                   255, 241, 160, 67)
-                                  //               : const Color.fromARGB(
-                                  //                   255, 247, 2, 2),
-                                  //       shape: BoxShape.circle,
-                                  //     ),
-                                  //   ),
-                                  // ),
                                   Positioned(
                                     top: 8,
                                     right: 8,
@@ -703,32 +695,36 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                             shape: BoxShape.circle,
                                           ),
                                         ),
-                                        const SizedBox(height: 40),
-                                        Transform.translate(
-                                          offset: const Offset(12, 0),
-                                          child: IconButton(
-                                            icon: const Icon(
-                                                Icons.calendar_month,
-                                                size: 24,
-                                                color: Colors.teal),
-                                            tooltip: 'View Calendar',
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      StaffCalendarPage(
-                                                          staffId:
-                                                              staff.staffId,
-                                                          selectedDate:
-                                                              selectedDate,
-                                                          staffName:
-                                                              staff.name),
+                                        viewAttendance == "true"
+                                            ? const SizedBox(height: 40)
+                                            : SizedBox(),
+                                        viewAttendance == "true"
+                                            ? Transform.translate(
+                                                offset: const Offset(12, 0),
+                                                child: IconButton(
+                                                  icon: const Icon(
+                                                      Icons.calendar_month,
+                                                      size: 24,
+                                                      color: Colors.teal),
+                                                  tooltip: 'View Calendar',
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            StaffCalendarPage(
+                                                                staffId: staff
+                                                                    .staffId,
+                                                                selectedDate:
+                                                                    selectedDate,
+                                                                staffName:
+                                                                    staff.name),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
-                                              );
-                                            },
-                                          ),
-                                        ),
+                                              )
+                                            : SizedBox(),
                                       ],
                                     ),
                                   ),

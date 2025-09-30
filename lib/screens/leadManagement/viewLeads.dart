@@ -1,9 +1,17 @@
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/leadDetailsModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
+import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
+import 'package:login2/models/lead_management/listFolderName.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
+import 'package:login2/screens/leadManagement/minimalLeadDetails.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
@@ -44,7 +52,16 @@ class ViewLeads extends StatefulWidget {
   String? callStatus;
   String? callResId;
   String? callResName;
-
+  DateTime? preservedFromDate;
+  DateTime? preservedToDate;
+  String? preservedSortOrder;
+  bool? preservedSortAscending;
+  List<String>? preservedCategoryItems;
+  List<String>? preservedPriorityItems;
+  List<String>? preservedAssignedStaffItems;
+  List<String>? preservedResponseItems;
+  //StateModel? stateDetails;
+  List<StateList>? stateDetails;
   ViewLeads(
     this.token,
     this.editLead,
@@ -67,6 +84,14 @@ class ViewLeads extends StatefulWidget {
     this.callStatus,
     this.callResId,
     this.callResName,
+    this.preservedFromDate,
+    this.preservedToDate,
+    this.preservedSortOrder,
+    this.preservedSortAscending,
+    this.preservedCategoryItems,
+    this.preservedPriorityItems,
+    this.preservedAssignedStaffItems,
+    this.preservedResponseItems,
   });
 
   @override
@@ -81,6 +106,8 @@ class _ViewLeadsState extends State<ViewLeads> {
   DateTime? fromdate;
   DateTime? todate;
   LeadDeatailsModel? leadDetails;
+  String currentSortOrder = 'desc';
+  bool sortAscending = false;
   var outputFormat = DateFormat('dd-MM-yyyy');
   dynamic status;
   dynamic staff;
@@ -89,6 +116,23 @@ class _ViewLeadsState extends State<ViewLeads> {
   List selectedIUsers = [];
   List selectedUserNumbers = [];
   bool searchField = false;
+  String callMasterId = "";
+  String whatsappNo = '';
+  String whatsappNo1 = '';
+  TextEditingController contactFName = TextEditingController();
+  TextEditingController contactLName = TextEditingController();
+  TextEditingController contactMobile = TextEditingController();
+  TextEditingController stateVal = TextEditingController();
+  TextEditingController pinCode = TextEditingController();
+  TextEditingController districtVal = TextEditingController();
+  PostalCodeModel? postalCodeModel;
+  List<PostOffice> postOffices = [];
+  List<DistrictList> districtList = [];
+  PostOffice? selectedPostOffice;
+  bool isDistrictLoading = false;
+  //bool isLoading = false;
+  String? StateId;
+  String? DistrictId;
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -143,17 +187,43 @@ class _ViewLeadsState extends State<ViewLeads> {
   List checkedAssignedStaffItems = [];
   List checkedAssignedStaffItemsName = [];
   List<TransferStaff> filteredStaff = [];
+  LeadMileStoneListModel? mileStone;
+  ListFolderNameModel? listFolder;
+  FileManagerPermissionModel? fileManagerPermission;
   String staffId = "";
   String staffName = "Staff";
   String name = '';
   String userId = '';
   CommonResponse? loginOrNot;
-
+  LeadDeatailsModelAdd? leadDetailsAdditional;
+  StateModel? stateDetails;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     // Set up animation controller
+    // fromdate = widget.preservedFromDate ??
+    //     (widget.fromDate != null
+    //         ? DateTime.parse(widget.fromDate.toString())
+    //         : null);
+    // todate = widget.preservedToDate ??
+    //     (widget.toDate != null
+    //         ? DateTime.parse(widget.toDate.toString())
+    //         : null);
+    currentSortOrder = widget.preservedSortOrder ?? 'desc';
+    sortAscending = widget.preservedSortAscending ?? false;
+    if (widget.preservedCategoryItems != null) {
+      checkedCategoryItems = List.from(widget.preservedCategoryItems!);
+    }
+    if (widget.preservedPriorityItems != null) {
+      checkedPriorityItems = List.from(widget.preservedPriorityItems!);
+    }
+    if (widget.preservedAssignedStaffItems != null) {
+      checkedAssignedStaffItems =
+          List.from(widget.preservedAssignedStaffItems!);
+    }
+    if (widget.preservedResponseItems != null) {
+      checkedResponseItems = List.from(widget.preservedResponseItems!);
+    }
     if (widget.staff != null) {
       checkedAssignedStaffItems.add(widget.staff);
       checkedAssignedStaffItemsName.add(widget.staffName);
@@ -190,8 +260,17 @@ class _ViewLeadsState extends State<ViewLeads> {
       todate = DateTime.now();
     }
 
-    getData('desc', true, status);
+    getData(currentSortOrder, true, status);
     initListner();
+    loadStates();
+  }
+
+  Future<void> loadStates() async {
+    var result = await HttpService.getState();
+    log("States loaded: ${result?.data.length}");
+    setState(() {
+      stateDetails = result;
+    });
   }
 
   initListner() {
@@ -202,6 +281,102 @@ class _ViewLeadsState extends State<ViewLeads> {
           getData('desc', false, status);
         }
       }
+    });
+  }
+
+  Future<StateList?> selectStateDialog(BuildContext context) async {
+    return showDialog<StateList>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select State"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: stateDetails?.data.length ?? 0,
+              itemBuilder: (context, index) {
+                final stateItem = stateDetails!.data[index];
+                return ListTile(
+                  title: Text(stateItem.name),
+                  onTap: () {
+                    Navigator.pop(context, stateItem); // return selected state
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> loadPostOffices(String pin) async {
+    PostalCodeModel postalCodeModel = await HttpService.fetchPostOffice(pin);
+    setState(() {
+      postOffices = postalCodeModel.postOffice ?? [];
+      if (postOffices.isNotEmpty) {
+        selectedPostOffice = postOffices.first;
+      }
+    });
+  }
+
+  listFolderList(token, callMasterId, path) async {
+    listFolder =
+        await HttpService.listFolderAndFiles(token, callMasterId, path);
+    if (listFolder != null) {
+      fileManagerPermissionFunction(widget.token);
+      setState(() {});
+    }
+  }
+
+  fileManagerPermissionFunction(token) async {
+    fileManagerPermission = await HttpService.fileManagerPermission(token);
+    if (fileManagerPermission != null) {
+      setState(() {});
+    }
+  }
+
+  listMileStone(
+    token,
+    callMasterId,
+  ) async {
+    mileStone = await HttpService.leadMileStone(token, callMasterId);
+    if (mileStone != null) {
+      setState(() {});
+    }
+  }
+
+  listAddonDet(token, callMasterId) async {
+    leadDetailsAdditional = await HttpService.listAddonDet(token, callMasterId);
+    if (leadDetailsAdditional != null) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadLeadDetails(String callMasterId) async {
+    leadDetails = await HttpService.leadDetails(widget.token, callMasterId);
+    if (leadDetails != null) {
+      contactMobile.text =
+          await Common.addPlus(leadDetails!.data!.contactNumber1.toString());
+      setState(() {
+        whatsappNo1 = leadDetails!.data!.contactNumber1.toString();
+        whatsappNo = leadDetails!.data!.contactNumber1.toString();
+        contactFName.text = leadDetails!.data!.clientName.toString();
+        contactMobile.text = '+${leadDetails!.data!.contactNumber1}';
+      });
+      listAddonDet(widget.token, callMasterId);
+      listFolderList(widget.token, callMasterId, '');
+      listMileStone(widget.token, callMasterId);
+    }
+  }
+
+  void _toggleSortOrder() {
+    setState(() {
+      sortAscending = !sortAscending;
+      currentSortOrder = sortAscending ? 'asc' : 'desc';
+      items.clear();
+      page = 1;
+      getData(currentSortOrder, true, status);
     });
   }
 
@@ -235,6 +410,7 @@ class _ViewLeadsState extends State<ViewLeads> {
         statusWise = await Common.getSharedPref("statusWise");
         roleId = await Common.getSharedPref("roleId");
         multiBranch = await Common.getSharedPref("multiBranch");
+
         setState(() {});
         if (statusWise == 'yes') {
           statusWiseId = await Common.getSharedPref("statusWisId");
@@ -277,6 +453,9 @@ class _ViewLeadsState extends State<ViewLeads> {
               "pageSize": pageSize,
               "isFirst": isFirst,
               "leadType": widget.leadType ?? "",
+              "state": StateId ?? "", // selected state ID
+              "district": DistrictId ?? "", // selected district ID
+              // "pincode": pinCode.text,
               // "call_status": widget.callStatus ?? "",
               "branchId": branch ?? ""
             };
@@ -297,6 +476,21 @@ class _ViewLeadsState extends State<ViewLeads> {
           setState(() {});
         }
         configure = await HttpService.configure(widget.token);
+        // leadDetails = await HttpService.leadDetails(
+        //     widget.token, items[index].callMasterId);
+        if (leadDetails != null) {
+          contactMobile.text = await Common.addPlus(
+              leadDetails!.data!.contactNumber1.toString());
+          setState(() {
+            whatsappNo1 = leadDetails!.data!.contactNumber1.toString();
+            whatsappNo = leadDetails!.data!.contactNumber1.toString();
+            contactFName.text = leadDetails!.data!.clientName.toString();
+            contactMobile.text = '+${leadDetails!.data!.contactNumber1}';
+          });
+          listAddonDet(widget.token, callMasterId);
+          listFolderList(widget.token, callMasterId, '');
+          listMileStone(widget.token, callMasterId);
+        }
         setState(() {
           items.addAll(viewLeads!.data.details);
           page++;
@@ -328,7 +522,7 @@ class _ViewLeadsState extends State<ViewLeads> {
       child: result == true && timeOut == false
           ? Scaffold(
               backgroundColor: Colors.grey.shade200,
-              appBar: PreferredSize(
+               appBar: PreferredSize(
                 preferredSize:
                     Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
                 child: Container(
@@ -402,6 +596,43 @@ class _ViewLeadsState extends State<ViewLeads> {
                         ),
                         Row(
                           children: [
+                            if (!searchField)
+                              InkWell(
+                                onTap: () {
+                                  _toggleSortOrder();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6),
+                                  margin: const EdgeInsets.only(right: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        sortAscending ? 'Oldest' : 'Newest',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        sortAscending
+                                            ? Icons.arrow_upward
+                                            : Icons.arrow_downward,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             selectedIUsers.isNotEmpty
                                 ? Row(
                                     children: [
@@ -731,11 +962,62 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             .address,
                                                         leadType1:
                                                             widget.leadType,
+                                                        preservedFromDate:
+                                                            fromdate,
+                                                        preservedToDate: todate,
+                                                        preservedSortOrder:
+                                                            currentSortOrder,
+                                                        preservedSortAscending:
+                                                            sortAscending,
+                                                        preservedCategoryItems:
+                                                            List<String>.from(
+                                                                checkedCategoryItems),
+                                                        preservedPriorityItems:
+                                                            List<String>.from(
+                                                                checkedPriorityItems),
+                                                        preservedAssignedStaffItems:
+                                                            List<String>.from(
+                                                                checkedAssignedStaffItems),
+                                                        preservedResponseItems:
+                                                            List<String>.from(
+                                                                checkedResponseItems),
                                                       )),
                                             ).then((value) {
+                                              if (value != null &&
+                                                  value is Map) {
+                                                setState(() {
+                                                  fromdate = value[
+                                                      'preservedFromDate'];
+                                                  todate =
+                                                      value['preservedToDate'];
+                                                  currentSortOrder = value[
+                                                          'preservedSortOrder'] ??
+                                                      currentSortOrder;
+                                                  sortAscending = value[
+                                                          'preservedSortAscending'] ??
+                                                      sortAscending;
+                                                  checkedCategoryItems = List<
+                                                      String>.from(value[
+                                                          'preservedCategoryItems'] ??
+                                                      checkedCategoryItems);
+                                                  checkedPriorityItems = List<
+                                                      String>.from(value[
+                                                          'preservedPriorityItems'] ??
+                                                      checkedPriorityItems);
+                                                  checkedAssignedStaffItems = List<
+                                                      String>.from(value[
+                                                          'preservedAssignedStaffItems'] ??
+                                                      checkedAssignedStaffItems);
+                                                  checkedResponseItems = List<
+                                                      String>.from(value[
+                                                          'preservedResponseItems'] ??
+                                                      checkedResponseItems);
+                                                });
+                                              }
                                               items.clear();
                                               page = 1;
-                                              getData('desc', true, status);
+                                              getData(currentSortOrder, true,
+                                                  status);
                                             });
                                           } else {
                                             Common.toastMessaage(
@@ -828,11 +1110,11 @@ class _ViewLeadsState extends State<ViewLeads> {
                                               // String url =
                                               //     'tel:+${items[index].contactNumber1}';
                                               // await launchUrl(Uri.parse(url));
-                                              // Common.dialPad(
-                                              //     items[index].contactNumber1);
-                                              await FlutterPhoneDirectCaller
-                                                  .callNumber(items[index]
-                                                      .contactNumber1);
+                                              Common.dialPad(
+                                                  items[index].contactNumber1);
+                                              // await FlutterPhoneDirectCaller
+                                              //     .callNumber(items[index]
+                                              //         .contactNumber1);
                                             }
                                           }
                                         }
@@ -881,37 +1163,85 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      LeadDetails(
-                                                          widget.token!,
-                                                          widget.editLead,
-                                                          widget.deleteLead,
-                                                          widget.cloudCall,
-                                                          items[index]
-                                                              .callMasterId
-                                                              .toString(),
-                                                          pageName: widget
-                                                              .pageName
-                                                              .toString(),
-                                                          status: widget.status,
-                                                          staff: widget.staff,
-                                                          isCalled:
-                                                              widget.isCalled,
-                                                          fromDate:
-                                                              widget.fromDate,
-                                                          toDate: widget.toDate,
-                                                          category:
-                                                              widget.category,
-                                                          scrollToIndex: index,
-                                                          page: page,
-                                                          pageSize:
-                                                              page * pageSize,
-                                                          leadType:
-                                                              widget.leadType)),
-                                            ).then((r) {
+                                                builder: (context) =>
+                                                    MinimalLeadDetails(
+                                                  widget.token!,
+                                                  widget.editLead,
+                                                  widget.deleteLead,
+                                                  widget.cloudCall,
+                                                  items[index]
+                                                      .callMasterId
+                                                      .toString(),
+                                                  pageName: widget.pageName
+                                                      .toString(),
+                                                  status: widget.status,
+                                                  staff: widget.staff,
+                                                  isCalled: widget.isCalled,
+                                                  fromDate: widget.fromDate,
+                                                  toDate: widget.toDate,
+                                                  category: widget.category,
+                                                  scrollToIndex: index,
+                                                  page: page,
+                                                  pageSize: page * pageSize,
+                                                  leadType: widget.leadType,
+                                                  preservedFromDate: fromdate,
+                                                  preservedToDate: todate,
+                                                  preservedSortOrder:
+                                                      currentSortOrder,
+                                                  preservedSortAscending:
+                                                      sortAscending,
+                                                  preservedCategoryItems:
+                                                      List<String>.from(
+                                                          checkedCategoryItems),
+                                                  preservedPriorityItems:
+                                                      List<String>.from(
+                                                          checkedPriorityItems),
+                                                  preservedAssignedStaffItems:
+                                                      List<String>.from(
+                                                          checkedAssignedStaffItems),
+                                                  preservedResponseItems:
+                                                      List<String>.from(
+                                                          checkedResponseItems),
+                                                ),
+                                              ),
+                                            ).then((returnedData) {
+                                              // Handle the returned data to preserve state
+                                              if (returnedData != null &&
+                                                  returnedData is Map) {
+                                                setState(() {
+                                                  fromdate = returnedData[
+                                                      'preservedFromDate'];
+                                                  todate = returnedData[
+                                                      'preservedToDate'];
+                                                  currentSortOrder = returnedData[
+                                                          'preservedSortOrder'] ??
+                                                      currentSortOrder;
+                                                  sortAscending = returnedData[
+                                                          'preservedSortAscending'] ??
+                                                      sortAscending;
+                                                  checkedCategoryItems = List<
+                                                      String>.from(returnedData[
+                                                          'preservedCategoryItems'] ??
+                                                      checkedCategoryItems);
+                                                  checkedPriorityItems = List<
+                                                      String>.from(returnedData[
+                                                          'preservedPriorityItems'] ??
+                                                      checkedPriorityItems);
+                                                  checkedAssignedStaffItems = List<
+                                                      String>.from(returnedData[
+                                                          'preservedAssignedStaffItems'] ??
+                                                      checkedAssignedStaffItems);
+                                                  checkedResponseItems = List<
+                                                      String>.from(returnedData[
+                                                          'preservedResponseItems'] ??
+                                                      checkedResponseItems);
+                                                });
+                                              }
+
                                               items.clear();
                                               page = 1;
-                                              getData('desc', true, status);
+                                              getData(currentSortOrder, true,
+                                                  status);
                                             });
                                           }
                                         },
@@ -919,7 +1249,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             ? Builder(
                                                 builder: (context) {
                                                   //try {
-
                                                   return leadListWidget(
                                                       context, index);
                                                   // } catch (e) {
@@ -1210,12 +1539,12 @@ class _ViewLeadsState extends State<ViewLeads> {
                         int currentPage = page;
                         items.clear();
                         page = 1;
-                         getData('desc', false, status);
+                        getData('desc', false, status);
 
                         if (itemScrollController.isAttached) {
                           itemScrollController.scrollTo(
                             index: (currentPage - 1) * pageSize,
-                             duration: const Duration(milliseconds: 500),
+                            duration: const Duration(milliseconds: 500),
                           );
                         }
                       }
@@ -1309,6 +1638,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                               SizedBox(
                                 width: MediaQuery.of(context).size.width * .46,
                                 child: Text(
+                                  items[index].clientName =="null"?"Unknown":
                                   items[index].clientName.toString(),
                                   // items.length.toString(),
                                   style: TextStyle(
@@ -1351,6 +1681,368 @@ class _ViewLeadsState extends State<ViewLeads> {
                               ),
                             ],
                           ),
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.end,
+                          //   children: [
+                          //     Visibility(
+                          //       visible: items[index]
+                          //                   .categoryCount
+                          //                   .toString() !=
+                          //               "1" &&
+                          //           items[index].categoryCount.toString() != "",
+                          //       child: Container(
+                          //         height: 20,
+                          //         width: 20,
+                          //         decoration: const BoxDecoration(
+                          //             color: Colors.red,
+                          //             shape: BoxShape.circle),
+                          //         child: Center(
+                          //           child: Text(
+                          //             items[index].categoryCount.toString(),
+                          //             // items.length.toString(),
+                          //             style: const TextStyle(
+                          //                 fontSize: 12,
+                          //                 color: Colors.white,
+                          //                 fontWeight: FontWeight.bold),
+                          //             maxLines: 1,
+                          //             overflow: TextOverflow.ellipsis,
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.end,
+                          //   children: [
+                          //     Visibility(
+                          //       visible: items[index]
+                          //                   .categoryCount
+                          //                   .toString() !=
+                          //               "1" &&
+                          //           items[index].categoryCount.toString() != "",
+                          //       child: GestureDetector(
+                          //         onTap: () {
+                          //            _loadLeadDetails(items[index]
+                          //                       .callMasterId
+                          //                       .toString());
+                          //           if (leadDetails == null ||
+                          //               leadDetails!.data?.leadCategories ==
+                          //                   null) {
+                          //             showDialog(
+                          //               context: context,
+                          //               builder: (context) {
+                          //                 return AlertDialog(
+                          //                   title: const Text("No Data"),
+                          //                   content: const Text(
+                          //                       "Lead categories are not available yet."),
+                          //                   actions: [
+                          //                     TextButton(
+                          //                       onPressed: () =>
+                          //                           Navigator.pop(context),
+                          //                       child: const Text("OK"),
+                          //                     )
+                          //                   ],
+                          //                 );
+                          //               },
+                          //             );
+                          //             return;
+                          //           }
+
+                          //           showDialog(
+                          //             context: context,
+                          //             builder: (context) {
+                          //               final categories =
+                          //                   leadDetails!.data!.leadCategories!;
+                          //               return Dialog(
+                          //                 shape: RoundedRectangleBorder(
+                          //                   borderRadius:
+                          //                       BorderRadius.circular(16),
+                          //                 ),
+                          //                 insetPadding:
+                          //                     const EdgeInsets.all(20),
+                          //                 child: Container(
+                          //                   padding: const EdgeInsets.all(16),
+                          //                   constraints: BoxConstraints(
+                          //                     maxHeight: MediaQuery.of(context)
+                          //                             .size
+                          //                             .height *
+                          //                         0.75,
+                          //                     maxWidth: MediaQuery.of(context)
+                          //                             .size
+                          //                             .width *
+                          //                         0.9,
+                          //                   ),
+                          //                   child: Column(
+                          //                     crossAxisAlignment:
+                          //                         CrossAxisAlignment.start,
+                          //                     children: [
+                          //                       // Header
+                          //                       Row(
+                          //                         mainAxisAlignment:
+                          //                             MainAxisAlignment
+                          //                                 .spaceBetween,
+                          //                         children: [
+                          //                           const Text(
+                          //                             "Lead Categories",
+                          //                             style: TextStyle(
+                          //                               fontSize: 18,
+                          //                               fontWeight:
+                          //                                   FontWeight.bold,
+                          //                               color:
+                          //                                   Colors.blueAccent,
+                          //                             ),
+                          //                           ),
+                          //                           IconButton(
+                          //                             icon: const Icon(
+                          //                                 Icons.close,
+                          //                                 color: Colors.grey),
+                          //                             onPressed: () =>
+                          //                                 Navigator.pop(
+                          //                                     context),
+                          //                           ),
+                          //                         ],
+                          //                       ),
+                          //                       const Divider(
+                          //                           thickness: 1, height: 16),
+
+                          //                       // List
+                          //                       Expanded(
+                          //                         child: ListView.separated(
+                          //                           itemCount:
+                          //                               categories.length,
+                          //                           separatorBuilder: (context,
+                          //                                   _) =>
+                          //                               const Divider(
+                          //                                   color: Colors.grey,
+                          //                                   height: 12),
+                          //                           itemBuilder: (context, i) {
+                          //                             final category =
+                          //                                 categories[i];
+                          //                             return Card(
+                          //                               elevation: 1,
+                          //                               shape:
+                          //                                   RoundedRectangleBorder(
+                          //                                 borderRadius:
+                          //                                     BorderRadius
+                          //                                         .circular(10),
+                          //                               ),
+                          //                               child: InkWell(
+                          //                                 borderRadius:
+                          //                                     BorderRadius
+                          //                                         .circular(10),
+                          //                                 onTap: () {
+                          //                                   Navigator.pop(
+                          //                                       context);
+                          //                                   callMasterId =
+                          //                                       category
+                          //                                           .callMasterId
+                          //                                           .toString();
+                          //                                   getData('desc',
+                          //                                       true, status);
+                          //                                 },
+                          //                                 child: Padding(
+                          //                                   padding:
+                          //                                       const EdgeInsets
+                          //                                           .all(12),
+                          //                                   child: Column(
+                          //                                     crossAxisAlignment:
+                          //                                         CrossAxisAlignment
+                          //                                             .start,
+                          //                                     children: [
+                          //                                       // Title row
+                          //                                       Row(
+                          //                                         children: [
+                          //                                           category.isSelected ==
+                          //                                                   true
+                          //                                               ? const Icon(
+                          //                                                   Icons
+                          //                                                       .check_circle,
+                          //                                                   size:
+                          //                                                       20,
+                          //                                                   color: Colors
+                          //                                                       .green)
+                          //                                               : const Icon(
+                          //                                                   Icons
+                          //                                                       .circle_outlined,
+                          //                                                   size:
+                          //                                                       20,
+                          //                                                   color:
+                          //                                                       Colors.grey),
+                          //                                           const SizedBox(
+                          //                                               width:
+                          //                                                   8),
+                          //                                           Expanded(
+                          //                                             child:
+                          //                                                 Text(
+                          //                                               category.leadCategory ??
+                          //                                                   "-",
+                          //                                               style:
+                          //                                                   const TextStyle(
+                          //                                                 fontSize:
+                          //                                                     15,
+                          //                                                 fontWeight:
+                          //                                                     FontWeight.w600,
+                          //                                               ),
+                          //                                               maxLines:
+                          //                                                   2,
+                          //                                               overflow:
+                          //                                                   TextOverflow.ellipsis,
+                          //                                             ),
+                          //                                           ),
+                          //                                           Container(
+                          //                                             padding: const EdgeInsets
+                          //                                                 .symmetric(
+                          //                                                 horizontal:
+                          //                                                     8,
+                          //                                                 vertical:
+                          //                                                     4),
+                          //                                             decoration:
+                          //                                                 BoxDecoration(
+                          //                                               color: (category.leadStatus ?? "") ==
+                          //                                                       "New"
+                          //                                                   ? Colors.blue
+                          //                                                   : (category.leadStatus ?? "") == "Follow Up"
+                          //                                                       ? Colors.orange
+                          //                                                       : (category.leadStatus ?? "") == "Rejected"
+                          //                                                           ? Colors.red
+                          //                                                           : Colors.purple,
+                          //                                               borderRadius:
+                          //                                                   BorderRadius.circular(6),
+                          //                                             ),
+                          //                                             child:
+                          //                                                 Text(
+                          //                                               category.leadStatus ??
+                          //                                                   "-",
+                          //                                               style:
+                          //                                                   const TextStyle(
+                          //                                                 color:
+                          //                                                     Colors.white,
+                          //                                                 fontSize:
+                          //                                                     11,
+                          //                                                 fontWeight:
+                          //                                                     FontWeight.bold,
+                          //                                               ),
+                          //                                             ),
+                          //                                           ),
+                          //                                         ],
+                          //                                       ),
+                          //                                       const SizedBox(
+                          //                                           height: 8),
+
+                          //                                       // Staff + Created
+                          //                                       Row(
+                          //                                         mainAxisAlignment:
+                          //                                             MainAxisAlignment
+                          //                                                 .spaceBetween,
+                          //                                         children: [
+                          //                                           Flexible(
+                          //                                             child:
+                          //                                                 Text(
+                          //                                               "👤 ${category.staffName ?? "-"}",
+                          //                                               style:
+                          //                                                   const TextStyle(
+                          //                                                 fontSize:
+                          //                                                     12,
+                          //                                                 color:
+                          //                                                     Colors.black54,
+                          //                                               ),
+                          //                                               overflow:
+                          //                                                   TextOverflow.ellipsis,
+                          //                                             ),
+                          //                                           ),
+                          //                                           const SizedBox(
+                          //                                               width:
+                          //                                                   10),
+                          //                                           Flexible(
+                          //                                             child:
+                          //                                                 Text(
+                          //                                               "📅 ${category.createdDate ?? "-"}",
+                          //                                               style:
+                          //                                                   const TextStyle(
+                          //                                                 fontSize:
+                          //                                                     12,
+                          //                                                 color:
+                          //                                                     Colors.black54,
+                          //                                               ),
+                          //                                               overflow:
+                          //                                                   TextOverflow.ellipsis,
+                          //                                             ),
+                          //                                           ),
+                          //                                         ],
+                          //                                       ),
+                          //                                     ],
+                          //                                   ),
+                          //                                 ),
+                          //                               ),
+                          //                             );
+                          //                           },
+                          //                         ),
+                          //                       ),
+
+                          //                       // Footer
+                          //                       const SizedBox(height: 8),
+                          //                       Align(
+                          //                         alignment:
+                          //                             Alignment.centerRight,
+                          //                         child: ElevatedButton.icon(
+                          //                           onPressed: () =>
+                          //                               Navigator.pop(context),
+                          //                           icon: const Icon(
+                          //                               Icons.close,
+                          //                               size: 18),
+                          //                           label: const Text("Close"),
+                          //                           style: ElevatedButton
+                          //                               .styleFrom(
+                          //                             backgroundColor:
+                          //                                 Colors.blueAccent,
+                          //                             foregroundColor:
+                          //                                 Colors.white,
+                          //                             shape:
+                          //                                 RoundedRectangleBorder(
+                          //                               borderRadius:
+                          //                                   BorderRadius
+                          //                                       .circular(8),
+                          //                             ),
+                          //                             padding: const EdgeInsets
+                          //                                 .symmetric(
+                          //                                 horizontal: 16,
+                          //                                 vertical: 10),
+                          //                           ),
+                          //                         ),
+                          //                       ),
+                          //                     ],
+                          //                   ),
+                          //                 ),
+                          //               );
+                          //             },
+                          //           );
+                          //         },
+                          //         child: Container(
+                          //           height: 20,
+                          //           width: 20,
+                          //           decoration: const BoxDecoration(
+                          //             color: Colors.red,
+                          //             shape: BoxShape.circle,
+                          //           ),
+                          //           child: Center(
+                          //             child: Text(
+                          //               items[index].categoryCount.toString(),
+                          //               style: const TextStyle(
+                          //                 fontSize: 12,
+                          //                 color: Colors.white,
+                          //                 fontWeight: FontWeight.bold,
+                          //               ),
+                          //               maxLines: 1,
+                          //               overflow: TextOverflow.ellipsis,
+                          //             ),
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ],
+                          // )
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -1360,28 +2052,335 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             .toString() !=
                                         "1" &&
                                     items[index].categoryCount.toString() != "",
-                                child: Container(
-                                  height: 20,
-                                  width: 20,
-                                  decoration: const BoxDecoration(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    Common.showProgressDialog(
+                                        context, "Loading categories...");
+
+                                    try {
+                                      await _loadLeadDetails(
+                                          items[index].callMasterId.toString());
+                                      if (context.mounted)
+                                        Navigator.pop(context);
+                                      if (leadDetails == null ||
+                                          leadDetails!.data?.leadCategories ==
+                                              null) {
+                                        if (context.mounted) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                title: const Text("No Data"),
+                                                content: const Text(
+                                                    "Lead categories are not available yet."),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: const Text("OK"),
+                                                  )
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        }
+                                        return;
+                                      }
+                                      if (context.mounted) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            final categories = leadDetails!
+                                                .data!.leadCategories!;
+                                            return Dialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              insetPadding:
+                                                  const EdgeInsets.all(20),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(16),
+                                                constraints: BoxConstraints(
+                                                  maxHeight:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .height *
+                                                          0.75,
+                                                  maxWidth:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .width *
+                                                          0.9,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    // Header
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        const Text(
+                                                          "Lead Categories",
+                                                          style: TextStyle(
+                                                            fontSize: 18,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .blueAccent,
+                                                          ),
+                                                        ),
+                                                        IconButton(
+                                                          icon: const Icon(
+                                                              Icons.close,
+                                                              color:
+                                                                  Colors.grey),
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  context),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const Divider(
+                                                        thickness: 1,
+                                                        height: 16),
+                                                    Expanded(
+                                                      child: ListView.separated(
+                                                        itemCount:
+                                                            categories.length,
+                                                        separatorBuilder:
+                                                            (context, _) =>
+                                                                const Divider(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    height: 12),
+                                                        itemBuilder:
+                                                            (context, i) {
+                                                          final category =
+                                                              categories[i];
+                                                          return Card(
+                                                            elevation: 1,
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                            ),
+                                                            child: InkWell(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                              onTap: () {
+                                                                Navigator.pop(
+                                                                    context);
+                                                                callMasterId = category
+                                                                    .callMasterId
+                                                                    .toString();
+                                                                getData(
+                                                                    'desc',
+                                                                    true,
+                                                                    status);
+                                                              },
+                                                              child: Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        12),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        category.isSelected ==
+                                                                                true
+                                                                            ? const Icon(Icons.check_circle,
+                                                                                size: 20,
+                                                                                color: Colors.green)
+                                                                            : const Icon(Icons.circle_outlined, size: 20, color: Colors.grey),
+                                                                        const SizedBox(
+                                                                            width:
+                                                                                8),
+                                                                        Expanded(
+                                                                          child:
+                                                                              Text(
+                                                                            category.leadCategory ??
+                                                                                "-",
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              fontSize: 15,
+                                                                              fontWeight: FontWeight.w600,
+                                                                            ),
+                                                                            maxLines:
+                                                                                2,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
+                                                                        ),
+                                                                        Container(
+                                                                          padding: const EdgeInsets
+                                                                              .symmetric(
+                                                                              horizontal: 8,
+                                                                              vertical: 4),
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            color: (category.leadStatus ?? "") == "New"
+                                                                                ? Colors.blue
+                                                                                : (category.leadStatus ?? "") == "Follow Up"
+                                                                                    ? Colors.orange
+                                                                                    : (category.leadStatus ?? "") == "Rejected"
+                                                                                        ? Colors.red
+                                                                                        : Colors.purple,
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(6),
+                                                                          ),
+                                                                          child:
+                                                                              Text(
+                                                                            category.leadStatus ??
+                                                                                "-",
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontSize: 11,
+                                                                              fontWeight: FontWeight.bold,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            8),
+                                                                    Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
+                                                                        Flexible(
+                                                                          child:
+                                                                              Text(
+                                                                            "👤 ${category.staffName ?? "-"}",
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              fontSize: 12,
+                                                                              color: Colors.black54,
+                                                                            ),
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                            width:
+                                                                                10),
+                                                                        Flexible(
+                                                                          child:
+                                                                              Text(
+                                                                            "📅 ${category.createdDate ?? "-"}",
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              fontSize: 12,
+                                                                              color: Colors.black54,
+                                                                            ),
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+
+                                                    // Footer
+                                                    const SizedBox(height: 8),
+                                                    Align(
+                                                      alignment:
+                                                          Alignment.centerRight,
+                                                      child:
+                                                          ElevatedButton.icon(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context),
+                                                        icon: const Icon(
+                                                            Icons.close,
+                                                            size: 18),
+                                                        label:
+                                                            const Text("Close"),
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              Colors.blueAccent,
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      16,
+                                                                  vertical: 10),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      }
+                                    } catch (error) {
+                                      if (context.mounted)
+                                        Navigator.pop(context);
+                                      if (context.mounted) {
+                                        Common.toastMessaage(
+                                            "Failed to load categories",
+                                            Colors.red);
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 20,
+                                    width: 20,
+                                    decoration: const BoxDecoration(
                                       color: Colors.red,
-                                      shape: BoxShape.circle),
-                                  child: Center(
-                                    child: Text(
-                                      items[index].categoryCount.toString(),
-                                      // items.length.toString(),
-                                      style: const TextStyle(
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        items[index].categoryCount.toString(),
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ],
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -1762,9 +2761,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                   //     'tel:+${items[index].contactNumber1}';
                                   // await launchUrl(
                                   //     Uri.parse(url));
-                                  // Common.dialPad(items[index].contactNumber1);
-                                  await FlutterPhoneDirectCaller.callNumber(
-                                      items[index].contactNumber1);
+                                  Common.dialPad(items[index].contactNumber1);
+                                  // await FlutterPhoneDirectCaller.callNumber(
+                                  //     items[index].contactNumber1);
                                 }
                               }
                             },
@@ -2739,9 +3738,138 @@ class _ViewLeadsState extends State<ViewLeads> {
                             ),
                           ],
                         ),
-                        const SizedBox(
-                          height: 13,
+                        const SizedBox(height: 15),
+
+// PIN Code
+//                         SizedBox(
+//                           width: 337,
+//                           child: TextFormField(
+//                             controller: pinCode,
+//                             keyboardType: TextInputType.number,
+//                             decoration: const InputDecoration(
+//                               labelText: 'PIN Code',
+//                               border: OutlineInputBorder(),
+//                               contentPadding: EdgeInsets.symmetric(
+//                                   horizontal: 10, vertical: 10),
+//                             ),
+//                             onChanged: (value) async {
+//                               if (value.length == 6) {
+//                                 await loadPostOffices(value);
+//                               }
+//                             },
+//                           ),
+//                         ),
+//                         const SizedBox(height: 10),
+
+// // Post Office
+//                         if (postOffices.isNotEmpty)
+//                           SizedBox(
+//                             width: 337,
+//                             child: DropdownButtonFormField<PostOffice>(
+//                               value: selectedPostOffice,
+//                               isExpanded: true,
+//                               decoration: const InputDecoration(
+//                                 labelText: 'Select Post Office',
+//                                 border: OutlineInputBorder(),
+//                               ),
+//                               items: postOffices.map((postOffice) {
+//                                 return DropdownMenuItem<PostOffice>(
+//                                   value: postOffice,
+//                                   child: Text(postOffice.name ?? ''),
+//                                 );
+//                               }).toList(),
+//                               onChanged: (value) {
+//                                 setState(() {
+//                                   selectedPostOffice = value;
+//                                 });
+//                               },
+//                             ),
+//                           ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: 337,
+                          child: TextFormField(
+                            controller: stateVal,
+                            readOnly: true,
+                            onTap: () async {
+                              // Open dialog and wait for selected state
+                              final selectedState =
+                                  await selectStateDialog(context);
+
+                              if (selectedState != null) {
+                                setState(() {
+                                  stateVal.text =
+                                      selectedState.name; // show state name
+                                  StateId = selectedState.id; // save stateId
+                                  districtVal.clear();
+                                  districtList = [];
+                                  isDistrictLoading = true;
+                                });
+
+                                // Fetch districts for the selected state
+                                final result =
+                                    await HttpService.getDistrict(StateId!);
+
+                                setState(() {
+                                  districtList = result?.data ?? [];
+                                  isDistrictLoading = false;
+
+                                  // Auto-select first district if available
+                                  if (districtList.isNotEmpty) {
+                                    DistrictId = districtList.first.id;
+                                    districtVal.text = districtList.first.name;
+                                  }
+                                });
+                              }
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              prefixIcon: Icon(
+                                Icons.arrow_drop_down_circle_outlined,
+                                color: Colors.grey,
+                              ),
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                          ),
                         ),
+
+                        const SizedBox(height: 10),
+
+// District Dropdown
+                        if (!isDistrictLoading && districtList.isNotEmpty)
+                          SizedBox(
+                            width: 337,
+                            child: DropdownButtonFormField<DistrictList>(
+                              value: districtList.firstWhere(
+                                (d) => d.id == DistrictId,
+                                orElse: () => districtList.first,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Select District',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: districtList.map((d) {
+                                return DropdownMenuItem<DistrictList>(
+                                  value: d,
+                                  child: Text(d.name),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  DistrictId = value?.id;
+                                  districtVal.text = value?.name ?? '';
+                                });
+                              },
+                            ),
+                          ),
+
+                        if (isDistrictLoading)
+                          const Center(child: CircularProgressIndicator()),
+
+                        const SizedBox(height: 13),
+
                         Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3387,9 +4515,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    // Common.dialPad(items[index].contactNumber1);
-                    await FlutterPhoneDirectCaller.callNumber(
-                        items[index].contactNumber1);
+                    Common.dialPad(items[index].contactNumber1);
+                    // await FlutterPhoneDirectCaller.callNumber(
+                    //     items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

@@ -24,19 +24,28 @@
 
 
     <application
-        android:label="Login2 Pro"
+        android:label="Mentorbee"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true" 
         android:requestLegacyExternalStorage="true">
         <!-- <receiver android:name="com.login2Pro.MyStartupReceiver" android:enabled="true" android:exported="false"> -->
-        <receiver android:name="com.example.login2.MyStartupReceiver"
+        <!-- <receiver android:name="com.example.login2.MyStartupReceiver"
         android:enabled="true"
         android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
-        </receiver>
+        </receiver> -->
+        <receiver
+        android:name=".MyStartupReceiver"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+        </intent-filter>
+    </receiver>
+
         <activity android:name="com.yalantis.ucrop.UCropActivity" android:screenOrientation="portrait" android:theme="@style/Theme.AppCompat.Light.NoActionBar" tools:ignore="MissingClass"/>
         <activity
             android:name=".MainActivity"

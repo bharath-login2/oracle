@@ -44,6 +44,10 @@ class Data {
   String? callLeadId;
   String? leadSource;
   String? leadSourceId;
+    String? postOffice;
+    String? pinCode;
+    String? stateId;
+    String? districtId;
 
   Data(
       {this.callMasterId,
@@ -75,7 +79,12 @@ class Data {
       this.warningMessage,
       this.callLeadId,
       this.leadSource,
-      this.leadSourceId});
+      this.leadSourceId,
+        this.postOffice,
+        this.pinCode,
+        this.stateId,
+        this.districtId,
+       });
 
   Data.fromJson(Map<String, dynamic> json) {
     callMasterId = json['call_master_id'] ?? "";
@@ -120,6 +129,10 @@ class Data {
     callLeadId = json['callLeadId'] ?? "";
     leadSource = json['lead_source'] ?? "";
     leadSourceId = json['lead_source_id'] ?? "";
+     postOffice = json['post_office'] ?? "";
+      pinCode = json['pincode'] ?? "";
+       stateId = json['state_id'] ?? "";
+        districtId = json['district_id'] ?? "";
   }
 }
 

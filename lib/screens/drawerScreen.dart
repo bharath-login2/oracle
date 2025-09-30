@@ -552,13 +552,13 @@ class _DraweScreenState extends State<DraweScreen> {
                                                           (context, index) {
                                                         return ListTile(
                                                           onTap: () {
-                                                            // Common.dialPad(
-                                                            //     supportPhone[
-                                                            //         index]);
-                                                            FlutterPhoneDirectCaller
-                                                                .callNumber(
-                                                                    supportPhone[
-                                                                        index]);
+                                                            Common.dialPad(
+                                                                supportPhone[
+                                                                    index]);
+                                                            // FlutterPhoneDirectCaller
+                                                            //     .callNumber(
+                                                            //         supportPhone[
+                                                            //             index]);
                                                           },
                                                           title: Text(
                                                             supportNames[index],

@@ -11,7 +11,7 @@ String expensePostModelToJson(CommonResponse data) => json.encode(data.toJson())
 class CommonResponse {
     bool status;
     String message;
-    bool data;
+    dynamic data; 
 
     CommonResponse({
         required this.status,

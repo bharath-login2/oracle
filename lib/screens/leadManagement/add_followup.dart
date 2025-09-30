@@ -45,30 +45,51 @@ class AddFollowup extends StatefulWidget {
   String? priority;
   String? priorityId;
   String? leadType1;
+  final DateTime? preservedFromDate;
+  final DateTime? preservedToDate;
+  final String? preservedSortOrder;
+  final bool? preservedSortAscending;
+  final List<String>? preservedCategoryItems;
+  final List<String>? preservedPriorityItems;
+  final List<String>? preservedAssignedStaffItems;
+  final List<String>? preservedResponseItems;
 
-  AddFollowup(this.token, this.editLead, this.deleteLead, this.cloudCall,
-      this.callMasterId,
-      {super.key,
-      this.fromDate,
-      this.toDate,
-      this.status,
-      this.category,
-      this.staff,
-      this.pageName,
-      this.isCalled,
-      this.callingDate,
-      this.callHistoryId,
-      this.scrollToIndex,
-      this.leadTypeId,
-      this.leadType,
-      this.leadSubTypeId,
-      this.leadSubType,
-      this.cost,
-      this.address,
-      this.searchKey,
-      this.priority,
-      this.priorityId,
-      this.leadType1});
+  AddFollowup(
+    this.token,
+    this.editLead,
+    this.deleteLead,
+    this.cloudCall,
+    this.callMasterId, {
+    super.key,
+    this.fromDate,
+    this.toDate,
+    this.status,
+    this.category,
+    this.staff,
+    this.pageName,
+    this.isCalled,
+    this.callingDate,
+    this.callHistoryId,
+    this.scrollToIndex,
+    this.leadTypeId,
+    this.leadType,
+    this.leadSubTypeId,
+    this.leadSubType,
+    this.cost,
+    this.address,
+    this.searchKey,
+    this.priority,
+    this.priorityId,
+    this.leadType1,
+    this.preservedFromDate,
+    this.preservedToDate,
+    this.preservedSortOrder,
+    this.preservedSortAscending,
+    this.preservedCategoryItems,
+    this.preservedPriorityItems,
+    this.preservedAssignedStaffItems,
+    this.preservedResponseItems,
+  });
 
   @override
   State<AddFollowup> createState() => _AddFollowupState();
@@ -113,6 +134,7 @@ class _AddFollowupState extends State<AddFollowup> {
   TextEditingController productTaxPercent = TextEditingController();
   TextEditingController productTaxAmount = TextEditingController();
   TextEditingController productTotalAmount = TextEditingController();
+  TextEditingController productTotalAmountTotal = TextEditingController();
   TextEditingController discount = TextEditingController();
   TextEditingController shippingCharge = TextEditingController();
   TextEditingController paidAmount = TextEditingController();
@@ -129,6 +151,7 @@ class _AddFollowupState extends State<AddFollowup> {
   List<Map<String, dynamic>> products = [];
   List<Map<String, dynamic>> renProducts = [];
   double subTotal = 0.00;
+   double subTotalGrand = 0.00;
   double totalTaxAmount = 00;
   double allTotal = 0.00;
   bool isPaying = false;
@@ -188,6 +211,28 @@ class _AddFollowupState extends State<AddFollowup> {
   void changeRadioValue(int? value) {
     priorityId = value.toString();
     setState(() {});
+  }
+
+  /// Common form row widget
+  Widget buildFormRow(String label, Widget field) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10, bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: 45,
+            child: field,
+          ),
+        ],
+      ),
+    );
   }
 
   getData() async {
@@ -644,7 +689,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                           );
                                         }
                                       }
-                                                                        },
+                                    },
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),
@@ -786,60 +831,124 @@ class _AddFollowupState extends State<AddFollowup> {
                           TextFormField(
                             onTap: () {
                               showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Call Response'),
-                                      content: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.height *
-                                                .8,
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .53,
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.callResponseStatus.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  callResponse = commonDetails!
-                                                      .data
-                                                      .callResponseStatus[ind]
-                                                      .callResponse
-                                                      .toString();
+                                context: context,
+                                builder: (BuildContext context) {
+                                  List filteredResponses = List.from(
+                                      commonDetails!.data.callResponseStatus);
+                                  TextEditingController searchController =
+                                      TextEditingController();
 
-                                                  callResponseId =
-                                                      commonDetails!
-                                                          .data
-                                                          .callResponseStatus[
-                                                              ind]
-                                                          .callResponseId
-                                                          .toString();
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .callResponseStatus[ind]
-                                                      .callResponse
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
+                                  return StatefulBuilder(
+                                    builder: (context, setState) {
+                                      return AlertDialog(
+                                        scrollable: true,
+                                        title: const Text('Call Response'),
+                                        content: SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.8,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.53,
+                                          child: Column(
+                                            children: [
+                                              // Search Box
+                                              TextField(
+                                                controller: searchController,
+                                                decoration: InputDecoration(
+                                                  hintText: "Search...",
+                                                  prefixIcon:
+                                                      const Icon(Icons.search),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  contentPadding:
+                                                      const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 5),
+                                                ),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    filteredResponses = commonDetails!
+                                                        .data.callResponseStatus
+                                                        .where((element) => element
+                                                            .callResponse
+                                                            .toString()
+                                                            .toLowerCase()
+                                                            .contains(value
+                                                                .toLowerCase()))
+                                                        .toList();
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(height: 10),
+                                              // List
+                                              Expanded(
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount:
+                                                      filteredResponses.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          callResponse =
+                                                              filteredResponses[
+                                                                      ind]
+                                                                  .callResponse
+                                                                  .toString();
+                                                          callResponseId =
+                                                              filteredResponses[
+                                                                      ind]
+                                                                  .callResponseId
+                                                                  .toString();
+
+                                                          /// ✅ Update the TextFormField controller
+                                                          callResponseVal.text =
+                                                              callResponse;
+
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 8,
+                                                                  horizontal:
+                                                                      5),
+                                                          child: Text(
+                                                            filteredResponses[
+                                                                    ind]
+                                                                .callResponse
+                                                                .toString(),
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        18),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
-                                            );
-                                          },
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  });
+                                      );
+                                    },
+                                  );
+                                },
+                              );
                             },
                             maxLines: 1,
                             readOnly: true,
@@ -960,101 +1069,207 @@ class _AddFollowupState extends State<AddFollowup> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-                               TextFormField(
-  controller: leadTypeVal,
-  onTap: () {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          scrollable: true,
-          title: const Text('Lead Category'),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * .8,
-            height: MediaQuery.of(context).size.width * .8,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: commonDetails!.data.leadCategory.length,
-              itemBuilder: (context, ind) {
-                return InkWell(
-                  onTap: () async {
-                    leadSubTypeList = await HttpService.leadSubType(
-                      commonDetails!.data.leadCategory[ind].leadCategoryId.toString(),
-                    );
-                    setState(() {
-                      leadSubType = 'Lead Sub Category';
-                      leadSubTypeId = '';
-                      leadType = commonDetails!.data.leadCategory[ind].leadCategory.toString();
-                      leadTypeId = commonDetails!.data.leadCategory[ind].leadCategoryId.toString();
-                    });
-                    Navigator.pop(context, true); // Close the dialog
-                  },
-                  child: SizedBox(
-                    height: 50,
-                    child: Text(
-                      commonDetails!.data.leadCategory[ind].leadCategory.toString(),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  },
-  maxLines: 1,
-  readOnly: true,
-  decoration: InputDecoration(
-    contentPadding: const EdgeInsets.only(left: 10, top: 2, bottom: 2),
-    labelText: 'Lead Category',
-    fillColor: Colors.white,
-    filled: true,
-    prefixIcon: const Icon(Icons.category, color: Colors.grey),
-    suffixIcon: IconButton(
-      icon: const Icon(Icons.add_circle, color: Colors.green),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext dialogContext) => AddLeadCategoryDialog(
-            onSubmit: (leadName, cost, subcategory) async {
-              final token = await Common.getSharedPref('token');
-              final response = await HttpService.postLeadCategory(
-                leadName,
-                cost,
-                subcategory,
-              );
+                                TextFormField(
+                                  controller: leadTypeVal,
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        List filteredCategories = List.from(
+                                            commonDetails!.data.leadCategory);
+                                        TextEditingController searchController =
+                                            TextEditingController();
 
-              if (response != null && response.status) {
-                final refreshed = await HttpService.addLeadCommonData(token);
-                setState(() {
-                  commonDetails = refreshed;
-                });
+                                        return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title:
+                                                  const Text('Lead Category'),
+                                              content: SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.8,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.8,
+                                                child: Column(
+                                                  children: [
+                                                    // Search box
+                                                    TextField(
+                                                      controller:
+                                                          searchController,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        hintText: "Search...",
+                                                        prefixIcon: const Icon(
+                                                            Icons.search),
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 10,
+                                                                vertical: 5),
+                                                      ),
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          filteredCategories = commonDetails!
+                                                              .data.leadCategory
+                                                              .where((element) => element
+                                                                  .leadCategory
+                                                                  .toString()
+                                                                  .toLowerCase()
+                                                                  .contains(value
+                                                                      .toLowerCase()))
+                                                              .toList();
+                                                        });
+                                                      },
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    // List
+                                                    Expanded(
+                                                      child: ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount:
+                                                            filteredCategories
+                                                                .length,
+                                                        itemBuilder:
+                                                            (context, ind) {
+                                                          return InkWell(
+                                                            onTap: () async {
+                                                              leadSubTypeList =
+                                                                  await HttpService
+                                                                      .leadSubType(
+                                                                filteredCategories[
+                                                                        ind]
+                                                                    .leadCategoryId
+                                                                    .toString(),
+                                                              );
+                                                              setState(() {
+                                                                leadSubType =
+                                                                    'Lead Sub Category';
+                                                                leadSubTypeId =
+                                                                    '';
+                                                                leadType = filteredCategories[
+                                                                        ind]
+                                                                    .leadCategory
+                                                                    .toString();
+                                                                leadTypeId =
+                                                                    filteredCategories[
+                                                                            ind]
+                                                                        .leadCategoryId
+                                                                        .toString();
+                                                              });
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  true);
+                                                            },
+                                                            child: SizedBox(
+                                                              height: 50,
+                                                              child: Padding(
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical: 8,
+                                                                    horizontal:
+                                                                        5),
+                                                                child: Text(
+                                                                  filteredCategories[
+                                                                          ind]
+                                                                      .leadCategory
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          18),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  maxLines: 1,
+                                  readOnly: true,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.only(
+                                        left: 10, top: 2, bottom: 2),
+                                    labelText: 'Lead Category',
+                                    fillColor: Colors.white,
+                                    filled: true,
+                                    prefixIcon: const Icon(Icons.category,
+                                        color: Colors.grey),
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Colors.green),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder:
+                                              (BuildContext dialogContext) =>
+                                                  AddLeadCategoryDialog(
+                                            onSubmit: (leadName, cost,
+                                                subcategory) async {
+                                              final token =
+                                                  await Common.getSharedPref(
+                                                      'token');
+                                              final response = await HttpService
+                                                  .postLeadCategory(leadName,
+                                                      cost, subcategory);
 
-                Navigator.pop(dialogContext); // Correctly closes the dialog only
+                                              if (response != null &&
+                                                  response.status) {
+                                                final refreshed =
+                                                    await HttpService
+                                                        .addLeadCommonData(
+                                                            token);
+                                                setState(() {
+                                                  commonDetails = refreshed;
+                                                });
+                                                Navigator.pop(dialogContext);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Lead category added successfully")),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Failed to add lead category")),
-                );
-              }
-            },
-          ),
-        );
-      },
-    ),
-    border: const OutlineInputBorder(),
-    focusedBorder: const OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.grey),
-    ),
-    labelStyle: const TextStyle(color: Colors.grey),
-  ),
-),
-
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          "Lead category added successfully")),
+                                                );
+                                              } else {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          "Failed to add lead category")),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    border: const OutlineInputBorder(),
+                                    focusedBorder: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.grey),
+                                    ),
+                                    labelStyle:
+                                        const TextStyle(color: Colors.grey),
+                                  ),
+                                ),
                                 const SizedBox(
                                   height: 20,
                                 ),
@@ -1783,7 +1998,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.end,
                                         children: [
-                                          const Text('Sub Total :'),
+                                          const Text('Total :'),
                                           const SizedBox(
                                             width: 10,
                                           ),
@@ -1818,7 +2033,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.end,
                                         children: [
-                                          const Text('Tax Amount:'),
+                                          const Text('Tax:'),
                                           const SizedBox(
                                             width: 10,
                                           ),
@@ -2032,7 +2247,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                             MainAxisAlignment.center,
                                         children: [
                                           const Text(
-                                            'Total :',
+                                            'Grand Total :',
                                             style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w500),
@@ -2059,513 +2274,299 @@ class _AddFollowupState extends State<AddFollowup> {
                                       height: 5,
                                     ),
                                     const Divider(),
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          const Text('Pay Status * :'),
-                                          const SizedBox(
-                                            width: 10,
-                                          ),
-                                          SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.5,
-                                            height: 35,
-                                            child: FormField<String>(
-                                              builder: (FormFieldState<String>
-                                                  state) {
-                                                return Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.5,
-                                                  decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      borderRadius:
-                                                          const BorderRadius
-                                                              .all(
-                                                              Radius.circular(
-                                                                  5))),
-                                                  child:
-                                                      DropdownButtonHideUnderline(
-                                                    child:
-                                                        DropdownButton<String>(
-                                                      isExpanded: true,
-                                                      hint: const Padding(
-                                                        padding:
-                                                            EdgeInsets.only(
-                                                                left: 20),
-                                                        child: Text('Status'),
-                                                      ),
-                                                      value: paymentStatus,
-                                                      items: detailsResponse!
-                                                          .data.paymentStatus
-                                                          .map((data) {
-                                                        return DropdownMenuItem(
-                                                          value: data
-                                                              .paymentStatus
-                                                              .toString(),
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10),
-                                                            child: SizedBox(
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.5,
-                                                              child: Text(
-                                                                data.displaySts
-                                                                    .toString(),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
-                                                      onChanged: (newValue) {
-                                                        setState(() {
-                                                          paymentStatus =
-                                                              newValue;
-                                                          if (paymentStatus ==
-                                                              "paid") {
-                                                            paidAmount.text =
-                                                                allTotal
-                                                                    .toString();
-                                                          }
-                                                        });
-                                                      },
-                                                    ),
-                                                  ),
-                                                );
-                                              },
+                                    buildFormRow(
+                                      'Pay Status * :',
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            value: paymentStatus,
+                                            hint: const Padding(
+                                              padding:
+                                                  EdgeInsets.only(left: 12),
+                                              child: Text('Status'),
                                             ),
+                                            items: detailsResponse!
+                                                .data.paymentStatus
+                                                .map((data) {
+                                              return DropdownMenuItem(
+                                                value: data.paymentStatus
+                                                    .toString(),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: Text(
+                                                    data.displaySts.toString(),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (newValue) {
+                                              setState(() {
+                                                paymentStatus = newValue;
+                                                if (paymentStatus == "paid") {
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+                                                }
+                                              });
+                                            },
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(
-                                      height: 10,
+                                      height: 5,
                                     ),
                                     if (paymentStatus != "unpaid")
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 10),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            const Text('Paid Amount * :'),
-                                            const SizedBox(
-                                              width: 10,
+                                      buildFormRow(
+                                        'Paid Amount * :',
+                                        TextFormField(
+                                          controller: paidAmount,
+                                          readOnly: paymentStatus == "paid",
+                                          style: TextStyle(color: paidColor),
+                                          keyboardType: TextInputType.number,
+                                          onChanged: (val) {
+                                            if (double.tryParse(val) != null &&
+                                                double.parse(val) > subTotal) {
+                                              Common.toastMessaage(
+                                                  'Enter valid amount',
+                                                  Colors.red);
+                                              paidColor = Colors.red;
+                                            } else {
+                                              paidColor = Colors.black;
+                                            }
+                                            setState(() {});
+                                          },
+                                          decoration: InputDecoration(
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10),
+                                            filled: true,
+                                            fillColor: Colors.grey[300],
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              borderSide: BorderSide.none,
                                             ),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.5,
-                                              height: 35,
-                                              child: TextFormField(
-                                                readOnly:
-                                                    paymentStatus == "paid",
-                                                style:
-                                                    TextStyle(color: paidColor),
-                                                onChanged: (val) {
-                                                  if (double.parse(val) >
-                                                      subTotal) {
-                                                    Common.toastMessaage(
-                                                        'Enter valid amount',
-                                                        Colors.red);
-                                                    paidColor = Colors.red;
-                                                  } else {
-                                                    paidColor = Colors.black;
-                                                  }
-                                                  setState(() {});
-                                                },
-                                                controller: paidAmount,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                decoration: InputDecoration(
-                                                    contentPadding:
-                                                        const EdgeInsets.only(
-                                                            left: 10,
-                                                            top: 2,
-                                                            bottom: 2),
-                                                    //labelText: 'Invoice Number',
-                                                    fillColor: Colors.grey[300],
-                                                    filled: true,
-                                                    border:
-                                                        const OutlineInputBorder(
-                                                      // width: 0.0 produces a thin "hairline" border
-                                                      borderRadius:
-                                                          BorderRadius.all(
-                                                              Radius.circular(
-                                                                  5)),
-                                                      borderSide:
-                                                          BorderSide.none,
-                                                    ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                          color: Colors
-                                                              .grey.shade300),
-                                                    ),
-                                                    labelStyle: const TextStyle(
-                                                        color: Colors.black)),
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     const SizedBox(
-                                      height: 10,
+                                      height: 5,
                                     ),
                                     Visibility(
                                       visible: paymentStatus == "paid" ||
                                           paymentStatus == "partial",
                                       child: Column(
                                         children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                const Text('Pay Method * :'),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.5,
-                                                  height: 35,
-                                                  child: FormField<String>(
-                                                    builder:
-                                                        (FormFieldState<String>
-                                                            state) {
-                                                      return Container(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.5,
-                                                        decoration: BoxDecoration(
-                                                            color: Colors
-                                                                .grey.shade300,
-                                                            borderRadius:
-                                                                const BorderRadius
-                                                                    .all(Radius
-                                                                        .circular(
-                                                                            5))),
-                                                        child:
-                                                            DropdownButtonHideUnderline(
-                                                          child: DropdownButton<
-                                                              String>(
-                                                            isExpanded: true,
-                                                            hint: const Padding(
-                                                              padding: EdgeInsets
-                                                                  .only(
-                                                                      left: 20),
-                                                              child: Text(
-                                                                  'Method'),
-                                                            ),
-                                                            value:
-                                                                paymentMethod,
-                                                            items: detailsResponse!
-                                                                .data
-                                                                .paymentMethods
-                                                                .map((data) {
-                                                              return DropdownMenuItem(
-                                                                value: data.id
-                                                                    .toString(),
-                                                                child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          left:
-                                                                              10),
-                                                                  child:
-                                                                      SizedBox(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.5,
-                                                                    child: Text(
-                                                                      data.name
-                                                                          .toString(),
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            }).toList(),
-                                                            onChanged:
-                                                                (newValue) {
-                                                              setState(() {
-                                                                paymentMethod =
-                                                                    newValue;
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
+                                          buildFormRow(
+                                            'Payment Method * :',
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                              ),
+                                              child:
+                                                  DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  isExpanded: true,
+                                                  value: paymentMethod,
+                                                  hint: const Padding(
+                                                    padding: EdgeInsets.only(
+                                                        left: 12),
+                                                    child: Text('Method'),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                const Text('Account Head * :'),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.5,
-                                                  height: 35,
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      collectedStaffDialog(
-                                                              context)
-                                                          .then((_) {
-                                                        setState(() {});
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors
-                                                            .grey.shade300,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(4),
-                                                      ),
-                                                      child: Center(
-                                                          child: Padding(
+                                                  items: detailsResponse!
+                                                      .data.paymentMethods
+                                                      .map((data) {
+                                                    return DropdownMenuItem(
+                                                      value: data.id.toString(),
+                                                      child: Padding(
                                                         padding:
                                                             const EdgeInsets
-                                                                .only(
-                                                                left: 16.0),
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.38,
-                                                                child: Text(
-                                                                  staffName,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: const TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                )),
-                                                            Icon(
-                                                              Icons
-                                                                  .arrow_drop_down,
-                                                              color: Colors.grey
-                                                                  .shade600,
-                                                            )
-                                                          ],
+                                                                .only(left: 10),
+                                                        child: Text(
+                                                          data.name.toString(),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
-                                                      )),
-                                                    ),
-                                                  ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (newValue) {
+                                                    setState(() {
+                                                      paymentMethod = newValue;
+                                                    });
+                                                  },
                                                 ),
-                                              ],
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(
-                                            height: 10,
+                                            height: 5,
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 10.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                const Text(
-                                                  'Target Group :',
+                                          buildFormRow(
+                                            'Account Head * :',
+                                            GestureDetector(
+                                              onTap: () async {
+                                                await collectedStaffDialog(
+                                                    context);
+                                                setState(() {});
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade300,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
                                                 ),
-                                                const SizedBox(
-                                                  width: 15,
-                                                ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.55,
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      targetGroupDialog(context)
-                                                          .then((_) {
-                                                        setState(() {});
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              1,
-                                                      height: 50,
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(5),
-                                                        color: Colors
-                                                            .grey.shade300,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        staffName,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
                                                       ),
-                                                      child: targetGroups
-                                                              .isEmpty
-                                                          ? const Padding(
-                                                              padding: EdgeInsets
-                                                                  .only(
-                                                                      left: 10,
-                                                                      top: 15,
-                                                                      bottom:
-                                                                          10),
-                                                              child: Text(
-                                                                  'Target Group'))
-                                                          : Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      right:
-                                                                          40),
-                                                              child: SizedBox(
-                                                                height: 35,
-                                                                child: ListView
-                                                                    .builder(
-                                                                  scrollDirection:
-                                                                      Axis.horizontal,
-                                                                  itemCount:
-                                                                      targetGroupNames
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          i) {
-                                                                    return Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          left:
-                                                                              5,
-                                                                          right:
-                                                                              5),
-                                                                      child:
-                                                                          InkWell(
-                                                                        onTap:
-                                                                            () {
-                                                                          setState(
-                                                                              () {});
-                                                                        },
-                                                                        child:
-                                                                            Row(
-                                                                          children: [
-                                                                            Container(
-                                                                              height: 35,
-                                                                              decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.white, borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
-                                                                              child: Center(
-                                                                                child: Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                                  children: [
-                                                                                    Padding(
-                                                                                      padding: const EdgeInsets.all(10),
-                                                                                      child: Text(
-                                                                                        targetGroupNames[i],
-                                                                                        style: const TextStyle(
-                                                                                          color: Colors.black,
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                showDialog(
-                                                                                    context: context,
-                                                                                    builder: (BuildContext context) {
-                                                                                      return AlertDialog(
-                                                                                        title: const Text('Please Confirm'),
-                                                                                        content: const Text('Are you sure to Remove this Number?'),
-                                                                                        actions: [
-                                                                                          TextButton(
-                                                                                              onPressed: () {
-                                                                                                Navigator.of(context).pop();
-                                                                                              },
-                                                                                              child: const Text('No')),
-                                                                                          TextButton(
-                                                                                              onPressed: () async {
-                                                                                                setState(() {
-                                                                                                  targetGroupNames.remove(targetGroupNames[i]);
-                                                                                                  targetGroups.remove(targetGroups[i]);
-                                                                                                });
-                                                                                                Navigator.of(context).pop();
-                                                                                              },
-                                                                                              child: const Text('Yes')),
-                                                                                        ],
-                                                                                      );
-                                                                                    });
-                                                                              },
-                                                                              child: Container(
-                                                                                height: 35,
-                                                                                width: 30,
-                                                                                decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
-                                                                                child: const Icon(
-                                                                                  Icons.close,
-                                                                                  color: Colors.red,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
+                                                    ),
+                                                    Icon(Icons.arrow_drop_down,
+                                                        color: Colors
+                                                            .grey.shade600),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                          buildFormRow(
+                                            'Target Group :',
+                                            GestureDetector(
+                                              onTap: () async {
+                                                await targetGroupDialog(
+                                                    context);
+                                                setState(() {});
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade300,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8),
+                                                child: targetGroups.isEmpty
+                                                    ? const Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: Text(
+                                                            'Target Group'),
+                                                      )
+                                                    : ListView.builder(
+                                                        scrollDirection:
+                                                            Axis.horizontal,
+                                                        itemCount:
+                                                            targetGroupNames
+                                                                .length,
+                                                        itemBuilder:
+                                                            (context, i) {
+                                                          return Container(
+                                                            margin:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    right: 6),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        8),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.white,
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6),
+                                                            ),
+                                                            child: Row(
+                                                              children: [
+                                                                Text(
+                                                                    targetGroupNames[
+                                                                        i]),
+                                                                const SizedBox(
+                                                                    width: 4),
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    showDialog(
+                                                                      context:
+                                                                          context,
+                                                                      builder:
+                                                                          (_) =>
+                                                                              AlertDialog(
+                                                                        title: const Text(
+                                                                            'Please Confirm'),
+                                                                        content:
+                                                                            const Text('Are you sure to Remove this Group?'),
+                                                                        actions: [
+                                                                          TextButton(
+                                                                            onPressed: () =>
+                                                                                Navigator.of(context).pop(),
+                                                                            child:
+                                                                                const Text('No'),
+                                                                          ),
+                                                                          TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              setState(() {
+                                                                                targetGroupNames.removeAt(i);
+                                                                                targetGroups.removeAt(i);
+                                                                              });
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('Yes'),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                     );
                                                                   },
+                                                                  child: const Icon(
+                                                                      Icons
+                                                                          .close,
+                                                                      size: 16,
+                                                                      color: Colors
+                                                                          .red),
                                                                 ),
-                                                              ),
+                                                              ],
                                                             ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                                          );
+                                                        },
+                                                      ),
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -2582,11 +2583,10 @@ class _AddFollowupState extends State<AddFollowup> {
                           if (callResultId == '4' &&
                               createOrder &&
                               commonDetails!.data.isRenewal)
-                            CheckboxListTile( 
+                            CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
-                                value:
-                                    createRenewal,
+                                value: createRenewal,
                                 onChanged: (bool? value) {
                                   setState(() {
                                     createRenewal = value!;
@@ -3836,12 +3836,18 @@ class _AddFollowupState extends State<AddFollowup> {
                                 "total_amount": productTotalAmount.text,
                               });
 
-                              subTotal = subTotal +
-                                  double.parse(productTotalAmount.text);
-                              totalTaxAmount = totalTaxAmount +
-                                  double.parse(productTaxAmount.text) *
+                              // subTotal = subTotal +
+                              //     double.parse(productTotalAmountTotal.text);
+                                subTotal = double.parse(productTotalAmountTotal.text) *
                                       double.parse(productQty.text);
-                              allTotal = subTotal +
+                                    subTotalGrand =
+                                  double.parse(productTotalAmount.text);
+                              // totalTaxAmount = totalTaxAmount +
+                              //     double.parse(productTaxAmount.text) *
+                              //         double.parse(productQty.text);
+                                totalTaxAmount = 
+                                  double.parse(productTaxAmount.text);
+                              allTotal = subTotalGrand +
                                   double.parse(shippingCharge.text == ''
                                       ? '0'
                                       : shippingCharge.text) -
@@ -3983,7 +3989,11 @@ class _AddFollowupState extends State<AddFollowup> {
                                     filteredItems[index].taxPercent;
                                 productTaxAmount.text =
                                     filteredItems[index].taxAmount;
-                                productTotalAmount.text =
+                                productTotalAmountTotal.text =
+                                    ((double.parse(productRate.text)) *
+                                            double.parse(productQty.text))
+                                        .toString();
+                                          productTotalAmount.text =
                                     ((double.parse(productRate.text) +
                                                 double.parse(
                                                     productTaxAmount.text)) *

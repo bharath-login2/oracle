@@ -100,59 +100,109 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
     return DateFormat('dd-MM-yyyy').format(selectedDate);
   }
 
-  Widget buildStatusText(String status) {
-    Color color;
-    String label;
 
+/// Modified to handle isCompleted check
+Widget buildStatusText(String status, String isCompleted) {
+  // ✅ Custom condition: if isCompleted is 1
+  if (isCompleted == "1") {
+    // First resolve the status label from the status code
+    String label;
     switch (status) {
       case '1':
-        color = const Color.fromARGB(255, 56, 148, 235);
         label = 'New';
         break;
       case '2':
-        color = const Color.fromARGB(255, 227, 143, 34);
         label = 'Pending';
         break;
-         case '3':
-        color = Colors.green;
+      case '3':
         label = 'Completed';
         break;
-         case '4':
-        color = const Color.fromARGB(255, 200, 181, 37);
+      case '4':
         label = 'In-Progress';
         break;
-           case '5':
-        color = const Color.fromARGB(255, 235, 69, 69);
-        label = ' Cancelled';
+      case '5':
+        label = 'Cancelled';
         break;
       default:
-        color = Colors.green;
-        label = 'Completed';
+        label = 'Unknown';
     }
 
-    if (status == '1' || status == '2') {
-      return AnimatedBuilder(
-        animation: _blinkController,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _blinkController.value,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    return Text(
-      label,
-      style: TextStyle(fontWeight: FontWeight.bold, color: color),
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            decoration: TextDecoration.lineThrough, // 🔥 cut line
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "Completed",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
+        ),
+      ],
     );
   }
+
+  // 🔽 Normal status handling if not completed
+  Color color;
+  String label;
+
+  switch (status) {
+    case '1':
+      color = const Color.fromARGB(255, 56, 148, 235);
+      label = 'New';
+      break;
+    case '2':
+      color = const Color.fromARGB(255, 227, 143, 34);
+      label = 'Pending';
+      break;
+    case '3':
+      color = Colors.green;
+      label = 'Completed';
+      break;
+    case '4':
+      color = const Color.fromARGB(255, 200, 181, 37);
+      label = 'In-Progress';
+      break;
+    case '5':
+      color = const Color.fromARGB(255, 235, 69, 69);
+      label = 'Cancelled';
+      break;
+    default:
+      color = Colors.grey;
+      label = 'Unknown';
+  }
+
+  if (status == '1' || status == '2') {
+    return AnimatedBuilder(
+      animation: _blinkController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _blinkController.value,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  return Text(
+    label,
+    style: TextStyle(fontWeight: FontWeight.bold, color: color),
+  );
+}
+
 
   Widget buildWorkTab() {
     final filteredWorks = staffWorks
@@ -216,19 +266,12 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                      //  "Project: ${project.projectName}",
-                      "${project.customerName ?? "No title"} [${project.projectName}]",
+                        "${project.customerName ?? "No title"} [${project.projectName}]",
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
-                         //SizedBox(height: 12,),
-                      //  Text(
-                      //   "Client: ${project.customerName}",
-                      //   style: const TextStyle(
-                      //       fontSize: 14, fontWeight: FontWeight.w600),
-                      // ),
-                      const SizedBox(height: 12,),
-                       Text(
+                      const SizedBox(height: 12),
+                      Text(
                         "Module: ${project.moduleName}",
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600),
@@ -256,7 +299,8 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
                                               : Icons.access_time,
                                           color: isCompleted
                                               ? Colors.green
-                                              : const Color.fromARGB(255, 238, 141, 31),
+                                              : const Color.fromARGB(
+                                                  255, 238, 141, 31),
                                           size: 20,
                                         ),
                                       ),
@@ -305,7 +349,8 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
                                                   ),
                                                 ),
                                                 const SizedBox(width: 8),
-                                                buildStatusText(task.status),
+                                                buildStatusText(task.status,
+                                                    task.isCompleted ?? "0"),
                                               ],
                                             ),
                                             const SizedBox(height: 4),
@@ -517,6 +562,7 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

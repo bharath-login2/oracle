@@ -1669,18 +1669,18 @@ class _CallLogsState extends State<CallLogs> {
                                                         if (direction ==
                                                             DismissDirection
                                                                 .startToEnd) {
-                                                          await FlutterPhoneDirectCaller
-                                                              .callNumber(_callLogEntries
-                                                                  .elementAt(
-                                                                      indexStaff)
-                                                                  .number
-                                                                  .toString());
-                                                          // Common.dialPad(
-                                                          //     _callLogEntries
+                                                          // await FlutterPhoneDirectCaller
+                                                          //     .callNumber(_callLogEntries
                                                           //         .elementAt(
                                                           //             indexStaff)
                                                           //         .number
                                                           //         .toString());
+                                                          Common.dialPad(
+                                                              _callLogEntries
+                                                                  .elementAt(
+                                                                      indexStaff)
+                                                                  .number
+                                                                  .toString());
                                                         } else {
                                                           Navigator.push(
                                                               context,
@@ -3000,35 +3000,16 @@ class _CallLogsState extends State<CallLogs> {
                           ),
 
                           /// Call Button
-                          // ElevatedButton(
-                          //   style: ElevatedButton.styleFrom(
-                          //       padding: const EdgeInsets.all(20),
-                          //       elevation: 5,
-                          //       shape: const CircleBorder(),
-                          //       backgroundColor: Colors.green),
-                          //   onPressed: phoneNumber.isEmpty
-                          //       ? null
-                          //       : () async {
-                          //           Common.dialPad(phoneNumber);
-                          //         },
-                          //   child: const Icon(
-                          //     Icons.call,
-                          //     color: Colors.white,
-                          //     size: 35,
-                          //   ),
-                          // ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(20),
-                              elevation: 5,
-                              shape: const CircleBorder(),
-                              backgroundColor: Colors.green,
-                            ),
+                                padding: const EdgeInsets.all(20),
+                                elevation: 5,
+                                shape: const CircleBorder(),
+                                backgroundColor: Colors.green),
                             onPressed: phoneNumber.isEmpty
                                 ? null
                                 : () async {
-                                    await FlutterPhoneDirectCaller.callNumber(
-                                        phoneNumber);
+                                    Common.dialPad(phoneNumber);
                                   },
                             child: const Icon(
                               Icons.call,
@@ -3036,6 +3017,25 @@ class _CallLogsState extends State<CallLogs> {
                               size: 35,
                             ),
                           ),
+                          // ElevatedButton(
+                          //   style: ElevatedButton.styleFrom(
+                          //     padding: const EdgeInsets.all(20),
+                          //     elevation: 5,
+                          //     shape: const CircleBorder(),
+                          //     backgroundColor: Colors.green,
+                          //   ),
+                          //   onPressed: phoneNumber.isEmpty
+                          //       ? null
+                          //       : () async {
+                          //           await FlutterPhoneDirectCaller.callNumber(
+                          //               phoneNumber);
+                          //         },
+                          //   child: const Icon(
+                          //     Icons.call,
+                          //     color: Colors.white,
+                          //     size: 35,
+                          //   ),
+                          // ),
 
                           const SizedBox(
                             width: 30,

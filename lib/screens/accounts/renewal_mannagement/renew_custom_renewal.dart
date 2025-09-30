@@ -91,6 +91,47 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
     if (branchList != null) {}
   }
 
+  final InputDecoration formFieldDecoration = InputDecoration(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    fillColor: Colors.grey[300],
+    filled: true,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(5),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(5),
+      borderSide: BorderSide(color: Colors.grey),
+    ),
+    errorMaxLines: 3,
+  );
+
+  Widget buildFormRow(String label, Widget field) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6), // more breathing space
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.35, // label width
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: field),
+      ],
+    ),
+  );
+}
+
+
   postRenewal() async {
     try {
       renewResponse = await HttpService.postRenewCustom(
@@ -955,419 +996,631 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                   ],
                 ),
                 const SizedBox(height: 15.0),
+                // Column(
+                //   children: [
+                //     Row(
+                //       mainAxisAlignment: MainAxisAlignment.end,
+                //       children: [
+                //         const Text('Payment Status * :'),
+                //         const SizedBox(
+                //           width: 10,
+                //         ),
+                //         Container(
+                //           width: MediaQuery.of(context).size.width * 0.5,
+                //           height: 35,
+                //           decoration: BoxDecoration(
+                //             color: Colors.grey.shade300,
+                //             borderRadius:
+                //                 const BorderRadius.all(Radius.circular(5)),
+                //           ),
+                //           child: DropdownButtonFormField(
+                //             validator: (val) {
+                //               if (val == "" || val == null) {
+                //                 return "Add payment status";
+                //               }
+                //               return null;
+                //             },
+                //             value: payStat,
+                //             onChanged: (value) async {
+                //               payStat = value.toString();
+                //               setState(() {});
+                //             },
+                //             items: renewalDetails!.data.paymentStatusList
+                //                 .map((data) {
+                //               return DropdownMenuItem<String>(
+                //                 value: data.paymentStatus.toString(),
+                //                 child: Text(
+                //                   data.displaySts.toString(),
+                //                 ),
+                //               );
+                //             }).toList(),
+                //             decoration: const InputDecoration(
+                //                 border: InputBorder.none,
+                //                 contentPadding: EdgeInsets.only(
+                //                     left: 8.0, right: 5.0, bottom: 10)),
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //     const SizedBox(height: 10.0),
+                //     Visibility(
+                //       visible: payStat == "partial" || payStat == "paid",
+                //       child: Column(
+                //         children: [
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.end,
+                //             children: [
+                //               const Text('Paid Amount * :'),
+                //               const SizedBox(
+                //                 width: 10,
+                //               ),
+                //               SizedBox(
+                //                 width: MediaQuery.of(context).size.width * 0.5,
+                //                 height: (totalPaidAmount.text.isNotEmpty &&
+                //                         double.tryParse(totalAmount.text) !=
+                //                             null &&
+                //                         double.tryParse(
+                //                                 totalPaidAmount.text)! >=
+                //                             double.tryParse(totalAmount.text)!)
+                //                     ? 35
+                //                     : 35,
+                //                 child: TextFormField(
+                //                   validator: (value) {
+                //                     if (payStat == "partial") {
+                //                       final val = double.tryParse(value ?? "");
+                //                       final total =
+                //                           double.tryParse(totalAmount.text);
+                //                       if (val == null || val == 0) {
+                //                         return "Enter Amount";
+                //                       } else if (total != null &&
+                //                           val >= total) {
+                //                         return "Paid amount cannot be greater than or equal to Sub Total";
+                //                       }
+                //                     }
+                //                     return null;
+                //                   },
+                //                   readOnly: payStat != "partial" ? true : false,
+                //                   keyboardType: TextInputType.number,
+                //                   controller: totalPaidAmount,
+                //                   onChanged: (value) {
+                //                     if (formKey.currentState != null) {
+                //                       formKey.currentState!.validate();
+                //                     }
+                //                   },
+                //                   decoration: InputDecoration(
+                //                     contentPadding: const EdgeInsets.only(
+                //                         left: 10, top: 2, bottom: 2),
+                //                     fillColor: Colors.grey[300],
+                //                     filled: true,
+                //                     border: const OutlineInputBorder(
+                //                       borderRadius:
+                //                           BorderRadius.all(Radius.circular(5)),
+                //                       borderSide: BorderSide.none,
+                //                     ),
+                //                     focusedBorder: OutlineInputBorder(
+                //                       borderSide: BorderSide(
+                //                           color: Colors.grey.shade300),
+                //                     ),
+                //                     labelStyle:
+                //                         const TextStyle(color: Colors.black),
+                //                     errorMaxLines: 3,
+                //                   ),
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //           const SizedBox(height: 10.0),
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.end,
+                //             children: [
+                //               const Text('Pay Method * :'),
+                //               const SizedBox(
+                //                 width: 10,
+                //               ),
+                //               Container(
+                //                 width: MediaQuery.of(context).size.width * 0.5,
+                //                 height: 35,
+                //                 decoration: BoxDecoration(
+                //                   color: Colors.grey.shade300,
+                //                   borderRadius: const BorderRadius.all(
+                //                       Radius.circular(5)),
+                //                 ),
+                //                 child: DropdownButtonFormField(
+                //                   isExpanded: true,
+                //                   decoration: const InputDecoration(
+                //                       border: InputBorder.none,
+                //                       contentPadding: EdgeInsets.only(
+                //                           right: 5.0, bottom: 10)),
+                //                   hint: const Padding(
+                //                     padding: EdgeInsets.only(left: 20),
+                //                     child: Text('Payment Method'),
+                //                   ),
+                //                   validator: (value) {
+                //                     if (payStat == "partial" ||
+                //                         payStat == "paid") {
+                //                       if (value == "" || value == null) {
+                //                         return "Select a payment method";
+                //                       }
+                //                     }
+                //                     return null;
+                //                   },
+                //                   value: payMethod,
+                //                   onChanged: (value) async {
+                //                     setState(() {
+                //                       payMethod = value.toString();
+                //                     });
+                //                     if (formKey.currentState != null) {
+                //                       formKey.currentState!.validate();
+                //                     }
+                //                   },
+                //                   items: renewalDetails!.data.paymentMethods
+                //                       .map((data) {
+                //                     return DropdownMenuItem<String>(
+                //                       value: data.id.toString(),
+                //                       child: Text(data.name.toString()),
+                //                     );
+                //                   }).toList(),
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //           const SizedBox(height: 10.0),
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.end,
+                //             children: [
+                //               const Text('Account Head * :'),
+                //               const SizedBox(width: 10),
+                //               SizedBox(
+                //                 width: MediaQuery.of(context).size.width * 0.5,
+                //                 child: Column(
+                //                   crossAxisAlignment: CrossAxisAlignment.start,
+                //                   children: [
+                //                     SizedBox(
+                //                       height: 35,
+                //                       child: TextFormField(
+                //                         readOnly: true,
+                //                         validator: (value) {
+                //                           if (_formSubmitted &&
+                //                               (payStat == "partial" ||
+                //                                   payStat == "paid")) {
+                //                             if (value == "" || value == null) {
+                //                               return "Select Account Head";
+                //                             }
+                //                           }
+                //                           return null;
+                //                         },
+                //                         onTap: () {
+                //                           collectedStaffDialog(context)
+                //                               .then((_) {
+                //                             if (formKey.currentState != null) {
+                //                               formKey.currentState!.validate();
+                //                             }
+                //                           });
+                //                         },
+                //                         controller: staffName,
+                //                         onChanged: (value) {
+                //                           if (formKey.currentState != null) {
+                //                             formKey.currentState!.validate();
+                //                           }
+                //                         },
+                //                         decoration: InputDecoration(
+                //                           contentPadding: const EdgeInsets.only(
+                //                               left: 10, top: 2, bottom: 2),
+                //                           fillColor: Colors.grey[300],
+                //                           filled: true,
+                //                           border: const OutlineInputBorder(
+                //                             borderRadius: BorderRadius.all(
+                //                                 Radius.circular(5)),
+                //                             borderSide: BorderSide.none,
+                //                           ),
+                //                           focusedBorder: OutlineInputBorder(
+                //                             borderSide: BorderSide(
+                //                                 color: Colors.grey.shade300),
+                //                           ),
+                //                           labelStyle: const TextStyle(
+                //                               color: Colors.black),
+                //                         ),
+                //                       ),
+                //                     ),
+                //                     // Add space for validation message without affecting layout
+                //                     const SizedBox(height: 20),
+                //                   ],
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //           const SizedBox(
+                //             height: 10,
+                //           ),
+                //           Padding(
+                //             padding:
+                //                 const EdgeInsets.symmetric(horizontal: 10.0),
+                //             child: Row(
+                //               mainAxisAlignment: MainAxisAlignment.end,
+                //               crossAxisAlignment: CrossAxisAlignment.center,
+                //               children: [
+                //                 const Text(
+                //                   'Target Group :',
+                //                 ),
+                //                 const SizedBox(
+                //                   width: 15,
+                //                 ),
+                //                 SizedBox(
+                //                   width:
+                //                       MediaQuery.of(context).size.width * 0.55,
+                //                   child: GestureDetector(
+                //                     onTap: () {
+                //                       targetGroupDialog(context);
+                //                     },
+                //                     child: Container(
+                //                       width:
+                //                           MediaQuery.of(context).size.width * 1,
+                //                       height: 50,
+                //                       decoration: BoxDecoration(
+                //                         borderRadius: BorderRadius.circular(5),
+                //                         color: Colors.grey.shade300,
+                //                       ),
+                //                       child: targetGroups.isEmpty
+                //                           ? const Padding(
+                //                               padding: EdgeInsets.only(
+                //                                   left: 10,
+                //                                   top: 15,
+                //                                   bottom: 10),
+                //                               child: Text('Target Group'))
+                //                           : Padding(
+                //                               padding: const EdgeInsets.only(
+                //                                   right: 40),
+                //                               child: SizedBox(
+                //                                 height: 35,
+                //                                 child: ListView.builder(
+                //                                   scrollDirection:
+                //                                       Axis.horizontal,
+                //                                   itemCount:
+                //                                       targetGroupNames.length,
+                //                                   itemBuilder: (context, i) {
+                //                                     return Padding(
+                //                                       padding:
+                //                                           const EdgeInsets.only(
+                //                                               left: 5,
+                //                                               right: 5),
+                //                                       child: InkWell(
+                //                                         onTap: () {
+                //                                           setState(() {});
+                //                                         },
+                //                                         child: Row(
+                //                                           children: [
+                //                                             Container(
+                //                                               height: 35,
+                //                                               decoration: BoxDecoration(
+                //                                                   border: Border.all(
+                //                                                       color: Colors
+                //                                                           .grey,
+                //                                                       width: 0),
+                //                                                   color: Colors
+                //                                                       .white,
+                //                                                   borderRadius: const BorderRadius
+                //                                                       .only(
+                //                                                       topLeft: Radius
+                //                                                           .circular(
+                //                                                               6),
+                //                                                       bottomLeft:
+                //                                                           Radius.circular(
+                //                                                               6))),
+                //                                               child: Center(
+                //                                                 child: Row(
+                //                                                   mainAxisAlignment:
+                //                                                       MainAxisAlignment
+                //                                                           .center,
+                //                                                   children: [
+                //                                                     Padding(
+                //                                                       padding: const EdgeInsets
+                //                                                           .all(
+                //                                                           10),
+                //                                                       child:
+                //                                                           Text(
+                //                                                         targetGroupNames[
+                //                                                             i],
+                //                                                         style:
+                //                                                             const TextStyle(
+                //                                                           color:
+                //                                                               Colors.black,
+                //                                                         ),
+                //                                                       ),
+                //                                                     ),
+                //                                                   ],
+                //                                                 ),
+                //                                               ),
+                //                                             ),
+                //                                             InkWell(
+                //                                               onTap: () {
+                //                                                 showDialog(
+                //                                                     context:
+                //                                                         context,
+                //                                                     builder:
+                //                                                         (BuildContext
+                //                                                             context) {
+                //                                                       return AlertDialog(
+                //                                                         title: const Text(
+                //                                                             'Please Confirm'),
+                //                                                         content:
+                //                                                             const Text('Are you sure to Remove this Number?'),
+                //                                                         actions: [
+                //                                                           TextButton(
+                //                                                               onPressed: () {
+                //                                                                 Navigator.of(context).pop();
+                //                                                               },
+                //                                                               child: const Text('No')),
+                //                                                           TextButton(
+                //                                                               onPressed: () async {
+                //                                                                 setState(() {
+                //                                                                   targetGroupNames.remove(targetGroupNames[i]);
+                //                                                                   targetGroups.remove(targetGroups[i]);
+                //                                                                 });
+                //                                                                 Navigator.of(context).pop();
+                //                                                               },
+                //                                                               child: const Text('Yes')),
+                //                                                         ],
+                //                                                       );
+                //                                                     });
+                //                                               },
+                //                                               child: Container(
+                //                                                 height: 35,
+                //                                                 width: 30,
+                //                                                 decoration: BoxDecoration(
+                //                                                     border: Border.all(
+                //                                                         color: Colors
+                //                                                             .grey,
+                //                                                         width:
+                //                                                             0),
+                //                                                     color: Colors
+                //                                                         .grey
+                //                                                         .shade100,
+                //                                                     borderRadius: const BorderRadius
+                //                                                         .only(
+                //                                                         topRight:
+                //                                                             Radius.circular(
+                //                                                                 6),
+                //                                                         bottomRight:
+                //                                                             Radius.circular(6))),
+                //                                                 child:
+                //                                                     const Icon(
+                //                                                   Icons.close,
+                //                                                   color: Colors
+                //                                                       .red,
+                //                                                 ),
+                //                                               ),
+                //                                             ),
+                //                                           ],
+                //                                         ),
+                //                                       ),
+                //                                     );
+                //                                   },
+                //                                 ),
+                //                               ),
+                //                             ),
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                // Reusable decoration for all fields
+
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const Text('Payment Status * :'),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.5,
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(5)),
-                          ),
-                          child: DropdownButtonFormField(
-                            validator: (val) {
-                              if (val == "" || val == null) {
-                                return "Add payment status";
+                    // Payment Status
+                    buildFormRow(
+                      'Payment Status * :',
+                      DropdownButtonFormField(
+                        value: payStat,
+                        validator: (val) => (val == null || val == "")
+                            ? "Add payment status"
+                            : null,
+                        onChanged: (value) {
+                          setState(() => payStat = value.toString());
+                        },
+                        items:
+                            renewalDetails!.data.paymentStatusList.map((data) {
+                          return DropdownMenuItem<String>(
+                            value: data.paymentStatus.toString(),
+                            child: Text(data.displaySts.toString()),
+                          );
+                        }).toList(),
+                        decoration: formFieldDecoration.copyWith(
+                            hintText: 'Select Status'),
+                      ),
+                    ),
+
+                    if (payStat == "partial" || payStat == "paid")
+                      buildFormRow(
+                        'Paid Amount * :',
+                        TextFormField(
+                          controller: totalPaidAmount,
+                          readOnly: payStat != "partial",
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (payStat == "partial") {
+                              final val = double.tryParse(value ?? "");
+                              final total = double.tryParse(totalAmount.text);
+                              if (val == null || val == 0)
+                                return "Enter Amount";
+                              if (total != null && val >= total) {
+                                return "Paid amount cannot be greater than or equal to Sub Total";
                               }
-                              return null;
-                            },
-                            value: payStat,
-                            onChanged: (value) async {
-                              payStat = value.toString();
-                              setState(() {});
-                            },
-                            items: renewalDetails!.data.paymentStatusList
-                                .map((data) {
-                              return DropdownMenuItem<String>(
-                                value: data.paymentStatus.toString(),
-                                child: Text(
-                                  data.displaySts.toString(),
-                                ),
-                              );
-                            }).toList(),
-                            decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.only(
-                                    left: 8.0, right: 5.0, bottom: 10)),
+                            }
+                            return null;
+                          },
+                          onChanged: (_) => formKey.currentState?.validate(),
+                          decoration: formFieldDecoration.copyWith(
+                            hintText: 'Enter Amount',
+                            errorMaxLines: 2,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 10),
+                          ),
+                        ),
+                      ),
+
+                    if (payStat == "partial" || payStat == "paid")
+                      buildFormRow(
+                        'Payment Method * :',
+                        DropdownButtonFormField(
+                          isExpanded: true,
+                          value: payMethod,
+                          validator: (val) {
+                            if (payStat == "partial" || payStat == "paid") {
+                              if (val == null || val == "")
+                                return "Select a payment method";
+                            }
+                            return null;
+                          },
+                          onChanged: (value) {
+                            setState(() => payMethod = value.toString());
+                            formKey.currentState?.validate();
+                          },
+                          items:
+                              renewalDetails!.data.paymentMethods.map((data) {
+                            return DropdownMenuItem<String>(
+                              value: data.id.toString(),
+                              child: Text(data.name.toString()),
+                            );
+                          }).toList(),
+                          decoration: formFieldDecoration.copyWith(
+                              hintText: 'Select Payment Method'),
+                        ),
+                      ),
+
+                    // Account Head
+                    if (payStat == "partial" || payStat == "paid")
+                      buildFormRow(
+                        'Account Head * :',
+                        TextFormField(
+                          controller: staffName,
+                          readOnly: true,
+                          validator: (value) {
+                            if (_formSubmitted &&
+                                (payStat == "partial" || payStat == "paid") &&
+                                (value == null || value.isEmpty)) {
+                              return "Select Account Head";
+                            }
+                            return null;
+                          },
+                          onTap: () {
+                            collectedStaffDialog(context).then((_) {
+                              formKey.currentState?.validate();
+                            });
+                          },
+                          onChanged: (_) => formKey.currentState?.validate(),
+                          decoration: formFieldDecoration.copyWith(
+                              hintText: 'Select Account Head'),
+                        ),
+                      ),
+
+                    // Target Group
+                    if (payStat == "partial" || payStat == "paid")
+  buildFormRow(
+    'Target Group :',
+    GestureDetector(
+      onTap: () => targetGroupDialog(context),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: Colors.grey.shade400),
+        ),
+        child: targetGroups.isEmpty
+            ? const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Select Target Group',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              )
+            : ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: targetGroupNames.length,
+                itemBuilder: (context, i) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 10),
+                          height: 28,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(6),
+                              bottomLeft: Radius.circular(6),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(targetGroupNames[i]),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Please Confirm'),
+                                content: const Text(
+                                    'Are you sure to Remove this Number?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('No'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        targetGroupNames.removeAt(i);
+                                        targetGroups.removeAt(i);
+                                      });
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Yes'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: Container(
+                            height: 28,
+                            width: 28,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              color: Colors.grey.shade100,
+                              borderRadius: const BorderRadius.only(
+                                topRight: Radius.circular(6),
+                                bottomRight: Radius.circular(6),
+                              ),
+                            ),
+                            child: const Icon(Icons.close,
+                                color: Colors.red, size: 18),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10.0),
-                    Visibility(
-                      visible: payStat == "partial" || payStat == "paid",
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Text('Paid Amount * :'),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                height: (totalPaidAmount.text.isNotEmpty &&
-                                        double.tryParse(totalAmount.text) !=
-                                            null &&
-                                        double.tryParse(
-                                                totalPaidAmount.text)! >=
-                                            double.tryParse(totalAmount.text)!)
-                                    ? 80
-                                    : 55,
-                                child: TextFormField(
-                                  validator: (value) {
-                                    if (payStat == "partial") {
-                                      final val = double.tryParse(value ?? "");
-                                      final total =
-                                          double.tryParse(totalAmount.text);
-                                      if (val == null || val == 0) {
-                                        return "Enter Amount";
-                                      } else if (total != null &&
-                                          val >= total) {
-                                        return "Paid amount cannot be greater than or equal to Sub Total";
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                  readOnly: payStat != "partial" ? true : false,
-                                  keyboardType: TextInputType.number,
-                                  controller: totalPaidAmount,
-                                  onChanged: (value) {
-                                    if (formKey.currentState != null) {
-                                      formKey.currentState!.validate();
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.only(
-                                        left: 10, top: 2, bottom: 2),
-                                    fillColor: Colors.grey[300],
-                                    filled: true,
-                                    border: const OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(5)),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.grey.shade300),
-                                    ),
-                                    labelStyle:
-                                        const TextStyle(color: Colors.black),
-                                    errorMaxLines: 3,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Text('Pay Method * :'),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Container(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(5)),
-                                ),
-                                child: DropdownButtonFormField(
-                                  isExpanded: true,
-                                  decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.only(
-                                          left: 8.0, right: 5.0, bottom: 10)),
-                                  hint: const Padding(
-                                    padding: EdgeInsets.only(left: 20),
-                                    child: Text('Payment Method'),
-                                  ),
-                                  validator: (value) {
-                                    if (payStat == "partial" ||
-                                        payStat == "paid") {
-                                      if (value == "" || value == null) {
-                                        return "Select a payment method";
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                  value: payMethod,
-                                  onChanged: (value) async {
-                                    setState(() {
-                                      payMethod = value.toString();
-                                    });
-                                    if (formKey.currentState != null) {
-                                      formKey.currentState!.validate();
-                                    }
-                                  },
-                                  items: renewalDetails!.data.paymentMethods
-                                      .map((data) {
-                                    return DropdownMenuItem<String>(
-                                      value: data.id.toString(),
-                                      child: Text(data.name.toString()),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Text('Account Head * :'),
-                              const SizedBox(width: 10),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 55,
-                                      child: TextFormField(
-                                        readOnly: true,
-                                        validator: (value) {
-                                          if (_formSubmitted &&
-                                              (payStat == "partial" ||
-                                                  payStat == "paid")) {
-                                            if (value == "" || value == null) {
-                                              return "Select Account Head";
-                                            }
-                                          }
-                                          return null;
-                                        },
-                                        onTap: () {
-                                          collectedStaffDialog(context)
-                                              .then((_) {
-                                            if (formKey.currentState != null) {
-                                              formKey.currentState!.validate();
-                                            }
-                                          });
-                                        },
-                                        controller: staffName,
-                                        onChanged: (value) {
-                                          if (formKey.currentState != null) {
-                                            formKey.currentState!.validate();
-                                          }
-                                        },
-                                        decoration: InputDecoration(
-                                          contentPadding: const EdgeInsets.only(
-                                              left: 10, top: 2, bottom: 2),
-                                          fillColor: Colors.grey[300],
-                                          filled: true,
-                                          border: const OutlineInputBorder(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(5)),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300),
-                                          ),
-                                          labelStyle: const TextStyle(
-                                              color: Colors.black),
-                                        ),
-                                      ),
-                                    ),
-                                    // Add space for validation message without affecting layout
-                                    const SizedBox(height: 20),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 10.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'Target Group :',
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.55,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      targetGroupDialog(context);
-                                    },
-                                    child: Container(
-                                      width:
-                                          MediaQuery.of(context).size.width * 1,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      child: targetGroups.isEmpty
-                                          ? const Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 10,
-                                                  top: 15,
-                                                  bottom: 10),
-                                              child: Text('Target Group'))
-                                          : Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 40),
-                                              child: SizedBox(
-                                                height: 35,
-                                                child: ListView.builder(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  itemCount:
-                                                      targetGroupNames.length,
-                                                  itemBuilder: (context, i) {
-                                                    return Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 5,
-                                                              right: 5),
-                                                      child: InkWell(
-                                                        onTap: () {
-                                                          setState(() {});
-                                                        },
-                                                        child: Row(
-                                                          children: [
-                                                            Container(
-                                                              height: 35,
-                                                              decoration: BoxDecoration(
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      width: 0),
-                                                                  color: Colors
-                                                                      .white,
-                                                                  borderRadius: const BorderRadius
-                                                                      .only(
-                                                                      topLeft: Radius
-                                                                          .circular(
-                                                                              6),
-                                                                      bottomLeft:
-                                                                          Radius.circular(
-                                                                              6))),
-                                                              child: Center(
-                                                                child: Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .center,
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .all(
-                                                                          10),
-                                                                      child:
-                                                                          Text(
-                                                                        targetGroupNames[
-                                                                            i],
-                                                                        style:
-                                                                            const TextStyle(
-                                                                          color:
-                                                                              Colors.black,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            InkWell(
-                                                              onTap: () {
-                                                                showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (BuildContext
-                                                                            context) {
-                                                                      return AlertDialog(
-                                                                        title: const Text(
-                                                                            'Please Confirm'),
-                                                                        content:
-                                                                            const Text('Are you sure to Remove this Number?'),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                              onPressed: () {
-                                                                                Navigator.of(context).pop();
-                                                                              },
-                                                                              child: const Text('No')),
-                                                                          TextButton(
-                                                                              onPressed: () async {
-                                                                                setState(() {
-                                                                                  targetGroupNames.remove(targetGroupNames[i]);
-                                                                                  targetGroups.remove(targetGroups[i]);
-                                                                                });
-                                                                                Navigator.of(context).pop();
-                                                                              },
-                                                                              child: const Text('Yes')),
-                                                                        ],
-                                                                      );
-                                                                    });
-                                                              },
-                                                              child: Container(
-                                                                height: 35,
-                                                                width: 30,
-                                                                decoration: BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color: Colors
-                                                                            .grey,
-                                                                        width:
-                                                                            0),
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade100,
-                                                                    borderRadius: const BorderRadius
-                                                                        .only(
-                                                                        topRight:
-                                                                            Radius.circular(
-                                                                                6),
-                                                                        bottomRight:
-                                                                            Radius.circular(6))),
-                                                                child:
-                                                                    const Icon(
-                                                                  Icons.close,
-                                                                  color: Colors
-                                                                      .red,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  );
+                },
+              ),
+      ),
+    ),
+  ),
+
                   ],
                 ),
+
                 const SizedBox(height: 20.0),
                 Row(
                   children: [
@@ -2078,181 +2331,214 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   //     },
   //   );
   // }
-void _editProduct(BuildContext context, int index) {
-  double ratePerUnit = double.tryParse(products[index]['product_rate']) ?? 0;
-  double qty = double.tryParse(products[index]['quantity']) ?? 0;
-  double taxPercent = double.tryParse(products[index]['tax_percent']) ?? 0;
+  void _editProduct(BuildContext context, int index) {
+    double ratePerUnit = double.tryParse(products[index]['product_rate']) ?? 0;
+    double qty = double.tryParse(products[index]['quantity']) ?? 0;
+    double taxPercent = double.tryParse(products[index]['tax_percent']) ?? 0;
 
-  // Controllers
-  final TextEditingController rateController =
-      TextEditingController(text: ratePerUnit.toStringAsFixed(2));
-  final TextEditingController qtyController =
-      TextEditingController(text: qty.toStringAsFixed(0));
-  final TextEditingController taxController =
-      TextEditingController(text: taxPercent.toStringAsFixed(2));
-  final TextEditingController totalController =
-      TextEditingController(text: (ratePerUnit * qty).toStringAsFixed(2));
+    // Controllers
+    final TextEditingController rateController =
+        TextEditingController(text: ratePerUnit.toStringAsFixed(2));
+    final TextEditingController qtyController =
+        TextEditingController(text: qty.toStringAsFixed(0));
+    final TextEditingController taxController =
+        TextEditingController(text: taxPercent.toStringAsFixed(2));
 
-  void recalcFields() {
-    double newQty = double.tryParse(qtyController.text) ?? 0;
-    double newRate = double.tryParse(rateController.text) ?? 0;
-    totalController.text = (newRate * newQty).toStringAsFixed(2);
-  }
+    double rateTotal = ratePerUnit * qty;
+    double taxTotal = (rateTotal * taxPercent) / 100;
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text(
-          'Edit Product',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Rate per unit
-              TextField(
-                controller: rateController,
-                decoration: const InputDecoration(
-                  labelText: 'Rate per Unit',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    final TextEditingController taxAmtController =
+        TextEditingController(text: taxTotal.toStringAsFixed(2));
+    final TextEditingController totalController =
+        TextEditingController(text: (rateTotal + taxTotal).toStringAsFixed(2));
+
+    void recalcFields() {
+      double newQty = double.tryParse(qtyController.text) ?? 0;
+      double newRate = double.tryParse(rateController.text) ?? 0;
+      double newTaxPercent = double.tryParse(taxController.text) ?? 0;
+
+      double rateTotal = newRate * newQty;
+      double taxTotal = (rateTotal * newTaxPercent) / 100;
+
+      taxAmtController.text = taxTotal.toStringAsFixed(2);
+      totalController.text = (rateTotal + taxTotal).toStringAsFixed(2);
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Edit Product',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: rateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Rate per Unit',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => recalcFields(),
                 ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => recalcFields(),
-              ),
-
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove, size: 20),
-                            onPressed: () {
-                              int currentQty = int.tryParse(qtyController.text) ?? 0;
-                              if (currentQty > 1) {
-                                qtyController.text = (currentQty - 1).toString();
-                                recalcFields();
-                              }
-                            },
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: qtyController,
-                              textAlign: TextAlign.center,
-                              decoration: const InputDecoration(
-                                labelText: 'Qty',
-                                border: InputBorder.none,
-                              ),
-                              keyboardType: TextInputType.number,
-                              onChanged: (_) => recalcFields(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove, size: 20),
+                              onPressed: () {
+                                int currentQty =
+                                    int.tryParse(qtyController.text) ?? 0;
+                                if (currentQty > 1) {
+                                  qtyController.text =
+                                      (currentQty - 1).toString();
+                                  recalcFields();
+                                }
+                              },
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add, size: 20),
-                            onPressed: () {
-                              int currentQty = int.tryParse(qtyController.text) ?? 0;
-                              qtyController.text = (currentQty + 1).toString();
-                              recalcFields();
-                            },
-                          ),
-                        ],
+                            Expanded(
+                              child: TextField(
+                                controller: qtyController,
+                                textAlign: TextAlign.center,
+                                decoration: const InputDecoration(
+                                  labelText: 'Qty',
+                                  border: InputBorder.none,
+                                ),
+                                keyboardType: TextInputType.number,
+                                onChanged: (_) => recalcFields(),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, size: 20),
+                              onPressed: () {
+                                int currentQty =
+                                    int.tryParse(qtyController.text) ?? 0;
+                                qtyController.text =
+                                    (currentQty + 1).toString();
+                                recalcFields();
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    flex: 1,
-                    child: TextField(
-                      controller: taxController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tax %',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: TextField(
+                        controller: taxController,
+                        decoration: const InputDecoration(
+                          labelText: 'Tax %',
+                          border: OutlineInputBorder(),
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => recalcFields(),
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => recalcFields(),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Total
-              TextField(
-                controller: totalController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Total Rate',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: taxAmtController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Tax Amount',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: totalController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Total (Incl. Tax)',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              double finalQty = double.tryParse(qtyController.text) ?? 0;
-              double finalRatePerUnit = double.tryParse(rateController.text) ?? 0;
-              double finalTaxPercent = double.tryParse(taxController.text) ?? 0;
-              double rateTotal = finalRatePerUnit * finalQty;
-              double taxTotal = (rateTotal * finalTaxPercent) / 100;
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                double finalQty = double.tryParse(qtyController.text) ?? 0;
+                double finalRatePerUnit =
+                    double.tryParse(rateController.text) ?? 0;
+                double finalTaxPercent =
+                    double.tryParse(taxController.text) ?? 0;
+                double rateTotal = finalRatePerUnit * finalQty;
+                double taxTotal = (rateTotal * finalTaxPercent) / 100;
 
-              products[index]['product_rate'] = finalRatePerUnit.toStringAsFixed(2);
-              products[index]['quantity'] = finalQty.toStringAsFixed(0);
-              products[index]['tax_percent'] = finalTaxPercent.toStringAsFixed(2);
-              products[index]['total_tax_amount'] = taxTotal.toStringAsFixed(2);
-              products[index]['rate_total'] = rateTotal.toStringAsFixed(2);
-              products[index]['total_amount'] = (rateTotal + taxTotal).toStringAsFixed(2);
+                products[index]['product_rate'] =
+                    finalRatePerUnit.toStringAsFixed(2);
+                products[index]['quantity'] = finalQty.toStringAsFixed(0);
+                products[index]['tax_percent'] =
+                    finalTaxPercent.toStringAsFixed(2);
+                products[index]['total_tax_amount'] =
+                    taxTotal.toStringAsFixed(2);
+                products[index]['rate_total'] = rateTotal.toStringAsFixed(2);
+                products[index]['total_amount'] =
+                    (rateTotal + taxTotal).toStringAsFixed(2);
 
-              totalProductCost = 0;
-              totalProductTax = 0;
-              double totalRate = 0;
-              for (int i = 0; i < products.length; i++) {
-                totalProductCost += double.parse(products[i]["total_amount"]);
-                totalProductTax += double.parse(products[i]["total_tax_amount"]);
-                totalRate += double.tryParse(products[i]["rate_total"] ?? "0") ?? 0;
-              }
+                totalProductCost = 0;
+                totalProductTax = 0;
+                double totalRate = 0;
+                for (int i = 0; i < products.length; i++) {
+                  totalProductCost += double.parse(products[i]["total_amount"]);
+                  totalProductTax +=
+                      double.parse(products[i]["total_tax_amount"]);
+                  totalRate +=
+                      double.tryParse(products[i]["rate_total"] ?? "0") ?? 0;
+                }
 
-              subTotal.text = totalRate.toStringAsFixed(2);
-              totalTax.text = totalProductTax.toStringAsFixed(2);
-              shippingAmt = double.parse(shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
-              totalAmount.text = (totalRate + totalProductTax - discountAmt + shippingAmt).toStringAsFixed(2);
-              totalPaidAmount.text = totalAmount.text;
+                subTotal.text = totalRate.toStringAsFixed(2);
+                totalTax.text = totalProductTax.toStringAsFixed(2);
+                shippingAmt = double.parse(
+                    shippingCharge.text.isEmpty ? "0" : shippingCharge.text);
+                totalAmount.text =
+                    (totalRate + totalProductTax - discountAmt + shippingAmt)
+                        .toStringAsFixed(2);
+                totalPaidAmount.text = totalAmount.text;
 
-              setState(() {});
-              Navigator.pop(context);
-            },
-            child: const Text('Update'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+                setState(() {});
+                Navigator.pop(context);
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<dynamic> collectedStaffDialog(BuildContext context) {
     TextEditingController localSearchController = TextEditingController();

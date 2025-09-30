@@ -68,7 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessage> items = [];
   List argList = [];
   int page = 1;
-  int pageSize = 30;
+  int pageSize = 10;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
   MediaModel? mediaDetails;

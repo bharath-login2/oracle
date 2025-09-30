@@ -77,15 +77,15 @@ class Project {
 
   Project({
     required this.projectName,
-      required this.customerName,
+    required this.customerName,
     required this.moduleName,
     required this.tasks,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         projectName: json["project_name"] ?? "",
-         customerName: json["customer_name"] ?? "",
-         moduleName: json["module"] ?? "",
+        customerName: json["customer_name"] ?? "",
+        moduleName: json["module"] ?? "",
         tasks: json["tasks"] != null
             ? List<Task>.from(
                 (json["tasks"] as List).map((x) => Task.fromJson(x)))
@@ -94,22 +94,24 @@ class Project {
 
   Map<String, dynamic> toJson() => {
         "project_name": projectName,
-          "customer_name": customerName,
-         "module": moduleName,
+        "customer_name": customerName,
+        "module": moduleName,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
       };
 }
 
 class Task {
   String taskName;
-   String status;
+  String status;
+  String isCompleted;
   String startTime;
   String endTime;
   List<String> remarks;
 
   Task({
     required this.taskName,
-     required this.status,
+    required this.status,
+    required this.isCompleted,
     required this.startTime,
     required this.endTime,
     required this.remarks,
@@ -117,20 +119,22 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
         taskName: json["task_name"] ?? "",
-           status: json["status"] ?? "",
+        status: json["status"] ?? "",
+        isCompleted: json["is_completed"] != null
+            ? json["is_completed"].toString()
+            : "0",
         startTime: json["start_time"] ?? "",
         endTime: json["end_time"] ?? "",
-        remarks: json["remarks"] != null
-            ? List<String>.from(json["remarks"])
-            : [],
+        remarks:
+            json["remarks"] != null ? List<String>.from(json["remarks"]) : [],
       );
 
   Map<String, dynamic> toJson() => {
         "task_name": taskName,
-          "status": status,
+        "status": status,
+        "is_completed": isCompleted,
         "start_time": startTime,
         "end_time": endTime,
         "remarks": remarks,
       };
 }
-

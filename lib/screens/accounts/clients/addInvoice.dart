@@ -105,6 +105,28 @@ class _AddInvoiceState extends State<AddInvoice> {
     });
   }
 
+  Widget buildFormRow(String label, Widget field) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10, bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: 45,
+            child: field,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1266,12 +1288,15 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     products[index]
                                                         ['total_amount'],
                                                   );
+                                              // totalTaxAmount = totalTaxAmount -
+                                              //     double.parse(products[index][
+                                              //             'total_tax_amount']) *
+                                              //         double.parse(
+                                              //             products[index]
+                                              //                 ['quantity']);
                                               totalTaxAmount = totalTaxAmount -
-                                                  double.parse(products[index][
-                                                          'total_tax_amount']) *
-                                                      double.parse(
-                                                          products[index]
-                                                              ['quantity']);
+                                                  double.parse(products[index]
+                                                      ['total_tax_amount']);
 
                                               allTotal = subTotal +
                                                   double.parse(
@@ -1577,141 +1602,78 @@ class _AddInvoiceState extends State<AddInvoice> {
                               height: 5,
                             ),
                             const Divider(),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text('Pay Status * :'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  SizedBox(
-                                    height: 35,
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.5,
-                                    child: FormField<String>(
-                                      builder: (FormFieldState<String> state) {
-                                        return Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                                  const BorderRadius.all(
-                                                      Radius.circular(5))),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              isExpanded: true,
-                                              hint: const Padding(
-                                                padding:
-                                                    EdgeInsets.only(left: 20),
-                                                child: Text('Status'),
-                                              ),
-                                              value: paymentStatus,
-                                              items: invDetails!
-                                                  .data.paymentStatus
-                                                  .map((data) {
-                                                return DropdownMenuItem(
-                                                  value: data.paymentStatus
-                                                      .toString(),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 10),
-                                                    child: SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.5,
-                                                      child: Text(
-                                                        data.displaySts
-                                                            .toString(),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                              onChanged: (newValue) {
-                                                setState(() {
-                                                  paymentStatus = newValue;
-                                                  if (paymentStatus == "paid") {
-                                                    paidAmount.text =
-                                                        allTotal.toString();
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                          ),
-                                        );
-                                      },
+                            buildFormRow(
+                              'Pay Status * :',
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: paymentStatus,
+                                    hint: const Padding(
+                                      padding: EdgeInsets.only(left: 12),
+                                      child: Text('Status'),
                                     ),
+                                    items: invDetails!.data.paymentStatus
+                                        .map((data) {
+                                      return DropdownMenuItem(
+                                        value: data.paymentStatus.toString(),
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10),
+                                          child: Text(
+                                              data.displaySts.toString(),
+                                              overflow: TextOverflow.ellipsis),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        paymentStatus = newValue;
+                                        if (paymentStatus == "paid") {
+                                          paidAmount.text = allTotal.toString();
+                                        }
+                                      });
+                                    },
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                             const SizedBox(
                               height: 10,
                             ),
                             if (paymentStatus != "unpaid")
-                              Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    const Text('Paid Amount * :'),
-                                    const SizedBox(
-                                      width: 10,
+                              buildFormRow(
+                                'Paid Amount * :',
+                                TextFormField(
+                                  controller: paidAmount,
+                                  readOnly: paymentStatus == "paid",
+                                  style: TextStyle(color: paidColor),
+                                  onChanged: (val) {
+                                    if (double.tryParse(val) != null &&
+                                        double.parse(val) > subTotal) {
+                                      Common.toastMessaage(
+                                          'Enter valid amount', Colors.red);
+                                      paidColor = Colors.red;
+                                    } else {
+                                      paidColor = Colors.black;
+                                    }
+                                    setState(() {});
+                                  },
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    filled: true,
+                                    fillColor: Colors.grey[300],
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.5,
-                                      height: 35,
-                                      child: TextFormField(
-                                        readOnly: paymentStatus == "paid",
-                                        style: TextStyle(color: paidColor),
-                                        onChanged: (val) {
-                                          if (double.parse(val) > subTotal) {
-                                            Common.toastMessaage(
-                                                'Enter valid amount',
-                                                Colors.red);
-                                            paidColor = Colors.red;
-                                          } else {
-                                            paidColor = Colors.black;
-                                          }
-                                          setState(() {});
-                                        },
-                                        controller: paidAmount,
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.only(
-                                                    left: 10,
-                                                    top: 2,
-                                                    bottom: 2),
-                                            //labelText: 'Invoice Number',
-                                            fillColor: Colors.grey[300],
-                                            filled: true,
-                                            border: const OutlineInputBorder(
-                                              // width: 0.0 produces a thin "hairline" border
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(5)),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.grey.shade300),
-                                            ),
-                                            labelStyle: const TextStyle(
-                                                color: Colors.black)),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             const SizedBox(
@@ -1722,323 +1684,155 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   paymentStatus == "partial",
                               child: Column(
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        const Text('Pay Method * :'),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          height: 35,
-                                          child: FormField<String>(
-                                            builder:
-                                                (FormFieldState<String> state) {
-                                              return Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.5,
-                                                decoration: BoxDecoration(
-                                                    color: Colors.grey.shade300,
-                                                    borderRadius:
-                                                        const BorderRadius.all(
-                                                            Radius.circular(
-                                                                5))),
-                                                child:
-                                                    DropdownButtonHideUnderline(
-                                                  child: DropdownButton<String>(
-                                                    isExpanded: true,
-                                                    hint: const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 20),
-                                                      child: Text('Method'),
-                                                    ),
-                                                    value: paymentMethod,
-                                                    items: invDetails!
-                                                        .data.paymentMethods
-                                                        .map((data) {
-                                                      return DropdownMenuItem(
-                                                        value:
-                                                            data.id.toString(),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10),
-                                                          child: SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.5,
-                                                            child: Text(
-                                                              data.name
-                                                                  .toString(),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                    onChanged: (newValue) {
-                                                      setState(() {
-                                                        paymentMethod =
-                                                            newValue;
-                                                      });
-                                                    },
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                  buildFormRow(
+                                    'Payment Method * :',
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          isExpanded: true,
+                                          value: paymentMethod,
+                                          hint: const Padding(
+                                            padding: EdgeInsets.only(left: 12),
+                                            child: Text('Method'),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        const Text('Account Head * :'),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          height: 35,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              collectedStaffDialog(context);
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade300,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Center(
-                                                  child: Padding(
+                                          items: invDetails!.data.paymentMethods
+                                              .map((data) {
+                                            return DropdownMenuItem(
+                                              value: data.id.toString(),
+                                              child: Padding(
                                                 padding: const EdgeInsets.only(
-                                                    left: 16.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.38,
-                                                        child: Text(
-                                                          staffName,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: const TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        )),
-                                                    Icon(
-                                                      Icons.arrow_drop_down,
-                                                      color:
-                                                          Colors.grey.shade600,
-                                                    )
-                                                  ],
-                                                ),
-                                              )),
-                                            ),
-                                          ),
+                                                    left: 10),
+                                                child: Text(
+                                                    data.name.toString(),
+                                                    overflow:
+                                                        TextOverflow.ellipsis),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (newValue) {
+                                            setState(() {
+                                              paymentMethod = newValue;
+                                            });
+                                          },
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        const Text(
-                                          'Target Group :',
+                                  buildFormRow(
+                                    'Account Head * :',
+                                    GestureDetector(
+                                      onTap: () =>
+                                          collectedStaffDialog(context),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
                                         ),
-                                        const SizedBox(
-                                          width: 15,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.55,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              targetGroupDialog(context);
-                                            },
-                                            child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  1,
-                                              height: 50,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                color: Colors.grey.shade300,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                staffName,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                               ),
-                                              child: targetGroups.isEmpty
-                                                  ? const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 10,
-                                                          top: 15,
-                                                          bottom: 10),
-                                                      child:
-                                                          Text('Target Group'))
-                                                  : Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              right: 40),
-                                                      child: SizedBox(
-                                                        height: 35,
-                                                        child: ListView.builder(
-                                                          scrollDirection:
-                                                              Axis.horizontal,
-                                                          itemCount:
-                                                              targetGroupNames
-                                                                  .length,
-                                                          itemBuilder:
-                                                              (context, i) {
-                                                            return Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 5,
-                                                                      right: 5),
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  setState(
-                                                                      () {});
-                                                                },
-                                                                child: Row(
-                                                                  children: [
-                                                                    Container(
-                                                                      height:
-                                                                          35,
-                                                                      decoration: BoxDecoration(
-                                                                          border: Border.all(
-                                                                              color: Colors
-                                                                                  .grey,
-                                                                              width:
-                                                                                  0),
-                                                                          color: Colors
-                                                                              .white,
-                                                                          borderRadius: const BorderRadius
-                                                                              .only(
-                                                                              topLeft: Radius.circular(6),
-                                                                              bottomLeft: Radius.circular(6))),
-                                                                      child:
-                                                                          Center(
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.center,
-                                                                          children: [
-                                                                            Padding(
-                                                                              padding: const EdgeInsets.all(10),
-                                                                              child: Text(
-                                                                                targetGroupNames[i],
-                                                                                style: const TextStyle(
-                                                                                  color: Colors.black,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        showDialog(
-                                                                            context:
-                                                                                context,
-                                                                            builder:
-                                                                                (BuildContext context) {
-                                                                              return AlertDialog(
-                                                                                title: const Text('Please Confirm'),
-                                                                                content: const Text('Are you sure to Remove this Number?'),
-                                                                                actions: [
-                                                                                  TextButton(
-                                                                                      onPressed: () {
-                                                                                        Navigator.of(context).pop();
-                                                                                      },
-                                                                                      child: const Text('No')),
-                                                                                  TextButton(
-                                                                                      onPressed: () async {
-                                                                                        setState(() {
-                                                                                          targetGroupNames.remove(targetGroupNames[i]);
-                                                                                          targetGroups.remove(targetGroups[i]);
-                                                                                        });
-                                                                                        Navigator.of(context).pop();
-                                                                                      },
-                                                                                      child: const Text('Yes')),
-                                                                                ],
-                                                                              );
-                                                                            });
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            35,
-                                                                        width:
-                                                                            30,
-                                                                        decoration: BoxDecoration(
-                                                                            border:
-                                                                                Border.all(color: Colors.grey, width: 0),
-                                                                            color: Colors.grey.shade100,
-                                                                            borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
-                                                                        child:
-                                                                            const Icon(
-                                                                          Icons
-                                                                              .close,
-                                                                          color:
-                                                                              Colors.red,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
+                                            ),
+                                            Icon(Icons.arrow_drop_down,
+                                                color: Colors.grey.shade600),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  buildFormRow(
+                                    'Target Group :',
+                                    GestureDetector(
+                                      onTap: () => targetGroupDialog(context),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8),
+                                        child: targetGroups.isEmpty
+                                            ? const Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text('Target Group'),
+                                              )
+                                            : ListView.builder(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                itemCount:
+                                                    targetGroupNames.length,
+                                                itemBuilder: (context, i) {
+                                                  return Row(
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 8),
+                                                        margin: const EdgeInsets
+                                                            .only(right: 4),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(6),
+                                                          border: Border.all(
+                                                              color:
+                                                                  Colors.grey),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Text(
+                                                                targetGroupNames[
+                                                                    i]),
+                                                            InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  targetGroupNames
+                                                                      .removeAt(
+                                                                          i);
+                                                                  targetGroups
+                                                                      .removeAt(
+                                                                          i);
+                                                                });
+                                                              },
+                                                              child: const Icon(
+                                                                  Icons.close,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .red),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
-                                                    ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -2189,8 +1983,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                           CheckboxListTile(
                               contentPadding: const EdgeInsets.all(16),
                               title: const Text('Create Renewal'),
-                              value:
-                                  createRenewal, // initial value of the checkbox
+                              value: createRenewal,
                               onChanged: (bool? value) {
                                 setState(() {
                                   createRenewal = value!;
@@ -2218,18 +2011,20 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             firstDate: DateTime(2000),
                                             lastDate: DateTime(2100),
                                           );
-                                          setState(() {
-                                            startDate.text =
-                                                DateFormat('dd-MM-yyyy')
-                                                    .format(selectedValue!);
-                                            final endValue = selectedValue.add(
-                                                Duration(
-                                                    days: int.parse(
-                                                        typeDuration)));
-                                            endDate.text =
-                                                DateFormat('dd-MM-yyyy')
-                                                    .format(endValue);
-                                          });
+                                          if (selectedValue != null) {
+                                            setState(() {
+                                              startDate.text =
+                                                  DateFormat('dd-MM-yyyy')
+                                                      .format(selectedValue);
+                                              final endValue =
+                                                  selectedValue.add(Duration(
+                                                      days: int.parse(
+                                                          typeDuration)));
+                                              endDate.text =
+                                                  DateFormat('dd-MM-yyyy')
+                                                      .format(endValue);
+                                            });
+                                          }
                                         },
                                         validator: (value) {
                                           if (value!.isEmpty) {
@@ -2238,29 +2033,42 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           return null;
                                         },
                                         decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.all(8),
-                                            labelText: 'Start Date *',
-                                            prefixIcon: const Icon(
-                                                Icons.calendar_month,
-                                                color: Colors.black54),
-                                            fillColor: Colors.grey[300],
-                                            filled: true,
-                                            //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                            border: const OutlineInputBorder(
-                                              borderSide: BorderSide.none,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(5)),
-                                            ),
-                                            labelStyle: const TextStyle(
-                                                color: Colors.black)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 12, horizontal: 10),
+                                          labelText: 'Start Date *',
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.black54),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black,
+                                                width: 1.5),
+                                          ),
+                                          labelStyle: const TextStyle(
+                                              color: Colors.black),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(
-                                      width: 15,
-                                    ),
+                                    const SizedBox(width: 15),
                                     Expanded(
                                       child: TextFormField(
+                                        controller: endDate,
+                                        readOnly: true,
                                         onTap: () async {
                                           DateTime? selectedEndDate =
                                               await showDatePicker(
@@ -2269,9 +2077,11 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             firstDate: DateTime(2000),
                                             lastDate: DateTime(2100),
                                           );
-                                          endDate.text =
-                                              DateFormat('dd-MM-yyyy')
-                                                  .format(selectedEndDate!);
+                                          if (selectedEndDate != null) {
+                                            endDate.text =
+                                                DateFormat('dd-MM-yyyy')
+                                                    .format(selectedEndDate);
+                                          }
                                         },
                                         validator: (value) {
                                           if (value!.isEmpty) {
@@ -2279,25 +2089,36 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           }
                                           return null;
                                         },
-                                        readOnly: true,
-                                        controller: endDate,
                                         decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.all(8),
-                                            labelText: 'End Date *',
-                                            prefixIcon: const Icon(
-                                                Icons.calendar_month,
-                                                color: Colors.black54),
-                                            fillColor: Colors.grey[300],
-                                            filled: true,
-                                            //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                            border: const OutlineInputBorder(
-                                              borderSide: BorderSide.none,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(5)),
-                                            ),
-                                            labelStyle: const TextStyle(
-                                                color: Colors.black)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 12, horizontal: 10),
+                                          labelText: 'End Date *',
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.black54),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black,
+                                                width: 1.5),
+                                          ),
+                                          labelStyle: const TextStyle(
+                                              color: Colors.black),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -2315,11 +2136,14 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       prefixIcon: const Icon(
                                           Icons.notifications,
                                           color: Colors.black54),
-                                      fillColor: Colors.grey[300],
+                                      fillColor: const Color.fromARGB(255, 255, 255, 255),
                                       filled: true,
                                       //prefixIcon: Icon(myIcon, color: prefixIconColor),
                                       border: const OutlineInputBorder(
-                                        borderSide: BorderSide.none,
+                                        
+                                          borderSide:  BorderSide(
+                                                color: Colors.black,
+                                                width: 1.5),
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(5)),
                                       ),
@@ -2334,11 +2158,13 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   maxLines: 1,
                                   decoration: InputDecoration(
                                       labelText: 'Remarks',
-                                      fillColor: Colors.grey[300],
+                                      fillColor: const Color.fromARGB(255, 255, 254, 254),
                                       filled: true,
                                       //prefixIcon: Icon(myIcon, color: prefixIconColor),
                                       border: const OutlineInputBorder(
-                                        borderSide: BorderSide.none,
+                                         borderSide:  BorderSide(
+                                                color: Colors.black,
+                                                width: 1.5),
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(5)),
                                       ),
@@ -2352,8 +2178,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text(
                                         'Is renewal amount is diffrent?'),
-                                    value:
-                                        isDifrent, // initial value of the checkbox
+                                    value: isDifrent,
                                     onChanged: (bool? value) {
                                       setState(() {
                                         isDifrent = value!;
@@ -3230,17 +3055,19 @@ class _AddInvoiceState extends State<AddInvoice> {
 
                               subTotal = subTotal +
                                   double.parse(productTotalAmount.text);
-                              
+
                               notsubTotal = 0.00;
                               for (var product in products) {
                                 notsubTotal +=
                                     double.parse(product['product_rate']) *
                                         double.parse(product['quantity']);
                               }
-                            
+
+                              // totalTaxAmount = totalTaxAmount +
+                              //     double.parse(productTaxAmount.text) *
+                              //         double.parse(productQty.text);
                               totalTaxAmount = totalTaxAmount +
-                                  double.parse(productTaxAmount.text) *
-                                      double.parse(productQty.text);
+                                  double.parse(productTaxAmount.text);
                               allTotal = subTotal +
                                   double.parse(shippingCharge.text == ''
                                       ? '0'

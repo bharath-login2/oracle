@@ -1,10 +1,15 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:developer';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/clients/postalCodeModel.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/leadSubTypeModel.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:login2/widgets/allreportFilterWidet.dart';
 import 'package:lottie/lottie.dart';
@@ -37,6 +42,7 @@ class AllReport extends StatefulWidget {
   List? checkedAssignedStaffItemsName;
   List? checkedCreatedStaffItems;
   List? checkedCreatedStaffItemsName;
+   List<StateList>? stateDetails;
   AllReport(this.token, this.editLead, this.deleteLead, this.cloudCall,
       {this.pageName,
       this.page,
@@ -101,6 +107,17 @@ class _AllReportState extends State<AllReport> {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
+        TextEditingController stateVal = TextEditingController();
+  TextEditingController pinCode = TextEditingController();
+  TextEditingController districtVal = TextEditingController();
+  PostalCodeModel? postalCodeModel;
+  List<PostOffice> postOffices = [];
+  List<DistrictList> districtList = [];
+  PostOffice? selectedPostOffice;
+  bool isDistrictLoading = false;
+  //bool isLoading = false;
+  String? StateId;
+  String? DistrictId;
   List<dynamic> items = [];
   int page = 1;
   int pageSize = 20;
@@ -120,6 +137,7 @@ class _AllReportState extends State<AllReport> {
   String? branch;
   String roleId = '';
   String multiBranch = '';
+  StateModel? stateDetails;
   @override
   void initState() {
     // TODO: implement initState
@@ -131,6 +149,45 @@ class _AllReportState extends State<AllReport> {
         if (items.length < viewLeads!.data.totalLeads) {
           getData();
         }
+      }
+    });
+  }
+
+
+    Future<StateList?> selectStateDialog(BuildContext context) async {
+    return showDialog<StateList>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select State"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: stateDetails?.data.length ?? 0,
+              itemBuilder: (context, index) {
+                final stateItem = stateDetails!.data[index];
+                return ListTile(
+                  title: Text(stateItem.name),
+                  onTap: () {
+                    Navigator.pop(context, stateItem); // return selected state
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+    Future<void> loadPostOffices(String pin) async {
+    PostalCodeModel postalCodeModel =
+        await HttpService.fetchPostOffice(pin); // your API call
+    setState(() {
+      postOffices = postalCodeModel.postOffice ?? [];
+      if (postOffices.isNotEmpty) {
+        selectedPostOffice = postOffices.first;
       }
     });
   }
@@ -209,7 +266,10 @@ class _AllReportState extends State<AllReport> {
         "staffId": checkedAssignedStaffItems,
         "createdBy": checkedCreatedStaffItems,
         "branchId": branch,
-        "lead_source_id": checkedLeadSource
+        "lead_source_id": checkedLeadSource,
+        "state": StateId ?? "", // selected state ID
+              "district": DistrictId ?? "", // selected district ID
+             // "pincode": pinCode.text,
       };
       //print(body);
       viewLeads = await HttpService.allViewLeads(body);
@@ -230,6 +290,15 @@ class _AllReportState extends State<AllReport> {
     } else {
       // Handle error
     }
+      loadStates();
+  }
+
+   Future<void> loadStates() async {
+    var result = await HttpService.getState();
+    log("States loaded: ${result?.data.length}");
+    setState(() {
+      stateDetails = result;
+    });
   }
 
   @override
@@ -2482,6 +2551,135 @@ class _AllReportState extends State<AllReport> {
                             ),
                           ],
                         ),
+                         const SizedBox(height: 15),
+
+// PIN Code
+//                         SizedBox(
+//                           width: 337,
+//                           child: TextFormField(
+//                             controller: pinCode,
+//                             keyboardType: TextInputType.number,
+//                             decoration: const InputDecoration(
+//                               labelText: 'PIN Code',
+//                               border: OutlineInputBorder(),
+//                               contentPadding: EdgeInsets.symmetric(
+//                                   horizontal: 10, vertical: 10),
+//                             ),
+//                             onChanged: (value) async {
+//                               if (value.length == 6) {
+//                                 await loadPostOffices(value);
+//                               }
+//                             },
+//                           ),
+//                         ),
+//                         const SizedBox(height: 10),
+
+// // Post Office
+//                         if (postOffices.isNotEmpty)
+//                           SizedBox(
+//                             width: 337,
+//                             child: DropdownButtonFormField<PostOffice>(
+//                               value: selectedPostOffice,
+//                               isExpanded: true,
+//                               decoration: const InputDecoration(
+//                                 labelText: 'Select Post Office',
+//                                 border: OutlineInputBorder(),
+//                               ),
+//                               items: postOffices.map((postOffice) {
+//                                 return DropdownMenuItem<PostOffice>(
+//                                   value: postOffice,
+//                                   child: Text(postOffice.name ?? ''),
+//                                 );
+//                               }).toList(),
+//                               onChanged: (value) {
+//                                 setState(() {
+//                                   selectedPostOffice = value;
+//                                 });
+//                               },
+//                             ),
+//                           ),
+//                         const SizedBox(height: 10),
+                        SizedBox(
+                          width: 337,
+                          child: TextFormField(
+                            controller: stateVal,
+                            readOnly: true,
+                            onTap: () async {
+                              // Open dialog and wait for selected state
+                              final selectedState =
+                                  await selectStateDialog(context);
+
+                              if (selectedState != null) {
+                                setState(() {
+                                  stateVal.text =
+                                      selectedState.name; // show state name
+                                  StateId = selectedState.id; // save stateId
+                                  districtVal.clear();
+                                  districtList = [];
+                                  isDistrictLoading = true;
+                                });
+
+                                // Fetch districts for the selected state
+                                final result =
+                                    await HttpService.getDistrict(StateId!);
+
+                                setState(() {
+                                  districtList = result?.data ?? [];
+                                  isDistrictLoading = false;
+
+                                  // Auto-select first district if available
+                                  if (districtList.isNotEmpty) {
+                                    DistrictId = districtList.first.id;
+                                    districtVal.text = districtList.first.name;
+                                  }
+                                });
+                              }
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              prefixIcon: Icon(
+                                Icons.arrow_drop_down_circle_outlined,
+                                color: Colors.grey,
+                              ),
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+// District Dropdown
+                        if (!isDistrictLoading && districtList.isNotEmpty)
+                          SizedBox(
+                            width: 337,
+                            child: DropdownButtonFormField<DistrictList>(
+                              value: districtList.firstWhere(
+                                (d) => d.id == DistrictId,
+                                orElse: () => districtList.first,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Select District',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: districtList.map((d) {
+                                return DropdownMenuItem<DistrictList>(
+                                  value: d,
+                                  child: Text(d.name),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  DistrictId = value?.id;
+                                  districtVal.text = value?.name ?? '';
+                                });
+                              },
+                            ),
+                          ),
+
+                        if (isDistrictLoading)
+                          const Center(child: CircularProgressIndicator()),
                         const SizedBox(
                           height: 13,
                         ),

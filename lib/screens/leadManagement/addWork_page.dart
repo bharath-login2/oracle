@@ -101,6 +101,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   void calculateTotalExisting() {}
   late String token;
   late String userId;
+    String? addWorkModule;
   List<Staff> staffList = [];
   List<TaskState> allTaskStates = [];
   List<PrioState> allPriorities = [];
@@ -163,10 +164,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
   void _initAsync() async {
     token = await Common.getSharedPref("token") ?? "";
     userId = await Common.getSharedPref("userId");
+    addWorkModule = await Common.getSharedPref("addWorkModule");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     await _loadProjects();
-
     if (assignedTo == null) {
       setState(() {
         assignedTo = userId;
@@ -961,6 +962,47 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
+                      // SizedBox(
+                      //   width: 180,
+                      //   child: TextFormField(
+                      //     controller: titleController,
+                      //     readOnly: true,
+                      //     onTap: () async {
+                      //       final selected =
+                      //           await dropTitleDialog(context, titleList);
+                      //       if (selected != null) {
+                      //         setState(() {
+                      //           selectedTitleId = selected['id'];
+                      //           titleController.text = selected['name']!;
+                      //         });
+                      //       }
+                      //     },
+                      //     decoration: InputDecoration(
+                      //       labelText: 'Module',
+                      //       border: const OutlineInputBorder(),
+                      //       prefixIcon: IconButton(
+                      //         icon: const Icon(Icons.add),
+                      //         onPressed: () async {
+                      //           final newTitle =
+                      //               await showProjectTitleDialog(context);
+                      //           if (newTitle != null) {
+                      //             setState(() {
+                      //               titleList.add(newTitle);
+                      //               selectedTitleId = newTitle.id;
+                      //               titleController.text = newTitle.name;
+                      //             });
+                      //           }
+                      //         },
+                      //       ),
+                      //     ),
+                      //     validator: (value) {
+                      //       if (value == null || value.isEmpty) {
+                      //         return 'Please select a Module';
+                      //       }
+                      //       return null;
+                      //     },
+                      //   ),
+                      // ),
                       SizedBox(
                         width: 180,
                         child: TextFormField(
@@ -979,20 +1021,22 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           decoration: InputDecoration(
                             labelText: 'Module',
                             border: const OutlineInputBorder(),
-                            prefixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () async {
-                                final newTitle =
-                                    await showProjectTitleDialog(context);
-                                if (newTitle != null) {
-                                  setState(() {
-                                    titleList.add(newTitle);
-                                    selectedTitleId = newTitle.id;
-                                    titleController.text = newTitle.name;
-                                  });
-                                }
-                              },
-                            ),
+                            prefixIcon: addWorkModule.toString() == "true"
+                                ? IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () async {
+                                      final newTitle =
+                                          await showProjectTitleDialog(context);
+                                      if (newTitle != null) {
+                                        setState(() {
+                                          titleList.add(newTitle);
+                                          selectedTitleId = newTitle.id;
+                                          titleController.text = newTitle.name;
+                                        });
+                                      }
+                                    },
+                                  )
+                                : null,
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -1001,7 +1045,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             return null;
                           },
                         ),
-                      ),
+                      )
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1064,20 +1108,28 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               //   },
                               // ),
                               Checkbox(
-                                value: tasks[taskIndex].status == '4'
-                                    ? true
-                                    : tasks[taskIndex].isChecked,
+                                value: tasks[taskIndex].isChecked,
                                 onChanged: (value) {
                                   setState(() {
-                                    // Uncheck all other tasks
-                                    for (var i = 0; i < tasks.length; i++) {
-                                      if (i != taskIndex) {
-                                        tasks[i].isChecked = false;
-                                      }
-                                    }
-                                    tasks[taskIndex].isChecked = value ?? false;
-
                                     if (value == true) {
+                                      for (var i = 0; i < tasks.length; i++) {
+                                        if (i != taskIndex) {
+                                          tasks[i].isChecked = false;
+                                          final toDoStatus =
+                                              allTaskStates.firstWhere(
+                                            (status) =>
+                                                status.status
+                                                    .toLowerCase()
+                                                    .contains('to-do') ||
+                                                status.status
+                                                    .toLowerCase()
+                                                    .contains('todo'),
+                                            orElse: () => allTaskStates.first,
+                                          );
+                                          tasks[i].status = toDoStatus.id;
+                                        }
+                                      }
+                                      tasks[taskIndex].isChecked = true;
                                       final completedStatus =
                                           allTaskStates.firstWhere(
                                         (status) => status.id == '4',
@@ -1090,10 +1142,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                       );
                                       tasks[taskIndex].status =
                                           completedStatus.id;
+                                    } else {
+                                      tasks[taskIndex].isChecked = false;
                                     }
                                   });
                                 },
                               ),
+
                               Expanded(
                                 flex: 5,
                                 child: TextField(

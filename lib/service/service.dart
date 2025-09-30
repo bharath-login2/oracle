@@ -10,6 +10,7 @@ import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/models/expense/bank_acc_list.dart';
+import 'package:login2/models/expense/commonModel.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/expense/exp_category_list.dart';
 import 'package:login2/models/expense/exp_history.dart';
@@ -24,16 +25,24 @@ import 'package:login2/models/groupTargetModel.dart';
 import 'package:login2/models/individualTargetModel.dart';
 import 'package:login2/models/lead_management/AssignedWorkModel.dart';
 import 'package:login2/models/lead_management/WorkLoginAndOutModel.dart';
+import 'package:login2/models/lead_management/activityModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/attendanceAllmodel.dart';
 import 'package:login2/models/lead_management/attendanceHistoryModel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
+import 'package:login2/models/lead_management/callDataModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
+import 'package:login2/models/lead_management/leadFollowupAdd.dart';
+import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
+import 'package:login2/models/lead_management/pendingExpenseModel.dart';
+import 'package:login2/models/lead_management/pendingListModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
@@ -42,7 +51,9 @@ import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
 import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
+import 'package:login2/models/lead_management/updatePendingList.dart';
 import 'package:login2/models/lead_management/workMessageModel.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/models/officialWhatsapp/campaign_sample_model.dart';
@@ -196,7 +207,7 @@ import '../models/lead_management/deleteLeadVoiceModel.dart';
 import '../models/lead_management/delete_notification.dart';
 import '../models/lead_management/editLeadSubCategoryModel.dart';
 import '../models/lead_management/leadCategoryStaffWiseModel.dart';
-import '../models/lead_management/leadDetailsModelAdd.dart';
+import '../models/lead_management/leadDetailsModelAdd.dart' hide CallHistory;
 import '../models/lead_management/leadMileStoneListModel.dart';
 import '../models/lead_management/leadNotificationListModel.dart';
 import '../models/lead_management/leadSubCategoryDeleteModel.dart';
@@ -319,6 +330,8 @@ class HttpService {
           queryParameters: params);
       if (result.statusCode == 200) {
         LoginModel model = LoginModel.fromJson(result.data);
+        var token = result.data["data"]["token"];
+        log("Login Token: $token");
         return model;
       }
     } catch (e) {
@@ -338,6 +351,27 @@ class HttpService {
 
   //   }
   // }
+
+//   static Future loginCheck(token, firebaseToken) async {
+//   var params = {"token": token, "firebaseId": firebaseToken};
+//   try {
+//     final baseUrl = await Config.getUrl();
+//     final url = "${baseUrl}if_token_expired";
+
+//     log("Final request URL: $url");
+//     log("Query parameters: $params");
+
+//     var result = await _dio.get(
+//       url,
+//       queryParameters: params,
+//     );
+
+//     LoginCheckModel model = LoginCheckModel.fromJson(result.data);
+//     return model;
+//   } catch (e) {
+//     log("error: $e");
+//   }
+// }
 
   static Future<LoginCheckModel?> loginCheck(
       String? token, String firebaseToken) async {
@@ -401,6 +435,36 @@ class HttpService {
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       LeadDashboardModel model = LeadDashboardModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static Future leadDashboardNew(
+    token,
+    fromDate,
+    toDate,
+    fromDate1,
+    toDate1,
+    String leadType,
+  ) async {
+    log(token);
+    var params = {
+      "token": token,
+      "fromDate": fromDate,
+      "toDate": toDate,
+      "fromDate1": fromDate1,
+      "toDate1": toDate1,
+      "leadType": leadType,
+    };
+    try {
+      var result = await _dio.get(
+        "${await Config.getUrl()}lead_dashboard_new",
+        options: Options(receiveTimeout: const Duration(seconds: 30)),
+        queryParameters: params,
+      );
+      NewLeadDashboard model = NewLeadDashboard.fromJson(result.data);
       return model;
     } catch (e) {
       log(e.toString());
@@ -553,6 +617,48 @@ class HttpService {
     }
   }
 
+  static Future getState() async {
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_states",
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+        data: {},
+      );
+
+      if (result.statusCode == 200) {
+        StateModel model = StateModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getDistrict(stateId) async {
+    try {
+      var formData = FormData.fromMap({
+        'state_id': stateId,
+      });
+
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_districts",
+        data: formData,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (result.statusCode == 200) {
+        DistrictModel model = DistrictModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future addLeads(
       token,
       branchId,
@@ -564,6 +670,8 @@ class HttpService {
       cost,
       priorityId,
       address,
+      pinCode,
+      postOffice,
       remark,
       callResultId,
       nextFollowupDate,
@@ -571,7 +679,9 @@ class HttpService {
       code,
       checked,
       timeBefore,
-      leadSource) async {
+      leadSource,
+      {String? stateId,
+      String? districtId}) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -582,6 +692,8 @@ class HttpService {
       'clientName': clientName,
       'contactNumber': contactNo,
       'address': address,
+      'pinCode': pinCode,
+      "postOffice": postOffice,
       'cost': cost,
       'user_id': staffId,
       'remarks': remark,
@@ -590,7 +702,9 @@ class HttpService {
       "additionalFields": jsonEncode(descriptions),
       "reminder": checked,
       "time_before": timeBefore,
-      "lead_source_id": leadSource
+      "lead_source_id": leadSource,
+      'state_id': stateId ?? '',
+      'district_id': districtId ?? '',
     });
 
     try {
@@ -763,7 +877,7 @@ class HttpService {
     } catch (e) {
       log("error: $e");
     }
-  }
+  }   
 
   static Future addLeadsFollowup(
       token,
@@ -980,10 +1094,14 @@ class HttpService {
       cost,
       priorityId,
       address,
+          pinCode,
+      postOffice,
       remark,
       descriptions,
       code,
-      leadSource) async {
+      leadSource,
+      {String? stateId,
+      String? districtId}) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -992,6 +1110,8 @@ class HttpService {
       'clientName': clientName,
       'contactNumber': contactNo,
       'address': address,
+        'pinCode': pinCode,
+      "postOffice": postOffice,
       'cost': cost,
       'user_id': staffId,
       'remarks': remark,
@@ -999,7 +1119,9 @@ class HttpService {
       'call_master_id': callMasterId,
       'country_code': code,
       "additionalFields": jsonEncode(descriptions),
-      "lead_source_id": leadSource
+      "lead_source_id": leadSource,
+        'state_id': stateId ?? '',
+      'district_id': districtId ?? '',
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}edit_lead_data",
@@ -1869,6 +1991,73 @@ class HttpService {
     }
   }
 
+  static Future leadFollowupData(token, callMaterId) async {
+    var formData = FormData.fromMap({
+      "token": token,
+      "call_master_id": callMaterId,
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}lead_details_followUpData",
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 30)),
+      );
+
+      if (result.statusCode == 200) {
+        LeadFollowupData model = LeadFollowupData.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future<CallHistoryResponse?> callDetailsData(
+      token, callMasterId) async {
+    var formData = FormData.fromMap({
+      "token": token,
+      "call_master_id": callMasterId,
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}lead_details_callHistory",
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 30)),
+      );
+
+      if (result.statusCode == 200) {
+        return CallHistoryResponse.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+    return null;
+  }
+
+  static Future<ActivityDetails?> activityMode(token, callMasterId) async {
+    var formData = FormData.fromMap({
+      "token": token,
+      "call_master_id": callMasterId,
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}lead_details_activities",
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 30)),
+      );
+
+      if (result.statusCode == 200) {
+        return ActivityDetails.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+    return null;
+  }
+
   static Future fileManagerPermission(token) async {
     var params = {
       "token": token,
@@ -2311,7 +2500,6 @@ class HttpService {
     token,
   ) async {
     var formData = FormData.fromMap({"token": token});
-
     try {
       var result = await _dio
           .post("${await Config.getUrl()}getInvoiceSearchData", data: formData);
@@ -2802,6 +2990,23 @@ class HttpService {
     }
   }
 
+  static Future getCurrentLoginStatus(token) async {
+    var formData = FormData.fromMap({
+      'token': token,
+    });
+    try {
+      var response = await _dio.post(
+          "${await Config.getUrl()}getLoginorNotCurrentState",
+          data: formData);
+      if (response.statusCode == 200) {
+        var commonResponse = CommonDataResponse.fromJson(response.data);
+        return commonResponse;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future getStaffid(token) async {
     var formData = FormData.fromMap({
       'token': token,
@@ -2830,7 +3035,7 @@ class HttpService {
 
       return campaignsListModel;
     } catch (e) {
-      // t("Exception: $e");
+     log("Exception: $e");
     }
   }
 
@@ -2868,6 +3073,7 @@ class HttpService {
             "group_id": groupId,
             "token": await Common.getSharedPref("token"),
             "pageNo": page,
+
             "pageSize": pageSize,
           });
       if (response.statusCode == 200) {
@@ -3496,7 +3702,6 @@ class HttpService {
     } catch (e) {
       log("error: $e");
     }
-
     return null;
   }
 
@@ -3836,7 +4041,6 @@ class HttpService {
       log("error: $e");
     }
   }
-  
 
   static Future getRenewalDetailsById(String id, String type) async {
     var formData = FormData.fromMap({
@@ -4119,7 +4323,8 @@ class HttpService {
       String searchKey,
       searchMonth,
       String expireIn,
-      String search) async {
+      String search,
+        String renewalStatus, ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "page": page,
@@ -4131,7 +4336,8 @@ class HttpService {
       "search_key": searchKey,
       "search_month": searchMonth,
       "expiry_in_days": expireIn,
-      "renewal_customer": search
+      "renewal_customer": search,
+        "renewal_status": renewalStatus,
     });
     try {
       var result = await _dio
@@ -5072,6 +5278,29 @@ class HttpService {
     } catch (e) {
       log("error: $e");
     }
+  }
+
+  static Future<PendingResponse?> pendingExpenseMasterData(
+      Map<String, dynamic> data) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      ...data,
+    };
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}add_pending_expense",
+        data: FormData.fromMap(params),
+      );
+
+      if (result.statusCode == 200) {
+        return PendingResponse.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error in pendingExpenseMasterData: $e");
+      rethrow;
+    }
+    return null;
   }
 
   static Future postExpense(
@@ -6242,7 +6471,6 @@ class HttpService {
     required bool isHalfDay,
   }) async {
     final token = await Common.getSharedPref('token');
-
     try {
       final response = await _dio.post(
         "${await Config.getUrl()}mark_leave",
@@ -6280,7 +6508,7 @@ class HttpService {
           'token': token,
           'date': date,
           'staff_ids': staffIds.join(','),
-          'half_day': isHalfDay ? '1':'0',
+          'half_day': isHalfDay ? '1' : '0',
         }),
       );
       return response.statusCode == 200 && response.data['status'] == true;
@@ -7022,6 +7250,111 @@ class HttpService {
     } catch (e) {
       print("🔥 Exception while fetching attendance history: $e");
       return null;
+    }
+  }
+
+  static Future<ExpenseTypePending?> get_expense_type() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_expense_type",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ExpenseTypePending.fromJson(response.data);
+      } else {
+        print("❌ Error response: ${response.data}");
+        return null;
+      }
+    } catch (e) {
+      print("🔥 Exception while fetching attendance history: $e");
+      return null;
+    }
+  }
+
+  static Future<PendingList?> get_pending_list() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_pending_list",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return PendingList.fromJson(response.data);
+      } else {
+        print("❌ Error response: ${response.data}");
+        return null;
+      }
+    } catch (e) {
+      print("🔥 Exception while fetching attendance history: $e");
+      return null;
+    }
+  }
+
+  static Future<UpdatePendingData?> editPendingHistory(
+      Map<String, dynamic> data) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      ...data,
+    };
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}update_pending_expense",
+        data: FormData.fromMap(params),
+      );
+      if (result.statusCode == 200) {
+        return UpdatePendingData.fromJson(result.data);
+      }
+    } catch (e) {
+      print("❌ editPendingHistory error: $e");
+    }
+    return null;
+  }
+
+  static Future<CommonResponse?> deletePendingHistory(String expenseId) async {
+    try {
+      var params = {
+        "token": await Common.getSharedPref('token'),
+        "id": expenseId,
+      };
+
+      var result = await _dio.post(
+        "${await Config.getUrl()}delete_pending_expense",
+        data: FormData.fromMap(params),
+      );
+
+      if (result.statusCode == 200) {
+        return CommonResponse.fromJson(result.data);
+      }
+    } catch (e) {
+      print("❌ delete_pending_expense error: $e");
+    }
+    return null;
+  }
+
+  static Future<bool> sendLogs(Map<String, dynamic> logData) async {
+    try {
+      final url = "${await Config.getUrl()}send_logs";
+      FormData formData = FormData.fromMap(logData);
+      Response response = await _dio.post(url, data: formData);
+      if (response.statusCode == 200) {
+        print("Log sent successfully");
+        return true;
+      } else {
+        print("Failed to send log: ${response.statusCode} ${response.data}");
+        return false;
+      }
+    } catch (e) {
+      print("Error sending log: $e");
+      return false;
     }
   }
 }

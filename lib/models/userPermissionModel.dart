@@ -23,11 +23,12 @@ class UserPermissionModel {
 }
 
 class Data {
-   String? ProjectDashboard;
-    String? LeadDashboard;
-     String? AccountsDashboard;
-      String? MenuDashboard;
-       String? RenewalDashboard;
+  String? ProjectDashboard;
+  String? LeadDashboard;
+  String? AccountsDashboard;
+  String? MenuDashboard;
+  String? RenewalDashboard;
+  String? NewleadDashboard;
   String? adminCheck;
   String? createStaff;
   String? viewStaff;
@@ -55,7 +56,7 @@ class Data {
   String? updateFacebookSettings;
   String? deleteFacebookSettings;
   String? createLeadImports;
-    String? viewTargetReport;
+  String? viewTargetReport;
   String? cloudCall;
   String? accessCallHistory;
   String? accessCallRecording;
@@ -73,22 +74,28 @@ class Data {
   String? readAccount;
   bool? uploadCallLog;
   String? multipleUsers;
-    String? multipleWorks;
+  String? multipleWorks;
   String? hasPhonecallAccess;
   String? addWorks;
   String? viewAllWorks;
   String? viewWorkReport;
   String? startAndStopWork;
- String? faceDetection;
+  String? faceDetection;
   String? companyLocation;
-    String? assignWork;
+  String? assignWork;
+  String? addWorkModule;
+  String? viewAttendanceSection;
+  String? viewPendingWorks;
+  String? updateDashboard;
+  String? approvePayroll;
   Data({
-      this.ProjectDashboard,
-        this.LeadDashboard,
-          this.AccountsDashboard,
-            this.MenuDashboard,
-              this.RenewalDashboard,
-        this.adminCheck,
+    this.ProjectDashboard,
+    this.LeadDashboard,
+    this.AccountsDashboard,
+    this.MenuDashboard,
+    this.RenewalDashboard,
+     this.NewleadDashboard,
+    this.adminCheck,
     this.createStaff,
     this.viewStaff,
     this.updateStaff,
@@ -133,24 +140,30 @@ class Data {
     this.readAccount,
     this.uploadCallLog,
     this.multipleUsers,
-        this.multipleWorks,
+    this.multipleWorks,
     this.hasPhonecallAccess,
     this.addWorks,
     this.viewAllWorks,
     this.viewWorkReport,
     this.startAndStopWork,
-      this.faceDetection,
-        this.companyLocation,
-          this.assignWork,
+    this.faceDetection,
+    this.companyLocation,
+    this.assignWork,
+    this.addWorkModule,
+    this.viewAttendanceSection,
+    this.viewPendingWorks,
+    this.updateDashboard,
+    this.approvePayroll,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
-       ProjectDashboard = json['dashboard_project'];
-          LeadDashboard = json['dashboard_lead'];
-             AccountsDashboard = json['dashboard_accounts'];
-                MenuDashboard = json['dashboard_menu'];
-                   RenewalDashboard = json['dashboard_renewal'];
-        adminCheck = json['admins_check'];
+    ProjectDashboard = json['dashboard_project'];
+    LeadDashboard = json['dashboard_lead'];
+    AccountsDashboard = json['dashboard_accounts'];
+    MenuDashboard = json['dashboard_menu'];
+    RenewalDashboard = json['dashboard_renewal'];
+    NewleadDashboard = json['dashboard_new_lead'];
+    adminCheck = json['admins_check'];
     createStaff = json['create_staff'];
     viewStaff = json['view_staff'];
     updateStaff = json['update_staff'];
@@ -177,7 +190,7 @@ class Data {
     updateFacebookSettings = json['update_facebook_settings'];
     deleteFacebookSettings = json['delete_facebook_settings'];
     createLeadImports = json['create_lead_imports'];
-        viewTargetReport = json['view_target_report'];
+    viewTargetReport = json['view_target_report'];
     cloudCall = json['cloud_call'];
     accessCallHistory = json['access_call_history'];
     accessCallRecording = json['access_call_recording'];
@@ -194,26 +207,31 @@ class Data {
     readRenewal = json['read_renewal'];
     readAccount = json['read_account'];
     uploadCallLog = json['upload_call_log'];
-        multipleUsers = json['multiple_users'];
-                multipleWorks = json['multiple_works'];
+    multipleUsers = json['multiple_users'];
+    multipleWorks = json['multiple_works'];
     hasPhonecallAccess = json['has_phone_call_access'];
     addWorks = json['add_work'];
     viewAllWorks = json['view_all_works'];
     viewWorkReport = json['View_Work_Report'];
     startAndStopWork = json['start_and_stop_work'];
-     faceDetection = json['face_detection'];
-      companyLocation = json['company_location'];
-        assignWork = json['assign_work'];
-
+    faceDetection = json['face_detection'];
+    companyLocation = json['company_location'];
+    assignWork = json['assign_work'];
+    addWorkModule = json['add_work_module'];
+    viewAttendanceSection = json['view_attendance'];
+    viewPendingWorks = json['view_pending_works'];
+    updateDashboard = json['update_dashboard'];
+    approvePayroll = json['approve_payroll'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-     data['dashboard_project'] = ProjectDashboard;
-      data['dashboard_lead'] = LeadDashboard;
-       data['dashboard_accounts'] = AccountsDashboard;
-        data['dashboard_menu'] = MenuDashboard;
-         data['dashboard_renewal'] = RenewalDashboard;
+    data['dashboard_project'] = ProjectDashboard;
+    data['dashboard_lead'] = LeadDashboard;
+    data['dashboard_accounts'] = AccountsDashboard;
+    data['dashboard_menu'] = MenuDashboard;
+    data['dashboard_renewal'] = RenewalDashboard;
+     data['dashboard_new_lead'] = NewleadDashboard;
     data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
@@ -241,7 +259,7 @@ class Data {
     data['update_facebook_settings'] = updateFacebookSettings;
     data['delete_facebook_settings'] = deleteFacebookSettings;
     data['create_lead_imports'] = createLeadImports;
-       data['view_target_report'] = viewTargetReport;
+    data['view_target_report'] = viewTargetReport;
     data['cloud_call'] = cloudCall;
     data['access_call_history'] = accessCallHistory;
     data['access_call_recording'] = accessCallRecording;
@@ -252,17 +270,22 @@ class Data {
     data['rename_file'] = renameFile;
     data['delete_file'] = deleteFile;
     data['download_file'] = downloadFile;
-        data['multiple_users'] = multipleUsers;
-                data['multiple_works'] = multipleWorks;
+    data['multiple_users'] = multipleUsers;
+    data['multiple_works'] = multipleWorks;
     data['whatsapp_unofficial'] = whatsappUnofficial;
     data['whatsapp_official'] = whatsappOfficial;
     data['add_work'] = addWorks;
     data['view_all_works'] = viewAllWorks;
     data['View_Work_Report'] = viewWorkReport;
     data['start_and_stop_work'] = startAndStopWork;
-      data['face_detection'] = faceDetection;
-        data['company_location'] = companyLocation;
-         data['assign_work'] = assignWork;
+    data['face_detection'] = faceDetection;
+    data['company_location'] = companyLocation;
+    data['assign_work'] = assignWork;
+    data['add_work_module'] = addWorkModule;
+    data['view_attendance'] = viewAttendanceSection;
+    data['view_pending_works'] = viewPendingWorks;
+    data['update_dashboard'] = updateDashboard;
+    data['approve_payroll'] = approvePayroll;
     return data;
   }
 }

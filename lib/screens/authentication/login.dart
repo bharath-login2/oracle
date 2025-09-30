@@ -249,16 +249,19 @@ class _LoginState extends State<Login> {
           Common.toastMessaage('Username cannot be empty', Colors.red);
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
-        } else if (serverChoose == false) {
-          // Common.toastMessaage('Choose a Server', Colors.red);
-          // openPopupMenu();
-          if (updatedata!.data!.server!.length > 1) {
-            Common.toastMessaage('Choose a Server', Colors.red);
-            openPopupMenu();
-          } else {
-            Common.toastMessaage('Server configuration error', Colors.red);
-          }
-        } else {
+        } 
+        // else if (serverChoose == false) {
+        //   // Common.toastMessaage('Choose a Server', Colors.red);
+        //   // openPopupMenu();
+        //   // if (updatedata!.data!.server!.length > 1) {
+        //   //   Common.toastMessaage('Choose a Server', Colors.red);
+        //   //   openPopupMenu();
+        //   // } 
+        //   // else {
+        //   //   Common.toastMessaage('Server configuration error', Colors.red);
+        //   // }
+        // }
+         else {
           setState(() {
             _loading = true;
           });
@@ -385,6 +388,18 @@ class _LoginState extends State<Login> {
                 "MenuDashboard", object1.data!.MenuDashboard.toString());
             Common.saveSharedPref("RenewalDashboardPermission",
                 object1.data!.RenewalDashboard.toString());
+                  Common.saveSharedPref("NewleadDashboardPermission",
+                object1.data!.NewleadDashboard.toString());
+                  Common.saveSharedPref(
+                  "addWorkModule", object1.data!.addWorkModule.toString());
+                   Common.saveSharedPref(
+                  "viewAttendanceSection", object1.data!.viewAttendanceSection.toString());
+                    Common.saveSharedPref(
+                  "approvePayroll", object1.data!.approvePayroll.toString());
+                    Common.saveSharedPref(
+                  "updateDashboard", object1.data!.updateDashboard.toString());
+                    Common.saveSharedPref(
+                  "viewPendingWorks", object1.data!.viewPendingWorks.toString());
             // Common.saveSharedPref("callLogPermission", 'false');
             //  Common.saveSharedPref(
             //  "callLogPermission", 'true');
@@ -621,129 +636,55 @@ class _LoginState extends State<Login> {
                                   const SizedBox(
                                     height: 25,
                                   ),
+                                 
                                   // Container(
-                                  //     width: double.infinity,
-                                  //     height: 60,
-                                  //     margin: const EdgeInsets.symmetric(
-                                  //         horizontal: 20, vertical: 20),
-                                  //     padding: const EdgeInsets.symmetric(
-                                  //         horizontal: 15, vertical: 5),
-                                  //     decoration: BoxDecoration(
-                                  //         border: Border.all(color: Colors.white, width: 0),
-                                  //         boxShadow: const [
-                                  //           BoxShadow(
-                                  //               color: Colors.grey,
-                                  //               blurRadius: 5,
-                                  //               offset: Offset(1, 1)),
-                                  //         ],
-                                  //         color: Colors.white,
-                                  //         borderRadius:
-                                  //             const BorderRadius.all(Radius.circular(10))),
-                                  //     child: Row(
-                                  //       mainAxisAlignment: MainAxisAlignment.start,
-                                  //       children: [
-                                  //         const Icon(Icons.email_outlined),
-                                  //         Expanded(
-                                  //           child: Container(
-                                  //             margin: const EdgeInsets.only(left: 10),
-                                  //             child: TextFormField(
-                                  //               maxLines: 1,
-                                  //               controller: username,
-                                  //               decoration: const InputDecoration(
-                                  //                 hintText: "Username",
-                                  //                 border: InputBorder.none,
+                                  //   child: Align(
+                                  //     child: updatedata!.data!.server!.length >
+                                  //             1
+                                  //         ? PopupMenuButton(
+                                  //             key: popupMenuKey,
+                                  //             child: const Text(
+                                  //               "Select Server",
+                                  //               style: TextStyle(
+                                  //                 fontWeight: FontWeight.bold,
+                                  //                 color: Colors.blue,
                                   //               ),
                                   //             ),
-                                  //           ),
-                                  //         ),
-                                  //       ],
-                                  //     )),
-                                  // Container(
-                                  //     width: double.infinity,
-                                  //     height: 60,
-                                  //     margin: const EdgeInsets.symmetric(
-                                  //         horizontal: 20, vertical: 20),
-                                  //     padding: const EdgeInsets.symmetric(
-                                  //         horizontal: 15, vertical: 5),
-                                  //     decoration: BoxDecoration(
-                                  //         border: Border.all(color: Colors.white, width: 0),
-                                  //         boxShadow: const [
-                                  //           BoxShadow(
-                                  //               color: Colors.grey,
-                                  //               blurRadius: 5,
-                                  //               offset: Offset(1, 1)),
-                                  //         ],
-                                  //         color: Colors.white,
-                                  //         borderRadius:
-                                  //             const BorderRadius.all(Radius.circular(10))),
-                                  //     child: Row(
-                                  //       mainAxisAlignment: MainAxisAlignment.start,
-                                  //       children: [
-                                  //         const Icon(Icons.password_outlined),
-                                  //         Expanded(
-                                  //           child: Container(
-                                  //             margin: const EdgeInsets.only(left: 10),
-                                  //             child: TextFormField(
-                                  //               maxLines: 1,
-                                  //               obscureText: true,
-                                  //               controller: password,
-                                  //               decoration: const InputDecoration(
-                                  //                 hintText: "Password",
-                                  //                 border: InputBorder.none,
-                                  //               ),
-                                  //             ),
-                                  //           ),
-                                  //         ),
-                                  //       ],
-                                  //     )),
-                                  Container(
-                                    child: Align(
-                                      child: updatedata!.data!.server!.length >
-                                              1
-                                          ? PopupMenuButton(
-                                              key: popupMenuKey,
-                                              child: const Text(
-                                                "Select Server",
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue,
-                                                ),
-                                              ),
-                                              itemBuilder: (context) {
-                                                return updatedata!.data!.server!
-                                                    .map((data) {
-                                                  return PopupMenuItem<String>(
-                                                    value: data.url,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(data.name
-                                                            .toString()),
-                                                        if (selectedUrl ==
-                                                            data.url)
-                                                          const Icon(
-                                                            Icons.check_circle,
-                                                            color: Colors.green,
-                                                            size: 20,
-                                                          )
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList();
-                                              },
-                                              onSelected: (value) {
-                                                Common.saveSharedPref(
-                                                    "url", value);
-                                                selectedUrl = value;
-                                                serverChoose = true;
-                                                setState(() {});
-                                              },
-                                            )
-                                          : const SizedBox(),
-                                    ),
-                                  ),
+                                  //             itemBuilder: (context) {
+                                  //               return updatedata!.data!.server!
+                                  //                   .map((data) {
+                                  //                 return PopupMenuItem<String>(
+                                  //                   value: data.url,
+                                  //                   child: Row(
+                                  //                     mainAxisAlignment:
+                                  //                         MainAxisAlignment
+                                  //                             .spaceBetween,
+                                  //                     children: [
+                                  //                       Text(data.name
+                                  //                           .toString()),
+                                  //                       if (selectedUrl ==
+                                  //                           data.url)
+                                  //                         const Icon(
+                                  //                           Icons.check_circle,
+                                  //                           color: Colors.green,
+                                  //                           size: 20,
+                                  //                         )
+                                  //                     ],
+                                  //                   ),
+                                  //                 );
+                                  //               }).toList();
+                                  //             },
+                                  //             onSelected: (value) {
+                                  //               Common.saveSharedPref(
+                                  //                   "url", value);
+                                  //               selectedUrl = value;
+                                  //               serverChoose = true;
+                                  //               setState(() {});
+                                  //             },
+                                  //           )
+                                  //         : const SizedBox(),
+                                  //   ),
+                                  // ),
                                   const SizedBox(
                                     height: 10,
                                   ),
@@ -781,18 +722,18 @@ class _LoginState extends State<Login> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      if (serverChoose == true) {
+                                     // if (serverChoose == true) {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
                                                   const ForgotPassword()),
                                         );
-                                      } else {
-                                        Common.toastMessaage(
-                                            'Choose a server', Colors.red);
-                                        openPopupMenu();
-                                      }
+                                      // } else {
+                                      //   Common.toastMessaage(
+                                      //       'Choose a server', Colors.red);
+                                      //   openPopupMenu();
+                                      // }
                                     },
                                     child: Container(
                                       alignment: Alignment.center,

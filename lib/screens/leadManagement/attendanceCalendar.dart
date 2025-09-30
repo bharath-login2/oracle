@@ -256,21 +256,60 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                             ),
                           ),
                           const SizedBox(height: 10),
+                          // Align(
+                          //   alignment: Alignment.centerRight,
+                          //   child: ElevatedButton.icon(
+                          //     onPressed: () async {
+                          //       await HttpService.markHoliday(
+                          //         date: DateFormat('yyyy-MM-dd').format(date),
+                          //         name: holidayNameController.text,
+                          //         description: holidayDescController.text,
+                          //       );
+                          //       setState(() {
+                          //         _holidays[DateTime(
+                          //                 date.year, date.month, date.day)] =
+                          //             holidayNameController.text;
+                          //       });
+                          //       Navigator.pop(context);
+                          //     },
+                          //     icon: const Icon(Icons.save),
+                          //     label: const Text('Save Holiday'),
+                          //   ),
+                          // ),
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                await HttpService.markHoliday(
+                                final response = await HttpService.markHoliday(
                                   date: DateFormat('yyyy-MM-dd').format(date),
                                   name: holidayNameController.text,
                                   description: holidayDescController.text,
                                 );
-                                setState(() {
-                                  _holidays[DateTime(
-                                          date.year, date.month, date.day)] =
-                                      holidayNameController.text;
-                                });
-                                Navigator.pop(context);
+
+                                if (response ?? false) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                          Text('Holiday marked successfully!'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  setState(() {
+                                    _holidays[DateTime(
+                                            date.year, date.month, date.day)] =
+                                        holidayNameController.text;
+                                  });
+                                  Navigator.pop(context);
+                                  await fetchWorkCalendar(
+                                      _focusedDay); // Refresh calendar data
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to mark holiday'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               },
                               icon: const Icon(Icons.save),
                               label: const Text('Save Holiday'),
@@ -370,22 +409,73 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                       if (!showHolidaySection)
                         ElevatedButton.icon(
                           onPressed: () async {
-                            if (isMarkingAttendance) {
-                              await HttpService.markAttendance(
-                                date: DateFormat('yyyy-MM-dd').format(date),
-                                staffIds: attendanceSelectedIds.toList(),
-                                isHalfDay: isAttendanceHalfDay,
-                              );
-                            } else {
-                              await HttpService.markLeave(
-                                date: DateFormat('yyyy-MM-dd').format(date),
-                                staffIds: leaveSelectedIds.toList(),
-                                leaveType: selectedLeaveType,
-                                reason: reasonController.text,
-                                isHalfDay: isHalfDayLeave,
+                            bool success = false;
+                            String message = '';
+
+                            try {
+                              if (isMarkingAttendance) {
+                                final response =
+                                    await HttpService.markAttendance(
+                                  date: DateFormat('yyyy-MM-dd').format(date),
+                                  staffIds: attendanceSelectedIds.toList(),
+                                  isHalfDay: isAttendanceHalfDay,
+                                );
+                                success = response ?? false;
+                                message = success
+                                    ? 'Attendance marked successfully!'
+                                    : 'Failed to mark attendance';
+                              } else {
+                                final response = await HttpService.markLeave(
+                                  date: DateFormat('yyyy-MM-dd').format(date),
+                                  staffIds: leaveSelectedIds.toList(),
+                                  leaveType: selectedLeaveType,
+                                  reason: reasonController.text,
+                                  isHalfDay: isHalfDayLeave,
+                                );
+                                success = response ?? false;
+                                message = success
+                                    ? 'Leave marked successfully!'
+                                    : 'Failed to mark leave';
+                              }
+
+                              if (success) {
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(message),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                // Refresh the data
+                                await _fetchAttendanceData(date);
+                                await fetchDailyCount(date);
+
+                                // Close the dialog
+                                Navigator.pop(context);
+
+                                // Update the main page UI
+                                if (mounted) {
+                                  setState(() {});
+                                }
+                              } else {
+                                // Show error message (don't close dialog)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(message),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              // Show error message for exceptions
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
                               );
                             }
-                            Navigator.pop(context);
                           },
                           icon: const Icon(Icons.save),
                           label: const Text("Save"),
@@ -932,7 +1022,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                               icon: Icons.beach_access,
                               label: "Leave Today",
                               count: _dailyList.isNotEmpty
-                                  ? _dailyList.first.halfDayCount
+                                  ? _dailyList.first.absentCount
                                   : 0,
                               color: Colors.redAccent,
                             ),
@@ -940,12 +1030,12 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                             _enhancedLegendCard(
                               icon: Icons.access_time,
                               label: "Half Day",
-                              count: 0,
+                                count: _dailyList.isNotEmpty
+                                  ? _dailyList.first.halfDayCount
+                                  : 0,
                               color: Colors.orange.shade600,
                             ),
-                            const SizedBox(
-                                width:
-                                    40), // extra space so arrow doesn’t overlap
+                            const SizedBox(width: 40),
                           ],
                         ),
                       ),
@@ -960,9 +1050,8 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.white
-                                    .withOpacity(0.0), // transparent left side
-                                Colors.white, // solid right side
+                                Colors.white.withOpacity(0.0),
+                                Colors.white,
                               ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,

@@ -442,7 +442,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                           );
                                         }
                                       }
-                                                                        },
+                                    },
                                     style: const TextStyle(
                                       color: Colors.black,
                                     ),
@@ -674,95 +674,156 @@ class _EditFollowupState extends State<EditFollowup> {
                             controller: leadTypeVal,
                             onTap: () {
                               showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Lead Category'),
-                                      content: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.height *
-                                                .8,
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.leadCategory.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () async {
-                                                leadSubTypeList =
-                                                    await HttpService
-                                                        .leadSubType(
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
+                                context: context,
+                                builder: (BuildContext context) {
+                                  List filteredCategories = List.from(
+                                      commonDetails!.data.leadCategory);
+                                  TextEditingController searchController =
+                                      TextEditingController();
+
+                                  return StatefulBuilder(
+                                    builder: (context, setState) {
+                                      return AlertDialog(
+                                        scrollable: true,
+                                        title: const Text('Lead Category'),
+                                        content: SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.8,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.6,
+                                          child: Column(
+                                            children: [
+                                              // Search Box
+                                              TextField(
+                                                controller: searchController,
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      "Search lead category...",
+                                                  prefixIcon:
+                                                      const Icon(Icons.search),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  contentPadding:
+                                                      const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 5),
+                                                ),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    filteredCategories = commonDetails!
+                                                        .data.leadCategory
+                                                        .where((element) => element
+                                                            .leadCategory
+                                                            .toString()
+                                                            .toLowerCase()
+                                                            .contains(value
+                                                                .toLowerCase()))
+                                                        .toList();
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(height: 10),
+                                              // List of Lead Categories
+                                              Expanded(
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount:
+                                                      filteredCategories.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () async {
+                                                        leadSubTypeList =
+                                                            await HttpService.leadSubType(
+                                                                filteredCategories[
+                                                                        ind]
+                                                                    .leadCategoryId
+                                                                    .toString());
+
+                                                        setState(() {
+                                                          leadTypeVal.text =
+                                                              filteredCategories[
+                                                                      ind]
+                                                                  .leadCategory
+                                                                  .toString();
+                                                          leadType =
+                                                              filteredCategories[
+                                                                      ind]
+                                                                  .leadCategory
+                                                                  .toString();
+                                                          leadTypeId =
+                                                              filteredCategories[
+                                                                      ind]
+                                                                  .leadCategoryId
+                                                                  .toString();
+                                                          leadSubType =
+                                                              'Lead Sub Category';
+                                                          leadSubTypeId = '';
+                                                          leadSubTypeVal.text =
+                                                              'Lead Sub Category';
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 8,
+                                                                  horizontal:
+                                                                      5),
+                                                          child: Text(
+                                                            filteredCategories[
                                                                     ind]
-                                                                .leadCategoryId
-                                                                .toString());
-                                                setState(() {
-                                                  leadTypeVal.text =
-                                                      commonDetails!
-                                                          .data
-                                                          .leadCategory[ind]
-                                                          .leadCategory
-                                                          .toString();
-                                                  leadSubType =
-                                                      'Lead Sub Category';
-                                                  leadSubTypeId = '';
-                                                  leadType = commonDetails!
-                                                      .data
-                                                      .leadCategory[ind]
-                                                      .leadCategory
-                                                      .toString();
-                                                  leadTypeId = commonDetails!
-                                                      .data
-                                                      .leadCategory[ind]
-                                                      .leadCategoryId
-                                                      .toString();
-                                                  leadSubType =
-                                                      'Lead Sub Category';
-                                                  leadSubTypeId = '';
-                                                  leadSubTypeVal.text =
-                                                      'Lead Sub Category';
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .leadCategory[ind]
-                                                      .leadCategory
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
+                                                                .leadCategory
+                                                                .toString(),
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        18),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
-                                            );
-                                          },
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  });
+                                      );
+                                    },
+                                  );
+                                },
+                              );
                             },
                             maxLines: 1,
                             readOnly: true,
                             keyboardType: TextInputType.text,
                             decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Lead Category',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
+                              contentPadding:
+                                  EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                              labelText: 'Lead Category',
+                              fillColor: Colors.white,
+                              filled: true,
+                              prefixIcon: Icon(
+                                  Icons.arrow_drop_down_circle_outlined,
+                                  color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           leadSubTypeList != null &&

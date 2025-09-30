@@ -72,7 +72,8 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
             child: const Icon(
               Icons.arrow_back,
               color: Colors.white,
-            )),
+            )
+            ),
       ),
       body: SingleChildScrollView(
         child: SafeArea(

@@ -106,7 +106,7 @@ class _AddLeadCategoryDialogState extends State<AddLeadCategoryDialog> {
                       final lead = _leadController.text.trim();
                       final cost = _costController.text.trim();
                       final sub = _addSub ? _subController.text.trim() : null;
-                      if (lead.isNotEmpty && cost.isNotEmpty) {
+                      if (lead.isNotEmpty ) {
                         widget.onSubmit(lead, cost, sub);
                         Navigator.pop(context);
                       } else {

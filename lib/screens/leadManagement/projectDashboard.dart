@@ -30,6 +30,7 @@ import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
@@ -63,6 +64,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   String? AccountsDashboardPermission;
   String? MenuDashboard;
   String? RenewalDashboardPermission;
+  String? NewleadDashboardPermission;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   LeadDashboardModel? leadDashboard;
   CommonConfigureModel? configure;
@@ -150,6 +153,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     MenuDashboard = await Common.getSharedPref("MenuDashboard");
     RenewalDashboardPermission =
         await Common.getSharedPref("RenewalDashboardPermission");
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
     adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
     setState(() {
       multipleWorksCheck = value ?? '';
@@ -243,9 +248,9 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
       final dismissedDate = prefs.getString('loginPromptDismissedDate');
       final today = DateTime.now().toIso8601String().substring(0, 10);
 
-      if (dismissedDate != today) {
+      if (dismissedDate != today && startAndStopWorkPermission == "true") {
         loginOrNot = await HttpService.getLoginorNot(token);
-        if (loginOrNot?.data != true) {
+        if (loginOrNot?.data != true && startAndStopWorkPermission == "true") {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             showLoginPrompt(context);
           });
@@ -316,7 +321,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
           isExpired = configure!.data!.isExpired!;
           setState(() {});
         }
-       
+
         projectList = await HttpService.getProjectList();
         workStatus = await HttpService.getWorkStatus();
         if (workStatus!.data.isNotEmpty) {
@@ -325,12 +330,12 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
         userDashboard = await HttpService.mainDashboard(token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
-       
+
         Common.saveSharedPref(
             "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
-             leadDashboard = await HttpService.leadDashboard(
+        leadDashboard = await HttpService.leadDashboard(
             token, fromdate, todate, fromdate1, todate1);
-             setState(() {
+        setState(() {
           notificationCount = leadDashboard!.data.unreadNotification;
         });
       }
@@ -374,8 +379,6 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
       }
     });
   }
-
-  
 
   // void showLoginPrompt(BuildContext context) {
   //   showDialog(
@@ -907,7 +910,6 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                       ),
                                     )
                                   : const SizedBox(),
-                              
                             ],
                           ),
                         ],
@@ -1215,33 +1217,43 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
               //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
               // );
               ProjectDashboardPermission == "true"
-            ? Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => ProjectDashboard()),
-              )
-            : AccountsDashboardPermission == "true"
-                ? Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => AccountsDashboard(token: token)),
-                  )
-                : MenuDashboard == "true"
-                    ? Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => HomePage(token)),
-                      )
-                    : RenewalDashboardPermission == "true"
-                        ? Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => RenewalDashboard()),
-                          )
-                        : Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => Dashboard(token)),
-                          );
+                  ? Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProjectDashboard()),
+                    )
+                  : AccountsDashboardPermission == "true"
+                      ? Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  AccountsDashboard(token: token)),
+                        )
+                      : MenuDashboard == "true"
+                          ? Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => HomePage(token)),
+                            )
+                          : RenewalDashboardPermission == "true"
+                              ? Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RenewalDashboard()),
+                                )
+                              : NewleadDashboardPermission == "true"
+                                  ? Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                             MinimalDashboard(token)),
+                                    )
+                                  : Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              Dashboard(token)),
+                                    );
             },
             child: Image.asset("assets/icons/menu.png", width: 25),
           ),
@@ -1451,15 +1463,15 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                       ),
                     ),
                   ),
-                     InkWell(
-                  onTap: () {
-                    _scaffoldKey.currentState!.openEndDrawer();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Image.asset("assets/icons/menu.png", width: 20),
+                  InkWell(
+                    onTap: () {
+                      _scaffoldKey.currentState!.openEndDrawer();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Image.asset("assets/icons/menu.png", width: 20),
+                    ),
                   ),
-                ),
                 ],
               ),
             ],

@@ -310,319 +310,479 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                   children: [
                                     Row(
                                       children: [
-                                        if (date.isNotEmpty)
+                                        if (date.isNotEmpty) ...[
                                           const Icon(Icons.calendar_month,
                                               size: 16, color: Colors.indigo),
-                                        if (date.isNotEmpty)
                                           const SizedBox(width: 6),
-                                        if (date.isNotEmpty) Text(date),
+                                          Text(date),
+                                        ],
                                         const Spacer(),
-                                        summary.userId == userIdSelf &&
-                                                name.toLowerCase() ==
-                                                    assignedTo.toLowerCase() && task.dueDate ==""
-                                            ? GestureDetector(
-                                                onTap: () async {
-                                                  final result =
-                                                      await HttpService
-                                                          .getWorkStatus();
-                                                  if (result != null &&
-                                                      result.data.isNotEmpty) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) =>
-                                                          AlertDialog(
-                                                        title: const Text(
-                                                            'Logout Blocked'),
-                                                        content: const Text(
-                                                            'Work is in progress. Please close all work before restarting another.'),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop(),
-                                                            child: const Text(
-                                                                'OK'),
-                                                          ),
-                                                        ],
+
+                                        // Restart / Start only if condition matches
+                                        if (summary.userId == userIdSelf &&
+                                            status != "3" &&
+                                            (assignedTo.isNotEmpty
+                                                ? name.toLowerCase() ==
+                                                    assignedTo.toLowerCase()
+                                                : true))
+                                          GestureDetector(
+                                            onTap: () async {
+                                              final result = await HttpService
+                                                  .getWorkStatus();
+
+                                              if (result != null &&
+                                                  result.data.isNotEmpty) {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                        'Logout Blocked'),
+                                                    content: const Text(
+                                                      'Work is in progress. Please close all work before restarting another.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(),
+                                                        child: const Text('OK'),
                                                       ),
-                                                    );
-                                                  } else if(task.dueDate!=""){
-                                                     final workStatusModel =
-                                                        await HttpService
-                                                            .getWorkStatusPaused(
-                                                                task.attendanceId);
-                                                                
-                                                    workStatus.WorkStatus?
-                                                        newExistingWork;
-                                                    if (workStatusModel !=
-                                                            null &&
-                                                        workStatusModel
-                                                            .data.isNotEmpty) {
-                                                      newExistingWork =
-                                                          workStatusModel
-                                                              .data.first;
-                                                    }
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddWorkPage(
-                                                          workId: "",
-                                                          existingWork:
-                                                              newExistingWork,
-                                                          isPaused: 0,
-                                                          Restart: 1,
-                                                          onSuccess: () {
-                                                            setState(() {
-                                                              getWorkDuration(
-                                                                  currentDate);
-                                                              checkExistingWorkStatus();
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                    );
-                                                  } else {
-                                                    final workStatusModel =
-                                                        await HttpService
-                                                            .getWorkStatusPaused(
-                                                                task.attendanceId);
-                                                                
-                                                    workStatus.WorkStatus?
-                                                        newExistingWork;
-                                                    if (workStatusModel !=
-                                                            null &&
-                                                        workStatusModel
-                                                            .data.isNotEmpty) {
-                                                      newExistingWork =
-                                                          workStatusModel
-                                                              .data.first;
-                                                    }
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddWorkPage(
-                                                          workId: "",
-                                                          existingWork:
-                                                              newExistingWork,
-                                                          isPaused: 0,
-                                                          Restart: 1,
-                                                          onSuccess: () {
-                                                            setState(() {
-                                                              getWorkDuration(
-                                                                  currentDate);
-                                                              checkExistingWorkStatus();
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                                child: 
-                                                task.dueDate ==""?
-                                                const Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.restart_alt,
-                                                        size: 20,
-                                                        color:
-                                                            Color(0xFF1DB7E6)),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      "Restart",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            Color(0xFF1DB7E6),
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ):  const Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.restart_alt,
-                                                        size: 20,
-                                                        color:
-                                                            Color(0xFF1DB7E6)),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      "Start",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            Color(0xFF1DB7E6),
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ):task.dueDate !=""?GestureDetector(
-                                                onTap: () async {
-                                                  final result =
-                                                      await HttpService
-                                                          .getWorkStatus();
-                                                  if (result != null &&
-                                                      result.data.isNotEmpty) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) =>
-                                                          AlertDialog(
-                                                        title: const Text(
-                                                            'Logout Blocked'),
-                                                        content: const Text(
-                                                            'Work is in progress. Please close all work before restarting another.'),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop(),
-                                                            child: const Text(
-                                                                'OK'),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  } else if(task.dueDate!=""){
-                                                     final workStatusModel =
-                                                        await HttpService
-                                                            .getWorkStatusPaused(
-                                                                task.attendanceId);
-                                                                
-                                                    workStatus.WorkStatus?
-                                                        newExistingWork;
-                                                    if (workStatusModel !=
-                                                            null &&
-                                                        workStatusModel
-                                                            .data.isNotEmpty) {
-                                                      newExistingWork =
-                                                          workStatusModel
-                                                              .data.first;
-                                                    }
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddWorkPage(
-                                                          workId: "",
-                                                          existingWork:
-                                                              newExistingWork,
-                                                          isPaused: 0,
-                                                          Restart: 1,
-                                                          onSuccess: () {
-                                                            setState(() {
-                                                              getWorkDuration(
-                                                                  currentDate);
-                                                              checkExistingWorkStatus();
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                    );
-                                                  } else {
-                                                    final workStatusModel =
-                                                        await HttpService
-                                                            .getWorkStatusPaused(
-                                                                task.attendanceId);
-                                                                
-                                                    workStatus.WorkStatus?
-                                                        newExistingWork;
-                                                    if (workStatusModel !=
-                                                            null &&
-                                                        workStatusModel
-                                                            .data.isNotEmpty) {
-                                                      newExistingWork =
-                                                          workStatusModel
-                                                              .data.first;
-                                                    }
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddWorkPage(
-                                                          workId: "",
-                                                          existingWork:
-                                                              newExistingWork,
-                                                          isPaused: 0,
-                                                          Restart: 1,
-                                                          onSuccess: () {
-                                                            setState(() {
-                                                              getWorkDuration(
-                                                                  currentDate);
-                                                              checkExistingWorkStatus();
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                                child: 
-                                                task.dueDate ==""?
-                                                const Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.restart_alt,
-                                                        size: 20,
-                                                        color:
-                                                            Color(0xFF1DB7E6)),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      "Restart",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            Color(0xFF1DB7E6),
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ):  const Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.start,
-                                                        size: 20,
-                                                        color:
-                                                            Color.fromARGB(255, 29, 230, 146)),
-                                                    SizedBox(width: 4),
-                                                    Text(
-                                                      "Start",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        color:
-                                                            Color.fromARGB(255, 29, 230, 129),
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              )
-                                            : Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 4),
-                                                child: Text(
-                                                  'Assigned By: $assignedBy',
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: Colors.grey,
+                                                    ],
+                                                  ),
+                                                );
+                                                return;
+                                              }
+
+                                              final workStatusModel =
+                                                  await HttpService
+                                                      .getWorkStatusPaused(
+                                                          task.attendanceId);
+
+                                              workStatus.WorkStatus?
+                                                  newExistingWork;
+                                              if (workStatusModel != null &&
+                                                  workStatusModel
+                                                      .data.isNotEmpty) {
+                                                newExistingWork =
+                                                    workStatusModel.data.first;
+                                              }
+
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AddWorkPage(
+                                                    workId: "",
+                                                    existingWork:
+                                                        newExistingWork,
+                                                    isPaused: 0,
+                                                    Restart: 1,
+                                                    onSuccess: () {
+                                                      setState(() {
+                                                        getWorkDuration(
+                                                            currentDate);
+                                                        checkExistingWorkStatus();
+                                                      });
+                                                    },
                                                   ),
                                                 ),
+                                              );
+                                            },
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  task.dueDate == ""
+                                                      ? Icons.restart_alt
+                                                      : Icons.start,
+                                                  size: 20,
+                                                  color: task.dueDate == ""
+                                                      ? const Color(0xFF1DB7E6)
+                                                      : const Color.fromARGB(
+                                                          255, 29, 230, 146),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  task.dueDate == ""
+                                                      ? "Restart"
+                                                      : "Start",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: task.dueDate == ""
+                                                        ? const Color(
+                                                            0xFF1DB7E6)
+                                                        : const Color.fromARGB(
+                                                            255, 29, 230, 129),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else if (assignedBy.isNotEmpty)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              'Assigned By: $assignedBy',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey,
                                               ),
+                                            ),
+                                          ),
                                       ],
                                     ),
+
+                                    // Row(
+                                    //   children: [
+                                    //     if (date.isNotEmpty)
+                                    //       const Icon(Icons.calendar_month,
+                                    //           size: 16, color: Colors.indigo),
+                                    //     if (date.isNotEmpty)
+                                    //       const SizedBox(width: 6),
+                                    //     if (date.isNotEmpty) Text(date),
+                                    //     const Spacer(),
+                                    //     summary.userId == userIdSelf &&
+                                    //             task.dueDate == "" && status !="3"
+                                    //         ? GestureDetector(
+                                    //             onTap: () async {
+                                    //               final result =
+                                    //                   await HttpService
+                                    //                       .getWorkStatus();
+                                    //               if (result != null &&
+                                    //                   result.data.isNotEmpty) {
+                                    //                 showDialog(
+                                    //                   context: context,
+                                    //                   builder: (context) =>
+                                    //                       AlertDialog(
+                                    //                     title: const Text(
+                                    //                         'Logout Blocked'),
+                                    //                     content: const Text(
+                                    //                         'Work is in progress. Please close all work before restarting another.'),
+                                    //                     actions: [
+                                    //                       TextButton(
+                                    //                         onPressed: () =>
+                                    //                             Navigator.of(
+                                    //                                     context)
+                                    //                                 .pop(),
+                                    //                         child: const Text(
+                                    //                             'OK'),
+                                    //                       ),
+                                    //                     ],
+                                    //                   ),
+                                    //                 );
+                                    //               } else if (task.dueDate !=
+                                    //                   "") {
+                                    //                 final workStatusModel =
+                                    //                     await HttpService
+                                    //                         .getWorkStatusPaused(
+                                    //                             task.attendanceId);
+
+                                    //                 workStatus.WorkStatus?
+                                    //                     newExistingWork;
+                                    //                 if (workStatusModel !=
+                                    //                         null &&
+                                    //                     workStatusModel
+                                    //                         .data.isNotEmpty) {
+                                    //                   newExistingWork =
+                                    //                       workStatusModel
+                                    //                           .data.first;
+                                    //                 }
+                                    //                 Navigator.push(
+                                    //                   context,
+                                    //                   MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         AddWorkPage(
+                                    //                       workId: "",
+                                    //                       existingWork:
+                                    //                           newExistingWork,
+                                    //                       isPaused: 0,
+                                    //                       Restart: 1,
+                                    //                       onSuccess: () {
+                                    //                         setState(() {
+                                    //                           getWorkDuration(
+                                    //                               currentDate);
+                                    //                           checkExistingWorkStatus();
+                                    //                         });
+                                    //                       },
+                                    //                     ),
+                                    //                   ),
+                                    //                 );
+                                    //               } else {
+                                    //                 final workStatusModel =
+                                    //                     await HttpService
+                                    //                         .getWorkStatusPaused(
+                                    //                             task.attendanceId);
+
+                                    //                 workStatus.WorkStatus?
+                                    //                     newExistingWork;
+                                    //                 if (workStatusModel !=
+                                    //                         null &&
+                                    //                     workStatusModel
+                                    //                         .data.isNotEmpty) {
+                                    //                   newExistingWork =
+                                    //                       workStatusModel
+                                    //                           .data.first;
+                                    //                 }
+                                    //                 Navigator.push(
+                                    //                   context,
+                                    //                   MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         AddWorkPage(
+                                    //                       workId: "",
+                                    //                       existingWork:
+                                    //                           newExistingWork,
+                                    //                       isPaused: 0,
+                                    //                       Restart: 1,
+                                    //                       onSuccess: () {
+                                    //                         setState(() {
+                                    //                           getWorkDuration(
+                                    //                               currentDate);
+                                    //                           checkExistingWorkStatus();
+                                    //                         });
+                                    //                       },
+                                    //                     ),
+                                    //                   ),
+                                    //                 );
+                                    //               }
+                                    //             },
+                                    //             child: task.dueDate == ""
+                                    //                 ? const Row(
+                                    //                     mainAxisSize:
+                                    //                         MainAxisSize.min,
+                                    //                     children: [
+                                    //                       Icon(
+                                    //                           Icons.restart_alt,
+                                    //                           size: 20,
+                                    //                           color: Color(
+                                    //                               0xFF1DB7E6)),
+                                    //                       SizedBox(width: 4),
+                                    //                       Text(
+                                    //                         "Restart",
+                                    //                         style: TextStyle(
+                                    //                           fontSize: 14,
+                                    //                           color: Color(
+                                    //                               0xFF1DB7E6),
+                                    //                           fontWeight:
+                                    //                               FontWeight
+                                    //                                   .bold,
+                                    //                         ),
+                                    //                       )
+                                    //                     ],
+                                    //                   )
+                                    //                 : const Row(
+                                    //                     mainAxisSize:
+                                    //                         MainAxisSize.min,
+                                    //                     children: [
+                                    //                       Icon(
+                                    //                           Icons.restart_alt,
+                                    //                           size: 20,
+                                    //                           color: Color(
+                                    //                               0xFF1DB7E6)),
+                                    //                       SizedBox(width: 4),
+                                    //                       Text(
+                                    //                         "Start",
+                                    //                         style: TextStyle(
+                                    //                           fontSize: 14,
+                                    //                           color: Color(
+                                    //                               0xFF1DB7E6),
+                                    //                           fontWeight:
+                                    //                               FontWeight
+                                    //                                   .bold,
+                                    //                         ),
+                                    //                       )
+                                    //                     ],
+                                    //                   ),
+                                    //           )
+                                    //         : task.dueDate != ""
+                                    //             ? GestureDetector(
+                                    //                 onTap: () async {
+                                    //                   final result =
+                                    //                       await HttpService
+                                    //                           .getWorkStatus();
+                                    //                   if (result != null &&
+                                    //                       result.data
+                                    //                           .isNotEmpty) {
+                                    //                     showDialog(
+                                    //                       context: context,
+                                    //                       builder: (context) =>
+                                    //                           AlertDialog(
+                                    //                         title: const Text(
+                                    //                             'Logout Blocked'),
+                                    //                         content: const Text(
+                                    //                             'Work is in progress. Please close all work before restarting another.'),
+                                    //                         actions: [
+                                    //                           TextButton(
+                                    //                             onPressed: () =>
+                                    //                                 Navigator.of(
+                                    //                                         context)
+                                    //                                     .pop(),
+                                    //                             child:
+                                    //                                 const Text(
+                                    //                                     'OK'),
+                                    //                           ),
+                                    //                         ],
+                                    //                       ),
+                                    //                     );
+                                    //                   } else if (task.dueDate !=
+                                    //                       "") {
+                                    //                     final workStatusModel =
+                                    //                         await HttpService
+                                    //                             .getWorkStatusPaused(
+                                    //                                 task.attendanceId);
+
+                                    //                     workStatus.WorkStatus?
+                                    //                         newExistingWork;
+                                    //                     if (workStatusModel !=
+                                    //                             null &&
+                                    //                         workStatusModel.data
+                                    //                             .isNotEmpty) {
+                                    //                       newExistingWork =
+                                    //                           workStatusModel
+                                    //                               .data.first;
+                                    //                     }
+                                    //                     Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                         builder:
+                                    //                             (context) =>
+                                    //                                 AddWorkPage(
+                                    //                           workId: "",
+                                    //                           existingWork:
+                                    //                               newExistingWork,
+                                    //                           isPaused: 0,
+                                    //                           Restart: 1,
+                                    //                           onSuccess: () {
+                                    //                             setState(() {
+                                    //                               getWorkDuration(
+                                    //                                   currentDate);
+                                    //                               checkExistingWorkStatus();
+                                    //                             });
+                                    //                           },
+                                    //                         ),
+                                    //                       ),
+                                    //                     );
+                                    //                   } else {
+                                    //                     final workStatusModel =
+                                    //                         await HttpService
+                                    //                             .getWorkStatusPaused(
+                                    //                                 task.attendanceId);
+
+                                    //                     workStatus.WorkStatus?
+                                    //                         newExistingWork;
+                                    //                     if (workStatusModel !=
+                                    //                             null &&
+                                    //                         workStatusModel.data
+                                    //                             .isNotEmpty) {
+                                    //                       newExistingWork =
+                                    //                           workStatusModel
+                                    //                               .data.first;
+                                    //                     }
+                                    //                     Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                         builder:
+                                    //                             (context) =>
+                                    //                                 AddWorkPage(
+                                    //                           workId: "",
+                                    //                           existingWork:
+                                    //                               newExistingWork,
+                                    //                           isPaused: 0,
+                                    //                           Restart: 1,
+                                    //                           onSuccess: () {
+                                    //                             setState(() {
+                                    //                               getWorkDuration(
+                                    //                                   currentDate);
+                                    //                               checkExistingWorkStatus();
+                                    //                             });
+                                    //                           },
+                                    //                         ),
+                                    //                       ),
+                                    //                     );
+                                    //                   }
+                                    //                 },
+                                    //                 child: task.dueDate == ""
+                                    //                     ? const Row(
+                                    //                         mainAxisSize:
+                                    //                             MainAxisSize
+                                    //                                 .min,
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .restart_alt,
+                                    //                               size: 20,
+                                    //                               color: Color(
+                                    //                                   0xFF1DB7E6)),
+                                    //                           SizedBox(
+                                    //                               width: 4),
+                                    //                           Text(
+                                    //                             "Restart",
+                                    //                             style:
+                                    //                                 TextStyle(
+                                    //                               fontSize: 14,
+                                    //                               color: Color(
+                                    //                                   0xFF1DB7E6),
+                                    //                               fontWeight:
+                                    //                                   FontWeight
+                                    //                                       .bold,
+                                    //                             ),
+                                    //                           )
+                                    //                         ],
+                                    //                       )
+                                    //                     : const Row(
+                                    //                         mainAxisSize:
+                                    //                             MainAxisSize
+                                    //                                 .min,
+                                    //                         children: [
+                                    //                           Icon(Icons.start,
+                                    //                               size: 20,
+                                    //                               color: Color
+                                    //                                   .fromARGB(
+                                    //                                       255,
+                                    //                                       29,
+                                    //                                       230,
+                                    //                                       146)),
+                                    //                           SizedBox(
+                                    //                               width: 4),
+                                    //                           Text(
+                                    //                             "Start",
+                                    //                             style:
+                                    //                                 TextStyle(
+                                    //                               fontSize: 14,
+                                    //                               color: Color
+                                    //                                   .fromARGB(
+                                    //                                       255,
+                                    //                                       29,
+                                    //                                       230,
+                                    //                                       129),
+                                    //                               fontWeight:
+                                    //                                   FontWeight
+                                    //                                       .bold,
+                                    //                             ),
+                                    //                           )
+                                    //                         ],
+                                    //                       ),
+                                    //               )
+                                    //             : assignedBy!=""?Padding(
+                                    //                 padding:
+                                    //                     const EdgeInsets.only(
+                                    //                         top: 4),
+                                    //                 child: Text(
+                                    //                   'Assigned By: $assignedBy',
+                                    //                   style: const TextStyle(
+                                    //                     fontSize: 13,
+                                    //                     fontWeight:
+                                    //                         FontWeight.w500,
+                                    //                     color: Colors.grey,
+                                    //                   ),
+                                    //                 ),
+                                    //               ):SizedBox(),
+                                    //   ],
+                                    // ),
                                     if (remarks.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 12),
@@ -654,13 +814,23 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                           ? 'Status: To Do'
                                           : status == "2"
                                               ? 'Status: Pending'
-                                              : 'Status: Completed',
+                                              : status == "3"
+                                                  ? 'Status: Completed'
+                                                  : status == "4"
+                                                      ? 'Status: In Progress'
+                                                      : 'Status: Cancel',
                                       style: TextStyle(
                                         color: status == "1"
                                             ? Colors.blue
                                             : status == "2"
                                                 ? Colors.orange
-                                                : Colors.green,
+                                                : status == "3"
+                                                    ? Colors.green
+                                                    : status == "4"
+                                                        ? const Color.fromARGB(
+                                                            255, 212, 187, 46)
+                                                        : const Color.fromARGB(
+                                                            255, 238, 33, 19),
                                       ),
                                     ),
                                     const SizedBox(height: 4),

@@ -9,7 +9,9 @@ import 'package:login2/screens/accounts/expense/add_expense.dart';
 import 'package:login2/screens/accounts/expense/edit_expense.dart';
 import 'package:login2/screens/accounts/expense/expense_categories.dart';
 import 'package:login2/screens/accounts/expense/expense_history.dart';
+import 'package:login2/screens/accounts/expense/pendingExpenseHistory.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/AddPendingExpenseForm.dart';
 import 'package:login2/widgets/expenseListFilterWidget.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -220,7 +222,7 @@ class _ExpenseListState extends State<ExpenseList> {
     String headId = [...fromHeadIds, ...toHeadIds].join(',');
     String staffId = staffIds.join(',');
     String fromHeadIdStr = fromHeadIds.join(','); // ✅ new
-String toHeadIdStr = toHeadIds.join(','); 
+    String toHeadIdStr = toHeadIds.join(',');
 
     try {
       ExpenseListModel? newData = await HttpService.expenseList(
@@ -354,6 +356,45 @@ String toHeadIdStr = toHeadIds.join(',');
                                 color: Colors.white),
                             onPressed: _showFilters,
                           ),
+                          // PopupMenuButton<String>(
+                          //   icon: const Icon(Icons.more_vert,
+                          //       color: Colors.white),
+                          //   iconSize: 22,
+                          //   padding: EdgeInsets.zero,
+                          //   constraints: const BoxConstraints(),
+                          //   color: Colors.white,
+                          //   onSelected: (value) {
+                          //     if (value == "0") {
+                          //       Navigator.push(
+                          //         context,
+                          //         MaterialPageRoute(
+                          //             builder: (context) => const AddExpense()),
+                          //       ).then((_) {
+                          //         setState(() {
+                          //           page = 1;
+                          //           add = 1;
+                          //           items.clear();
+                          //         });
+                          //         getList();
+                          //       });
+                          //     } else if (value == "1") {
+                          //       Navigator.push(
+                          //         context,
+                          //         MaterialPageRoute(
+                          //             builder: (context) =>
+                          //                 const ExpenseCategories()),
+                          //       ).then((_) => getDetails());
+                          //     }
+                          //   },
+                          //   itemBuilder: (context) => const [
+                          //     PopupMenuItem(
+                          //         value: '0', child: Text('Add Expense')),
+                          //     PopupMenuItem(
+                          //         value: '1', child: Text('Expense Category')),
+                          //         PopupMenuItem(
+                          //         value: '2', child: Text('Add Expense History')),
+                          //   ],
+                          // ),
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert,
                                 color: Colors.white),
@@ -382,6 +423,33 @@ String toHeadIdStr = toHeadIds.join(',');
                                       builder: (context) =>
                                           const ExpenseCategories()),
                                 ).then((_) => getDetails());
+                              } else if (value == "2") {
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return Dialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: SizedBox(
+                                        width: 400,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: AddPendingExpenseForm(),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else if (value == "3") {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PendingExpenseHistoryPage(),
+                                  ),
+                                );
                               }
                             },
                             itemBuilder: (context) => const [
@@ -389,8 +457,13 @@ String toHeadIdStr = toHeadIds.join(',');
                                   value: '0', child: Text('Add Expense')),
                               PopupMenuItem(
                                   value: '1', child: Text('Expense Category')),
+                              // PopupMenuItem(
+                              //     value: '2',
+                              //     child: Text('Add Pending History')),
+                              PopupMenuItem(
+                                  value: '3', child: Text('Pending Expense')),
                             ],
-                          ),
+                          )
                         ],
                       ),
                     ],
@@ -915,25 +988,25 @@ String toHeadIdStr = toHeadIds.join(',');
                             onTap: () {
                               if (item.isVerified == "N") {
                                 deleteDialog(context, item.cmpnyExId);
-                              }else{
+                              } else {
                                 showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return AlertDialog(
-                                          title: const Text("Cannot Edit"),
-                                          content: const Text(
-                                              "This expense is already verified and cannot be deleted."),
-                                          actions: [
-                                            TextButton(
-                                              child: const Text("OK"),
-                                              onPressed: () {
-                                                Navigator.pop(context);
-                                              },
-                                            )
-                                          ],
-                                        );
-                                      },
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("Cannot Edit"),
+                                      content: const Text(
+                                          "This expense is already verified and cannot be deleted."),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("OK"),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                        )
+                                      ],
                                     );
+                                  },
+                                );
                               }
                             },
                             child: Container(

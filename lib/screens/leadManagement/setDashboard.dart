@@ -111,7 +111,6 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
         final object1 = await HttpService.userPermissionCheck(token);
 
         if (object1.status == true) {
-          // save updated permissions in shared prefs
           Common.saveSharedPref("ProjectDashboardPermission",
               object1.data!.ProjectDashboard.toString());
           Common.saveSharedPref("LeadDashboard",
@@ -122,6 +121,8 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
               object1.data!.MenuDashboard.toString());
           Common.saveSharedPref("RenewalDashboardPermission",
               object1.data!.RenewalDashboard.toString());
+                 Common.saveSharedPref("NewleadDashboardPermission",
+              object1.data!.NewleadDashboard.toString());
           if (object1.data!.ProjectDashboard == "true") {
             Navigator.pushAndRemoveUntil(
               context,
@@ -133,7 +134,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
             Navigator.pushAndRemoveUntil(
               context,
              // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
-             MaterialPageRoute(builder: (_) =>  MinimalDashboard(token)),
+             MaterialPageRoute(builder: (_) =>  Dashboard(token)),
               (route) => false,
             );
             return;
@@ -155,6 +156,13 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (_) =>  HomePage(token)),
+              (route) => false,
+            );
+            return;
+          } else if (object1.data!.NewleadDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) =>  MinimalDashboard(token)),
               (route) => false,
             );
             return;

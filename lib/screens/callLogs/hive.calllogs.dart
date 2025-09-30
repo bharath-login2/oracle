@@ -1204,7 +1204,7 @@ setState(() {
                                                         if (direction ==
                                                             DismissDirection
                                                                 .startToEnd) {
-                                                          Common.dialPad(
+                                                              Common.dialPad(
                                                               _callLogEntries
                                                                   .elementAt(
                                                                       indexStaff)

@@ -46,6 +46,7 @@ class _RenewalListState extends State<RenewalList> {
   TextEditingController projectCost = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController customer = TextEditingController();
+   TextEditingController renewalstatus = TextEditingController();
   TextEditingController recieverName = TextEditingController();
   TextEditingController contactNumber = TextEditingController();
   TextEditingController expireIn = TextEditingController();
@@ -77,6 +78,7 @@ class _RenewalListState extends State<RenewalList> {
   bool isAllSelected = false;
   String multiBranch = "true";
   DateTime? selectedValue;
+  String? selectedRenewalValue;
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
@@ -171,7 +173,8 @@ class _RenewalListState extends State<RenewalList> {
         widget.searchKey,
         widget.searchMonth,
         expireIn.text,
-        search.text);
+        search.text,
+         selectedRenewalValue ?? "");
     if (listResponse != null && listResponse!.status == true) {
       // items = listResponse!.data.lists;
       items.addAll(listResponse!.data.lists);
@@ -1183,38 +1186,83 @@ class _RenewalListState extends State<RenewalList> {
                                                                                 false,
                                                                         child:
                                                                             InkWell(
+                                                                          // onTap:
+                                                                          //     () {
+                                                                          //   if (items[index].renewalType ==
+                                                                          //       "quick") {
+                                                                          //     Navigator.push(
+                                                                          //         context,
+                                                                          //         MaterialPageRoute(
+                                                                          //           builder: (context) => RenewQuickRenewal(
+                                                                          //             id: items[index].id,
+                                                                          //           ),
+                                                                          //         )).then((_) {
+                                                                          //       page = 1;
+                                                                          //       add = 1;
+                                                                          //       items.clear();
+                                                                          //       getList();
+                                                                          //     });
+                                                                          //   } else {
+                                                                          //     Navigator.push(
+                                                                          //         context,
+                                                                          //         MaterialPageRoute(
+                                                                          //           builder: (context) => RenewCustomRenewal(
+                                                                          //             renId: items[index].id,
+                                                                          //             renewalType: items[index].renewalType,
+                                                                          //           ),
+                                                                          //         )).then((_) {
+                                                                          //       page = 1;
+                                                                          //       add = 1;
+                                                                          //       items.clear();
+                                                                          //       getList();
+                                                                          //     });
+                                                                          //   }
+                                                                          // },
                                                                           onTap:
                                                                               () {
                                                                             if (items[index].renewalType ==
                                                                                 "quick") {
                                                                               Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => RenewQuickRenewal(
-                                                                                      id: items[index].id,
-                                                                                    ),
-                                                                                  )).then((_) {
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => RenewQuickRenewal(
+                                                                                    id: items[index].id,
+                                                                                  ),
+                                                                                ),
+                                                                              ).then((_) {
                                                                                 page = 1;
                                                                                 add = 1;
                                                                                 items.clear();
                                                                                 getList();
+                                                                                Future.delayed(const Duration(milliseconds: 300), () {
+                                                                                  if (itemScrollController.isAttached) {
+                                                                                    itemScrollController.jumpTo(index: 0);
+                                                                                  }
+                                                                                });
                                                                               });
                                                                             } else {
                                                                               Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => RenewCustomRenewal(
-                                                                                      renId: items[index].id,
-                                                                                      renewalType: items[index].renewalType,
-                                                                                    ),
-                                                                                  )).then((_) {
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => RenewCustomRenewal(
+                                                                                    renId: items[index].id,
+                                                                                    renewalType: items[index].renewalType,
+                                                                                  ),
+                                                                                ),
+                                                                              ).then((_) {
                                                                                 page = 1;
                                                                                 add = 1;
                                                                                 items.clear();
                                                                                 getList();
+                                                                                Future.delayed(const Duration(milliseconds: 300), () {
+                                                                                  if (itemScrollController.isAttached) {
+                                                                                    itemScrollController.jumpTo(index: 0);
+                                                                                  }
+                                                                                });
                                                                               });
                                                                             }
                                                                           },
+
                                                                           child:
                                                                               Container(
                                                                             decoration:
@@ -1459,6 +1507,25 @@ class _RenewalListState extends State<RenewalList> {
                               labelStyle: TextStyle(color: Colors.black),
                             ),
                           ),
+                          const SizedBox(height: 20.0),
+                          TextFormField(
+                            controller: renewalstatus,
+                            readOnly: true,
+                            onTap: (() {
+                              renewalDropDialog(context, "Renewal Status");
+                            }),
+                            decoration: const InputDecoration(
+                              labelText: 'Renewal Status',
+                              prefixIcon: Icon(
+                                  Icons.star_border_purple500_sharp,
+                                  color: Colors.black),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                              ),
+                              labelStyle: TextStyle(color: Colors.black),
+                            ),
+                          ),
                           const SizedBox(height: 30.0),
                           Container(
                             height: 40,
@@ -1599,6 +1666,36 @@ class _RenewalListState extends State<RenewalList> {
                 ));
           });
         });
+      },
+    );
+  }
+
+  Future<void> renewalDropDialog(BuildContext context, String title) async {
+    final Map<String, String> options = {
+      "1": "Renewed",
+      "2": "Not Renewed",
+      "3": "Expired",
+    };
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: options.entries.map((entry) {
+              return ListTile(
+                title: Text(entry.value),
+                onTap: () {
+                  renewalstatus.text = entry.value; // show label in textfield
+                  selectedRenewalValue = entry.key; // store value (1,2,3)
+                  Navigator.of(ctx).pop();
+                },
+              );
+            }).toList(),
+          ),
+        );
       },
     );
   }

@@ -5,6 +5,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.da
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
@@ -44,6 +45,7 @@ class _ViewUsersState extends State<ViewUsers> {
   String? AccountsDashboardPermission;
   String? MenuDashboard;
   String? RenewalDashboardPermission;
+  String? NewleadDashboardPermission;
   String LeadDashboard = '';
   String? createStaffPermission;
   String? viewStaffPermission;
@@ -56,6 +58,7 @@ class _ViewUsersState extends State<ViewUsers> {
   String? deleteStaffDesignationPermission;
   String? updateStaffPasswordPermission;
   String phoneCallLogPermission = '';
+  String viewAttendanceSection = '';
   String multiBranch = '';
   String userId = '';
   List<StaffList> filteredStaffs = [];
@@ -97,7 +100,9 @@ class _ViewUsersState extends State<ViewUsers> {
     MenuDashboard = await Common.getSharedPref("MenuDashboard");
     RenewalDashboardPermission =
         await Common.getSharedPref("RenewalDashboardPermission");
-
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
+    viewAttendanceSection = await Common.getSharedPref("viewAttendanceSection");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -851,10 +856,11 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                   value: 'disable',
                                                                                   child: Text('Disable'),
                                                                                 ),
-                                                                                const PopupMenuItem(
-                                                                                  value: 'attendance',
-                                                                                  child: Text('Attendance'),
-                                                                                ),
+                                                                                if (viewAttendanceSection.toString() == "true")
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'attendance',
+                                                                                    child: Text('Attendance'),
+                                                                                  ),
                                                                               ],
                                                                             ),
                                                                           ],
@@ -1130,12 +1136,19 @@ class _ViewUsersState extends State<ViewUsers> {
                                           builder: (context) =>
                                               RenewalDashboard()),
                                     )
-                                  : Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              Dashboard(widget.token)),
-                                    );
+                                  : NewleadDashboardPermission == "true"
+                                      ? Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  MinimalDashboard(widget.token)),
+                                        )
+                                      : Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  Dashboard(widget.token)),
+                                        );
                 },
                 child: Image.asset("assets/icons/menu.png",
                     width: 25), //icon inside button

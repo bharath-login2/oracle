@@ -2,6 +2,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:login2/models/clients/postalCodeModel.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/widgets/AddLeadSourceDialog.dart';
 import 'package:login2/widgets/addLeadCateoryPopup.dart';
 // import 'package:fluttercontactpicker/fluttercontactpicker.dart';
@@ -51,6 +54,7 @@ class AddLeads extends StatefulWidget {
 class _AddLeadsState extends State<AddLeads> {
   GlobalKey<FormState> globalKey = GlobalKey<FormState>();
   AddLeadCommonDataModel? commonDetails;
+  StateModel? stateDetails;
   CommonConfigureModel? configure;
   LeadSubTypeModel? leadSubTypeList;
   bool? result = true;
@@ -80,9 +84,21 @@ class _AddLeadsState extends State<AddLeads> {
   TextEditingController timeBefore = TextEditingController(text: '10');
   TextEditingController callResultVal = TextEditingController();
   TextEditingController leadSourceVal = TextEditingController();
+  TextEditingController stateVal = TextEditingController();
+
   String? nextFollowupDate = '';
   TextEditingController nextFollowupDate1 = TextEditingController();
   final List<TextEditingController> _controllers = [];
+  TextEditingController pinCode = TextEditingController();
+  TextEditingController districtVal = TextEditingController();
+  PostalCodeModel? postalCodeModel;
+  List<PostOffice> postOffices = [];
+  List<DistrictList> districtList = [];
+  PostOffice? selectedPostOffice;
+  bool isDistrictLoading = false;
+  bool isLoading = false;
+  String? StateId;
+  String? DistrictId;
   List descriptions = [];
   var code = '91';
   String roleId = '';
@@ -143,6 +159,7 @@ class _AddLeadsState extends State<AddLeads> {
         setState(() {});
       }
     }
+    stateDetails = await HttpService.getState();
   }
 
   String getYmdFromDmy(String dmy) {
@@ -442,117 +459,196 @@ class _AddLeadsState extends State<AddLeads> {
                                           controller: assignStaffVal,
                                           onTap: () {
                                             showDialog(
-                                                context: context,
-                                                builder: (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Assign Staff'),
-                                                    content: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .height *
-                                                              .8,
-                                                          child:
-                                                              ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount:
-                                                                commonDetails!
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                TextEditingController
+                                                    searchController =
+                                                    TextEditingController();
+                                                List<TransferStaff>
+                                                    filteredList = List.from(
+                                                        commonDetails!.data
+                                                            .transferStaffs);
+
+                                                return StatefulBuilder(
+                                                  builder: (context, setState) {
+                                                    return AlertDialog(
+                                                      scrollable: true,
+                                                      title: const Text(
+                                                          'Assign Staff'),
+                                                      content: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          // 🔍 Search box
+                                                          TextField(
+                                                            controller:
+                                                                searchController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                filteredList = commonDetails!
                                                                     .data
                                                                     .transferStaffs
-                                                                    .length,
-                                                            itemBuilder:
-                                                                (context, ind) {
-                                                              return InkWell(
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    assignStaff = commonDetails!
-                                                                        .data
-                                                                        .transferStaffs[
-                                                                            ind]
+                                                                    .where((staff) => staff
                                                                         .tranStaffName
-                                                                        .toString();
-                                                                    assignStaffId = commonDetails!
-                                                                        .data
-                                                                        .transferStaffs[
-                                                                            ind]
-                                                                        .tranStaffId
-                                                                        .toString();
-                                                                    Navigator.pop(
-                                                                        context,
-                                                                        true);
-                                                                  });
-                                                                },
-                                                                child: SizedBox(
-                                                                  height: 50,
-                                                                  child: Text(
-                                                                    commonDetails!
-                                                                        .data
-                                                                        .transferStaffs[
-                                                                            ind]
-                                                                        .tranStaffName
-                                                                        .toString(),
-                                                                    style: const TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                                  ),
-                                                                ),
-                                                              );
+                                                                        .toLowerCase()
+                                                                        .contains(
+                                                                            value.toLowerCase()))
+                                                                    .toList();
+                                                              });
                                                             },
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            setState(() {
-                                                              assignStaff =
-                                                                  'Un Assigned';
-                                                              assignStaffId =
-                                                                  '';
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
-                                                            });
-                                                          },
-                                                          child: const SizedBox(
-                                                            height: 50,
-                                                            child: Text(
-                                                              'Un Assigned',
-                                                              style: TextStyle(
-                                                                  fontSize: 18),
+                                                            decoration:
+                                                                InputDecoration(
+                                                              hintText:
+                                                                  "Search",
+                                                              prefixIcon: const Icon(
+                                                                  Icons.search,
+                                                                  color: Colors
+                                                                      .grey),
+                                                              border:
+                                                                  OutlineInputBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                              contentPadding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10),
                                                             ),
                                                           ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                });
+                                                          const SizedBox(
+                                                              height: 10),
+
+                                                          // 📋 Staff list
+                                                          SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height *
+                                                                .8,
+                                                            height: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height *
+                                                                .35,
+                                                            child: ListView
+                                                                .builder(
+                                                              shrinkWrap: true,
+                                                              itemCount:
+                                                                  filteredList
+                                                                      .length,
+                                                              itemBuilder:
+                                                                  (context,
+                                                                      ind) {
+                                                                return InkWell(
+                                                                  onTap: () {
+                                                                    setState(
+                                                                        () {
+                                                                      assignStaff = filteredList[
+                                                                              ind]
+                                                                          .tranStaffName
+                                                                          .toString();
+                                                                      assignStaffId = filteredList[
+                                                                              ind]
+                                                                          .tranStaffId
+                                                                          .toString();
+                                                                      assignStaffVal
+                                                                          .text = filteredList[
+                                                                              ind]
+                                                                          .tranStaffName
+                                                                          .toString();
+                                                                      Navigator.pop(
+                                                                          context,
+                                                                          true);
+                                                                    });
+                                                                  },
+                                                                  child:
+                                                                      SizedBox(
+                                                                    height: 45,
+                                                                    child:
+                                                                        Align(
+                                                                      alignment:
+                                                                          Alignment
+                                                                              .centerLeft,
+                                                                      child:
+                                                                          Text(
+                                                                        filteredList[ind]
+                                                                            .tranStaffName
+                                                                            .toString(),
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                16),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+
+                                                          // ❌ Unassigned option
+                                                          InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                assignStaff =
+                                                                    'Un Assigned';
+                                                                assignStaffId =
+                                                                    '';
+                                                                assignStaffVal
+                                                                        .text =
+                                                                    'Un Assigned';
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              });
+                                                            },
+                                                            child:
+                                                                const SizedBox(
+                                                              height: 45,
+                                                              child: Align(
+                                                                alignment: Alignment
+                                                                    .centerLeft,
+                                                                child: Text(
+                                                                  'Un Assigned',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            );
                                           },
                                           maxLines: 1,
                                           readOnly: true,
                                           decoration: const InputDecoration(
-                                              contentPadding: EdgeInsets.only(
-                                                  left: 10, top: 2, bottom: 2),
-                                              labelText: 'Assign Staff',
-                                              fillColor: Colors.white,
-                                              filled: true,
-                                              prefixIcon: Icon(Icons.person,
+                                            contentPadding: EdgeInsets.only(
+                                                left: 10, top: 2, bottom: 2),
+                                            labelText: 'Assign Staff',
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            prefixIcon: Icon(Icons.person,
+                                                color: Colors.grey),
+                                            border: OutlineInputBorder(),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
                                                   color: Colors.grey),
-                                              border: OutlineInputBorder(),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.grey),
-                                              ),
-                                              labelStyle: TextStyle(
-                                                  color: Colors.grey)),
+                                            ),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(
@@ -589,7 +685,6 @@ class _AddLeadsState extends State<AddLeads> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-                                //already working without quick add
 
                                 // Padding(
                                 //   padding: const EdgeInsets.only(
@@ -692,8 +787,6 @@ class _AddLeadsState extends State<AddLeads> {
                                 //   ),
                                 // ),
 
-                                //already working without quick add
-
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10),
@@ -702,90 +795,240 @@ class _AddLeadsState extends State<AddLeads> {
                                       Expanded(
                                         child: TextFormField(
                                           controller: leadTypeVal,
+                                          // onTap: () {
+                                          //   showDialog(
+                                          //     context: context,
+                                          //     builder: (BuildContext context) {
+                                          //       return AlertDialog(
+                                          //         scrollable: true,
+                                          //         title: const Text(
+                                          //             'Lead Category'),
+                                          //         content: SizedBox(
+                                          //           width:
+                                          //               MediaQuery.of(context)
+                                          //                       .size
+                                          //                       .width *
+                                          //                   .8,
+                                          //           height:
+                                          //               MediaQuery.of(context)
+                                          //                       .size
+                                          //                       .height *
+                                          //                   .46,
+                                          //           child: ListView.builder(
+                                          //             shrinkWrap: true,
+                                          //             itemCount: commonDetails!
+                                          //                 .data
+                                          //                 .leadCategory
+                                          //                 .length,
+                                          //             itemBuilder:
+                                          //                 (context, ind) {
+                                          //               return InkWell(
+                                          //                 onTap: () async {
+                                          //                   leadSubTypeList =
+                                          //                       await HttpService
+                                          //                           .leadSubType(
+                                          //                     commonDetails!
+                                          //                         .data
+                                          //                         .leadCategory[
+                                          //                             ind]
+                                          //                         .leadCategoryId
+                                          //                         .toString(),
+                                          //                   );
+                                          //                   setState(() {
+                                          //                     leadSubType =
+                                          //                         'Lead Sub Category';
+                                          //                     leadSubTypeId =
+                                          //                         '';
+                                          //                     leadType = commonDetails!
+                                          //                         .data
+                                          //                         .leadCategory[
+                                          //                             ind]
+                                          //                         .leadCategory
+                                          //                         .toString();
+                                          //                     leadTypeId = commonDetails!
+                                          //                         .data
+                                          //                         .leadCategory[
+                                          //                             ind]
+                                          //                         .leadCategoryId
+                                          //                         .toString();
+                                          //                     Navigator.pop(
+                                          //                         context,
+                                          //                         true);
+                                          //                   });
+                                          //                 },
+                                          //                 child: SizedBox(
+                                          //                   height: 50,
+                                          //                   child: Text(
+                                          //                     commonDetails!
+                                          //                         .data
+                                          //                         .leadCategory[
+                                          //                             ind]
+                                          //                         .leadCategory
+                                          //                         .toString(),
+                                          //                     style:
+                                          //                         const TextStyle(
+                                          //                             fontSize:
+                                          //                                 18),
+                                          //                   ),
+                                          //                 ),
+                                          //               );
+                                          //             },
+                                          //           ),
+                                          //         ),
+                                          //       );
+                                          //     },
+                                          //   );
+                                          // },
                                           onTap: () {
                                             showDialog(
                                               context: context,
                                               builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  scrollable: true,
-                                                  title: const Text(
-                                                      'Lead Category'),
-                                                  content: SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
+                                                TextEditingController
+                                                    searchController =
+                                                    TextEditingController();
+                                                List<LeadCategory>
+                                                    filteredList = List.from(
+                                                        commonDetails!
+                                                            .data.leadCategory);
+
+                                                return StatefulBuilder(
+                                                  builder: (context, setState) {
+                                                    return AlertDialog(
+                                                      scrollable: true,
+                                                      title: const Text(
+                                                          'Lead Category'),
+                                                      content: SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
                                                                 .size
                                                                 .width *
-                                                            .8,
-                                                    height:
-                                                        MediaQuery.of(context)
+                                                            0.8,
+                                                        height: MediaQuery.of(
+                                                                    context)
                                                                 .size
                                                                 .height *
-                                                            .46,
-                                                    child: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      itemCount: commonDetails!
-                                                          .data
-                                                          .leadCategory
-                                                          .length,
-                                                      itemBuilder:
-                                                          (context, ind) {
-                                                        return InkWell(
-                                                          onTap: () async {
-                                                            leadSubTypeList =
-                                                                await HttpService
-                                                                    .leadSubType(
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategoryId
-                                                                  .toString(),
-                                                            );
-                                                            setState(() {
-                                                              leadSubType =
-                                                                  'Lead Sub Category';
-                                                              leadSubTypeId =
-                                                                  '';
-                                                              leadType = commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategory
-                                                                  .toString();
-                                                              leadTypeId = commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategoryId
-                                                                  .toString();
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
-                                                            });
-                                                          },
-                                                          child: SizedBox(
-                                                            height: 50,
-                                                            child: Text(
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategory
-                                                                  .toString(),
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          18),
+                                                            0.55,
+                                                        child: Column(
+                                                          children: [
+                                                            // 🔍 Search box
+                                                            TextField(
+                                                              controller:
+                                                                  searchController,
+                                                              onChanged:
+                                                                  (value) {
+                                                                setState(() {
+                                                                  filteredList = commonDetails!
+                                                                      .data
+                                                                      .leadCategory
+                                                                      .where((cat) => cat
+                                                                          .leadCategory
+                                                                          .toLowerCase()
+                                                                          .contains(
+                                                                              value.toLowerCase()))
+                                                                      .toList();
+                                                                });
+                                                              },
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                hintText:
+                                                                    "Search",
+                                                                prefixIcon: const Icon(
+                                                                    Icons
+                                                                        .search,
+                                                                    color: Colors
+                                                                        .grey),
+                                                                border:
+                                                                    OutlineInputBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8),
+                                                                ),
+                                                                contentPadding:
+                                                                    const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                            10),
+                                                              ),
                                                             ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
+                                                            const SizedBox(
+                                                                height: 10),
+
+                                                            // 📋 Category list
+                                                            Expanded(
+                                                              child: ListView
+                                                                  .builder(
+                                                                itemCount:
+                                                                    filteredList
+                                                                        .length,
+                                                                itemBuilder:
+                                                                    (context,
+                                                                        ind) {
+                                                                  return InkWell(
+                                                                    onTap:
+                                                                        () async {
+                                                                      leadSubTypeList =
+                                                                          await HttpService
+                                                                              .leadSubType(
+                                                                        filteredList[ind]
+                                                                            .leadCategoryId
+                                                                            .toString(),
+                                                                      );
+                                                                      setState(
+                                                                          () {
+                                                                        leadSubType =
+                                                                            'Lead Sub Category';
+                                                                        leadSubTypeId =
+                                                                            '';
+                                                                        leadType = filteredList[ind]
+                                                                            .leadCategory
+                                                                            .toString();
+                                                                        leadTypeId = filteredList[ind]
+                                                                            .leadCategoryId
+                                                                            .toString();
+                                                                        leadTypeVal
+                                                                            .text = filteredList[
+                                                                                ind]
+                                                                            .leadCategory;
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            true);
+                                                                      });
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      height:
+                                                                          45,
+                                                                      alignment:
+                                                                          Alignment
+                                                                              .centerLeft,
+                                                                      padding: const EdgeInsets
+                                                                          .symmetric(
+                                                                          horizontal:
+                                                                              10),
+                                                                      child:
+                                                                          Text(
+                                                                        filteredList[ind]
+                                                                            .leadCategory,
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                16),
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 );
                                               },
                                             );
                                           },
+
                                           maxLines: 1,
                                           readOnly: true,
                                           decoration: InputDecoration(
@@ -852,7 +1095,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                         });
 
                                                         Navigator.pop(
-                                                            dialogContext); 
+                                                            dialogContext);
                                                         ScaffoldMessenger.of(
                                                                 scaffoldContext)
                                                             .showSnackBar(
@@ -994,105 +1237,6 @@ class _AddLeadsState extends State<AddLeads> {
                                         ),
                                       )
                                     : const SizedBox(),
-                                //already working without quick add
-
-                                // Padding(
-                                //   padding: const EdgeInsets.only(
-                                //       left: 10, right: 10),
-                                //   child: TextFormField(
-                                //     controller: leadSourceVal,
-                                //     onTap: () {
-                                //       showDialog(
-                                //           context: context,
-                                //           builder: (BuildContext context) {
-                                //             return AlertDialog(
-                                //               scrollable: true,
-                                //               title: const Text('Lead Source'),
-                                //               content: SizedBox(
-                                //                 width: MediaQuery.of(context)
-                                //                         .size
-                                //                         .width *
-                                //                     .8,
-                                //                 height: MediaQuery.of(context)
-                                //                         .size
-                                //                         .height *
-                                //                     .46,
-                                //                 child: ListView.builder(
-                                //                   shrinkWrap: true,
-                                //                   itemCount: commonDetails!
-                                //                       .data.leadSource.length,
-                                //                   itemBuilder: (context, ind) {
-                                //                     return InkWell(
-                                //                       onTap: () async {
-                                //                         setState(() {
-                                //                           leadSource =
-                                //                               commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSource
-                                //                                   .toString();
-                                //                           leadSourceId =
-                                //                               commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSourceId
-                                //                                   .toString();
-                                //                           leadSourceVal.text =
-                                //                               commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSource
-                                //                                   .toString();
-                                //                           Navigator.pop(
-                                //                               context, true);
-                                //                         });
-                                //                       },
-                                //                       child: SizedBox(
-                                //                         height: 50,
-                                //                         child: Text(
-                                //                           commonDetails!
-                                //                               .data
-                                //                               .leadSource[ind]
-                                //                               .leadSource
-                                //                               .toString(),
-                                //                           style:
-                                //                               const TextStyle(
-                                //                                   fontSize: 18),
-                                //                         ),
-                                //                       ),
-                                //                     );
-                                //                   },
-                                //                 ),
-                                //               ),
-                                //             );
-                                //           });
-                                //     },
-                                //     maxLines: 1,
-                                //     readOnly: true,
-                                //     decoration: const InputDecoration(
-                                //         contentPadding: EdgeInsets.only(
-                                //             left: 10, top: 2, bottom: 2),
-                                //         labelText: 'Lead Source',
-                                //         fillColor: Colors.white,
-                                //         filled: true,
-                                //         prefixIcon: Icon(
-                                //             Icons
-                                //                 .arrow_drop_down_circle_outlined,
-                                //             color: Colors.grey),
-                                //         border: OutlineInputBorder(),
-                                //         focusedBorder: OutlineInputBorder(
-                                //           borderSide:
-                                //               BorderSide(color: Colors.grey),
-                                //         ),
-                                //         labelStyle:
-                                //             TextStyle(color: Colors.grey)),
-                                //   ),
-                                // ),
-
-                                //already working without quick add
 
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -1107,68 +1251,127 @@ class _AddLeadsState extends State<AddLeads> {
                                           showDialog(
                                             context: context,
                                             builder: (_) {
-                                              return AlertDialog(
-                                                title:
-                                                    const Text('Lead Source'),
-                                                content: SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.8,
-                                                  height: MediaQuery.of(context)
-                                                          .size
-                                                          .height *
-                                                      0.46,
-                                                  child: ListView.builder(
-                                                    itemCount: commonDetails!
-                                                        .data.leadSource.length,
-                                                    itemBuilder:
-                                                        (context, ind) {
-                                                      return InkWell(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            leadSource =
-                                                                commonDetails!
+                                              TextEditingController
+                                                  searchController =
+                                                  TextEditingController();
+                                              List<LeadSource> filteredList =
+                                                  List.from(commonDetails!
+                                                      .data.leadSource);
+
+                                              return StatefulBuilder(
+                                                builder: (context, setState) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                        'Lead Source'),
+                                                    content: SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.8,
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              0.55,
+                                                      child: Column(
+                                                        children: [
+                                                          // 🔍 Search Box
+                                                          TextField(
+                                                            controller:
+                                                                searchController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                filteredList = commonDetails!
                                                                     .data
-                                                                    .leadSource[
-                                                                        ind]
-                                                                    .leadSource;
-                                                            leadSourceId =
-                                                                commonDetails!
-                                                                    .data
-                                                                    .leadSource[
-                                                                        ind]
-                                                                    .leadSourceId;
-                                                            leadSourceVal.text =
-                                                                commonDetails!
-                                                                    .data
-                                                                    .leadSource[
-                                                                        ind]
-                                                                    .leadSource;
-                                                          });
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  vertical: 10),
-                                                          child: Text(
-                                                            commonDetails!
-                                                                .data
-                                                                .leadSource[ind]
-                                                                .leadSource,
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        18),
+                                                                    .leadSource
+                                                                    .where((src) => src
+                                                                        .leadSource
+                                                                        .toLowerCase()
+                                                                        .contains(
+                                                                            value.toLowerCase()))
+                                                                    .toList();
+                                                              });
+                                                            },
+                                                            decoration:
+                                                                InputDecoration(
+                                                              hintText:
+                                                                  "Search",
+                                                              prefixIcon: const Icon(
+                                                                  Icons.search,
+                                                                  color: Colors
+                                                                      .grey),
+                                                              border:
+                                                                  OutlineInputBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                              contentPadding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10),
+                                                            ),
                                                           ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                ),
+                                                          const SizedBox(
+                                                              height: 10),
+
+                                                          // 📋 Source List
+                                                          Expanded(
+                                                            child: ListView
+                                                                .builder(
+                                                              itemCount:
+                                                                  filteredList
+                                                                      .length,
+                                                              itemBuilder:
+                                                                  (context,
+                                                                      ind) {
+                                                                return InkWell(
+                                                                  onTap: () {
+                                                                    setState(
+                                                                        () {
+                                                                      leadSource =
+                                                                          filteredList[ind]
+                                                                              .leadSource;
+                                                                      leadSourceId =
+                                                                          filteredList[ind]
+                                                                              .leadSourceId;
+                                                                      leadSourceVal
+                                                                          .text = filteredList[
+                                                                              ind]
+                                                                          .leadSource;
+                                                                    });
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        vertical:
+                                                                            10,
+                                                                        horizontal:
+                                                                            5),
+                                                                    child: Text(
+                                                                      filteredList[
+                                                                              ind]
+                                                                          .leadSource,
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              18),
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               );
                                             },
                                           );
@@ -1348,6 +1551,295 @@ class _AddLeadsState extends State<AddLeads> {
                                   ),
                                 ),
                                 const SizedBox(
+                                  height: 15,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 10,
+                                    right: 10,
+                                  ),
+                                  child: SizedBox(
+                                    child: TextFormField(
+                                      controller: pinCode,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        labelText: 'PIN Code',
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        border: const OutlineInputBorder(),
+                                        focusedBorder: const OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            const TextStyle(color: Colors.grey),
+                                      ),
+                                      onChanged: (value) async {
+                                        if (value.length == 6) {
+                                          setState(() {
+                                            isLoading = true;
+                                            postOffices = [];
+                                            selectedPostOffice = null;
+                                          });
+                                          var model =
+                                              await HttpService.fetchPostOffice(
+                                                  value);
+                                          setState(() {
+                                            isLoading = false;
+                                            postalCodeModel = model;
+                                            postOffices =
+                                                model?.postOffice ?? [];
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: 15,
+                                ),
+                                //   const SizedBox(height: 15),
+                                if (isLoading)
+                                  const Center(
+                                      child: CircularProgressIndicator()),
+
+                                if (postOffices.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: SizedBox(
+                                        width: 337,
+                                        child:
+                                            DropdownButtonFormField<PostOffice>(
+                                          value: selectedPostOffice,
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: "Select Post Office",
+                                            border: OutlineInputBorder(),
+                                          ),
+                                          items: postOffices.map((postOffice) {
+                                            return DropdownMenuItem<PostOffice>(
+                                              value: postOffice,
+                                              child:
+                                                  Text(postOffice.name ?? ''),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedPostOffice = value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (postOffices.isNotEmpty)
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Column(
+                                    children: [
+                                      // 🔹 State Selection
+                                      Stack(
+                                        alignment: Alignment.centerRight,
+                                        children: [
+                                          TextFormField(
+                                            controller: stateVal,
+                                            readOnly: true,
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) {
+                                                  TextEditingController
+                                                      searchController =
+                                                      TextEditingController();
+                                                  List<StateList> filteredList =
+                                                      List.from(
+                                                          stateDetails!.data);
+
+                                                  return StatefulBuilder(
+                                                    builder:
+                                                        (context, setStateSB) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                            'Select State'),
+                                                        content: SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.8,
+                                                          height: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height *
+                                                              0.55,
+                                                          child: Column(
+                                                            children: [
+                                                              TextField(
+                                                                controller:
+                                                                    searchController,
+                                                                onChanged:
+                                                                    (value) {
+                                                                  setStateSB(
+                                                                      () {
+                                                                    filteredList = stateDetails!
+                                                                        .data
+                                                                        .where((item) => item
+                                                                            .name
+                                                                            .toLowerCase()
+                                                                            .contains(value.toLowerCase()))
+                                                                        .toList();
+                                                                  });
+                                                                },
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  hintText:
+                                                                      "Search State",
+                                                                  prefixIcon: const Icon(
+                                                                      Icons
+                                                                          .search,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(8),
+                                                                  ),
+                                                                  contentPadding:
+                                                                      const EdgeInsets
+                                                                          .symmetric(
+                                                                          horizontal:
+                                                                              10),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 10),
+                                                              Expanded(
+                                                                child: ListView
+                                                                    .builder(
+                                                                  itemCount:
+                                                                      filteredList
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          ind) {
+                                                                    return InkWell(
+                                                                      onTap:
+                                                                          () async {
+                                                                        setState(
+                                                                            () {
+                                                                          stateVal.text =
+                                                                              filteredList[ind].name;
+                                                                          StateId =
+                                                                              filteredList[ind].id;
+                                                                          districtVal
+                                                                              .clear();
+                                                                          districtList =
+                                                                              [];
+                                                                          isDistrictLoading =
+                                                                              true;
+                                                                        });
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        var result =
+                                                                            await HttpService.getDistrict(StateId!);
+                                                                        setState(
+                                                                            () {
+                                                                          districtList =
+                                                                              result?.data ?? [];
+                                                                          isDistrictLoading =
+                                                                              false;
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .symmetric(
+                                                                            vertical:
+                                                                                10,
+                                                                            horizontal:
+                                                                                5),
+                                                                        child:
+                                                                            Text(
+                                                                          filteredList[ind]
+                                                                              .name,
+                                                                          style:
+                                                                              const TextStyle(fontSize: 18),
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
+                                            decoration: const InputDecoration(
+                                              labelText: 'State',
+                                              prefixIcon: Icon(
+                                                  Icons
+                                                      .arrow_drop_down_circle_outlined,
+                                                  color: Colors.grey),
+                                              border: OutlineInputBorder(),
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 15),
+                                      if (isDistrictLoading)
+                                        const Center(
+                                            child: CircularProgressIndicator()),
+                                      if (!isDistrictLoading &&
+                                          districtList.isNotEmpty)
+                                        DropdownButtonFormField<DistrictList>(
+                                          value: districtList.isNotEmpty
+                                              ? districtList.firstWhere(
+                                                  (d) => d.id == DistrictId,
+                                                  orElse: () =>
+                                                      districtList.first)
+                                              : null,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Select District',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                          items: districtList.map((d) {
+                                            return DropdownMenuItem<
+                                                DistrictList>(
+                                              value: d,
+                                              child: Text(d.name),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              DistrictId = value?.id;
+                                              districtVal.text =
+                                                  value?.name ?? '';
+                                            });
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(
                                   height: 15,
                                 ),
                                 Padding(
@@ -1775,6 +2267,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   cost.text,
                                                                   priorityId,
                                                                   address.text,
+                                                                  pinCode.text,
+                                                                  selectedPostOffice
+                                                                          ?.name ??
+                                                                      "",
                                                                   remark.text,
                                                                   callResultId,
                                                                   nextFollowupDate1
@@ -1783,7 +2279,11 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   code,
                                                                   checked,
                                                                   timeBefore,
-                                                                  leadSourceId);
+                                                                  leadSourceId,
+                                                                  stateId:
+                                                                      StateId,
+                                                                  districtId:
+                                                                      DistrictId);
                                                               if (object
                                                                       .status ==
                                                                   true) {
@@ -1833,6 +2333,9 @@ class _AddLeadsState extends State<AddLeads> {
                                                     cost.text,
                                                     priorityId,
                                                     address.text,
+                                                    pinCode.text,
+                                                    selectedPostOffice?.name ??
+                                                        "",
                                                     remark.text,
                                                     callResultId,
                                                     nextFollowupDate1.text,
@@ -1840,7 +2343,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                     code,
                                                     checked,
                                                     timeBefore.text,
-                                                    leadSourceId
+                                                    leadSourceId,
+                                                    stateId:
+                                                        StateId, // ← pass selected state
+                                                    districtId: DistrictId
                                                     //  leadSourceId
                                                     );
                                             if (object.status == true) {
