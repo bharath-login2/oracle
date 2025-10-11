@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/pending_expense.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
+import 'package:login2/screens/accounts/expense/pendingExpenseHistory.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/AddPendingExpenseForm.dart';
 
 // ignore: must_be_immutable
 class PendingExpense extends StatefulWidget {
@@ -110,14 +112,81 @@ class _PendingExpenseState extends State<PendingExpense> {
                       const SizedBox(
                         width: 25,
                       ),
-                      Text(
-                        widget.status == "1"
-                            ? "Bank Accounts"
-                            : widget.status == "2"
-                                ? "Pending Expense"
-                                : "Advance Amount",
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18),
+                      Row(
+                        children: [
+                          Text(
+                            widget.status == "1"
+                                ? "Bank Accounts"
+                                : widget.status == "2"
+                                    ? "Pending Expense"
+                                    : "Advance Amount",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 18),
+                          ),
+                          SizedBox(width: 95),
+                          PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert,
+                                  color: Colors.white),
+                              iconSize: 22,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              color: Colors.white,
+                              onSelected: (value) {
+                                if (value == "2") {
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (BuildContext context) {
+                                      return Dialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: SizedBox(
+                                          width: 400,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: AddPendingExpenseForm(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                } else if (value == "3") {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PendingExpenseHistoryPage(),
+                                    ),
+                                  );
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: '2',
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.add_circle_outline,
+                                              color: Colors.green),
+                                          SizedBox(width: 8),
+                                          Text('Add New'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: '3',
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.history,
+                                              color: Colors.blue),
+                                          SizedBox(width: 8),
+                                          Text('History'),
+                                        ],
+                                      ),
+                                    ),
+                                  ])
+                        ],
                       ),
                     ],
                   ),

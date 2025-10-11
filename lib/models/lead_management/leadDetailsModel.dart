@@ -48,7 +48,8 @@ class Data {
     String? pinCode;
     String? stateId;
     String? districtId;
-
+ String? stateName;
+  String? districtName;
   Data(
       {this.callMasterId,
       this.leadCategoryId,
@@ -84,6 +85,8 @@ class Data {
         this.pinCode,
         this.stateId,
         this.districtId,
+          this.stateName,
+            this.districtName,
        });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -133,6 +136,8 @@ class Data {
       pinCode = json['pincode'] ?? "";
        stateId = json['state_id'] ?? "";
         districtId = json['district_id'] ?? "";
+           stateName = json['state_name'] ?? "";
+              districtName = json['district_name'] ?? "";
   }
 }
 

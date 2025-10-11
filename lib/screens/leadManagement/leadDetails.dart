@@ -118,6 +118,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   int selectedIndex = 0;
   String callResult = 'New';
   String callResultId = '1';
+  bool isPausedAllVoices = false;
   var callDate = DateTime.now();
   String? nextFollowupDate = '';
   String leadType = 'Lead Category';
@@ -236,6 +237,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   String callMasterId = "";
   bool canPop = true;
   String cloudCall = "";
+  String whatsappOfficial = "";
   @override
   void initState() {
     super.initState();
@@ -249,6 +251,7 @@ class _LeadDetailsState extends State<LeadDetails> {
     contactPermission = await Common.getSharedPref("saveContactPermission");
     transferPermission = await Common.getSharedPref("transferLeads");
     cloudCall = await Common.getSharedPref("cloudCallPermission");
+    whatsappOfficial = await Common.getSharedPref("officialWhatsApp");
     setState(() {
       timeOut = false;
     });
@@ -445,7 +448,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 width: 25,
                               ),
                               const Text(
-                                'Lead DetailsSSSS',
+                                'Lead Details',
                                 style: TextStyle(
                                     color: Colors.white, fontSize: 18),
                               ),
@@ -492,10 +495,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       value: '1',
                                       child: Text('Personal whatsapp'),
                                     ),
-                                    const PopupMenuItem<String>(
-                                      value: '2',
-                                      child: Text('Official whatsapp'),
-                                    ),
+                                    if (whatsappOfficial == 'true')
+                                      const PopupMenuItem<String>(
+                                        value: '2',
+                                        child: Text('Official whatsapp'),
+                                      ),
                                   ];
                                 },
                                 child: Container(
@@ -3338,6 +3342,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     category: widget.category,
                                                   );
                                                 })
+
                                             // : SizedBox(
                                             //     height: MediaQuery.of(context)
                                             //             .size
@@ -7765,13 +7770,12 @@ class _AudioItemState extends State<AudioItem> {
   String currentPostLabel = "00:00";
   bool isplaying = false;
   bool audioPlayed = false;
-  Duration duration = Duration.zero; // For total duration
-  Duration position = Duration.zero; // For the current position
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
   LeadDeatailsModel? leadDetails;
   @override
   void initState() {
     super.initState();
-
     Future.delayed(Duration.zero, () async {
       try {
         leadDetails =
@@ -7786,8 +7790,7 @@ class _AudioItemState extends State<AudioItem> {
       });
 
       audioPlayer.onPositionChanged.listen((Duration p) {
-        currentPos =
-            p.inMilliseconds;
+        currentPos = p.inMilliseconds;
         int shours = Duration(milliseconds: currentPos).inHours;
         int sminutes = Duration(milliseconds: currentPos).inMinutes;
         int sseconds = Duration(milliseconds: currentPos).inSeconds;
@@ -7893,7 +7896,6 @@ class _AudioItemState extends State<AudioItem> {
 //     }
 //   });
 // }
-
 
   @override
   void dispose() {

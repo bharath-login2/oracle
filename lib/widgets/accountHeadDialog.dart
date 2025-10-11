@@ -214,47 +214,47 @@ class _AddAccountHeadDialogState extends State<AddAccountHeadDialog> {
         ),
         const SizedBox(height: 10),
         if (type == "Staff") ...[
-          const Text("Select Staff *",
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            value: selectedStaffId,
-            decoration: _inputDecoration("Select Staff"),
-            items: staffList
-                .map((staff) => DropdownMenuItem<String>(
-                      value: staff.id,
-                      child: Text(staff.name),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedStaffId = value;
-                personNameController.text =
-                    staffList.firstWhere((staff) => staff.id == value).name;
-              });
-            },
-          ),
+          // const Text("Select Staff *",
+          //     style: TextStyle(fontWeight: FontWeight.w600)),
+          // const SizedBox(height: 6),
+          // DropdownButtonFormField<String>(
+          //   value: selectedStaffId,
+          //   decoration: _inputDecoration("Select Staff"),
+          //   items: staffList
+          //       .map((staff) => DropdownMenuItem<String>(
+          //             value: staff.id,
+          //             child: Text(staff.name),
+          //           ))
+          //       .toList(),
+          //   onChanged: (value) {
+          //     setState(() {
+          //       selectedStaffId = value;
+          //       personNameController.text =
+          //           staffList.firstWhere((staff) => staff.id == value).name;
+          //     });
+          //   },
+          // ),
         ] else if (type == "Customer") ...[
-          const Text("Select Customer *",
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            value: selectedCustomerId,
-            decoration: _inputDecoration("Select Customer"),
-            items: customerList
-                .map((cust) => DropdownMenuItem<String>(
-                      value: cust.id,
-                      child: Text(cust.name),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedCustomerId = value;
-                personNameController.text =
-                    customerList.firstWhere((cust) => cust.id == value).name;
-              });
-            },
-          ),
+          // const Text("Select Customer *",
+          //     style: TextStyle(fontWeight: FontWeight.w600)),
+          // const SizedBox(height: 6),
+          // DropdownButtonFormField<String>(
+          //   value: selectedCustomerId,
+          //   decoration: _inputDecoration("Select Customer"),
+          //   items: customerList
+          //       .map((cust) => DropdownMenuItem<String>(
+          //             value: cust.id,
+          //             child: Text(cust.name),
+          //           ))
+          //       .toList(),
+          //   onChanged: (value) {
+          //     setState(() {
+          //       selectedCustomerId = value;
+          //       personNameController.text =
+          //           customerList.firstWhere((cust) => cust.id == value).name;
+          //     });
+          //   },
+          // ),
         ] else ...[
           const Text("Person Name",
               style: TextStyle(fontWeight: FontWeight.w600)),

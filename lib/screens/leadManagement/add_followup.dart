@@ -151,7 +151,7 @@ class _AddFollowupState extends State<AddFollowup> {
   List<Map<String, dynamic>> products = [];
   List<Map<String, dynamic>> renProducts = [];
   double subTotal = 0.00;
-   double subTotalGrand = 0.00;
+  double subTotalGrand = 0.00;
   double totalTaxAmount = 00;
   double allTotal = 0.00;
   bool isPaying = false;
@@ -2084,36 +2084,33 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   if (value == '') {
                                                     value = '0';
                                                   }
-                                                  if (double.parse(
-                                                          discount.text == ""
-                                                              ? "0"
-                                                              : discount.text) >
-                                                      subTotal) {
+                                                  double discountAmount =
+                                                      double.tryParse(value) ??
+                                                          0.0;
+                                                  double shipping =
+                                                      double.tryParse(
+                                                              shippingCharge
+                                                                  .text) ??
+                                                          0.0;
+                                                  if (discountAmount >
+                                                      subTotalGrand) {
                                                     Common.toastMessaage(
                                                         'The discount should not exceed the total amount',
                                                         Colors.red);
-                                                  } else if (double.parse(
-                                                          discount.text == ""
-                                                              ? "0"
-                                                              : discount.text) <
+                                                    return;
+                                                  } else if (discountAmount <
                                                       0) {
                                                     Common.toastMessaage(
                                                         'Please enter valid discount amount',
                                                         Colors.red);
+                                                    return;
                                                   }
-                                                  allTotal = subTotal +
-                                                      double.parse(
-                                                          shippingCharge.text ==
-                                                                  ''
-                                                              ? '0'
-                                                              : shippingCharge
-                                                                  .text) -
-                                                      double.parse(value);
-                                                  paidAmount.text =
-                                                      allTotal.toString();
+                                                  allTotal = subTotalGrand +
+                                                      shipping -
+                                                      discountAmount;
+                                                  paidAmount.text = allTotal
+                                                      .toStringAsFixed(2);
 
-                                                  paidAmount.text =
-                                                      allTotal.toString();
                                                   setState(() {});
                                                 } else {
                                                   discount.clear();
@@ -2121,8 +2118,51 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       'choose at least one product',
                                                       Colors.red);
                                                 }
-                                                setState(() {});
                                               },
+                                              // onChanged: (value) {
+                                              //   if (products.isNotEmpty) {
+                                              //     if (value == '') {
+                                              //       value = '0';
+                                              //     }
+                                              //     if (double.parse(
+                                              //             discount.text == ""
+                                              //                 ? "0"
+                                              //                 : discount.text) >
+                                              //         subTotal) {
+                                              //       Common.toastMessaage(
+                                              //           'The discount should not exceed the total amount',
+                                              //           Colors.red);
+                                              //     } else if (double.parse(
+                                              //             discount.text == ""
+                                              //                 ? "0"
+                                              //                 : discount.text) <
+                                              //         0) {
+                                              //       Common.toastMessaage(
+                                              //           'Please enter valid discount amount',
+                                              //           Colors.red);
+                                              //     }
+                                              //     allTotal = subTotal +
+                                              //         double.parse(
+                                              //             shippingCharge.text ==
+                                              //                     ''
+                                              //                 ? '0'
+                                              //                 : shippingCharge
+                                              //                     .text) -
+                                              //         double.parse(value);
+                                              //     paidAmount.text =
+                                              //         allTotal.toString();
+
+                                              //     paidAmount.text =
+                                              //         allTotal.toString();
+                                              //     setState(() {});
+                                              //   } else {
+                                              //     discount.clear();
+                                              //     Common.toastMessaage(
+                                              //         'choose at least one product',
+                                              //         Colors.red);
+                                              //   }
+                                              //   setState(() {});
+                                              // },
                                               controller: discount,
                                               keyboardType:
                                                   TextInputType.number,
@@ -3838,14 +3878,15 @@ class _AddFollowupState extends State<AddFollowup> {
 
                               // subTotal = subTotal +
                               //     double.parse(productTotalAmountTotal.text);
-                                subTotal = double.parse(productTotalAmountTotal.text) *
+                              subTotal =
+                                  double.parse(productTotalAmountTotal.text) *
                                       double.parse(productQty.text);
-                                    subTotalGrand =
+                              subTotalGrand =
                                   double.parse(productTotalAmount.text);
                               // totalTaxAmount = totalTaxAmount +
                               //     double.parse(productTaxAmount.text) *
                               //         double.parse(productQty.text);
-                                totalTaxAmount = 
+                              totalTaxAmount =
                                   double.parse(productTaxAmount.text);
                               allTotal = subTotalGrand +
                                   double.parse(shippingCharge.text == ''
@@ -3993,7 +4034,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                     ((double.parse(productRate.text)) *
                                             double.parse(productQty.text))
                                         .toString();
-                                          productTotalAmount.text =
+                                productTotalAmount.text =
                                     ((double.parse(productRate.text) +
                                                 double.parse(
                                                     productTaxAmount.text)) *

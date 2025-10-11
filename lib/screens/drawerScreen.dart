@@ -53,14 +53,16 @@ class _DraweScreenState extends State<DraweScreen> {
     Colors.purple,
   ];
 
-  List supportNames = ["Pradeesh", "Swetha", "Abina", "Unnimaya", "Login2"];
-  List supportPhone = [
-    "8086935814",
-    "9746981138",
-    "9567616533",
-    "9567256533",
-    "9061125533"
-  ];
+  // List supportNames = ["Pradeesh", "Swetha", "Abina", "Unnimaya", "Login2"];
+  // List supportPhone = [
+  //   "8086935814",
+  //   "9746981138",
+  //   "9567616533",
+  //   "9567256533",
+  //   "9061125533"
+  // ];
+  List supportNames = ["Swetha", "Abina", "Unnimaya", "Login2"];
+  List supportPhone = ["9746981138", "9567616533", "9567256533", "9061125533"];
   int _currentColorIndex = 0;
   PackageInfo _packageInfo = PackageInfo(
     appName: 'Unknown',
@@ -422,7 +424,7 @@ class _DraweScreenState extends State<DraweScreen> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                             SetDashboardPage(id:userId)),
+                                            SetDashboardPage(id: userId)),
                                   );
                                 },
                               ),

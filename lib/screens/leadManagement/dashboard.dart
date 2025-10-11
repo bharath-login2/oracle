@@ -9250,7 +9250,7 @@ class _DashboardState extends State<Dashboard> {
                         setDashboardLoading: (bool loading) {
                           setState(() {
                             isLoading =
-                                true; // This changes the dashboard loader state
+                                true; 
                           });
                         },
                       )

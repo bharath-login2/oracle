@@ -178,10 +178,18 @@ class _AddLeadsState extends State<AddLeads> {
     leadSourceVal.text = leadSource;
     if (widget.page == 'leadDetails') {
       clientName.text = widget.clientName.toString();
-      final myString = widget.phoneNumber;
-      int countryCodeLengt = widget.countryCode!.length;
-      contactNo.text = myString!.substring(countryCodeLengt);
-      //contactNo.text = widget.phoneNumber.toString();
+      // final myString = widget.phoneNumber;
+      // int countryCodeLengt = widget.countryCode!.length;
+      // contactNo.text = myString!.substring(countryCodeLengt);
+      final phone = widget.phoneNumber ?? "";
+      final code = widget.countryCode ?? "";
+      if (phone.startsWith(code)) {
+        contactNo.text = phone.replaceFirst(code, "");
+      } else if (phone.startsWith("+$code")) {
+        contactNo.text = phone.replaceFirst("+$code", "");
+      } else {
+        contactNo.text = phone;
+      }
     }
     return result == true
         ? Scaffold(

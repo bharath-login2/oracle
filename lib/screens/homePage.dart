@@ -15,10 +15,12 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
+import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
+import 'package:login2/screens/leadManagement/staffReport.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
@@ -64,6 +66,7 @@ class _HomePageState extends State<HomePage> {
   String name = '';
   String role = '';
   String token = '';
+  String userId = '';
   String? ProjectDashboardPermission;
   String? AccountsDashboardPermission;
   String? MenuDashboard;
@@ -107,10 +110,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   getData() async {
-    //
     token = await Common.getSharedPref("token");
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     AccountsDashboardPermission =
@@ -352,8 +355,7 @@ class _HomePageState extends State<HomePage> {
                                       },
                                       setDashboardLoading: (bool loading) {
                                         setState(() {
-                                          isLoading =
-                                              loading; // This changes the dashboard loader state
+                                          isLoading = loading;
                                         });
                                       },
                                     )
@@ -972,6 +974,43 @@ class _HomePageState extends State<HomePage> {
                                                   ));
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
+                                                'Staff Report') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        StaffReport(
+                                                      // token: widget.token
+                                                      //     .toString(),
+                                                    ),
+                                                  ));
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Target Report') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ViewAllTargetReportPage(
+                                                            id: userId),
+                                                  ));
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Total Lead Report') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        AllReport(
+                                                          widget.token!,
+                                                          true,
+                                                          true,
+                                                          true,
+                                                          pageName: 'AllLeads',
+                                                        )),
+                                              );
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
                                                 'reports') {
                                               showDialog(
                                                   barrierColor: Colors.white
@@ -1288,7 +1327,7 @@ class _HomePageState extends State<HomePage> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                     MinimalDashboard(token)),
+                                                    MinimalDashboard(token)),
                                           )
                                         : Navigator.pushReplacement(
                                             context,

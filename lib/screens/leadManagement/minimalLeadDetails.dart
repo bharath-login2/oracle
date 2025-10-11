@@ -259,6 +259,7 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
   String callMasterId = "";
   bool canPop = true;
   String cloudCall = "";
+  String whatsappOfficial = "";
   @override
   void initState() {
     super.initState();
@@ -272,6 +273,7 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
     contactPermission = await Common.getSharedPref("saveContactPermission");
     transferPermission = await Common.getSharedPref("transferLeads");
     cloudCall = await Common.getSharedPref("cloudCallPermission");
+    whatsappOfficial = await Common.getSharedPref("officialWhatsApp");
     setState(() {
       timeOut = false;
     });
@@ -534,10 +536,11 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                       value: '1',
                                       child: Text('Personal whatsapp'),
                                     ),
-                                    const PopupMenuItem<String>(
-                                      value: '2',
-                                      child: Text('Official whatsapp'),
-                                    ),
+                                    if (whatsappOfficial == 'true')
+                                      const PopupMenuItem<String>(
+                                        value: '2',
+                                        child: Text('Official whatsapp'),
+                                      ),
                                   ];
                                 },
                                 child: Container(
@@ -4061,9 +4064,218 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-                                                    const SizedBox(
+
+                                                   
+                                                     const SizedBox(
                                                       height: 10,
                                                     ),
+
+                                                     Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10,
+                                                              right: 10,
+                                                              top: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.4,
+                                                              child: const Text(
+                                                                'State',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              )),
+                                                          const Text(':'),
+                                                          const SizedBox(
+                                                            width: 5,
+                                                          ),
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.45,
+                                                              child: Text(
+                                                                leadDetails!
+                                                                    .data!
+                                                                    .stateName
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            14),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                     const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                     Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10,
+                                                              right: 10,
+                                                              top: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.4,
+                                                              child: const Text(
+                                                                'District',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              )),
+                                                          const Text(':'),
+                                                          const SizedBox(
+                                                            width: 5,
+                                                          ),
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.45,
+                                                              child: Text(
+                                                                leadDetails!
+                                                                    .data!
+                                                                    .districtName
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            14),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                     const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                     Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10,
+                                                              right: 10,
+                                                              top: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.4,
+                                                              child: const Text(
+                                                                'PIN Code:',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              )),
+                                                          const Text(':'),
+                                                          const SizedBox(
+                                                            width: 5,
+                                                          ),
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.45,
+                                                              child: Text(
+                                                                leadDetails!
+                                                                    .data!
+                                                                    .pinCode
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            14),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                     const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                     Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10,
+                                                              right: 10,
+                                                              top: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.4,
+                                                              child: const Text(
+                                                                'Post Office',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                              )),
+                                                          const Text(':'),
+                                                          const SizedBox(
+                                                            width: 5,
+                                                          ),
+                                                          SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.45,
+                                                              child: Text(
+                                                                leadDetails!
+                                                                    .data!
+                                                                    .postOffice
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            14),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 10,),
                                                   ],
                                                 ),
                                               ),

@@ -42,7 +42,7 @@ class AllReport extends StatefulWidget {
   List? checkedAssignedStaffItemsName;
   List? checkedCreatedStaffItems;
   List? checkedCreatedStaffItemsName;
-   List<StateList>? stateDetails;
+  List<StateList>? stateDetails;
   AllReport(this.token, this.editLead, this.deleteLead, this.cloudCall,
       {this.pageName,
       this.page,
@@ -72,10 +72,15 @@ class _AllReportState extends State<AllReport> {
   bool? result1 = true;
   String fromdate = DateTime.now().toString();
   String todate = DateTime.now().toString();
+  String createdDate = DateTime.now().toString();
+  String updatedDate = DateTime.now().toString();
   var outputFormat = DateFormat('dd-MM-yyyy');
   bool? isCalled = true;
   List selectedIUsers = [];
   List selectedUserNumbers = [];
+  bool isCreatedDateChecked = false;
+  bool isUpdatedDateChecked = false;
+
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -107,7 +112,7 @@ class _AllReportState extends State<AllReport> {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
-        TextEditingController stateVal = TextEditingController();
+  TextEditingController stateVal = TextEditingController();
   TextEditingController pinCode = TextEditingController();
   TextEditingController districtVal = TextEditingController();
   PostalCodeModel? postalCodeModel;
@@ -153,8 +158,7 @@ class _AllReportState extends State<AllReport> {
     });
   }
 
-
-    Future<StateList?> selectStateDialog(BuildContext context) async {
+  Future<StateList?> selectStateDialog(BuildContext context) async {
     return showDialog<StateList>(
       context: context,
       builder: (context) {
@@ -180,8 +184,7 @@ class _AllReportState extends State<AllReport> {
     );
   }
 
-
-    Future<void> loadPostOffices(String pin) async {
+  Future<void> loadPostOffices(String pin) async {
     PostalCodeModel postalCodeModel =
         await HttpService.fetchPostOffice(pin); // your API call
     setState(() {
@@ -192,42 +195,42 @@ class _AllReportState extends State<AllReport> {
     });
   }
 
-
- void _showFilters() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+  void _showFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: AllReportFilterWidget(
+                  pageId: 2,
+                  initialFilters: {
+                    'created_from': DateTime.now()
+                        .subtract(const Duration(days: 7))
+                        .toIso8601String(),
+                    'created_to': DateTime.now().toIso8601String(),
+                    'category_ids': <String>[],
+                    'from_account_head_ids': <String>[],
+                    'to_account_head_ids': <String>[],
+                    'created_by_ids': <String>[],
+                  },
+                  onApplyFilters: (filters) {
+                    debugPrint("Filters applied: $filters");
+                    // You can assign to currentFilters or reload a list if needed
+                  },
+                ),
               ),
-              child: AllReportFilterWidget(
-                pageId: 2,
-                initialFilters: {
-                  'created_from': DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
-                  'created_to': DateTime.now().toIso8601String(),
-                  'category_ids': <String>[],
-                  'from_account_head_ids': <String>[],
-                  'to_account_head_ids': <String>[],
-                  'created_by_ids': <String>[],
-                },
-                onApplyFilters: (filters) {
-                  debugPrint("Filters applied: $filters");
-                  // You can assign to currentFilters or reload a list if needed
-                },
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
+            );
+          },
+        );
+      },
+    );
+  }
 
   void getData() async {
     //print('scrollIndex1:${widget.scrollToIndex}');
@@ -252,12 +255,16 @@ class _AllReportState extends State<AllReport> {
 
       roleId = await Common.getSharedPref("roleId");
       multiBranch = await Common.getSharedPref("multiBranch");
+      int createdFlag = isCreatedDateChecked ? 1 : 0;
+      int updatedFlag = isUpdatedDateChecked ? 1 : 0;
       Map<String, dynamic> body = {
         "token": widget.token,
         "fromDate":
             fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
         "toDate":
             todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
+        "createdDate": createdFlag,
+        "updatedDate": updatedFlag,
         "page": page,
         "pageSize": pageSize,
         "callResultId": checkedCallResultItems,
@@ -267,16 +274,15 @@ class _AllReportState extends State<AllReport> {
         "createdBy": checkedCreatedStaffItems,
         "branchId": branch,
         "lead_source_id": checkedLeadSource,
-        "state": StateId ?? "", // selected state ID
-              "district": DistrictId ?? "", // selected district ID
-             // "pincode": pinCode.text,
+        "state": StateId ?? "",
+        "district": DistrictId ?? "",
+        //"pincode": pinCode.text,
       };
       //print(body);
       viewLeads = await HttpService.allViewLeads(body);
       if (viewLeads != null) {
         setState(() {});
       }
-
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (commonDetails != null) {
         setState(() {});
@@ -290,10 +296,10 @@ class _AllReportState extends State<AllReport> {
     } else {
       // Handle error
     }
-      loadStates();
+    loadStates();
   }
 
-   Future<void> loadStates() async {
+  Future<void> loadStates() async {
     var result = await HttpService.getState();
     log("States loaded: ${result?.data.length}");
     setState(() {
@@ -1432,6 +1438,7 @@ class _AllReportState extends State<AllReport> {
   }
 
   Future<dynamic> filtrationSheet(BuildContext context) {
+    int selectedDateType = 1;
     return showModalBottomSheet(
         isScrollControlled: true,
         context: context,
@@ -1463,7 +1470,45 @@ class _AllReportState extends State<AllReport> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        // const SizedBox(height: 20),
                         const SizedBox(height: 20),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                value: true,
+                                groupValue: isCreatedDateChecked,
+                                onChanged: (val) {
+                                  setState(() {
+                                    isCreatedDateChecked = true;
+                                    isUpdatedDateChecked = false;
+                                  });
+                                },
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text("Created Date"),
+                              ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                value: true,
+                                groupValue: isUpdatedDateChecked,
+                                onChanged: (val) {
+                                  setState(() {
+                                    isCreatedDateChecked = false;
+                                    isUpdatedDateChecked = true;
+                                  });
+                                },
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text("Updated Date"),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
                         Row(
                           children: [
                             Column(
@@ -1684,6 +1729,138 @@ class _AllReportState extends State<AllReport> {
                                 ),
                               )
                             : const SizedBox(),
+                        //  Column(
+                        //   mainAxisAlignment: MainAxisAlignment.start,
+                        //   crossAxisAlignment: CrossAxisAlignment.start,
+                        //   children: [
+                        //     const Text('Created Date',
+                        //         style: TextStyle(
+                        //           fontSize: 15,
+                        //           fontWeight: FontWeight.w500,
+                        //         )),
+                        //     const SizedBox(
+                        //       height: 5,
+                        //     ),
+                        //     SizedBox(
+                        //       width:
+                        //           MediaQuery.of(context).size.width * 1.43,
+                        //       child: Center(
+                        //         child: DateTimePicker(
+                        //           decoration: InputDecoration(
+                        //               filled: true,
+                        //               //<-- SEE HERE
+                        //               fillColor: Colors.white,
+                        //               prefixIcon: const Icon(
+                        //                 Icons.arrow_right,
+                        //                 color: Colors.grey,
+                        //               ),
+                        //               counterText: "",
+                        //               hintText: 'Created Date',
+                        //               isDense: true,
+                        //               border: OutlineInputBorder(
+                        //                   borderSide: BorderSide(
+                        //                       color:
+                        //                           Colors.purple.shade100),
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(5))),
+                        //           initialValue: createdDate.toString(),
+                        //           type: DateTimePickerType.date,
+
+                        //           //controller: fromDate,
+                        //           firstDate: DateTime(1995),
+                        //           lastDate: DateTime.now()
+                        //               .add(const Duration(days: 365)),
+                        //           // This will add one year from current date
+                        //           validator: (value) {
+                        //             return null;
+                        //           },
+                        //           onChanged: (value) {
+                        //             if (value.isNotEmpty) {
+                        //               setState(() {
+                        //                 createdDate = DateTime.parse(value)
+                        //                     .toString();
+                        //               });
+                        //             }
+                        //           },
+                        //           // We can also use onSaved
+                        //           onSaved: (value) {
+                        //             if (value!.isNotEmpty) {
+                        //               createdDate =
+                        //                   DateTime.parse(value).toString();
+                        //             }
+                        //           },
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                        // SizedBox(height: 10,),
+                        //   Column(
+                        //   mainAxisAlignment: MainAxisAlignment.start,
+                        //   crossAxisAlignment: CrossAxisAlignment.start,
+                        //   children: [
+                        //     const Text('Updated Date',
+                        //         style: TextStyle(
+                        //           fontSize: 15,
+                        //           fontWeight: FontWeight.w500,
+                        //         )),
+                        //     const SizedBox(
+                        //       height: 5,
+                        //     ),
+                        //     SizedBox(
+                        //       width:
+                        //           MediaQuery.of(context).size.width * 1.43,
+                        //       child: Center(
+                        //         child: DateTimePicker(
+                        //           decoration: InputDecoration(
+                        //               filled: true,
+                        //               //<-- SEE HERE
+                        //               fillColor: Colors.white,
+                        //               prefixIcon: const Icon(
+                        //                 Icons.arrow_right,
+                        //                 color: Colors.grey,
+                        //               ),
+                        //               counterText: "",
+                        //               hintText: 'Updated Date',
+                        //               isDense: true,
+                        //               border: OutlineInputBorder(
+                        //                   borderSide: BorderSide(
+                        //                       color:
+                        //                           Colors.purple.shade100),
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(5))),
+                        //           initialValue: updatedDate.toString(),
+                        //           type: DateTimePickerType.date,
+
+                        //           //controller: fromDate,
+                        //           firstDate: DateTime(1995),
+                        //           lastDate: DateTime.now()
+                        //               .add(const Duration(days: 365)),
+                        //           // This will add one year from current date
+                        //           validator: (value) {
+                        //             return null;
+                        //           },
+                        //           onChanged: (value) {
+                        //             if (value.isNotEmpty) {
+                        //               setState(() {
+                        //                 updatedDate = DateTime.parse(value)
+                        //                     .toString();
+                        //               });
+                        //             }
+                        //           },
+                        //           // We can also use onSaved
+                        //           onSaved: (value) {
+                        //             if (value!.isNotEmpty) {
+                        //               updatedDate =
+                        //                   DateTime.parse(value).toString();
+                        //             }
+                        //           },
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                        //  SizedBox(height: 10,),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2551,7 +2728,7 @@ class _AllReportState extends State<AllReport> {
                             ),
                           ],
                         ),
-                         const SizedBox(height: 15),
+                        const SizedBox(height: 15),
 
 // PIN Code
 //                         SizedBox(
@@ -3473,7 +3650,7 @@ class _AllReportState extends State<AllReport> {
                             ),
                           ),
                         ),
-                         const SizedBox(
+                        const SizedBox(
                           height: 17,
                         ),
                       ],

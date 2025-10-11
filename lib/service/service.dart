@@ -48,6 +48,7 @@ import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryListModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
+import 'package:login2/models/lead_management/staffReportModel.dart';
 import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
@@ -877,7 +878,7 @@ class HttpService {
     } catch (e) {
       log("error: $e");
     }
-  }   
+  }
 
   static Future addLeadsFollowup(
       token,
@@ -1094,7 +1095,7 @@ class HttpService {
       cost,
       priorityId,
       address,
-          pinCode,
+      pinCode,
       postOffice,
       remark,
       descriptions,
@@ -1110,7 +1111,7 @@ class HttpService {
       'clientName': clientName,
       'contactNumber': contactNo,
       'address': address,
-        'pinCode': pinCode,
+      'pinCode': pinCode,
       "postOffice": postOffice,
       'cost': cost,
       'user_id': staffId,
@@ -1120,7 +1121,7 @@ class HttpService {
       'country_code': code,
       "additionalFields": jsonEncode(descriptions),
       "lead_source_id": leadSource,
-        'state_id': stateId ?? '',
+      'state_id': stateId ?? '',
       'district_id': districtId ?? '',
     });
     try {
@@ -3035,7 +3036,7 @@ class HttpService {
 
       return campaignsListModel;
     } catch (e) {
-     log("Exception: $e");
+      log("Exception: $e");
     }
   }
 
@@ -3073,7 +3074,6 @@ class HttpService {
             "group_id": groupId,
             "token": await Common.getSharedPref("token"),
             "pageNo": page,
-
             "pageSize": pageSize,
           });
       if (response.statusCode == 200) {
@@ -3569,6 +3569,33 @@ class HttpService {
     try {
       final response = await _dio.get(
           "${await Config.getUrl()}view_staff_dashboard",
+          queryParameters: params);
+
+      if (response.statusCode == 200) {
+        UserDashboardModel? userDashboardModel =
+            UserDashboardModel.fromJson(response.data);
+        return userDashboardModel;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
+
+  static Future<UserDashboardModel?> getStaffDashboardNew(
+      String userId, String fDate, String tDate) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "from_date": fDate,
+      "to_date": tDate,
+      "user_id": userId
+    };
+    try {
+      final response = await _dio.get(
+          "${await Config.getUrl()}get_staff_report_view",
           queryParameters: params);
 
       if (response.statusCode == 200) {
@@ -4314,17 +4341,18 @@ class HttpService {
   }
 
   static Future renewalList(
-      page,
-      pageSize,
-      clientId,
-      fromDate,
-      toDate,
-      daysToExpire,
-      String searchKey,
-      searchMonth,
-      String expireIn,
-      String search,
-        String renewalStatus, ) async {
+    page,
+    pageSize,
+    clientId,
+    fromDate,
+    toDate,
+    daysToExpire,
+    String searchKey,
+    searchMonth,
+    String expireIn,
+    String search,
+    String renewalStatus,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "page": page,
@@ -4337,7 +4365,7 @@ class HttpService {
       "search_month": searchMonth,
       "expiry_in_days": expireIn,
       "renewal_customer": search,
-        "renewal_status": renewalStatus,
+      "renewal_status": renewalStatus,
     });
     try {
       var result = await _dio
@@ -7355,6 +7383,29 @@ class HttpService {
     } catch (e) {
       print("Error sending log: $e");
       return false;
+    }
+  }
+
+  static Future<StaffReportModel?> get_staff_list() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_staff_report",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return StaffReportModel.fromJson(response.data);
+      } else {
+        print("❌ Error response: ${response.data}");
+        return null;
+      }
+    } catch (e) {
+      print("🔥 Exception while fetching attendance history: $e");
+      return null;
     }
   }
 }

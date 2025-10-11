@@ -11,7 +11,8 @@ class SalaryReportPage extends StatefulWidget {
 }
 
 class _SalaryReportPageState extends State<SalaryReportPage> {
-  DateTime selectedDate = DateTime(DateTime.now().year, DateTime.now().month - 1);
+  DateTime selectedDate =
+      DateTime(DateTime.now().year, DateTime.now().month - 1);
   final List<String> months = List.generate(
     12,
     (index) => DateFormat.MMMM().format(DateTime(0, index + 1)),
@@ -81,83 +82,83 @@ class _SalaryReportPageState extends State<SalaryReportPage> {
     });
   }
 
- Future<void> showMonthYearDialog() async {
-  tempMonth = DateFormat.MMMM().format(selectedDate);
-  tempYear = selectedDate.year;
+  Future<void> showMonthYearDialog() async {
+    tempMonth = DateFormat.MMMM().format(selectedDate);
+    tempYear = selectedDate.year;
 
-  await showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text("Select Month & Year"),
-            content: Row(
-              children: [
-                Expanded(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: tempMonth,
-                    items: months.map((month) {
-                      return DropdownMenuItem(
-                        value: month,
-                        child: Text(month),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          tempMonth = value;
-                        });
-                      }
-                    },
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Select Month & Year"),
+              content: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: tempMonth,
+                      items: months.map((month) {
+                        return DropdownMenuItem(
+                          value: month,
+                          child: Text(month),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            tempMonth = value;
+                          });
+                        }
+                      },
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButton<int>(
+                      isExpanded: true,
+                      value: tempYear,
+                      items: years.map((year) {
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(year.toString()),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            tempYear = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: DropdownButton<int>(
-                    isExpanded: true,
-                    value: tempYear,
-                    items: years.map((year) {
-                      return DropdownMenuItem(
-                        value: year,
-                        child: Text(year.toString()),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          tempYear = value;
-                        });
-                      }
-                    },
-                  ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedDate =
+                          DateTime(tempYear, months.indexOf(tempMonth) + 1);
+                    });
+                    Navigator.pop(context);
+                    fetchSalaryData();
+                  },
+                  child: const Text("OK"),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    selectedDate = DateTime(tempYear, months.indexOf(tempMonth) + 1);
-                  });
-                  Navigator.pop(context);
-                  fetchSalaryData();
-                },
-                child: const Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,7 +251,7 @@ class _SalaryReportPageState extends State<SalaryReportPage> {
                                       MaterialPageRoute(
                                         builder: (_) => SalaryDetailPage(
                                           staffName: staff.staffName,
-                                          Id:staff.id?? '', 
+                                          Id: staff.id ?? '',
                                         ),
                                       ),
                                     );
@@ -279,7 +280,19 @@ class _SalaryReportPageState extends State<SalaryReportPage> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text("Worked Days: ${staff.workedDays}"),
-                                      Text("LOP Days: ${staff.lopDays}"),
+                                      Text(
+                                        "LOP Days: ${staff.lopDays}",
+                                        style: TextStyle(
+                                          color: (double.tryParse(staff.lopDays
+                                                          .toString()) ??
+                                                      0) >
+                                                  0
+                                              ? Colors.red
+                                              : Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // Text("LOP Days: ${staff.lopDays}"),
                                     ],
                                   ),
                                   trailing: Column(

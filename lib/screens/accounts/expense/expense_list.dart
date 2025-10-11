@@ -221,7 +221,7 @@ class _ExpenseListState extends State<ExpenseList> {
     String categoryId = categoryIds.join(',');
     String headId = [...fromHeadIds, ...toHeadIds].join(',');
     String staffId = staffIds.join(',');
-    String fromHeadIdStr = fromHeadIds.join(','); // ✅ new
+    String fromHeadIdStr = fromHeadIds.join(',');
     String toHeadIdStr = toHeadIds.join(',');
 
     try {

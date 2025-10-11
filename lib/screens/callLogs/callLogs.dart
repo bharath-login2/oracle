@@ -1565,7 +1565,6 @@ class _CallLogsState extends State<CallLogs> {
                                                     (context, indexStaff) {
                                                   final entry = _callLogEntries
                                                       .elementAt(indexStaff);
-
                                                   //  bool isUploaded = fullHiveData.any((item) => item.id == entry.timestamp.toString());
                                                   bool isUploaded =
                                                       fullHiveData.any((item) =>
@@ -1574,7 +1573,6 @@ class _CallLogsState extends State<CallLogs> {
                                                                   .toString() &&
                                                           item.isUploaded ==
                                                               true);
-
                                                   //  log('isUploaded :  ${entry.name} || $isUploaded');
                                                   //  for (var item in fullHiveData) {
                                                   //    log('item : ${item.name} || ${item.phoneNumber} || ${item.isUploaded} || ${item.isEnabled}');
@@ -2057,7 +2055,12 @@ class _CallLogsState extends State<CallLogs> {
                                                                                           });
                                                                                         },
                                                                                         child: const Icon(Icons.upload))
-                                                                                    : const SizedBox(),
+                                                                                    : isUploaded == true
+                                                                                        ? const Icon(
+                                                                                            Icons.check_circle,
+                                                                                            color: Colors.green,
+                                                                                          )
+                                                                                        : const Icon(Icons.upload, color: Colors.grey),
                                                                               ],
                                                                             ),
                                                                           ],
