@@ -776,22 +776,25 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                 toDate: widget.toDate,
                                                 category: widget.category,
                                                 leadType: leadDetails!
-                                                    .data!.leadCategory,
+                                                        .data!.leadCategory ??
+                                                    '',
                                                 leadTypeId: leadDetails!
-                                                    .data!.leadCategoryId,
-                                                leadSubType: leadDetails!
-                                                    .data!.leadSubCategory,
+                                                        .data!.leadCategoryId ??
+                                                    '',
+                                                leadSubType: leadDetails!.data!
+                                                        .leadSubCategory ??
+                                                    '',
                                                 leadSubTypeId: leadDetails!
-                                                    .data!.leadSubCategoryId,
+                                                        .data!
+                                                        .leadSubCategoryId ??
+                                                    '',
                                                 priority:
-                                                    leadDetails!.data!.priority,
-                                                priorityId: leadDetails!
-                                                    .data!.priorityId,
-                                                cost: leadDetails!.data!.cost,
-                                                address:
-                                                    leadDetails!.data!.address,
-                                                searchKey:
-                                                    widget.searchKey.toString(),
+                                                    leadDetails!.data!.priority ??
+                                                        '',
+                                                priorityId: leadDetails!.data!.priorityId ?? '',
+                                                cost: leadDetails!.data!.cost ?? '',
+                                                address: leadDetails!.data!.address ?? '',
+                                                searchKey: widget.searchKey.toString(),
                                                 leadType1: widget.leadType)),
                                       ).then((r) {
                                         getData();
@@ -2152,30 +2155,30 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                                           .status,
                                                                       staff: widget
                                                                           .staff,
-                                                                      isCalled: widget
-                                                                          .isCalled,
-                                                                      fromDate: widget
-                                                                          .fromDate,
+                                                                      isCalled:
+                                                                          widget
+                                                                              .isCalled,
+                                                                      fromDate:
+                                                                          widget
+                                                                              .fromDate,
                                                                       toDate: widget
                                                                           .toDate,
-                                                                      category: widget
-                                                                          .category,
-                                                                      leadType: leadDetails!
-                                                                          .data!
-                                                                          .leadCategory,
-                                                                      leadTypeId: leadDetails!
-                                                                          .data!
-                                                                          .leadCategoryId,
-                                                                      leadSubType: leadDetails!
-                                                                          .data!
-                                                                          .leadSubCategory,
-                                                                      leadSubTypeId: leadDetails!
-                                                                          .data!
-                                                                          .leadSubCategoryId,
-                                                                      priority: leadDetails!.data!.priority,
-                                                                      priorityId: leadDetails!.data!.priorityId,
-                                                                      cost: leadDetails!.data!.cost,
-                                                                      address: leadDetails!.data!.address,
+                                                                      category:
+                                                                          widget
+                                                                              .category,
+                                                                      leadType:
+                                                                          leadDetails!.data!.leadCategory ??
+                                                                              '',
+                                                                      leadTypeId:
+                                                                          leadDetails!.data!.leadCategoryId ??
+                                                                              '',
+                                                                      leadSubType:
+                                                                          leadDetails!.data!.leadSubCategory ?? '',
+                                                                      leadSubTypeId: leadDetails!.data!.leadSubCategoryId ?? '',
+                                                                      priority: leadDetails!.data!.priority ?? '',
+                                                                      priorityId: leadDetails!.data!.priorityId ?? '',
+                                                                      cost: leadDetails!.data!.cost ?? '',
+                                                                      address: leadDetails!.data!.address ?? '',
                                                                       searchKey: widget.searchKey.toString(),
                                                                       leadType1: widget.leadType)),
                                                             ).then((r) {
@@ -4064,13 +4067,10 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-
-                                                   
-                                                     const SizedBox(
+                                                    const SizedBox(
                                                       height: 10,
                                                     ),
-
-                                                     Padding(
+                                                    Padding(
                                                       padding:
                                                           const EdgeInsets.only(
                                                               left: 10,
@@ -4119,10 +4119,10 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-                                                     const SizedBox(
+                                                    const SizedBox(
                                                       height: 10,
                                                     ),
-                                                     Padding(
+                                                    Padding(
                                                       padding:
                                                           const EdgeInsets.only(
                                                               left: 10,
@@ -4171,10 +4171,10 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-                                                     const SizedBox(
+                                                    const SizedBox(
                                                       height: 10,
                                                     ),
-                                                     Padding(
+                                                    Padding(
                                                       padding:
                                                           const EdgeInsets.only(
                                                               left: 10,
@@ -4223,10 +4223,10 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-                                                     const SizedBox(
+                                                    const SizedBox(
                                                       height: 10,
                                                     ),
-                                                     Padding(
+                                                    Padding(
                                                       padding:
                                                           const EdgeInsets.only(
                                                               left: 10,
@@ -4275,7 +4275,9 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                         ],
                                                       ),
                                                     ),
-                                                    SizedBox(height: 10,),
+                                                    SizedBox(
+                                                      height: 10,
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -6179,45 +6181,83 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                           heroTag: 'add',
                           backgroundColor: Colors.green,
                           onPressed: () {
-                            if (leadDetails!.data!.callResult != "Confirmed") {
+                            if (leadDetails != null &&
+                                leadDetails!.data != null &&
+                                (leadDetails!.data!.callResult == null ||
+                                    leadDetails!.data!.callResult !=
+                                        "Confirmed")) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => AddFollowup(
-                                        widget.token,
-                                        widget.editLead,
-                                        widget.deleteLead,
-                                        widget.cloudCall,
-                                        callMasterId,
-                                        pageName: widget.pageName,
-                                        status: widget.status,
-                                        staff: widget.staff,
-                                        isCalled: widget.isCalled,
-                                        fromDate: widget.fromDate,
-                                        toDate: widget.toDate,
-                                        category: widget.category,
-                                        leadType:
-                                            leadDetails!.data!.leadCategory,
-                                        leadTypeId:
-                                            leadDetails!.data!.leadCategoryId,
-                                        leadSubType:
-                                            leadDetails!.data!.leadSubCategory,
-                                        leadSubTypeId: leadDetails!
-                                            .data!.leadSubCategoryId,
-                                        priorityId:
-                                            leadDetails!.data!.priorityId,
-                                        priority: leadDetails!.data!.priority,
-                                        cost: leadDetails!.data!.cost,
-                                        address: leadDetails!.data!.address,
-                                        searchKey: widget.searchKey,
-                                        leadType1: widget.leadType)),
+                                  builder: (context) => AddFollowup(
+                                    widget.token ?? '', 
+                                    widget.editLead,
+                                    widget.deleteLead,
+                                    widget.cloudCall,
+                                    callMasterId ?? '', 
+                                    pageName: widget.pageName ?? '',
+                                    status: widget.status ?? '',
+                                    staff: widget.staff ?? '',
+                                    isCalled: widget.isCalled ?? false,
+                                    fromDate: widget.fromDate ?? '',
+                                    toDate: widget.toDate ?? '',
+                                    category: widget.category ?? '',
+                                    leadType:
+                                        leadDetails?.data?.leadCategory ?? '',
+                                    leadTypeId:
+                                        leadDetails?.data?.leadCategoryId ?? '',
+                                    leadSubType:
+                                        leadDetails?.data?.leadSubCategory ??
+                                            '',
+                                    leadSubTypeId:
+                                        leadDetails?.data?.leadSubCategoryId ??
+                                            '',
+                                    priority: leadDetails?.data?.priority ?? '',
+                                    priorityId:
+                                        leadDetails?.data?.priorityId ?? '',
+                                    cost: leadDetails?.data?.cost ?? '',
+                                    address: leadDetails?.data?.address ?? '',
+                                    searchKey: widget.searchKey ?? '',
+                                    leadType1: widget.leadType ?? '',
+                                    // widget.token,
+                                    // widget.editLead,
+                                    // widget.deleteLead,
+                                    // widget.cloudCall,
+                                    // callMasterId,
+                                    // pageName: widget.pageName,
+                                    // status: widget.status,
+                                    // staff: widget.staff,
+                                    // isCalled: widget.isCalled,
+                                    // fromDate: widget.fromDate,
+                                    // toDate: widget.toDate,
+                                    // category: widget.category,
+                                    // leadType:
+                                    //     leadDetails?.data?.leadCategory ?? '',
+                                    // leadTypeId:
+                                    //     leadDetails?.data?.leadCategoryId ?? '',
+                                    // leadSubType:
+                                    //     leadDetails?.data?.leadSubCategory ??
+                                    //         '',
+                                    // leadSubTypeId:
+                                    //     leadDetails?.data?.leadSubCategoryId ??
+                                    //         '',
+                                    // priority: leadDetails?.data?.priority ?? '',
+                                    // priorityId:
+                                    //     leadDetails?.data?.priorityId ?? '',
+                                    // cost: leadDetails?.data?.cost ?? '',
+                                    // address: leadDetails?.data?.address ?? '',
+                                    // searchKey: widget.searchKey,
+                                    // leadType1: widget.leadType,
+                                  ),
+                                ),
                               ).then((r) {
                                 getData();
                               });
                             } else {
                               Common.toastMessaage(
-                                  "You can't follow up on confirmed leads",
-                                  Colors.red);
+                                "You can't follow up on confirmed leads",
+                                Colors.red,
+                              );
                             }
                           },
                           child: Container(

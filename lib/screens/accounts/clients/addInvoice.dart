@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
+import 'package:login2/models/clients/invoiceListTempModel.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/addInvoiceModel.dart';
@@ -20,8 +21,15 @@ import '../../../service/service.dart';
 class AddInvoice extends StatefulWidget {
   String token;
   String clientId;
-
-  AddInvoice(this.token, this.clientId, {super.key});
+  String proformaId;
+  final List<ProductTemp>? products;
+  AddInvoice(
+    this.token,
+    this.clientId,
+    this.proformaId, {
+    super.key,
+    this.products,
+  });
 
   @override
   State<AddInvoice> createState() => _AddInvoiceState();
@@ -97,12 +105,86 @@ class _AddInvoiceState extends State<AddInvoice> {
   List<TargetGroup> filteredTargets = [];
   List targetGroups = [];
   List targetGroupNames = [];
+  bool sameAsBilling = false;
 
   void headerToggle() {
     setState(() {
       header = !header;
       headerContent = !headerContent;
     });
+  }
+
+  List<Map<String, dynamic>> _getAllProducts() {
+    List<Map<String, dynamic>> allProducts = [];
+    if (widget.products != null) {
+      for (var product in widget.products!) {
+         allProducts.add({
+        'product_name': product.productName,
+        'product_id': product.productId ?? '', 
+        'description':  '',
+        'product_rate': product.amount,
+        'quantity': product.qty,
+        'tax_percent': '0', 
+        'total_tax_amount': '0.00',
+        'total_amount': product.amount,
+        'type': 'pre_added',
+      });
+      }
+    }
+    allProducts.addAll(products);
+
+    return allProducts;
+  }
+
+ void _removeProduct(int index) {
+  final allProducts = _getAllProducts();
+  if (index >= allProducts.length) return; 
+  final productToRemove = allProducts[index];
+  if (productToRemove['type'] == 'pre_added') {
+    if (widget.products != null && index < widget.products!.length) {
+      widget.products!.removeAt(index);
+    }
+  } else {
+    final productsIndex = index - (widget.products?.length ?? 0);
+    if (productsIndex >= 0 && productsIndex < products.length) {
+      subTotal = subTotal - double.parse(products[productsIndex]['total_amount']);
+      totalTaxAmount = totalTaxAmount - double.parse(products[productsIndex]['total_tax_amount']);
+      products.removeAt(productsIndex);
+    }
+  }
+  _updateTotals();
+  setState(() {});
+}
+
+  void _updateTotals() {
+    final allProducts = _getAllProducts();
+    subTotal = 0.00;
+    notsubTotal = 0.00;
+    totalTaxAmount = 0.00;
+    if (widget.products != null) {
+      for (var product in widget.products!) {
+        final amount = double.tryParse(product.amount) ?? 0.0;
+        final qty = double.tryParse(product.qty) ?? 1.0;
+        subTotal += amount;
+        notsubTotal += amount;
+      }
+    }
+
+    for (var product in products) {
+      subTotal += double.parse(product['total_amount']);
+      notsubTotal += double.parse(product['product_rate']) *
+          double.parse(product['quantity']);
+      totalTaxAmount += double.parse(product['total_tax_amount']);
+    }
+
+    final discountAmount = double.tryParse(discount.text) ?? 0.0;
+    final shippingAmount = double.tryParse(shippingCharge.text) ?? 0.0;
+    allTotal = subTotal + shippingAmount - discountAmount;
+    if (paymentStatus == "paid") {
+      paidAmount.text = allTotal.toStringAsFixed(2);
+    }
+
+    setState(() {});
   }
 
   Widget buildFormRow(String label, Widget field) {
@@ -131,6 +213,9 @@ class _AddInvoiceState extends State<AddInvoice> {
   void initState() {
     super.initState();
     getData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateTotals();
+    });
   }
 
   getData() async {
@@ -975,6 +1060,430 @@ class _AddInvoiceState extends State<AddInvoice> {
                             ],
                           ),
                         ),
+                        const Divider(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 10, right: 10, top: 1),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: sameAsBilling,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            sameAsBilling = value ?? false;
+                                            if (sameAsBilling) {
+                                              shippingName.text =
+                                                  billingName.text;
+                                              shippingAddress.text =
+                                                  billingAddress.text;
+                                              shippingPhone.text =
+                                                  billingPhone.text;
+                                              shippingGstNo.text =
+                                                  billingGstNo.text;
+                                              shippingPinCode.text =
+                                                  billingPinCode.text;
+                                              shippingPostOffice.text =
+                                                  billingPostOffice.text;
+                                              shippingPostal = billingPostal;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                      const Text(
+                                        'Same as Billing',
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Shipping Address (${shippingName.text})',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 7, right: 7, top: 7, bottom: 7),
+                                child: InkWell(
+                                  onTap: () async {
+                                    if (sameAsBilling) return;
+                                    showGeneralDialog(
+                                      barrierLabel: "showGeneralDialog",
+                                      barrierDismissible: true,
+                                      barrierColor:
+                                          Colors.black.withOpacity(0.6),
+                                      transitionDuration:
+                                          const Duration(milliseconds: 400),
+                                      context: context,
+                                      pageBuilder: (context, _, __) {
+                                        return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return Align(
+                                              alignment: Alignment.center,
+                                              child: SingleChildScrollView(
+                                                child: AlertDialog(
+                                                  content: SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            1,
+                                                    child: Column(
+                                                      children: [
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        const Text(
+                                                          'Shipping Address',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 24),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingName,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Name',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .person,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingAddress,
+                                                          maxLines: 2,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Address',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .location_on,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingPhone,
+                                                          decoration:
+                                                              InputDecoration(
+                                                            labelText:
+                                                                'Phone Number',
+                                                            prefixIcon:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                showCountryPicker(
+                                                                  context:
+                                                                      context,
+                                                                  searchAutofocus:
+                                                                      false,
+                                                                  showPhoneCode:
+                                                                      true,
+                                                                  onSelect: (Country
+                                                                      country) {
+                                                                    setState(
+                                                                        () {
+                                                                      code = country
+                                                                          .phoneCode;
+                                                                    });
+                                                                  },
+                                                                );
+                                                              },
+                                                              child: SizedBox(
+                                                                width: 70,
+                                                                child: Row(
+                                                                    children: [
+                                                                      Text(
+                                                                          "+$code"),
+                                                                      const Icon(
+                                                                          Icons
+                                                                              .arrow_drop_down),
+                                                                    ]),
+                                                              ),
+                                                            ),
+                                                            border:
+                                                                const OutlineInputBorder(),
+                                                            focusedBorder:
+                                                                const OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide(
+                                                                      color: Colors
+                                                                          .grey),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingGstNo,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'GST Number',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .arrow_right,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          onChanged:
+                                                              (value) async {
+                                                            if (value.length >=
+                                                                6) {
+                                                              shippingPostal =
+                                                                  await HttpService
+                                                                      .fetchPostOffice(
+                                                                          value);
+                                                              setState(() {});
+                                                            } else {
+                                                              shippingPostal =
+                                                                  null;
+                                                              shippingPostOffice
+                                                                  .clear();
+                                                              setState(() {});
+                                                            }
+                                                          },
+                                                          controller:
+                                                              shippingPinCode,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Pin Code',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .pin_drop,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        shippingPostal != null
+                                                            ? TextFormField(
+                                                                onTap: () {
+                                                                  showDialog(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (BuildContext
+                                                                            context) {
+                                                                      return AlertDialog(
+                                                                        scrollable:
+                                                                            true,
+                                                                        title: const Text(
+                                                                            'Post Office'),
+                                                                        content: shippingPostal!.postOffice !=
+                                                                                null
+                                                                            ? SizedBox(
+                                                                                height: MediaQuery.of(context).size.height * .32,
+                                                                                child: ListView.builder(
+                                                                                  itemCount: shippingPostal!.postOffice!.length,
+                                                                                  itemBuilder: (context, ind) {
+                                                                                    return InkWell(
+                                                                                      onTap: () {
+                                                                                        setState(() {
+                                                                                          shippingPostOffice.text = shippingPostal!.postOffice![ind].name.toString();
+                                                                                          Navigator.pop(context, true);
+                                                                                        });
+                                                                                      },
+                                                                                      child: Padding(
+                                                                                        padding: const EdgeInsets.all(8.0),
+                                                                                        child: Text(
+                                                                                          shippingPostal!.postOffice![ind].name.toString(),
+                                                                                          style: const TextStyle(fontSize: 18),
+                                                                                        ),
+                                                                                      ),
+                                                                                    );
+                                                                                  },
+                                                                                ),
+                                                                              )
+                                                                            : const Text('No Post Office Found'),
+                                                                      );
+                                                                    },
+                                                                  );
+                                                                },
+                                                                readOnly: true,
+                                                                controller:
+                                                                    shippingPostOffice,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                        labelText:
+                                                                            'Post Office',
+                                                                        prefixIcon: Icon(
+                                                                            Icons
+                                                                                .arrow_drop_down_circle_outlined,
+                                                                            color: Colors
+                                                                                .grey),
+                                                                        border:
+                                                                            OutlineInputBorder(),
+                                                                        focusedBorder:
+                                                                            OutlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.grey),
+                                                                        )),
+                                                              )
+                                                            : const SizedBox(),
+                                                        const SizedBox(
+                                                            height: 15),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop();
+                                                              },
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        10,
+                                                                    horizontal:
+                                                                        30),
+                                                                child: const Text(
+                                                                    'Cancel',
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black)),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 10),
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop();
+                                                              },
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
+                                                                    color: Colors
+                                                                        .green,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        10,
+                                                                    horizontal:
+                                                                        30),
+                                                                child: const Text(
+                                                                    'Add',
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .white)),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      transitionBuilder:
+                                          (_, animation1, __, child) {
+                                        return SlideTransition(
+                                          position: Tween(
+                                            begin: const Offset(0, 1),
+                                            end: const Offset(0, 0),
+                                          ).animate(animation1),
+                                          child: child,
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Icon(
+                                    sameAsBilling
+                                        ? Icons.lock_outline
+                                        : Icons.edit,
+                                    color: sameAsBilling
+                                        ? Colors.grey
+                                        : Colors.blue,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(),
                         const SizedBox(
                           height: 10,
                         ),
@@ -1182,14 +1691,18 @@ class _AddInvoiceState extends State<AddInvoice> {
                             ],
                           ),
                         ),
+                        // Replace the current ListView.builder with this:
                         Padding(
                           padding: const EdgeInsets.only(left: 5, right: 5),
                           child: SingleChildScrollView(
                             child: ListView.builder(
                               shrinkWrap: true,
                               physics: const BouncingScrollPhysics(),
-                              itemCount: products.length,
+                              itemCount: _getAllProducts()
+                                  .length, // Combine both lists
                               itemBuilder: (context, index) {
+                                final allProducts = _getAllProducts();
+                                final product = allProducts[index];
                                 Color color = index % 2 == 0
                                     ? const Color(0xFFF3F3F3)
                                     : const Color(0xFFece9fd);
@@ -1199,16 +1712,16 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     columnWidths: {
                                       0: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.2), // Using 10%
+                                              0.2),
                                       1: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.16), // Using 30%
+                                              0.16),
                                       2: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.10),
                                       3: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.16), // Using 20%
+                                              0.16),
                                       4: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.22),
@@ -1217,7 +1730,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               0.10),
                                     },
                                     children: [
-                                      // Each TableRow represents a row in the Table
                                       TableRow(
                                         decoration: BoxDecoration(
                                           borderRadius:
@@ -1228,7 +1740,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              products[index]['product_name'],
+                                              product['product_name'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style:
@@ -1239,7 +1751,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              products[index]['product_rate'],
+                                              product['product_rate'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style:
@@ -1250,7 +1762,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              products[index]['quantity'],
+                                              product['quantity'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style:
@@ -1261,8 +1773,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              products[index]
-                                                  ['total_tax_amount'],
+                                              product['total_tax_amount'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style:
@@ -1273,7 +1784,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              products[index]['total_amount'],
+                                              product['total_amount'],
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style:
@@ -1283,77 +1794,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           ),
                                           GestureDetector(
                                             onTap: () {
-                                              subTotal = subTotal -
-                                                  double.parse(
-                                                    products[index]
-                                                        ['total_amount'],
-                                                  );
-                                              // totalTaxAmount = totalTaxAmount -
-                                              //     double.parse(products[index][
-                                              //             'total_tax_amount']) *
-                                              //         double.parse(
-                                              //             products[index]
-                                              //                 ['quantity']);
-                                              totalTaxAmount = totalTaxAmount -
-                                                  double.parse(products[index]
-                                                      ['total_tax_amount']);
-
-                                              allTotal = subTotal +
-                                                  double.parse(
-                                                      shippingCharge.text == ''
-                                                          ? '0'
-                                                          : shippingCharge
-                                                              .text) -
-                                                  double.parse(
-                                                      discount.text == ''
-                                                          ? '0'
-                                                          : discount.text);
-                                              paidAmount.text =
-                                                  allTotal.toString();
-
-                                              // products.removeWhere(
-                                              //   (item) => mapEquals(
-                                              //       item,
-                                              //       ({
-                                              //         "product_name":
-                                              //             products[index]
-                                              //                 ['product_name'],
-                                              //         "product_id":
-                                              //             products[index]
-                                              //                 ['product_id'],
-                                              //         "description":
-                                              //             products[index]
-                                              //                 ['description'],
-                                              //         "product_rate":
-                                              //             products[index]
-                                              //                 ['product_rate'],
-                                              //         "quantity":
-                                              //             products[index]
-                                              //                 ['quantity'],
-                                              //         "tax_percent":
-                                              //             products[index]
-                                              //                 ['tax_percent'],
-                                              //         "total_tax_amount":
-                                              //             products[index][
-                                              //                 'total_tax_amount'],
-                                              //         "total_amount":
-                                              //             products[index]
-                                              //                 ['total_amount'],
-                                              //       })),
-                                              // );
-                                              products.removeAt(index);
-                                              if (renProducts.isNotEmpty) {
-                                                renProducts.removeAt(index);
-                                              }
-                                              if (products.isEmpty) {
-                                                discount.clear();
-                                                shippingCharge.clear();
-                                                allTotal = 0.00;
-                                                paidAmount.text =
-                                                    allTotal.toString();
-                                              }
-
-                                              setState(() {});
+                                              _removeProduct(index);
                                             },
                                             child: const Padding(
                                               padding: EdgeInsets.all(8.0),
@@ -1372,6 +1813,197 @@ class _AddInvoiceState extends State<AddInvoice> {
                             ),
                           ),
                         ),
+
+                        // Padding(
+                        //   padding: const EdgeInsets.only(left: 5, right: 5),
+                        //   child: SingleChildScrollView(
+                        //     child: ListView.builder(
+                        //       shrinkWrap: true,
+                        //       physics: const BouncingScrollPhysics(),
+                        //       itemCount: products.length,
+                        //       itemBuilder: (context, index) {
+                        //         Color color = index % 2 == 0
+                        //             ? const Color(0xFFF3F3F3)
+                        //             : const Color(0xFFece9fd);
+                        //         return Padding(
+                        //           padding: const EdgeInsets.all(1.0),
+                        //           child: Table(
+                        //             columnWidths: {
+                        //               0: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.2), // Using 10%
+                        //               1: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.16), // Using 30%
+                        //               2: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.10),
+                        //               3: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.16), // Using 20%
+                        //               4: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.22),
+                        //               5: FixedColumnWidth(
+                        //                   MediaQuery.of(context).size.width *
+                        //                       0.10),
+                        //             },
+                        //             children: [
+                        //               // Each TableRow represents a row in the Table
+                        //               TableRow(
+                        //                 decoration: BoxDecoration(
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(1),
+                        //                   color: color,
+                        //                 ),
+                        //                 children: [
+                        //                   Padding(
+                        //                     padding: const EdgeInsets.all(8.0),
+                        //                     child: Text(
+                        //                       products[index]['product_name'],
+                        //                       maxLines: 2,
+                        //                       overflow: TextOverflow.ellipsis,
+                        //                       style:
+                        //                           const TextStyle(fontSize: 12),
+                        //                       textAlign: TextAlign.center,
+                        //                     ),
+                        //                   ),
+                        //                   Padding(
+                        //                     padding: const EdgeInsets.all(8.0),
+                        //                     child: Text(
+                        //                       products[index]['product_rate'],
+                        //                       maxLines: 2,
+                        //                       overflow: TextOverflow.ellipsis,
+                        //                       style:
+                        //                           const TextStyle(fontSize: 12),
+                        //                       textAlign: TextAlign.center,
+                        //                     ),
+                        //                   ),
+                        //                   Padding(
+                        //                     padding: const EdgeInsets.all(8.0),
+                        //                     child: Text(
+                        //                       products[index]['quantity'],
+                        //                       maxLines: 2,
+                        //                       overflow: TextOverflow.ellipsis,
+                        //                       style:
+                        //                           const TextStyle(fontSize: 12),
+                        //                       textAlign: TextAlign.center,
+                        //                     ),
+                        //                   ),
+                        //                   Padding(
+                        //                     padding: const EdgeInsets.all(8.0),
+                        //                     child: Text(
+                        //                       products[index]
+                        //                           ['total_tax_amount'],
+                        //                       maxLines: 2,
+                        //                       overflow: TextOverflow.ellipsis,
+                        //                       style:
+                        //                           const TextStyle(fontSize: 12),
+                        //                       textAlign: TextAlign.center,
+                        //                     ),
+                        //                   ),
+                        //                   Padding(
+                        //                     padding: const EdgeInsets.all(8.0),
+                        //                     child: Text(
+                        //                       products[index]['total_amount'],
+                        //                       maxLines: 2,
+                        //                       overflow: TextOverflow.ellipsis,
+                        //                       style:
+                        //                           const TextStyle(fontSize: 12),
+                        //                       textAlign: TextAlign.center,
+                        //                     ),
+                        //                   ),
+                        //                   GestureDetector(
+                        //                     onTap: () {
+                        //                       subTotal = subTotal -
+                        //                           double.parse(
+                        //                             products[index]
+                        //                                 ['total_amount'],
+                        //                           );
+                        //                       // totalTaxAmount = totalTaxAmount -
+                        //                       //     double.parse(products[index][
+                        //                       //             'total_tax_amount']) *
+                        //                       //         double.parse(
+                        //                       //             products[index]
+                        //                       //                 ['quantity']);
+                        //                       totalTaxAmount = totalTaxAmount -
+                        //                           double.parse(products[index]
+                        //                               ['total_tax_amount']);
+
+                        //                       allTotal = subTotal +
+                        //                           double.parse(
+                        //                               shippingCharge.text == ''
+                        //                                   ? '0'
+                        //                                   : shippingCharge
+                        //                                       .text) -
+                        //                           double.parse(
+                        //                               discount.text == ''
+                        //                                   ? '0'
+                        //                                   : discount.text);
+                        //                       paidAmount.text =
+                        //                           allTotal.toString();
+
+                        //                       // products.removeWhere(
+                        //                       //   (item) => mapEquals(
+                        //                       //       item,
+                        //                       //       ({
+                        //                       //         "product_name":
+                        //                       //             products[index]
+                        //                       //                 ['product_name'],
+                        //                       //         "product_id":
+                        //                       //             products[index]
+                        //                       //                 ['product_id'],
+                        //                       //         "description":
+                        //                       //             products[index]
+                        //                       //                 ['description'],
+                        //                       //         "product_rate":
+                        //                       //             products[index]
+                        //                       //                 ['product_rate'],
+                        //                       //         "quantity":
+                        //                       //             products[index]
+                        //                       //                 ['quantity'],
+                        //                       //         "tax_percent":
+                        //                       //             products[index]
+                        //                       //                 ['tax_percent'],
+                        //                       //         "total_tax_amount":
+                        //                       //             products[index][
+                        //                       //                 'total_tax_amount'],
+                        //                       //         "total_amount":
+                        //                       //             products[index]
+                        //                       //                 ['total_amount'],
+                        //                       //       })),
+                        //                       // );
+                        //                       products.removeAt(index);
+                        //                       if (renProducts.isNotEmpty) {
+                        //                         renProducts.removeAt(index);
+                        //                       }
+                        //                       if (products.isEmpty) {
+                        //                         discount.clear();
+                        //                         shippingCharge.clear();
+                        //                         allTotal = 0.00;
+                        //                         paidAmount.text =
+                        //                             allTotal.toString();
+                        //                       }
+
+                        //                       setState(() {});
+                        //                     },
+                        //                     child: const Padding(
+                        //                       padding: EdgeInsets.all(8.0),
+                        //                       child: Icon(
+                        //                         Icons.delete_outline,
+                        //                         color: Colors.red,
+                        //                       ),
+                        //                     ),
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ],
+                        //           ),
+                        //         );
+                        //       },
+                        //     ),
+                        //   ),
+                        // ),
                         const SizedBox(
                           height: 10,
                         ),
@@ -2136,14 +2768,13 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       prefixIcon: const Icon(
                                           Icons.notifications,
                                           color: Colors.black54),
-                                      fillColor: const Color.fromARGB(255, 255, 255, 255),
+                                      fillColor: const Color.fromARGB(
+                                          255, 255, 255, 255),
                                       filled: true,
                                       //prefixIcon: Icon(myIcon, color: prefixIconColor),
                                       border: const OutlineInputBorder(
-                                        
-                                          borderSide:  BorderSide(
-                                                color: Colors.black,
-                                                width: 1.5),
+                                        borderSide: BorderSide(
+                                            color: Colors.black, width: 1.5),
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(5)),
                                       ),
@@ -2158,13 +2789,13 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   maxLines: 1,
                                   decoration: InputDecoration(
                                       labelText: 'Remarks',
-                                      fillColor: const Color.fromARGB(255, 255, 254, 254),
+                                      fillColor: const Color.fromARGB(
+                                          255, 255, 254, 254),
                                       filled: true,
                                       //prefixIcon: Icon(myIcon, color: prefixIconColor),
                                       border: const OutlineInputBorder(
-                                         borderSide:  BorderSide(
-                                                color: Colors.black,
-                                                width: 1.5),
+                                        borderSide: BorderSide(
+                                            color: Colors.black, width: 1.5),
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(5)),
                                       ),
@@ -2556,7 +3187,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                             alignment: Alignment.center,
                             child: InkWell(
                               onTap: () async {
-                                if (products.isEmpty) {
+                                final allProducts =
+                                    _getAllProducts(); // Add this line
+                                if (allProducts.isEmpty) {
+                                  // Change this line
                                   Common.toastMessaage(
                                       'Add at least one product', Colors.red);
                                 } else if (paidAmount.text.isNotEmpty &&
@@ -2602,6 +3236,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
                                   var body = FormData.fromMap({
                                     "token": widget.token,
+                                    "proformaId": widget.proformaId,
                                     'invoice_number':
                                         invDetails!.data.invoiceNumber,
                                     'invoice_date': DateFormat("dd-MM-yyyy")
@@ -2633,7 +3268,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     "shipping_post_office":
                                         shippingPostOffice.text,
                                     'amount_paid': paidAmount.text,
-                                    'product_details': jsonEncode(products),
+                                    'product_details': jsonEncode(_getAllProducts()),
                                     'upload_file': templateImage != null
                                         ? await MultipartFile.fromFile(
                                             templateImage.toString())
@@ -3053,29 +3688,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "total_amount": productTotalAmount.text,
                               });
 
-                              subTotal = subTotal +
-                                  double.parse(productTotalAmount.text);
-
-                              notsubTotal = 0.00;
-                              for (var product in products) {
-                                notsubTotal +=
-                                    double.parse(product['product_rate']) *
-                                        double.parse(product['quantity']);
-                              }
-
-                              // totalTaxAmount = totalTaxAmount +
-                              //     double.parse(productTaxAmount.text) *
-                              //         double.parse(productQty.text);
-                              totalTaxAmount = totalTaxAmount +
-                                  double.parse(productTaxAmount.text);
-                              allTotal = subTotal +
-                                  double.parse(shippingCharge.text == ''
-                                      ? '0'
-                                      : shippingCharge.text) -
-                                  double.parse(discount.text == ''
-                                      ? '0'
-                                      : discount.text);
-                              paidAmount.text = allTotal.toString();
+                              _updateTotals();
                               productName = "Choose Product";
                               productId = "";
                               productDescription.clear();
@@ -3093,6 +3706,84 @@ class _AddInvoiceState extends State<AddInvoice> {
                               setState(() {});
                             }
                           },
+                          // onTap: () {
+                          //   if (productRate.text.isEmpty) {
+                          //     Common.toastMessaage(
+                          //         'Enter Product Rate', Colors.red);
+                          //   } else if (productQty.text.isEmpty) {
+                          //     Common.toastMessaage(
+                          //         'Enter Product Qty', Colors.red);
+                          //   } else if (productTaxPercent.text.isEmpty) {
+                          //     Common.toastMessaage(
+                          //         'Enter Product Tax Percent', Colors.red);
+                          //   } else if (productTaxAmount.text.isEmpty) {
+                          //     Common.toastMessaage(
+                          //         'Enter Product Tax Amount', Colors.red);
+                          //   } else if (productTotalAmount.text.isEmpty) {
+                          //     Common.toastMessaage(
+                          //         'Enter Product Total Amount', Colors.red);
+                          //   } else {
+                          //     products.add({
+                          //       "product_name": productName,
+                          //       "product_id": productId,
+                          //       "description": productDescription.text,
+                          //       "product_rate": productRate.text,
+                          //       "quantity": productQty.text,
+                          //       "tax_percent": productTaxPercent.text,
+                          //       "total_tax_amount": productTaxAmount.text,
+                          //       "total_amount": productTotalAmount.text,
+                          //     });
+                          //     renProducts.add({
+                          //       "product_name": productName,
+                          //       "product_id": productId,
+                          //       "description": productDescription.text,
+                          //       "product_rate": productRate.text,
+                          //       "quantity": productQty.text,
+                          //       "tax_percent": productTaxPercent.text,
+                          //       "total_tax_amount": productTaxAmount.text,
+                          //       "total_amount": productTotalAmount.text,
+                          //     });
+                          //     _updateTotals();
+                          //     subTotal = subTotal +
+                          //         double.parse(productTotalAmount.text);
+
+                          //     notsubTotal = 0.00;
+                          //     for (var product in products) {
+                          //       notsubTotal +=
+                          //           double.parse(product['product_rate']) *
+                          //               double.parse(product['quantity']);
+                          //     }
+
+                          //     // totalTaxAmount = totalTaxAmount +
+                          //     //     double.parse(productTaxAmount.text) *
+                          //     //         double.parse(productQty.text);
+                          //     totalTaxAmount = totalTaxAmount +
+                          //         double.parse(productTaxAmount.text);
+                          //     allTotal = subTotal +
+                          //         double.parse(shippingCharge.text == ''
+                          //             ? '0'
+                          //             : shippingCharge.text) -
+                          //         double.parse(discount.text == ''
+                          //             ? '0'
+                          //             : discount.text);
+                          //     paidAmount.text = allTotal.toString();
+                          //     productName = "Choose Product";
+                          //     productId = "";
+                          //     productDescription.clear();
+                          //     productRate.clear();
+                          //     productQty.clear();
+                          //     productTaxPercent.clear();
+                          //     productTaxAmount.clear();
+                          //     productTotalAmount.clear();
+
+                          //     final endValue = DateTime.now()
+                          //         .add(Duration(days: int.parse(typeDuration)));
+                          //     endDate.text =
+                          //         DateFormat('dd-MM-yyyy').format(endValue);
+                          //     Navigator.of(context).pop();
+                          //     setState(() {});
+                          //   }
+                          // },
                           child: Container(
                               decoration: BoxDecoration(
                                   color: Colors.green,
@@ -3756,6 +4447,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "total_tax_amount": renProductTaxAmount.text,
                                 "total_amount": renProductTotalAmount.text,
                               };
+                              _updateTotals();
                               Navigator.of(context).pop();
                               setState(() {});
                             }

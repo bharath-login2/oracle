@@ -5,14 +5,18 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 // import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/officialWhatsapp/audioPlayer.dart';
 import 'package:login2/screens/officialWhatsapp/chat_home_screen.dart';
+import 'package:login2/screens/officialWhatsapp/imageviewscreenBottom.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:login2/screens/officialWhatsapp/whatsapp_profile.dart';
@@ -186,6 +190,108 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _makePhoneCall() async {
+    if (officialMessageModel == null) return;
+
+    String phoneNumber = _cleanPhoneNumber(officialMessageModel!.phoneNumber);
+
+    final Uri telLaunchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+
+    if (await canLaunchUrl(telLaunchUri)) {
+      await launchUrl(telLaunchUri);
+    } else {
+      Common.toastMessaage("Cannot make phone call", Colors.red);
+    }
+  }
+
+  void _makeWhatsAppCall() async {
+    if (officialMessageModel == null) return;
+
+    String phoneNumber = _cleanPhoneNumber(officialMessageModel!.phoneNumber);
+    if (phoneNumber.startsWith('+91')) {
+      phoneNumber = phoneNumber.substring(3); 
+    }
+
+    String url = "https://wa.me/91$phoneNumber";
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      Common.toastMessaage("WhatsApp not installed", Colors.red);
+    }
+  }
+
+  void _showCallAppOptions() async {
+    if (officialMessageModel == null) return;
+
+    String phoneNumber = _cleanPhoneNumber(officialMessageModel!.phoneNumber);
+
+    final Uri telLaunchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+
+    try {
+      await launchUrl(
+        telLaunchUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      Common.toastMessaage("Cannot make call", Colors.red);
+    }
+  }
+
+  String _cleanPhoneNumber(String phoneNumber) {
+    return phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+  }
+
+  void _initiateVoiceCall() {
+    if (officialMessageModel == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Make a Call",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.call, color: Colors.green, size: 30),
+                title: const Text("Phone Call",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text("Call using your device's dialer"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _makePhoneCall();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.phone_in_talk,
+                    color: Colors.blue, size: 30),
+                title: const Text("Other Apps",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text("Choose from installed calling apps"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showCallAppOptions();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   getSocketMerssages() async {
     try {
       final socketMessage = await HttpService.socketChat(widget.groupId);
@@ -345,6 +451,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8, right: 16),
+              child: GestureDetector(
+                onTap: () {
+                  _initiateVoiceCall();
+                },
+                child: const Icon(
+                  Icons.phone,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ],
         ),
         body: Container(
@@ -399,6 +517,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                         bottom: index == 0 ? 90.0 : 0.0,
                                         top: 4.0),
                                     child: chatWidget2(index, context),
+                                  );
+                                } else if (items[index].messageText.format ==
+                                    "AUDIO") {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                        bottom: index == 0 ? 90.0 : 0.0,
+                                        top: 4.0),
+                                    child: chatWidgetAudio(
+                                        index, context), // <-- New widget
                                   );
                                 } else {
                                   return Padding(
@@ -496,7 +623,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                             ),
                                             GestureDetector(
                                               onTap: () {
-                                                attachDialog(context);
+                                                attachDialog(
+                                                    context, widget.groupId);
                                               },
                                               child: const Icon(
                                                 Icons.attach_file,
@@ -610,6 +738,113 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 color: ColorConstant.grey,
                                               ),
                                             ),
+                                            // const SizedBox(
+                                            //   width: 15,
+                                            // ),
+                                            // GestureDetector(
+                                            //   onTap: () async {
+                                            //     showDialog(
+                                            //       context: context,
+                                            //       builder:
+                                            //           (BuildContext context) {
+                                            //         return AlertDialog(
+                                            //           scrollable: true,
+                                            //           title: const Text(
+                                            //               'Select Source'),
+                                            //           content: Column(
+                                            //             crossAxisAlignment:
+                                            //                 CrossAxisAlignment
+                                            //                     .start,
+                                            //             children: [
+                                            //               TextButton(
+                                            //                 onPressed:
+                                            //                     () async {
+                                            //                   await pickedImage(
+                                            //                       context,
+                                            //                       ImageSource
+                                            //                           .camera);
+                                            //                   if (userImage ==
+                                            //                       null) {
+                                            //                   } else {
+                                            //                     Navigator.push(
+                                            //                         context,
+                                            //                         MaterialPageRoute(
+                                            //                           builder:
+                                            //                               (context) =>
+                                            //                                   ImageViewScreen(
+                                            //                             image:
+                                            //                                 userImage,
+                                            //                             val:
+                                            //                                 '1',
+                                            //                             groupId:
+                                            //                                 widget.groupId,
+                                            //                           ),
+                                            //                         )).then((t) {
+                                            //                       page = 1;
+                                            //                       add = 1;
+                                            //                       items.clear();
+                                            //                       getchat(widget
+                                            //                           .groupId);
+                                            //                     });
+                                            //                   }
+                                            //                 },
+                                            //                 child: const Text(
+                                            //                     "Camera"),
+                                            //               ),
+                                            //               TextButton(
+                                            //                 onPressed:
+                                            //                     () async {
+                                            //                   await pickedImage(
+                                            //                       context,
+                                            //                       ImageSource
+                                            //                           .gallery);
+                                            //                   if (userImage ==
+                                            //                       null) {
+                                            //                   } else {
+                                            //                     Navigator.push(
+                                            //                         context,
+                                            //                         MaterialPageRoute(
+                                            //                           builder:
+                                            //                               (context) =>
+                                            //                                   ImageViewScreen(
+                                            //                             image:
+                                            //                                 userImage,
+                                            //                             val:
+                                            //                                 '1',
+                                            //                             groupId:
+                                            //                                 widget.groupId,
+                                            //                           ),
+                                            //                         )).then((t) {
+                                            //                       page = 1;
+                                            //                       add = 1;
+                                            //                       items.clear();
+                                            //                       getchat(widget
+                                            //                           .groupId);
+                                            //                     });
+                                            //                   }
+                                            //                 },
+                                            //                 child: const Text(
+                                            //                     "Gallery"),
+                                            //               ),
+                                            //               TextButton(
+                                            //                 onPressed: () {
+                                            //                   Navigator.pop(
+                                            //                       context);
+                                            //                 },
+                                            //                 child: const Text(
+                                            //                     "Cancel"),
+                                            //               ),
+                                            //             ],
+                                            //           ),
+                                            //         );
+                                            //       },
+                                            //     );
+                                            //   },
+                                            //   child: const Icon(
+                                            //     Icons.mic,
+                                            //     color: ColorConstant.grey,
+                                            //   ),
+                                            // ),
                                           ],
                                         ),
                                       ),
@@ -697,267 +932,321 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<Object?> attachDialog(BuildContext context) {
+  // Future<Object?> attachDialog(BuildContext context) {
+  //   return showGeneralDialog(
+  //     barrierLabel: "showGeneralDialog",
+  //     barrierDismissible: true,
+  //     barrierColor: Colors.black.withOpacity(0.6),
+  //     transitionDuration: const Duration(milliseconds: 400),
+  //     context: context,
+  //     pageBuilder: (context, _, __) {
+  //       return StatefulBuilder(
+  //         builder: (context, setState) {
+  //           return Align(
+  //               alignment: Alignment.bottomCenter,
+  //               child: IntrinsicHeight(
+  //                 child: Container(
+  //                   width: double.maxFinite,
+  //                   clipBehavior: Clip.antiAlias,
+  //                   padding: const EdgeInsets.all(16),
+  //                   decoration: const BoxDecoration(
+  //                     color: Colors.white,
+  //                     borderRadius: BorderRadius.only(
+  //                       topLeft: Radius.circular(16),
+  //                       topRight: Radius.circular(16),
+  //                     ),
+  //                   ),
+  //                   child: Material(
+  //                       color: Colors.white,
+  //                       child: SingleChildScrollView(
+  //                         scrollDirection: Axis.horizontal,
+  //                         child: Column(
+  //                           children: [
+  //                             const SizedBox(height: 20),
+  //                             Row(
+  //                               children: [
+  //                                 InkWell(
+  //                                   onTap: () async {
+  //                                     Navigator.push(
+  //                                       context,
+  //                                       MaterialPageRoute(
+  //                                         builder: (context) => ListFileManager(
+  //                                             'document', widget.groupId),
+  //                                       ),
+  //                                     ).then((r) {
+  //                                       page = 1;
+  //                                       add = 1;
+  //                                       items.clear();
+  //                                       getchat(widget.groupId);
+  //                                     });
+  //                                   },
+  //                                   child: Column(
+  //                                     children: [
+  //                                       Container(
+  //                                         height: 40.0,
+  //                                         width: 40.0,
+  //                                         decoration: const BoxDecoration(
+  //                                           image: DecorationImage(
+  //                                             image: AssetImage(
+  //                                                 'assets/icons/doc.png'),
+  //                                             fit: BoxFit.fill,
+  //                                           ),
+  //                                         ),
+  //                                       ),
+  //                                       const SizedBox(
+  //                                         height: 3,
+  //                                       ),
+  //                                       SizedBox(
+  //                                         width: MediaQuery.of(context)
+  //                                                 .size
+  //                                                 .width *
+  //                                             0.2,
+  //                                         child: const Center(
+  //                                           child: Text(
+  //                                             'Docs',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     ],
+  //                                   ),
+  //                                 ),
+  //                                 InkWell(
+  //                                   onTap: () {
+  //                                     Navigator.push(
+  //                                       context,
+  //                                       MaterialPageRoute(
+  //                                         builder: (context) => ListFileManager(
+  //                                             'video', widget.groupId),
+  //                                       ),
+  //                                     ).then((r) {
+  //                                       page = 1;
+  //                                       add = 1;
+  //                                       items.clear();
+  //                                       getchat(widget.groupId);
+  //                                     });
+  //                                   },
+  //                                   child: Column(
+  //                                     children: [
+  //                                       Container(
+  //                                         height: 40.0,
+  //                                         width: 40.0,
+  //                                         decoration: const BoxDecoration(
+  //                                           image: DecorationImage(
+  //                                             image: AssetImage(
+  //                                                 'assets/icons/mp4.png'),
+  //                                             fit: BoxFit.fill,
+  //                                           ),
+  //                                         ),
+  //                                       ),
+  //                                       const SizedBox(
+  //                                         height: 3,
+  //                                       ),
+  //                                       SizedBox(
+  //                                         width: MediaQuery.of(context)
+  //                                                 .size
+  //                                                 .width *
+  //                                             0.2,
+  //                                         child: const Center(
+  //                                           child: Text(
+  //                                             'Video',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     ],
+  //                                   ),
+  //                                 ),
+  //                                 InkWell(
+  //                                   onTap: () {
+  //                                     Navigator.push(
+  //                                       context,
+  //                                       MaterialPageRoute(
+  //                                         builder: (context) => ListFileManager(
+  //                                             'image', widget.groupId),
+  //                                       ),
+  //                                     ).then((r) {
+  //                                       page = 1;
+  //                                       add = 1;
+  //                                       items.clear();
+  //                                       getchat(widget.groupId);
+  //                                     });
+  //                                   },
+  //                                   child: Column(
+  //                                     children: [
+  //                                       Container(
+  //                                         height: 40.0,
+  //                                         width: 40.0,
+  //                                         decoration: const BoxDecoration(
+  //                                           image: DecorationImage(
+  //                                             image: AssetImage(
+  //                                                 'assets/icons/picture.png'),
+  //                                             fit: BoxFit.fill,
+  //                                           ),
+  //                                         ),
+  //                                       ),
+  //                                       const SizedBox(
+  //                                         height: 3,
+  //                                       ),
+  //                                       SizedBox(
+  //                                         width: MediaQuery.of(context)
+  //                                                 .size
+  //                                                 .width *
+  //                                             0.2,
+  //                                         child: const Center(
+  //                                           child: Text(
+  //                                             'Gallery',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     ],
+  //                                   ),
+  //                                 ),
+  //                                 InkWell(
+  //                                   onTap: () {
+  //                                     Navigator.push(
+  //                                       context,
+  //                                       MaterialPageRoute(
+  //                                         builder: (context) => ListFileManager(
+  //                                             'audio', widget.groupId),
+  //                                       ),
+  //                                     ).then((r) {
+  //                                       page = 1;
+  //                                       add = 1;
+  //                                       items.clear();
+  //                                       getchat(widget.groupId);
+  //                                     });
+  //                                   },
+  //                                   child: Column(
+  //                                     children: [
+  //                                       Container(
+  //                                         height: 40.0,
+  //                                         width: 40.0,
+  //                                         decoration: const BoxDecoration(
+  //                                           image: DecorationImage(
+  //                                             image: AssetImage(
+  //                                                 'assets/icons/audio.png'),
+  //                                             fit: BoxFit.fill,
+  //                                           ),
+  //                                         ),
+  //                                       ),
+  //                                       const SizedBox(
+  //                                         height: 3,
+  //                                       ),
+  //                                       SizedBox(
+  //                                         width: MediaQuery.of(context)
+  //                                                 .size
+  //                                                 .width *
+  //                                             0.2,
+  //                                         child: const Center(
+  //                                           child: Text(
+  //                                             'Audio',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     ],
+  //                                   ),
+  //                                 ),
+  //                                 InkWell(
+  //                                   onTap: () {
+  //                                     templateDialog(context);
+  //                                   },
+  //                                   child: Column(
+  //                                     children: [
+  //                                       Container(
+  //                                         height: 40.0,
+  //                                         width: 40.0,
+  //                                         decoration: const BoxDecoration(
+  //                                           image: DecorationImage(
+  //                                             image: AssetImage(
+  //                                                 'assets/icons/template.png'),
+  //                                             fit: BoxFit.fill,
+  //                                           ),
+  //                                         ),
+  //                                       ),
+  //                                       const SizedBox(
+  //                                         height: 3,
+  //                                       ),
+  //                                       SizedBox(
+  //                                         width: MediaQuery.of(context)
+  //                                                 .size
+  //                                                 .width *
+  //                                             0.2,
+  //                                         child: const Center(
+  //                                           child: Text(
+  //                                             'Template',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     ],
+  //                                   ),
+  //                                 )
+  //                               ],
+  //                             ),
+  //                             const SizedBox(height: 20),
+  //                           ],
+  //                         ),
+  //                       )),
+  //                 ),
+  //               ));
+  //         },
+  //       );
+  //     },
+  //     transitionBuilder: (_, animation1, __, child) {
+  //       return SlideTransition(
+  //         position: Tween(
+  //           begin: const Offset(0, 1),
+  //           end: const Offset(0, 0),
+  //         ).animate(animation1),
+  //         child: child,
+  //       );
+  //     },
+  //   );
+  // }
+  Future<Object?> attachDialog(BuildContext parentContext, String groupId) {
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
       barrierDismissible: true,
       barrierColor: Colors.black.withOpacity(0.6),
       transitionDuration: const Duration(milliseconds: 400),
-      context: context,
+      context: parentContext,
       pageBuilder: (context, _, __) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Align(
-                alignment: Alignment.bottomCenter,
-                child: IntrinsicHeight(
-                  child: Container(
-                    width: double.maxFinite,
-                    clipBehavior: Clip.antiAlias,
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Material(
-                        color: Colors.white,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  InkWell(
-                                    onTap: () async {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ListFileManager(
-                                              'document', widget.groupId),
-                                        ),
-                                      ).then((r) {
-                                        page = 1;
-                                        add = 1;
-                                        items.clear();
-                                        getchat(widget.groupId);
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          height: 40.0,
-                                          width: 40.0,
-                                          decoration: const BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  'assets/icons/doc.png'),
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
-                                          child: const Center(
-                                            child: Text(
-                                              'Docs',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ListFileManager(
-                                              'video', widget.groupId),
-                                        ),
-                                      ).then((r) {
-                                        page = 1;
-                                        add = 1;
-                                        items.clear();
-                                        getchat(widget.groupId);
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          height: 40.0,
-                                          width: 40.0,
-                                          decoration: const BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  'assets/icons/mp4.png'),
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
-                                          child: const Center(
-                                            child: Text(
-                                              'Video',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ListFileManager(
-                                              'image', widget.groupId),
-                                        ),
-                                      ).then((r) {
-                                        page = 1;
-                                        add = 1;
-                                        items.clear();
-                                        getchat(widget.groupId);
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          height: 40.0,
-                                          width: 40.0,
-                                          decoration: const BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  'assets/icons/picture.png'),
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
-                                          child: const Center(
-                                            child: Text(
-                                              'Gallery',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ListFileManager(
-                                              'audio', widget.groupId),
-                                        ),
-                                      ).then((r) {
-                                        page = 1;
-                                        add = 1;
-                                        items.clear();
-                                        getchat(widget.groupId);
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          height: 40.0,
-                                          width: 40.0,
-                                          decoration: const BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  'assets/icons/audio.png'),
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
-                                          child: const Center(
-                                            child: Text(
-                                              'Audio',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      templateDialog(context);
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          height: 40.0,
-                                          width: 40.0,
-                                          decoration: const BoxDecoration(
-                                            image: DecorationImage(
-                                              image: AssetImage(
-                                                  'assets/icons/template.png'),
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
-                                          child: const Center(
-                                            child: Text(
-                                              'Template',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        )),
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: IntrinsicHeight(
+            child: Container(
+              width: double.maxFinite,
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Material(
+                color: Colors.white,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _attachmentOption(parentContext, 'Docs',
+                          'assets/icons/doc.png', 'document', groupId),
+                      _attachmentOption(parentContext, 'Video',
+                          'assets/icons/mp4.png', 'video', groupId),
+                      _attachmentOption(parentContext, 'Gallery',
+                          'assets/icons/picture.png', 'image', groupId),
+                      _attachmentOption(parentContext, 'Audio',
+                          'assets/icons/audio.png', 'audio', groupId),
+                    ],
                   ),
-                ));
-          },
+                ),
+              ),
+            ),
+          ),
         );
       },
       transitionBuilder: (_, animation1, __, child) {
@@ -969,6 +1258,104 @@ class _ChatScreenState extends State<ChatScreen> {
           child: child,
         );
       },
+    );
+  }
+
+  Widget _attachmentOption(
+    BuildContext parentContext,
+    String label,
+    String iconPath,
+    String format,
+    String groupId,
+  ) {
+    return InkWell(
+      onTap: () async {
+        Navigator.of(parentContext, rootNavigator: true).pop();
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        if (format == 'image' || format == 'video') {
+          XFile? pickedFile;
+
+          if (format == 'image') {
+            pickedFile =
+                await ImagePicker().pickImage(source: ImageSource.gallery);
+          } else if (format == 'video') {
+            pickedFile =
+                await ImagePicker().pickVideo(source: ImageSource.gallery);
+          }
+
+          if (pickedFile != null) {
+            final filePath = pickedFile.path;
+
+            Navigator.push(
+              parentContext,
+              MaterialPageRoute(
+                builder: (context) => ImageViewScreenBottom(
+                  filePath: filePath,
+                  val: '1',
+                  groupId: groupId,
+                ),
+              ),
+            ).then((_) {
+              page = 1;
+              add = 1;
+              items.clear();
+              getchat(widget.groupId);
+            });
+          }
+        } else if (format == 'document' || format == 'audio') {
+          FilePickerResult? result = await FilePicker.platform.pickFiles(
+            type: format == 'document' ? FileType.custom : FileType.audio,
+            allowedExtensions:
+                format == 'document' ? ['pdf', 'doc', 'docx', 'txt'] : null,
+          );
+
+          if (result != null && result.files.isNotEmpty) {
+            final filePath = result.files.first.path;
+            if (filePath != null) {
+              Navigator.push(
+                parentContext,
+                MaterialPageRoute(
+                  builder: (context) => ImageViewScreenBottom(
+                    filePath: filePath,
+                    val: '1',
+                    groupId: groupId,
+                  ),
+                ),
+              ).then((_) {
+                page = 1;
+                add = 1;
+                items.clear();
+                getchat(widget.groupId);
+              });
+            }
+          }
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          children: [
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(iconPath),
+                  fit: BoxFit.fill,
+                ),
+              ),
+            ),
+            const SizedBox(height: 3),
+            SizedBox(
+              width: MediaQuery.of(parentContext).size.width * 0.2,
+              child: Center(
+                child: Text(label, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1189,38 +1576,245 @@ class _ChatScreenState extends State<ChatScreen> {
                             ? const EdgeInsets.only(left: 0)
                             : const EdgeInsets.only(left: 5),
                         child: items[index].messageText.format == 'LOCATION'
-                            ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(36.0),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        size: 80,
-                                        color: Colors.red,
-                                      ),
-                                      Text(
-                                        "Tap to view",
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.red),
-                                      ),
-                                    ],
+                            ? InkWell(
+                                onTap: () async {
+                                  final url =
+                                      "https://www.google.com/maps?q=${items[index].messageText.latitude},${items[index].messageText.longitude}";
+                                  // if (await canLaunchUrl(Uri.parse(url))) {
+                                  await launchUrl(Uri.parse(url),
+                                      mode: LaunchMode.externalApplication);
+                                  //}
+                                },
+                                child: const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(36.0),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          size: 80,
+                                          color: Colors.red,
+                                        ),
+                                        Text(
+                                          "Tap to view ",
+                                          style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.red),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               )
-                            : Visibility(
-                                visible:
-                                    items[index].messageText.messageBody != "",
-                                child: Text(
-                                  items[index].messageText.messageBody,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
+                            : items[index].messageText.format == 'CONTACTS'
+                                ? GestureDetector(
+                                    onTap: () {
+                                      final name =
+                                          items[index].messageText.firstName;
+                                      final phone =
+                                          items[index].messageText.contactNo;
+
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          title: const Text("Contact Number"),
+                                          content: Text(
+                                            phone,
+                                            style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              child: const Text("Close"),
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                            ),
+                                            TextButton(
+                                              child: const Text("Call"),
+                                              onPressed: () {
+                                                launchUrl(
+                                                    Uri.parse("tel:$phone"));
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: const Text("Save"),
+                                              onPressed: () async {
+                                                if (await FlutterContacts
+                                                    .requestPermission()) {
+                                                  final contact = Contact()
+                                                    ..name.first = name
+                                                    ..phones = [Phone(phone)];
+                                                  await contact.insert();
+                                                  Navigator.pop(context);
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text(
+                                                            "Contact saved successfully ✅")),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.05),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Header: Avatar + Name + Company
+                                          Row(
+                                            children: [
+                                              const CircleAvatar(
+                                                radius: 24,
+                                                backgroundColor:
+                                                    Colors.blueGrey,
+                                                child: Icon(Icons.person,
+                                                    size: 28,
+                                                    color: Colors.white),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (items[index]
+                                                        .messageText
+                                                        .firstName
+                                                        .isNotEmpty)
+                                                      Text(
+                                                        items[index]
+                                                            .messageText
+                                                            .firstName,
+                                                        style: const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600),
+                                                      ),
+                                                    if (items[index]
+                                                        .messageText
+                                                        .companyName
+                                                        .isNotEmpty)
+                                                      Text(
+                                                        items[index]
+                                                            .messageText
+                                                            .companyName,
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: Colors
+                                                                .grey.shade600,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                          const SizedBox(height: 12),
+
+                                          // WhatsApp Style Buttons
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: TextButton.icon(
+                                                  style: TextButton.styleFrom(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 10),
+                                                  ),
+                                                  icon: const Icon(Icons.call,
+                                                      color: Colors.green),
+                                                  label: const Text("Call"),
+                                                  onPressed: () {
+                                                    final phone = items[index]
+                                                        .messageText
+                                                        .contactNo;
+                                                    launchUrl(Uri.parse(
+                                                        "tel:$phone"));
+                                                  },
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: TextButton.icon(
+                                                  style: TextButton.styleFrom(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 10),
+                                                  ),
+                                                  icon: const Icon(
+                                                      Icons.person_add,
+                                                      color: Colors.blue),
+                                                  label: const Text("Save"),
+                                                  onPressed: () async {
+                                                    final name = items[index]
+                                                        .messageText
+                                                        .firstName;
+                                                    final phone = items[index]
+                                                        .messageText
+                                                        .contactNo;
+                                                    if (await FlutterContacts
+                                                        .requestPermission()) {
+                                                      final contact = Contact()
+                                                        ..name.first = name
+                                                        ..phones = [
+                                                          Phone(phone)
+                                                        ];
+                                                      await contact.insert();
+                                                      Navigator.pop(context);
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        const SnackBar(
+                                                            content: Text(
+                                                                "Contact saved successfully ✅")),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Visibility(
+                                    visible:
+                                        items[index].messageText.messageBody !=
+                                            "",
+                                    child: Text(
+                                      items[index].messageText.messageBody,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
                       ),
                       items[index].messageText.footer == ""
                           ? const SizedBox()
@@ -1400,6 +1994,18 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget chatWidgetAudio(int index, BuildContext context) {
+    final audioUrl = items[index].messageText.url;
+    final fromMe = items[index].fromMe;
+
+    if (audioUrl.isEmpty) return const SizedBox.shrink();
+
+    return AudioMessageWidget(
+      audioUrl: audioUrl,
+      fromMe: fromMe,
     );
   }
 
@@ -3106,17 +3712,54 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  // sendingMessage(groupId, messageData, fileName, isImage) async {
+  //   setState(() {
+  //     buttonStatus = true;
+  //   });
+  //   sendMessageModel =
+  //       await HttpService.sendMessage(groupId, messageData, fileName, isImage);
+  //   if (sendMessageModel != null && sendMessageModel!.status == true) {
+  //     page = 1;
+  //     add = 1;
+  //     items.clear();
+  //     await getchat(groupId);
+  //     setState(() {
+  //       buttonStatus = false;
+  //     });
+  //   }
+  // }
+
   sendingMessage(groupId, messageData, fileName, isImage) async {
     setState(() {
       buttonStatus = true;
     });
-    sendMessageModel =
-        await HttpService.sendMessage(groupId, messageData, fileName, isImage);
-    if (sendMessageModel != null && sendMessageModel!.status == true) {
-      page = 1;
-      add = 1;
-      items.clear();
-      await getchat(groupId);
+    try {
+      print("➡️ Calling API: HttpService.sendMessage...");
+      if (messageData is List) {
+        messageData = messageData.join(",");
+      }
+      if (fileName is List) {
+        fileName = fileName.join(",");
+      }
+      sendMessageModel = await HttpService.sendMessage(
+        groupId,
+        messageData,
+        fileName,
+        isImage,
+      );
+      print("✅ API Response Received: ${sendMessageModel?.toJson()}");
+      if (sendMessageModel != null && sendMessageModel!.status == true) {
+        page = 1;
+        add = 1;
+        items.clear();
+        await getchat(groupId);
+      } else {
+        print("⚠️ API returned false or null status");
+      }
+    } catch (e, s) {
+      print("❌ ERROR in sendMessage: $e");
+      print(s);
+    } finally {
       setState(() {
         buttonStatus = false;
       });

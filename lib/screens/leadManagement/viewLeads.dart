@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
@@ -7,6 +8,7 @@ import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/leadDetailsModel.dart';
 import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
 import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
+import 'package:login2/models/lead_management/leadSubTypeModel.dart';
 import 'package:login2/models/lead_management/listFolderName.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
@@ -37,7 +39,9 @@ class ViewLeads extends StatefulWidget {
   bool cloudCall;
   String? fromDate;
   String? toDate;
+  String? staffId;
   String? status;
+
   String? category;
   String? staff;
   String? categoryName;
@@ -60,7 +64,9 @@ class ViewLeads extends StatefulWidget {
   List<String>? preservedAssignedStaffItems;
   List<String>? preservedResponseItems;
   List<StateList>? stateDetails;
-
+  final Set<String> _loadedLeadIds = HashSet<String>();
+  final Map<String, int> _leadIdToIndexMap = {};
+  bool _isCacheInitialized = false;
   ViewLeads(
     this.token,
     this.editLead,
@@ -69,6 +75,7 @@ class ViewLeads extends StatefulWidget {
     super.key,
     this.fromDate,
     this.toDate,
+    this.staffId,
     this.status,
     this.category,
     this.staff,
@@ -111,6 +118,7 @@ class _ViewLeadsState extends State<ViewLeads>
     with AutomaticKeepAliveClientMixin {
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
+  LeadSubTypeModel? leadSubTypeList;
   CommonConfigureModel? configure;
   LeadDeatailsModel? leadDetails;
   LeadDeatailsModelAdd? leadDetailsAdditional;
@@ -148,6 +156,7 @@ class _ViewLeadsState extends State<ViewLeads>
   PostOffice? selectedPostOffice;
   bool isDistrictLoading = false;
   bool _isLoading = false;
+  bool isFilterApplied = false;
   String? StateId;
   String? DistrictId;
   final List<Color> _colors = [
@@ -242,11 +251,33 @@ class _ViewLeadsState extends State<ViewLeads>
     }
   }
 
+  // void _initializeData() {
+  //   fromdate = widget.preservedFromDate ??
+  //       (widget.fromDate != null ? DateTime.parse(widget.fromDate!) : null);
+  //   todate = widget.preservedToDate ??
+  //       (widget.toDate != null ? DateTime.parse(widget.toDate!) : null);
+  //   currentSortOrder = widget.preservedSortOrder ?? 'desc';
+  //   sortAscending = widget.preservedSortAscending ?? false;
+  //   _initializeFilterItems();
+  //   if (widget.page != null) page = widget.page! - 1;
+  //   if (widget.pageSize != null) pageSize = widget.pageSize!;
+  //   status = widget.status == "0" ? null : widget.status;
+  //   staff = widget.staff;
+  //   _handlePageSpecificLogic();
+  //   if (!_isDataLoaded) {
+  //     getData(currentSortOrder, true, status);
+  //   }
+  // }
   void _initializeData() {
     fromdate = widget.preservedFromDate ??
-        (widget.fromDate != null ? DateTime.parse(widget.fromDate!) : null);
+        (widget.fromDate != null
+            ? DateTime.parse(widget.fromDate!)
+            : DateTime.now());
     todate = widget.preservedToDate ??
-        (widget.toDate != null ? DateTime.parse(widget.toDate!) : null);
+        (widget.toDate != null
+            ? DateTime.parse(widget.toDate!)
+            : DateTime.now());
+
     currentSortOrder = widget.preservedSortOrder ?? 'desc';
     sortAscending = widget.preservedSortAscending ?? false;
     _initializeFilterItems();
@@ -255,6 +286,7 @@ class _ViewLeadsState extends State<ViewLeads>
     status = widget.status == "0" ? null : widget.status;
     staff = widget.staff;
     _handlePageSpecificLogic();
+
     if (!_isDataLoaded) {
       getData(currentSortOrder, true, status);
     }
@@ -466,158 +498,6 @@ class _ViewLeadsState extends State<ViewLeads>
     }
   }
 
-  // Future<void> getData(String sort, bool isFirst, dynamic status1) async {
-  //   String currentHash = _generateApiCallHash();
-  //   if (_lastApiCallHash == currentHash && _isDataLoaded) {
-  //     return;
-  //   }
-  //   _lastApiCallHash = currentHash;
-  //   transferPermission = await Common.getSharedPref("transferLeads");
-  //   userId = await Common.getSharedPref("userId");
-  //   name = await Common.getSharedPref("name");
-  //   setState(() {
-  //     timeOut = false;
-  //   });
-
-  //   final String cacheKey = _generateCacheKey();
-  //   _currentCacheKey = cacheKey;
-  //   if (_leadCache.containsKey(cacheKey) && isFirst) {
-  //     final cachedItems = _leadCache[cacheKey]!;
-  //     final int startIndex = (page - 1) * pageSize;
-
-  //     if (startIndex < cachedItems.length) {
-  //       setState(() {
-  //         items = cachedItems.sublist(0, startIndex + pageSize);
-  //         isLoading = false;
-  //         _isDataLoaded = true;
-  //       });
-  //       return;
-  //     }
-  //   }
-
-  //   try {
-  //     if (!isLoading) {
-  //       setState(() {
-  //         isLoading = true;
-  //       });
-  //       final connectivityResult = await (Connectivity().checkConnectivity());
-  //       if (connectivityResult == ConnectivityResult.mobile ||
-  //           connectivityResult == ConnectivityResult.wifi) {
-  //         setState(() {
-  //           result = true;
-  //         });
-  //       } else {
-  //         setState(() {
-  //           result = false;
-  //         });
-  //         return;
-  //       }
-  //       statusWise = await Common.getSharedPref("statusWise");
-  //       roleId = await Common.getSharedPref("roleId");
-  //       multiBranch = await Common.getSharedPref("multiBranch");
-  //       if (statusWise == 'yes') {
-  //         statusWiseId = await Common.getSharedPref("statusWisId");
-  //         statusCatId = await Common.getSharedPref("statusCatId");
-  //         type = await Common.getSharedPref("type");
-  //         viewLeads = await HttpService.viewLeadsSts(
-  //             widget.token,
-  //             fromdate,
-  //             todate,
-  //             type,
-  //             statusCatId,
-  //             statusWiseId,
-  //             sort,
-  //             page,
-  //             pageSize,
-  //             isFirst,
-  //             branch);
-  //       } else {
-  //         try {
-  //           Map<String, dynamic> body = {
-  //             "token": widget.token,
-  //             // if (fromdate != null) "fromDate": outputFormat.format(fromdate!),
-  //             // if (todate != null) "toDate": outputFormat.format(todate!),
-  //             if (fromdate == null) "fromDate": "",
-  //             if (todate == null) "toDate": "",
-  //             "callResultId": status1 ?? "",
-  //             "leadCategoryId": checkedCategoryItems,
-  //             "callResponseId": checkedResponseItems,
-  //             "staffId": checkedAssignedStaffItems,
-  //             "isCalled": isCalled,
-  //             "priority": checkedPriorityItems,
-  //             "sort": sort,
-  //             "page": page,
-  //             "pageSize": pageSize,
-  //             "isFirst": isFirst,
-  //             "leadType": widget.leadType ?? "",
-  //             "state": StateId ?? "",
-  //             "district": DistrictId ?? "",
-  //             "branchId": branch ?? ""
-  //           };
-  //           log(body.toString());
-  //           viewLeads = await HttpService.viewLeads(body);
-  //         } catch (e) {
-  //           log(e.toString());
-  //         }
-  //       }
-  //       if (commonDetails == null) {
-  //         commonDetails = await HttpService.addLeadCommonData(widget.token);
-  //         if (commonDetails != null) {
-  //           filteredStaff.addAll(commonDetails!.data.transferStaffs);
-  //         }
-  //       }
-  //       if (configure == null) {
-  //         configure = await HttpService.configure(widget.token);
-  //       }
-
-  //       setState(() {
-  //         if (isFirst) {
-  //           items.clear();
-  //         }
-  //         // if (viewLeads != null) {
-  //         //   items.addAll(viewLeads!.data.details);
-  //         // }
-
-  //         if (viewLeads != null) {
-  //           final newItems = viewLeads!.data.details;
-
-  //           // Update cache
-  //           if (isFirst) {
-  //             _leadCache[cacheKey] = List.from(newItems);
-  //             _cacheTotalCounts[cacheKey] = viewLeads!.data.totalLeads;
-  //             items.clear();
-  //             items.addAll(newItems);
-  //           } else {
-  //             // Append to existing cache
-  //             _leadCache[cacheKey]!.addAll(newItems);
-  //             items.addAll(newItems);
-  //           }
-
-  //           setState(() {
-  //             page++;
-  //             isLoading = false;
-  //             _isDataLoaded = true;
-  //             isInitialLoad = false;
-  //           });
-  //         }
-  //         // page++;
-  //         // isLoading = false;
-  //         // _isDataLoaded = true;
-  //         // isInitialLoad = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     setState(() {
-  //       isLoading = false;
-  //       timeOut = true;
-  //       _isDataLoaded = false;
-  //     });
-  //     log("error: $e");
-  //   }
-
-  //   phoneCallLogPermission =
-  //       await Common.getSharedPref("phoneCallLogPermission");
-  // }
 
   Future<void> getData(String sort, bool isFirst, dynamic status1) async {
     if (isLoading) return;
@@ -686,12 +566,15 @@ class _ViewLeadsState extends State<ViewLeads>
       } else {
         Map<String, dynamic> body = {
           "token": widget.token,
-          if (fromdate == null) "fromDate": "",
-          if (todate == null) "toDate": "",
           "callResultId": status1 ?? "",
           "leadCategoryId": checkedCategoryItems,
+          "leadSubcategoryId": checkedSubCategoryItems,
           "callResponseId": checkedResponseItems,
-          "staffId": checkedAssignedStaffItems,
+          //  "staffId": checkedAssignedStaffItems !=""? checkedAssignedStaffItems:widget.staffId,
+          "staffId": (checkedAssignedStaffItems != null &&
+                  checkedAssignedStaffItems.isNotEmpty)
+              ? checkedAssignedStaffItems
+              : widget.staffId,
           "isCalled": isCalled,
           "priority": checkedPriorityItems,
           "sort": sort,
@@ -703,6 +586,16 @@ class _ViewLeadsState extends State<ViewLeads>
           "district": DistrictId ?? "",
           "branchId": branch ?? ""
         };
+        bool shouldSendDates = isFilterApplied ||
+            widget.leadType == "-1" ||
+            (status1 != null && status1 == "4");
+        body["filterStatus"] = shouldSendDates ? 1 : 0;
+        body["fromDate"] = shouldSendDates && fromdate != null
+            ? outputFormat.format(fromdate!)
+            : "";
+        body["toDate"] = shouldSendDates && todate != null
+            ? outputFormat.format(todate!)
+            : "";
         log(body.toString());
         viewLeads = await HttpService.viewLeads(body);
       }
@@ -1532,48 +1425,268 @@ class _ViewLeadsState extends State<ViewLeads>
     );
   }
 
+  // void _showDeleteConfirmationDialog() {
+  //   showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return AlertDialog(
+  //           title: const Text('Please Confirm'),
+  //           content: const Text('Are you sure to Delete Selected Leads?'),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () => Navigator.of(context).pop(),
+  //                 child: const Text('No')),
+  //             TextButton(
+  //                 onPressed: () async {
+  //                   Map<String, dynamic> body = {
+  //                     "token": widget.token,
+  //                     'leadMasterIds': selectedIUsers,
+  //                   };
+  //                   BulkDeleteLeadModel deleteBulk =
+  //                       await HttpService.bulkDeleteLead(body);
+  //                   // if (deleteBulk.data == true) {
+  //                   //   Common.toastMessaage(deleteBulk.message, Colors.green);
+  //                   //   selectedIUsers.clear();
+  //                   //   if (context.mounted) {
+  //                   //     Navigator.pop(context);
+  //                   //     setState(() {
+  //                   //       _isDataLoaded = false;
+  //                   //       _lastApiCallHash = null;
+  //                   //     });
+  //                   //     page = 1;
+  //                   //     items.clear();
+  //                   //     getData('desc', false, status);
+  //                   //   }
+  //                   // } else {
+  //                   //   Common.toastMessaage(deleteBulk.message, Colors.red);
+  //                   //   if (context.mounted) Navigator.of(context).pop();
+  //                   // }
+  //                   if (deleteBulk.data == true) {
+  //                     Common.toastMessaage(deleteBulk.message, Colors.green);
+
+  //                     if (context.mounted) {
+  //                       Navigator.pop(context);
+  //                       Navigator.pop(context);
+  //                       _refreshCurrentListAfterDelete();
+  //                     }
+  //                   } else {
+  //                     Common.toastMessaage(deleteBulk.message, Colors.red);
+  //                     if (context.mounted) {
+  //                       Navigator.pop(context);
+  //                     }
+  //                   }
+  //                 },
+  //                 child: const Text('Yes')),
+  //           ],
+  //         );
+  //       });
+  // }
+
   void _showDeleteConfirmationDialog() {
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Delete Selected Leads?'),
+            content: Text(
+                'Are you sure you want to delete ${selectedIUsers.length} selected leads?'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('No')),
+                  child: const Text('Cancel')),
               TextButton(
                   onPressed: () async {
-                    Map<String, dynamic> body = {
-                      "token": widget.token,
-                      'leadMasterIds': selectedIUsers,
-                    };
-                    BulkDeleteLeadModel deleteBulk =
-                        await HttpService.bulkDeleteLead(body);
-                    if (deleteBulk.data == true) {
-                      Common.toastMessaage(deleteBulk.message, Colors.green);
-                      selectedIUsers.clear();
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        setState(() {
-                          _isDataLoaded = false;
-                          _lastApiCallHash = null;
-                        });
-                        page = 1;
-                        items.clear();
-                        getData('desc', false, status);
-                      }
-                    } else {
-                      Common.toastMessaage(deleteBulk.message, Colors.red);
-                      if (context.mounted) Navigator.of(context).pop();
-                    }
+                    Navigator.pop(context);
+                    await _performBulkDelete();
                   },
-                  child: const Text('Yes')),
+                  child: const Text('Delete',
+                      style: TextStyle(color: Colors.red))),
             ],
           );
         });
   }
+
+  Future<void> _performBulkDelete() async {
+    Common.showProgressDialog(context, "Deleting leads...");
+
+    try {
+      Map<String, dynamic> body = {
+        "token": widget.token,
+        'leadMasterIds': selectedIUsers,
+      };
+
+      BulkDeleteLeadModel deleteBulk = await HttpService.bulkDeleteLead(body);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      if (deleteBulk.data == true) {
+        Common.toastMessaage(
+            '${selectedIUsers.length} lead(s) deleted successfully',
+            Colors.green);
+        _refreshListAfterDelete();
+      } else {
+        Common.toastMessaage(deleteBulk.message, Colors.red);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+      Common.toastMessaage("Delete failed: ${e.toString()}", Colors.red);
+    }
+  }
+
+  void _refreshListAfterDelete() {
+    final currentCacheKey = _generateCacheKey();
+    _leadCache.remove(currentCacheKey);
+    _cacheTotalCounts.remove(currentCacheKey);
+    final deletedCount = selectedIUsers.length;
+    setState(() {
+      selectedIUsers.clear();
+      selectedUserNumbers.clear();
+      for (var item in items) {
+        item.isSelected = false;
+      }
+    });
+    if (viewLeads != null) {
+      viewLeads!.data.totalLeads = (viewLeads!.data.totalLeads - deletedCount)
+          .clamp(0, double.maxFinite.toInt());
+    }
+    _reloadCurrentData();
+  }
+
+  void _reloadCurrentData() {
+    setState(() {
+      _isDataLoaded = false;
+      isLoading = false;
+    });
+
+    items.clear();
+    page = 1;
+
+    getData(currentSortOrder, true, status).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  // Future<dynamic> transferLeads(BuildContext context) {
+  //   return showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return StatefulBuilder(builder: (context, setState) {
+  //           return AlertDialog(
+  //             backgroundColor: Colors.white,
+  //             title: const Text('Transfer'),
+  //             content: FormField<String>(
+  //               builder: (FormFieldState<String> state) {
+  //                 return Container(
+  //                   height: 50,
+  //                   width: MediaQuery.of(context).size.width * 0.43,
+  //                   decoration: BoxDecoration(
+  //                       border:
+  //                           Border.all(color: Colors.grey.shade900, width: 0),
+  //                       color: Colors.white,
+  //                       borderRadius:
+  //                           const BorderRadius.all(Radius.circular(5))),
+  //                   child: GestureDetector(
+  //                     onTap: () {
+  //                       collectedStaffDialog(context);
+  //                     },
+  //                     child: Container(
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.white,
+  //                         borderRadius: BorderRadius.circular(4),
+  //                       ),
+  //                       child: Center(
+  //                           child: Padding(
+  //                         padding: const EdgeInsets.only(left: 16.0),
+  //                         child: Row(
+  //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                           children: [
+  //                             SizedBox(
+  //                                 width:
+  //                                     MediaQuery.of(context).size.width * 0.38,
+  //                                 child: Text(
+  //                                   staffName,
+  //                                   overflow: TextOverflow.ellipsis,
+  //                                   style: const TextStyle(
+  //                                       fontWeight: FontWeight.bold),
+  //                                 )),
+  //                             Icon(
+  //                               Icons.arrow_drop_down,
+  //                               color: Colors.grey.shade600,
+  //                             )
+  //                           ],
+  //                         ),
+  //                       )),
+  //                     ),
+  //                   ),
+  //                 );
+  //               },
+  //             ),
+  //             actions: [
+  //               TextButton(
+  //                   onPressed: () {
+  //                     Navigator.of(context).pop();
+  //                   },
+  //                   child: const Text('No')),
+  //               TextButton(
+  //                 onPressed: () async {
+  //                   if (staffId == null || staffId.toString().isEmpty) {
+  //                     Common.toastMessaage("Please select a staff", Colors.red);
+  //                     return;
+  //                   }
+  //                   Common.showProgressDialog(context, "Loading..");
+  //                   Map<String, dynamic> body = {
+  //                     "token": widget.token,
+  //                     'leadMasterIds': selectedIUsers,
+  //                     'staffId': staffId
+  //                   };
+  //                   BulkTransferLeadModel bulkTransfer =
+  //                       await HttpService.bulkTransferLead(body);
+
+  //                   if (bulkTransfer.data == true) {
+  //                     Common.toastMessaage(bulkTransfer.message, Colors.green);
+
+  //                     if (context.mounted) {
+  //                       Navigator.pop(context);
+  //                       Navigator.pop(context);
+  //                       setState(() {
+  //                         selectedIUsers.clear();
+  //                         selectedUserNumbers.clear();
+  //                         for (var item in items) {
+  //                           item.isSelected = false;
+  //                         }
+  //                       });
+  //                       int currentPage = page;
+  //                       items.clear();
+  //                       page = 1;
+  //                       getData('desc', false, status);
+
+  //                       if (itemScrollController.isAttached) {
+  //                         itemScrollController.scrollTo(
+  //                           index: (currentPage - 1) * pageSize,
+  //                           duration: const Duration(milliseconds: 500),
+  //                         );
+  //                       }
+  //                     }
+  //                   } else {
+  //                     Common.toastMessaage(bulkTransfer.message, Colors.red);
+  //                     if (context.mounted) {
+  //                       Navigator.of(context).pop();
+  //                     }
+  //                   }
+  //                 },
+  //                 child: const Text('Yes'),
+  //               ),
+  //             ],
+  //           );
+  //         });
+  //       });
+  // }
 
   Future<dynamic> transferLeads(BuildContext context) {
     return showDialog(
@@ -1638,44 +1751,42 @@ class _ViewLeadsState extends State<ViewLeads>
                     child: const Text('No')),
                 TextButton(
                   onPressed: () async {
-                    Common.showProgressDialog(context, "Loading..");
-                    Map<String, dynamic> body = {
-                      "token": widget.token,
-                      'leadMasterIds': selectedIUsers,
-                      'staffId': staffId
-                    };
-                    BulkTransferLeadModel bulkTransfer =
-                        await HttpService.bulkTransferLead(body);
+                    if (staffId == null || staffId.toString().isEmpty) {
+                      Common.toastMessaage("Please select a staff", Colors.red);
+                      return;
+                    }
 
-                    if (bulkTransfer.data == true) {
-                      Common.toastMessaage(bulkTransfer.message, Colors.green);
+                    Common.showProgressDialog(context, "Transferring leads...");
 
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                        setState(() {
-                          selectedIUsers.clear();
-                          selectedUserNumbers.clear();
-                          for (var item in items) {
-                            item.isSelected = false;
-                          }
-                        });
-                        int currentPage = page;
-                        items.clear();
-                        page = 1;
-                        getData('desc', false, status);
+                    try {
+                      Map<String, dynamic> body = {
+                        "token": widget.token,
+                        'leadMasterIds': selectedIUsers,
+                        'staffId': staffId
+                      };
 
-                        if (itemScrollController.isAttached) {
-                          itemScrollController.scrollTo(
-                            index: (currentPage - 1) * pageSize,
-                            duration: const Duration(milliseconds: 500),
-                          );
+                      BulkTransferLeadModel bulkTransfer =
+                          await HttpService.bulkTransferLead(body);
+
+                      if (bulkTransfer.data == true) {
+                        Common.toastMessaage(
+                            bulkTransfer.message, Colors.green);
+
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                          _nuclearReset();
+                        }
+                      } else {
+                        Common.toastMessaage(bulkTransfer.message, Colors.red);
+                        if (context.mounted) {
+                          Navigator.pop(context);
                         }
                       }
-                    } else {
-                      Common.toastMessaage(bulkTransfer.message, Colors.red);
+                    } catch (e) {
                       if (context.mounted) {
-                        Navigator.of(context).pop();
+                        Navigator.pop(context);
+                        Common.toastMessaage("Transfer failed: $e", Colors.red);
                       }
                     }
                   },
@@ -1685,6 +1796,39 @@ class _ViewLeadsState extends State<ViewLeads>
             );
           });
         });
+  }
+
+  void _nuclearReset() {
+    _leadCache.clear();
+    _cacheTotalCounts.clear();
+    _currentCacheKey = null;
+    _lastApiCallHash = null;
+    setState(() {
+      selectedIUsers.clear();
+      selectedUserNumbers.clear();
+      staffName = "Staff";
+      staffId = "";
+      items.clear();
+      page = 1;
+      _isDataLoaded = false;
+      isLoading = false;
+      isInitialLoad = true;
+      for (var item in items) {
+        item.isSelected = false;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _forceReloadData();
+    });
+  }
+
+  void _forceReloadData() {
+    viewLeads = null;
+    getData(currentSortOrder, true, status).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   Future<dynamic> collectedStaffDialog(BuildContext context) {
@@ -2724,6 +2868,7 @@ class _ViewLeadsState extends State<ViewLeads>
                           child: RawMaterialButton(
                             onPressed: () {
                               setState(() {
+                                isFilterApplied = true;
                                 _isDataLoaded = false;
                                 _lastApiCallHash = null;
                               });
@@ -2879,67 +3024,11 @@ class _ViewLeadsState extends State<ViewLeads>
         const SizedBox(height: 13),
         const Text('Lead Category'),
         const SizedBox(height: 10),
+
+        // Main Category Selection
         InkWell(
           onTap: () {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    scrollable: true,
-                    title: const Text('Lead Category'),
-                    content: SizedBox(
-                      height: MediaQuery.of(context).size.height * .32,
-                      width: MediaQuery.of(context).size.height * .8,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: commonDetails?.data.leadCategory.length ?? 0,
-                        itemBuilder: (context, ind) {
-                          return CheckboxListTile(
-                            title: SizedBox(
-                              width: 200,
-                              child: Text(
-                                commonDetails!
-                                    .data.leadCategory[ind].leadCategory
-                                    .toString(),
-                                style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 14),
-                              ),
-                            ),
-                            value: checkedCategoryItems.contains(commonDetails!
-                                .data.leadCategory[ind].leadCategoryId
-                                .toString()),
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                setState(() {
-                                  checkedCategoryItems.add(commonDetails!
-                                      .data.leadCategory[ind].leadCategoryId
-                                      .toString());
-                                  checkedCategoryItemsName.add(commonDetails!
-                                      .data.leadCategory[ind].leadCategory
-                                      .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              } else {
-                                setState(() {
-                                  checkedCategoryItems.remove(commonDetails!
-                                      .data.leadCategory[ind].leadCategoryId
-                                      .toString());
-                                  checkedCategoryItemsName.remove(commonDetails!
-                                      .data.leadCategory[ind].leadCategory
-                                      .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              }
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                });
+            _showCategorySelectionDialog(setState);
           },
           child: Container(
             width: MediaQuery.of(context).size.width * 1,
@@ -3003,7 +3092,7 @@ class _ViewLeadsState extends State<ViewLeads>
                                               title:
                                                   const Text('Please Confirm'),
                                               content: const Text(
-                                                  'Are you sure to Remove this Number?'),
+                                                  'Are you sure to Remove this Category?'),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () =>
@@ -3053,9 +3142,578 @@ class _ViewLeadsState extends State<ViewLeads>
                   ),
           ),
         ),
+
+        // Subcategory Selection (only shows when subcategories exist)
+        if (_hasSelectedCategoriesWithSubcategories())
+          _buildSubCategoryFilter(setState),
       ],
     );
   }
+
+  bool _hasSelectedCategoriesWithSubcategories() {
+    // Check if any selected category has subcategories
+    // You might need to implement this based on your data structure
+    return checkedCategoryItems.isNotEmpty;
+  }
+
+  Widget _buildSubCategoryFilter(StateSetter setState) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 13),
+        const Text('Lead Sub Category'),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: () {
+            _showSubCategorySelectionDialog(setState);
+          },
+          child: Container(
+            width: MediaQuery.of(context).size.width * 1,
+            height: 50,
+            decoration: BoxDecoration(
+              border: Border.all(),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: checkedSubCategoryItems.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
+                    child: Text('Lead Sub Category'))
+                : Padding(
+                    padding: const EdgeInsets.only(right: 40),
+                    child: SizedBox(
+                      height: 35,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: checkedSubCategoryItemsName.length,
+                        itemBuilder: (context, i) {
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 5, right: 5),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {});
+                              },
+                              child: Row(
+                                children: [
+                                  Container(
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey, width: 0),
+                                        color: Colors.white,
+                                        borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(6),
+                                            bottomLeft: Radius.circular(6))),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Text(
+                                              checkedSubCategoryItemsName[i],
+                                              style: const TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title:
+                                                  const Text('Please Confirm'),
+                                              content: const Text(
+                                                  'Are you sure to Remove this Sub Category?'),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(),
+                                                    child: const Text('No')),
+                                                TextButton(
+                                                    onPressed: () async {
+                                                      setState(() {
+                                                        checkedSubCategoryItemsName
+                                                            .remove(
+                                                                checkedSubCategoryItemsName[
+                                                                    i]);
+                                                        checkedSubCategoryItems
+                                                            .remove(
+                                                                checkedSubCategoryItems[
+                                                                    i]);
+                                                      });
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text('Yes')),
+                                              ],
+                                            );
+                                          });
+                                    },
+                                    child: Container(
+                                      height: 35,
+                                      width: 30,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey, width: 0),
+                                          color: Colors.grey.shade100,
+                                          borderRadius: const BorderRadius.only(
+                                              topRight: Radius.circular(6),
+                                              bottomRight: Radius.circular(6))),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCategorySelectionDialog(StateSetter setState) {
+    TextEditingController searchController = TextEditingController();
+    List<LeadCategory> filteredList =
+        List.from(commonDetails!.data.leadCategory);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text('Lead Category'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.55,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: (value) {
+                        dialogSetState(() {
+                          filteredList = commonDetails!.data.leadCategory
+                              .where((cat) => cat.leadCategory
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Search",
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredList.length,
+                        itemBuilder: (context, ind) {
+                          final category = filteredList[ind];
+                          final isSelected = checkedCategoryItems
+                              .contains(category.leadCategoryId.toString());
+                          return InkWell(
+                            onTap: () async {
+                              if (!isSelected) {
+                                final subTypeResponse =
+                                    await HttpService.leadSubType(
+                                        category.leadCategoryId.toString());
+
+                                dialogSetState(() {
+                                  checkedCategoryItems
+                                      .add(category.leadCategoryId.toString());
+                                  checkedCategoryItemsName
+                                      .add(category.leadCategory);
+                                  _categorySubcategories[
+                                          category.leadCategoryId.toString()] =
+                                      subTypeResponse?.data ?? [];
+                                });
+                              } else {
+                                dialogSetState(() {
+                                  checkedCategoryItems.remove(
+                                      category.leadCategoryId.toString());
+                                  checkedCategoryItemsName
+                                      .remove(category.leadCategory);
+                                  _removeSubcategoriesForCategory(
+                                      category.leadCategoryId.toString());
+                                });
+                              }
+                            },
+                            child: Container(
+                              height: 45,
+                              alignment: Alignment.centerLeft,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blue.shade50
+                                    : Colors.transparent,
+                                border: Border(
+                                  left: BorderSide(
+                                    color: isSelected
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                    width: 3,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    color:
+                                        isSelected ? Colors.blue : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      category.leadCategory,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? Colors.blue.shade800
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {});
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSubCategorySelectionDialog(StateSetter setState) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text('Lead Sub Category'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: ListView.builder(
+                  itemCount: _getAllSubcategories().length,
+                  itemBuilder: (context, index) {
+                    final subCategory = _getAllSubcategories()[index];
+                    final isSelected = checkedSubCategoryItems
+                        .contains(subCategory.leadSubCategoryId.toString());
+
+                    return CheckboxListTile(
+                      title: SizedBox(
+                        width: 200,
+                        child: Text(
+                          subCategory.leadSubCategory!,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        dialogSetState(() {
+                          if (value == true) {
+                            checkedSubCategoryItems
+                                .add(subCategory.leadSubCategoryId.toString());
+                            checkedSubCategoryItemsName
+                                .add(subCategory.leadSubCategory!);
+                          } else {
+                            checkedSubCategoryItems.remove(
+                                subCategory.leadSubCategoryId.toString());
+                            checkedSubCategoryItemsName
+                                .remove(subCategory.leadSubCategory!);
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {});
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<dynamic> _getAllSubcategories() {
+    List<dynamic> allSubcategories = [];
+    for (var categoryId in checkedCategoryItems) {
+      if (_categorySubcategories.containsKey(categoryId)) {
+        allSubcategories.addAll(_categorySubcategories[categoryId]!);
+      }
+    }
+    return allSubcategories;
+  }
+
+  void _removeSubcategoriesForCategory(String categoryId) {
+    final subcategoriesToRemove = _categorySubcategories[categoryId] ?? [];
+    for (var subCategory in subcategoriesToRemove) {
+      checkedSubCategoryItems.remove(subCategory.leadSubCategoryId.toString());
+      checkedSubCategoryItemsName.remove(subCategory.leadSubCategory);
+    }
+  }
+
+  final Map<String, List<dynamic>> _categorySubcategories = {};
+  List<String> checkedSubCategoryItems = [];
+  List<String> checkedSubCategoryItemsName = [];
+
+  // Widget _buildCategoryFilter(StateSetter setState) {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.start,
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const SizedBox(height: 13),
+  //       const Text('Lead Category'),
+  //       const SizedBox(height: 10),
+  //       InkWell(
+  //         onTap: () {
+  //           showDialog(
+  //               context: context,
+  //               builder: (BuildContext context) {
+  //                 return AlertDialog(
+  //                   scrollable: true,
+  //                   title: const Text('Lead Category'),
+  //                   content: SizedBox(
+  //                     height: MediaQuery.of(context).size.height * .32,
+  //                     width: MediaQuery.of(context).size.height * .8,
+  //                     child: ListView.builder(
+  //                       shrinkWrap: true,
+  //                       itemCount: commonDetails?.data.leadCategory.length ?? 0,
+  //                       itemBuilder: (context, ind) {
+  //                         return CheckboxListTile(
+  //                           title: SizedBox(
+  //                             width: 200,
+  //                             child: Text(
+  //                               commonDetails!
+  //                                   .data.leadCategory[ind].leadCategory
+  //                                   .toString(),
+  //                               style: const TextStyle(
+  //                                   color: Colors.black,
+  //                                   fontWeight: FontWeight.w400,
+  //                                   fontSize: 14),
+  //                             ),
+  //                           ),
+  //                           value: checkedCategoryItems.contains(commonDetails!
+  //                               .data.leadCategory[ind].leadCategoryId
+  //                               .toString()),
+  //                           onChanged: (bool? value) {
+  //                             if (value == true) {
+  //                               setState(() {
+  //                                 checkedCategoryItems.add(commonDetails!
+  //                                     .data.leadCategory[ind].leadCategoryId
+  //                                     .toString());
+  //                                 checkedCategoryItemsName.add(commonDetails!
+  //                                     .data.leadCategory[ind].leadCategory
+  //                                     .toString());
+  //                                 Navigator.pop(context, true);
+  //                               });
+  //                             } else {
+  //                               setState(() {
+  //                                 checkedCategoryItems.remove(commonDetails!
+  //                                     .data.leadCategory[ind].leadCategoryId
+  //                                     .toString());
+  //                                 checkedCategoryItemsName.remove(commonDetails!
+  //                                     .data.leadCategory[ind].leadCategory
+  //                                     .toString());
+  //                                 Navigator.pop(context, true);
+  //                               });
+  //                             }
+  //                           },
+  //                           controlAffinity: ListTileControlAffinity.leading,
+  //                         );
+  //                       },
+  //                     ),
+  //                   ),
+  //                 );
+  //               });
+  //         },
+  //         child: Container(
+  //           width: MediaQuery.of(context).size.width * 1,
+  //           height: 50,
+  //           decoration: BoxDecoration(
+  //             border: Border.all(),
+  //             borderRadius: BorderRadius.circular(5),
+  //           ),
+  //           child: checkedCategoryItems.isEmpty
+  //               ? const Padding(
+  //                   padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
+  //                   child: Text('Lead Category'))
+  //               : Padding(
+  //                   padding: const EdgeInsets.only(right: 40),
+  //                   child: SizedBox(
+  //                     height: 35,
+  //                     child: ListView.builder(
+  //                       scrollDirection: Axis.horizontal,
+  //                       itemCount: checkedCategoryItemsName.length,
+  //                       itemBuilder: (context, i) {
+  //                         return Padding(
+  //                           padding: const EdgeInsets.only(left: 5, right: 5),
+  //                           child: InkWell(
+  //                             onTap: () {
+  //                               setState(() {});
+  //                             },
+  //                             child: Row(
+  //                               children: [
+  //                                 Container(
+  //                                   height: 35,
+  //                                   decoration: BoxDecoration(
+  //                                       border: Border.all(
+  //                                           color: Colors.grey, width: 0),
+  //                                       color: Colors.white,
+  //                                       borderRadius: const BorderRadius.only(
+  //                                           topLeft: Radius.circular(6),
+  //                                           bottomLeft: Radius.circular(6))),
+  //                                   child: Center(
+  //                                     child: Row(
+  //                                       mainAxisAlignment:
+  //                                           MainAxisAlignment.center,
+  //                                       children: [
+  //                                         Padding(
+  //                                           padding: const EdgeInsets.all(10),
+  //                                           child: Text(
+  //                                             checkedCategoryItemsName[i],
+  //                                             style: const TextStyle(
+  //                                                 color: Colors.black),
+  //                                           ),
+  //                                         ),
+  //                                       ],
+  //                                     ),
+  //                                   ),
+  //                                 ),
+  //                                 InkWell(
+  //                                   onTap: () {
+  //                                     showDialog(
+  //                                         context: context,
+  //                                         builder: (BuildContext context) {
+  //                                           return AlertDialog(
+  //                                             title:
+  //                                                 const Text('Please Confirm'),
+  //                                             content: const Text(
+  //                                                 'Are you sure to Remove this Number?'),
+  //                                             actions: [
+  //                                               TextButton(
+  //                                                   onPressed: () =>
+  //                                                       Navigator.of(context)
+  //                                                           .pop(),
+  //                                                   child: const Text('No')),
+  //                                               TextButton(
+  //                                                   onPressed: () async {
+  //                                                     setState(() {
+  //                                                       checkedCategoryItemsName
+  //                                                           .remove(
+  //                                                               checkedCategoryItemsName[
+  //                                                                   i]);
+  //                                                       checkedCategoryItems.remove(
+  //                                                           checkedCategoryItems[
+  //                                                               i]);
+  //                                                     });
+  //                                                     Navigator.of(context)
+  //                                                         .pop();
+  //                                                   },
+  //                                                   child: const Text('Yes')),
+  //                                             ],
+  //                                           );
+  //                                         });
+  //                                   },
+  //                                   child: Container(
+  //                                     height: 35,
+  //                                     width: 30,
+  //                                     decoration: BoxDecoration(
+  //                                         border: Border.all(
+  //                                             color: Colors.grey, width: 0),
+  //                                         color: Colors.grey.shade100,
+  //                                         borderRadius: const BorderRadius.only(
+  //                                             topRight: Radius.circular(6),
+  //                                             bottomRight: Radius.circular(6))),
+  //                                     child: const Icon(Icons.close,
+  //                                         color: Colors.red),
+  //                                   ),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         );
+  //                       },
+  //                     ),
+  //                   ),
+  //                 ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildPriorityFilter(StateSetter setState) {
     return Column(

@@ -3,6 +3,7 @@
 import 'dart:developer';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 // import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:intl/intl.dart';
@@ -39,6 +40,7 @@ class WhatsappProfile extends StatefulWidget {
 class _WhatsappProfileState extends State<WhatsappProfile> {
   TextEditingController nameTextController = TextEditingController();
   TextEditingController groupTextController = TextEditingController();
+  TextEditingController mobileTextController = TextEditingController();
   TextEditingController numberTextController = TextEditingController();
   final editKey = GlobalKey<FormState>();
   final contactKey = GlobalKey<FormState>();
@@ -72,8 +74,7 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
             child: const Icon(
               Icons.arrow_back,
               color: Colors.white,
-            )
-            ),
+            )),
       ),
       body: SingleChildScrollView(
         child: SafeArea(
@@ -120,11 +121,36 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
                         if (widget.number != null)
                           Padding(
                             padding: const EdgeInsets.only(
-                                left: 8.0, right: 8.0, bottom: 16),
-                            child: Text(
-                              widget.number!,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.normal, fontSize: 18),
+                                left: 35.0, right: 0, bottom: 16),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.number!,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                GestureDetector(
+                                  onTap: () {
+                                    Clipboard.setData(
+                                        ClipboardData(text: widget.number!));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Copied to clipboard'),
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
+                                  child: const Icon(
+                                    Icons.copy,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -549,56 +575,157 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
         });
   }
 
+  // Future<dynamic> editDialog(BuildContext context) {
+  //   return showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return AlertDialog(
+  //           scrollable: true,
+  //           title: const Text('Edit'),
+  //           content: Form(
+  //             key: editKey,
+  //             child: TextFormField(
+  //               validator: (value) {
+  //                 if (value!.isEmpty) {
+  //                   return "Please enter name";
+  //                 }
+  //                 return null;
+  //               },
+  //               controller: groupTextController,
+  //               decoration: const InputDecoration(
+  //                 contentPadding: EdgeInsets.all(7),
+  //                 border: OutlineInputBorder(),
+  //                 hintText: 'Campaign name',
+  //               ),
+  //             ),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 child: const Text('Cancel',
+  //                     style: TextStyle(color: Colors.black))),
+  //             ElevatedButton(
+  //                 style: ElevatedButton.styleFrom(
+  //                     backgroundColor: ColorConstant.barGreen),
+  //                 onPressed: () async {
+  //                   if (editKey.currentState!.validate()) editGroupName();
+  //                 },
+  //                 child: const Text(
+  //                   'SUBMIT',
+  //                   style: TextStyle(color: Colors.white),
+  //                 )),
+  //           ],
+  //         );
+  //       });
+  // }
+
   Future<dynamic> editDialog(BuildContext context) {
+     mobileTextController.text = widget.number ?? '';
+
     return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Edit'),
-            content: Form(
-              key: editKey,
-              child: TextFormField(
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return "Please enter name";
-                  }
-                  return null;
-                },
-                controller: groupTextController,
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.all(7),
-                  border: OutlineInputBorder(),
-                  hintText: 'Campaign name',
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          scrollable: true,
+          title: const Text('Edit'),
+          content: Form(
+            key: editKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return "Please enter name";
+                    }
+                    return null;
+                  },
+                  controller: groupTextController,
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(7),
+                    border: OutlineInputBorder(),
+                    hintText: 'Campaign name',
+                  ),
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please enter mobile number";
+                    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                      return "Enter a valid 10-digit number";
+                    }
+                    return null;
+                  },
+                  controller: mobileTextController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(7),
+                    border: OutlineInputBorder(),
+                    hintText: 'Mobile number',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.black)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorConstant.barGreen),
+              onPressed: () async {
+                if (editKey.currentState!.validate()) {
+                  editGroupName();
+                }
+              },
+              child: const Text(
+                'SUBMIT',
+                style: TextStyle(color: Colors.white),
               ),
             ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.black))),
-              ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorConstant.barGreen),
-                  onPressed: () async {
-                    if (editKey.currentState!.validate()) editGroupName();
-                  },
-                  child: const Text(
-                    'SUBMIT',
-                    style: TextStyle(color: Colors.white),
-                  )),
-            ],
-          );
-        });
+          ],
+        );
+      },
+    );
   }
+
+  // editGroupName() async {
+  //   try {
+  //     samResponse = await HttpService.editGroupName(
+  //         widget.groupId, groupTextController.text);
+  //     if (samResponse != null && samResponse!.status == true) {
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //         Navigator.pop(context);
+  //       }
+  //       Common.toastMessaage(samResponse!.message, Colors.green);
+  //     } else {
+  //       Common.toastMessaage("Something went wrong", Colors.red);
+  //     }
+  //   } catch (e) {
+  //     log(e.toString());
+  //   }
+  // }
 
   editGroupName() async {
     try {
+      final groupName = groupTextController.text.trim();
+      final mobileNumber = mobileTextController.text.trim();
+
       samResponse = await HttpService.editGroupName(
-          widget.groupId, groupTextController.text);
+        widget.groupId,
+        groupName,
+        mobileNumber,
+      );
+
       if (samResponse != null && samResponse!.status == true) {
         if (mounted) {
           Navigator.pop(context);

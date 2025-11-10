@@ -53,6 +53,7 @@ class _EditInvoiceState extends State<EditInvoice> {
   TextEditingController productTaxPercent = TextEditingController();
   TextEditingController productTaxAmount = TextEditingController();
   TextEditingController productTotalAmount = TextEditingController();
+  TextEditingController productTotalAmountTax = TextEditingController();
   TextEditingController discount = TextEditingController();
   TextEditingController shippingCharge = TextEditingController();
   TextEditingController paidAmount = TextEditingController();
@@ -75,6 +76,8 @@ class _EditInvoiceState extends State<EditInvoice> {
   bool header = true;
   bool headerContent = false;
   var code = '91';
+  bool isLoading = true;
+  String? errorMessage;
 
   void toggleTextFieldVisibility() {
     setState(() {
@@ -97,6 +100,11 @@ class _EditInvoiceState extends State<EditInvoice> {
   }
 
   getData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -106,98 +114,243 @@ class _EditInvoiceState extends State<EditInvoice> {
     } else {
       setState(() {
         result = false;
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      invDetails =
+          await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
+
+      if (invDetails == null) {
+        setState(() {
+          errorMessage = 'Failed to load common details';
+          isLoading = false;
+        });
+        return;
+      }
+
+      invoiceEditDetails =
+          await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
+
+      if (invoiceEditDetails != null) {
+        billingName.text =
+            invoiceEditDetails!.data!.billingAddress!.billingName.toString();
+        billingAddress.text =
+            invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+        billingPhone.text = invoiceEditDetails!
+            .data!.billingAddress!.billingContactNo
+            .toString();
+        billingGstNo.text =
+            invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
+        billingPinCode.text =
+            invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
+        billingPostOffice.text = invoiceEditDetails!
+            .data!.billingAddress!.billingPostOffice
+            .toString();
+
+        if (billingPinCode.text != '') {
+          billingPostal =
+              await HttpService.fetchPostOffice(billingPinCode.text);
+        }
+
+        if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+                .toString() !=
+            '') {
+          code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+              .toString();
+        }
+
+        shippingName.text =
+            invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
+        shippingAddress.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingAddress
+            .toString();
+        shippingPhone.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingContactNo
+            .toString();
+        shippingGstNo.text =
+            invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
+        shippingPinCode.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingPincode
+            .toString();
+        shippingPostOffice.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingPostOffice
+            .toString();
+
+        if (shippingPinCode.text != '') {
+          shippingPostal =
+              await HttpService.fetchPostOffice(shippingPinCode.text);
+        }
+
+        invoiceNumber.text =
+            invoiceEditDetails!.data!.displayInvoice.toString();
+        fromdate =
+            DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+
+        items = invDetails!.data.products;
+        filteredItems.addAll(items);
+
+        if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
+          for (int i = 0;
+              i < invoiceEditDetails!.data!.productDetails!.length;
+              i++) {
+            products.add({
+              "product_name":
+                  invoiceEditDetails!.data!.productDetails![i].productName,
+              "product_id":
+                  invoiceEditDetails!.data!.productDetails![i].productId,
+              "description": invoiceEditDetails!
+                  .data!.productDetails![i].productDescription,
+              "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
+              "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
+              "tax_percent":
+                  invoiceEditDetails!.data!.productDetails![i].taxPercentage,
+              "total_tax_amount":
+                  invoiceEditDetails!.data!.productDetails![i].taxAmount,
+              "total_amount":
+                  invoiceEditDetails!.data!.productDetails![i].amount,
+            });
+          }
+          subTotal =
+              double.parse(invoiceEditDetails!.data!.subTotal.toString());
+          totalTaxAmount =
+              double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
+          discount.text = invoiceEditDetails!.data!.discountAmount.toString();
+          shippingCharge.text =
+              invoiceEditDetails!.data!.shippingAmount.toString();
+          allTotal = double.parse(
+              invoiceEditDetails!.data!.totalInvoiceAmount.toString());
+          remarks.text = invoiceEditDetails!.data!.remarks.toString();
+        }
+        isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
+      }
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error in getData: $e');
+      setState(() {
+        errorMessage = 'Failed to load data: $e';
+        isLoading = false;
       });
     }
-
-    invDetails =
-        await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
-    invoiceEditDetails =
-        await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
-    if (invoiceEditDetails != null) {
-      billingName.text =
-          invoiceEditDetails!.data!.billingAddress!.billingName.toString();
-      billingAddress.text =
-          invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
-      billingPhone.text =
-          invoiceEditDetails!.data!.billingAddress!.billingContactNo.toString();
-      billingGstNo.text =
-          invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
-      billingPinCode.text =
-          invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
-      billingPostOffice.text = invoiceEditDetails!
-          .data!.billingAddress!.billingPostOffice
-          .toString();
-      if (billingPinCode.text != '') {
-        billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
-      }
-      if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
-              .toString() !=
-          '') {
-        code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
-            .toString();
-      }
-
-      shippingName.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
-      shippingAddress.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingAddress.toString();
-      shippingPhone.text = invoiceEditDetails!
-          .data!.shippingAddress!.shippingContactNo
-          .toString();
-      shippingGstNo.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
-      shippingPinCode.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingPincode.toString();
-      shippingPostOffice.text = invoiceEditDetails!
-          .data!.shippingAddress!.shippingPostOffice
-          .toString();
-      if (shippingPinCode.text != '') {
-        shippingPostal =
-            await HttpService.fetchPostOffice(shippingPinCode.text);
-      }
-
-      invoiceNumber.text = invoiceEditDetails!.data!.displayInvoice.toString();
-      fromdate =
-          DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
-
-      items = invDetails!.data.products;
-      filteredItems.addAll(items);
-
-      if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-        for (int i = 0;
-            i < invoiceEditDetails!.data!.productDetails!.length;
-            i++) {
-          products.add({
-            "product_name":
-                invoiceEditDetails!.data!.productDetails![i].productName,
-            "product_id":
-                invoiceEditDetails!.data!.productDetails![i].productId,
-            "description":
-                invoiceEditDetails!.data!.productDetails![i].productDescription,
-            "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
-            "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
-            "tax_percent":
-                invoiceEditDetails!.data!.productDetails![i].taxPercentage,
-            "total_tax_amount":
-                invoiceEditDetails!.data!.productDetails![i].taxAmount,
-            "total_amount": invoiceEditDetails!.data!.productDetails![i].amount,
-          });
-        }
-        subTotal = double.parse(invoiceEditDetails!.data!.subTotal.toString());
-        totalTaxAmount =
-            double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
-        discount.text = invoiceEditDetails!.data!.discountAmount.toString();
-        shippingCharge.text =
-            invoiceEditDetails!.data!.shippingAmount.toString();
-        allTotal = double.parse(
-            invoiceEditDetails!.data!.totalInvoiceAmount.toString());
-        remarks.text = invoiceEditDetails!.data!.remarks.toString();
-      }
-      isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
-
-      setState(() {});
-    }
   }
+
+  // getData() async {
+  //   setState(() {
+  //     isLoading = true;
+  //     errorMessage = null;
+  //   });
+  //   final connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi) {
+  //     setState(() {
+  //       result = true;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       result = false;
+  //     });
+  //   }
+
+  //   invDetails =
+  //       await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
+  //   if (invDetails == null) {
+  //     setState(() {
+  //       errorMessage = 'Failed to load common details';
+  //       isLoading = false;
+  //     });
+  //     return;
+  //   }
+  //   invoiceEditDetails =
+  //       await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
+  //   if (invoiceEditDetails != null) {
+  //     billingName.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingName.toString();
+  //     billingAddress.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+  //     billingPhone.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingContactNo.toString();
+  //     billingGstNo.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
+  //     billingPinCode.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
+  //     billingPostOffice.text = invoiceEditDetails!
+  //         .data!.billingAddress!.billingPostOffice
+  //         .toString();
+  //     if (billingPinCode.text != '') {
+  //       billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
+  //     }
+  //     if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //             .toString() !=
+  //         '') {
+  //       code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //           .toString();
+  //     }
+
+  //     shippingName.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
+  //     shippingAddress.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingAddress.toString();
+  //     shippingPhone.text = invoiceEditDetails!
+  //         .data!.shippingAddress!.shippingContactNo
+  //         .toString();
+  //     shippingGstNo.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
+  //     shippingPinCode.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingPincode.toString();
+  //     shippingPostOffice.text = invoiceEditDetails!
+  //         .data!.shippingAddress!.shippingPostOffice
+  //         .toString();
+  //     if (shippingPinCode.text != '') {
+  //       shippingPostal =
+  //           await HttpService.fetchPostOffice(shippingPinCode.text);
+  //     }
+
+  //     invoiceNumber.text = invoiceEditDetails!.data!.displayInvoice.toString();
+  //     fromdate =
+  //         DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+
+  //     items = invDetails!.data.products;
+  //     filteredItems.addAll(items);
+
+  //     if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
+  //       for (int i = 0;
+  //           i < invoiceEditDetails!.data!.productDetails!.length;
+  //           i++) {
+  //         products.add({
+  //           "product_name":
+  //               invoiceEditDetails!.data!.productDetails![i].productName,
+  //           "product_id":
+  //               invoiceEditDetails!.data!.productDetails![i].productId,
+  //           "description":
+  //               invoiceEditDetails!.data!.productDetails![i].productDescription,
+  //           "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
+  //           "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
+  //           "tax_percent":
+  //               invoiceEditDetails!.data!.productDetails![i].taxPercentage,
+  //           "total_tax_amount":
+  //               invoiceEditDetails!.data!.productDetails![i].taxAmount,
+  //           "total_amount": invoiceEditDetails!.data!.productDetails![i].amount,
+  //         });
+  //       }
+  //       subTotal = double.parse(invoiceEditDetails!.data!.subTotal.toString());
+  //       totalTaxAmount =
+  //           double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
+  //       discount.text = invoiceEditDetails!.data!.discountAmount.toString();
+  //       shippingCharge.text =
+  //           invoiceEditDetails!.data!.shippingAmount.toString();
+  //       allTotal = double.parse(
+  //           invoiceEditDetails!.data!.totalInvoiceAmount.toString());
+  //       remarks.text = invoiceEditDetails!.data!.remarks.toString();
+  //     }
+  //     isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
+
+  //     setState(() {});
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -1655,6 +1808,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             productTaxAmount.text =
                                                                                 filteredItems[index].taxAmount;
                                                                             productTotalAmount.text =
+                                                                                ((double.parse(productRate.text)) * double.parse(productQty.text)).toString();
+                                                                            productTotalAmountTax.text =
                                                                                 ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
                                                                             productTotalAmount.text =
                                                                                 double.parse(productTotalAmount.text).toStringAsFixed(2);
@@ -1781,18 +1936,24 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
-                                                                  borderSide:
-                                                                      BorderSide(
-                                                                          color:
-                                                                              Color.fromARGB(255, 12, 12, 12)),
+                                                                  borderSide: BorderSide(
+                                                                      color: Color.fromARGB(
+                                                                          255,
+                                                                          12,
+                                                                          12,
+                                                                          12)),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Color.fromARGB(255, 16, 15, 15))),
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            16,
+                                                                            15,
+                                                                            15))),
                                                       ),
                                                     ),
                                                     const SizedBox(
@@ -1827,7 +1988,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1838,7 +1998,12 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Color.fromARGB(255, 31, 30, 30))),
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            31,
+                                                                            30,
+                                                                            30))),
                                                       ),
                                                     ),
                                                   ],
@@ -1879,7 +2044,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                                
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1890,7 +2054,12 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Color.fromARGB(255, 25, 25, 25))),
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            25,
+                                                                            25,
+                                                                            25))),
                                                       ),
                                                     ),
                                                     const SizedBox(
@@ -1924,7 +2093,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     Colors
                                                                         .white,
                                                                 filled: true,
-                                                               
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -1935,7 +2103,12 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                               Colors.grey),
                                                                 ),
                                                                 labelStyle: TextStyle(
-                                                                    color: Color.fromARGB(255, 26, 26, 26))),
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            26,
+                                                                            26,
+                                                                            26))),
                                                       ),
                                                     ),
                                                   ],
@@ -1963,19 +2136,22 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             fillColor:
                                                                 Colors.white,
                                                             filled: true,
-                                                           
                                                             border:
                                                                 OutlineInputBorder(),
                                                             focusedBorder:
-                                                                OutlineInputBorder(  
+                                                                OutlineInputBorder(
                                                               borderSide:
                                                                   BorderSide(
                                                                       color: Colors
                                                                           .grey),
                                                             ),
-                                                            labelStyle:
-                                                                TextStyle(
-                                                                    color: Color.fromARGB(255, 31, 30, 30))),
+                                                            labelStyle: TextStyle(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        255,
+                                                                        31,
+                                                                        30,
+                                                                        30))),
                                                   ),
                                                 ),
 
@@ -2052,6 +2228,31 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               'Enter valid tax percentage',
                                                               Colors.red);
                                                         } else {
+                                                          double rate =
+                                                              double.parse(
+                                                                  productRate
+                                                                      .text);
+                                                          double qty =
+                                                              double.parse(
+                                                                  productQty
+                                                                      .text);
+                                                          double taxPercent =
+                                                              double.parse(
+                                                                  productTaxPercent
+                                                                      .text);
+                                                          double taxPerUnit =
+                                                              double.parse(
+                                                                  productTaxAmount
+                                                                      .text);
+                                                          double totalAmount =
+                                                              double.parse(
+                                                                  productTotalAmount
+                                                                      .text);
+
+                                                          double
+                                                              totalTaxForProduct =
+                                                              taxPerUnit * qty;
+
                                                           products.add({
                                                             "product_name":
                                                                 productName,
@@ -2060,33 +2261,36 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             "description":
                                                                 productDescription
                                                                     .text,
-                                                            "product_rate":
-                                                                productRate
-                                                                    .text,
-                                                            "quantity":
-                                                                productQty.text,
+                                                            "product_rate": rate
+                                                                .toStringAsFixed(
+                                                                    2),
+                                                            "quantity": qty
+                                                                .toStringAsFixed(
+                                                                    2),
                                                             "tax_percent":
-                                                                productTaxPercent
-                                                                    .text,
+                                                                taxPercent
+                                                                    .toStringAsFixed(
+                                                                        2),
+                                                            "tax_per_unit":
+                                                                taxPerUnit
+                                                                    .toStringAsFixed(
+                                                                        2),
                                                             "total_tax_amount":
-                                                                productTaxAmount
-                                                                    .text,
+                                                                totalTaxForProduct
+                                                                    .toStringAsFixed(
+                                                                        2),
                                                             "total_amount":
-                                                                productTotalAmount
-                                                                    .text,
+                                                                totalAmount
+                                                                    .toStringAsFixed(
+                                                                        2),
                                                           });
 
                                                           subTotal = subTotal +
-                                                              double.parse(
-                                                                  productTotalAmount
-                                                                      .text);
-                                                          totalTaxAmount = totalTaxAmount +
-                                                              double.parse(
-                                                                      productTaxAmount
-                                                                          .text) *
-                                                                  double.parse(
-                                                                      productQty
-                                                                          .text);
+                                                              totalAmount;
+                                                          totalTaxAmount =
+                                                              totalTaxAmount +
+                                                                  totalTaxForProduct;
+
                                                           allTotal = subTotal +
                                                               double.parse(shippingCharge
                                                                           .text ==
@@ -2100,9 +2304,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                       ? '0'
                                                                       : discount
                                                                           .text);
+
                                                           paidAmount.text =
                                                               allTotal
-                                                                  .toString();
+                                                                  .toStringAsFixed(
+                                                                      2);
 
                                                           productName =
                                                               "Choose Product";
@@ -2122,6 +2328,110 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                           setState(() {});
                                                         }
                                                       },
+                                                      // onTap: () {
+                                                      //   if (productRate
+                                                      //       .text.isEmpty) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter Product Rate',
+                                                      //         Colors.red);
+                                                      //   } else if (productQty
+                                                      //       .text.isEmpty) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter Product Qty',
+                                                      //         Colors.red);
+                                                      //   } else if (productTaxPercent
+                                                      //       .text.isEmpty) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter Product Tax Percent',
+                                                      //         Colors.red);
+                                                      //   } else if (productTaxAmount
+                                                      //       .text.isEmpty) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter Product Tax Amount',
+                                                      //         Colors.red);
+                                                      //   } else if (productTotalAmount
+                                                      //       .text.isEmpty) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter Product Total Amount',
+                                                      //         Colors.red);
+                                                      //   } else if (double.parse(
+                                                      //           productTaxPercent
+                                                      //               .text) >
+                                                      //       100) {
+                                                      //     Common.toastMessaage(
+                                                      //         'Enter valid tax percentage',
+                                                      //         Colors.red);
+                                                      //   } else {
+                                                      //     products.add({
+                                                      //       "product_name":
+                                                      //           productName,
+                                                      //       "product_id":
+                                                      //           productId,
+                                                      //       "description":
+                                                      //           productDescription
+                                                      //               .text,
+                                                      //       "product_rate":
+                                                      //           productRate
+                                                      //               .text,
+                                                      //       "quantity":
+                                                      //           productQty.text,
+                                                      //       "tax_percent":
+                                                      //           productTaxPercent
+                                                      //               .text,
+                                                      //       "total_tax_amount":
+                                                      //           productTaxAmount
+                                                      //               .text,
+                                                      //       "total_amount":
+                                                      //           productTotalAmount
+                                                      //               .text,
+                                                      //     });
+
+                                                      //     subTotal = subTotal +
+                                                      //         double.parse(
+                                                      //             productTotalAmount
+                                                      //                 .text);
+                                                      //     totalTaxAmount = totalTaxAmount +
+                                                      //         double.parse(
+                                                      //                 productTaxAmount
+                                                      //                     .text) *
+                                                      //             double.parse(
+                                                      //                 productQty
+                                                      //                     .text);
+                                                      //     allTotal = subTotal +
+                                                      //         double.parse(shippingCharge
+                                                      //                     .text ==
+                                                      //                 ''
+                                                      //             ? '0'
+                                                      //             : shippingCharge
+                                                      //                 .text) -
+                                                      //         double.parse(
+                                                      //             discount.text ==
+                                                      //                     ''
+                                                      //                 ? '0'
+                                                      //                 : discount
+                                                      //                     .text);
+                                                      //     paidAmount.text =
+                                                      //         allTotal
+                                                      //             .toString();
+
+                                                      //     productName =
+                                                      //         "Choose Product";
+                                                      //     productId = "";
+                                                      //     productDescription
+                                                      //         .clear();
+                                                      //     productRate.clear();
+                                                      //     productQty.clear();
+                                                      //     productTaxPercent
+                                                      //         .clear();
+                                                      //     productTaxAmount
+                                                      //         .clear();
+                                                      //     productTotalAmount
+                                                      //         .clear();
+                                                      //     Navigator.of(context)
+                                                      //         .pop();
+                                                      //     setState(() {});
+                                                      //   }
+                                                      // },
                                                       child: Container(
                                                           decoration: BoxDecoration(
                                                               color:
@@ -2317,7 +2627,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               0.10),
                                     },
                                     children: [
-                                      // Each TableRow represents a row in the Table
                                       TableRow(
                                         decoration: BoxDecoration(
                                           borderRadius:
@@ -2383,17 +2692,17 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           ),
                                           GestureDetector(
                                             onTap: () {
-                                              subTotal = subTotal -
-                                                  double.parse(
-                                                    products[index]
-                                                        ['total_amount'],
-                                                  );
-                                              totalTaxAmount = totalTaxAmount -
-                                                  double.parse(products[index][
-                                                          'total_tax_amount']) *
-                                                      double.parse(
-                                                          products[index]
-                                                              ['quantity']);
+                                              double productAmount =
+                                                  double.parse(products[index]
+                                                      ['total_amount']);
+                                              double productTax = double.parse(
+                                                  products[index]
+                                                      ['total_tax_amount']);
+
+                                              subTotal =
+                                                  subTotal - productAmount;
+                                              totalTaxAmount =
+                                                  totalTaxAmount - productTax;
 
                                               allTotal = subTotal +
                                                   double.parse(
@@ -2405,49 +2714,88 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                       discount.text == ''
                                                           ? '0'
                                                           : discount.text);
-                                              paidAmount.text =
-                                                  allTotal.toString();
 
-                                              products.removeWhere(
-                                                (item) => mapEquals(
-                                                    item,
-                                                    ({
-                                                      "product_name":
-                                                          products[index]
-                                                              ['product_name'],
-                                                      "product_id":
-                                                          products[index]
-                                                              ['product_id'],
-                                                      "description":
-                                                          products[index]
-                                                              ['description'],
-                                                      "product_rate":
-                                                          products[index]
-                                                              ['product_rate'],
-                                                      "quantity":
-                                                          products[index]
-                                                              ['quantity'],
-                                                      "tax_percent":
-                                                          products[index]
-                                                              ['tax_percent'],
-                                                      "total_tax_amount":
-                                                          products[index][
-                                                              'total_tax_amount'],
-                                                      "total_amount":
-                                                          products[index]
-                                                              ['total_amount'],
-                                                    })),
-                                              );
+                                              paidAmount.text =
+                                                  allTotal.toStringAsFixed(2);
+
+                                              products.removeAt(index);
+
                                               if (products.isEmpty) {
                                                 discount.clear();
                                                 shippingCharge.clear();
                                                 allTotal = 0.00;
                                                 paidAmount.text =
-                                                    allTotal.toString();
+                                                    allTotal.toStringAsFixed(2);
                                               }
 
                                               setState(() {});
                                             },
+                                            // onTap: () {
+                                            //   subTotal = subTotal -
+                                            //       double.parse(
+                                            //         products[index]
+                                            //             ['total_amount'],
+                                            //       );
+                                            //   totalTaxAmount = totalTaxAmount -
+                                            //       double.parse(products[index][
+                                            //               'total_tax_amount']) *
+                                            //           double.parse(
+                                            //               products[index]
+                                            //                   ['quantity']);
+
+                                            //   allTotal = subTotal +
+                                            //       double.parse(
+                                            //           shippingCharge.text == ''
+                                            //               ? '0'
+                                            //               : shippingCharge
+                                            //                   .text) -
+                                            //       double.parse(
+                                            //           discount.text == ''
+                                            //               ? '0'
+                                            //               : discount.text);
+                                            //   paidAmount.text =
+                                            //       allTotal.toString();
+
+                                            //   products.removeWhere(
+                                            //     (item) => mapEquals(
+                                            //         item,
+                                            //         ({
+                                            //           "product_name":
+                                            //               products[index]
+                                            //                   ['product_name'],
+                                            //           "product_id":
+                                            //               products[index]
+                                            //                   ['product_id'],
+                                            //           "description":
+                                            //               products[index]
+                                            //                   ['description'],
+                                            //           "product_rate":
+                                            //               products[index]
+                                            //                   ['product_rate'],
+                                            //           "quantity":
+                                            //               products[index]
+                                            //                   ['quantity'],
+                                            //           "tax_percent":
+                                            //               products[index]
+                                            //                   ['tax_percent'],
+                                            //           "total_tax_amount":
+                                            //               products[index][
+                                            //                   'total_tax_amount'],
+                                            //           "total_amount":
+                                            //               products[index]
+                                            //                   ['total_amount'],
+                                            //         })),
+                                            //   );
+                                            //   if (products.isEmpty) {
+                                            //     discount.clear();
+                                            //     shippingCharge.clear();
+                                            //     allTotal = 0.00;
+                                            //     paidAmount.text =
+                                            //         allTotal.toString();
+                                            //   }
+
+                                            //   setState(() {});
+                                            // },
                                             child: const Padding(
                                               padding: EdgeInsets.all(8.0),
                                               child: Icon(
@@ -2498,7 +2846,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 ],
                               ),
                             ),
-                               const SizedBox(
+                            const SizedBox(
                               height: 5,
                             ),
                             Padding(
@@ -2598,7 +2946,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 ],
                               ),
                             ),
-                         
                             const SizedBox(
                               height: 5,
                             ),
@@ -2692,7 +3039,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
                                     child: Text(
-                                      allTotal.toString(),
+                                      // allTotal.toString(),
+                                      (subTotal + totalTaxAmount)
+                                          .toStringAsFixed(2),
                                       style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w500),
@@ -2901,22 +3250,34 @@ class _EditInvoiceState extends State<EditInvoice> {
             ));
   }
 
+  // productCalculation() {
+  //   productTaxAmount.text =
+  //       ((double.parse(productRate.text == "" ? "0" : productRate.text) *
+  //                   double.parse(productTaxPercent.text == ""
+  //                       ? "0"
+  //                       : productTaxPercent.text) /
+  //                   100) *
+  //               double.parse(productQty.text == "" ? "0" : productQty.text))
+  //           .toString();
+  //   productTotalAmount.text = ((double.parse(
+  //                   productRate.text == "" ? "0" : productRate.text) *
+  //               double.parse(productQty.text == "" ? "0" : productQty.text)) +
+  //           double.parse(productTaxAmount.text))
+  //       .toString();
+  //   productTotalAmount.text =
+  //       double.parse(productTotalAmount.text).toStringAsFixed(2);
+  //   setState(() {});
+  // }
   productCalculation() {
-    productTaxAmount.text =
-        ((double.parse(productRate.text == "" ? "0" : productRate.text) *
-                    double.parse(productTaxPercent.text == ""
-                        ? "0"
-                        : productTaxPercent.text) /
-                    100) *
-                double.parse(productQty.text == "" ? "0" : productQty.text))
-            .toString();
-    productTotalAmount.text = ((double.parse(
-                    productRate.text == "" ? "0" : productRate.text) *
-                double.parse(productQty.text == "" ? "0" : productQty.text)) +
-            double.parse(productTaxAmount.text))
-        .toString();
-    productTotalAmount.text =
-        double.parse(productTotalAmount.text).toStringAsFixed(2);
+    double rate = double.parse(productRate.text == "" ? "0" : productRate.text);
+    double qty = double.parse(productQty.text == "" ? "0" : productQty.text);
+    double taxPercent = double.parse(
+        productTaxPercent.text == "" ? "0" : productTaxPercent.text);
+    double taxPerUnit = (rate * taxPercent / 100);
+    double totalTax = taxPerUnit * qty;
+    double totalAmount = (rate) * qty;
+    productTaxAmount.text = taxPerUnit.toStringAsFixed(2);
+    productTotalAmount.text = totalAmount.toStringAsFixed(2);
     setState(() {});
   }
 }

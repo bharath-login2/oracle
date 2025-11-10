@@ -843,11 +843,11 @@ class _EditFollowupState extends State<EditFollowup> {
                                             content: SingleChildScrollView(
                                               child: ConstrainedBox(
                                                 constraints: BoxConstraints(
-                                                  maxHeight: MediaQuery.of(
-                                                              context)
-                                                          .size
-                                                          .height *
-                                                      0.8, // Adjust as needed
+                                                  maxHeight:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .height *
+                                                          0.8,
                                                 ),
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
@@ -856,6 +856,24 @@ class _EditFollowupState extends State<EditFollowup> {
                                                   itemBuilder:
                                                       (context, subIndex) {
                                                     return InkWell(
+                                                      // onTap: () {
+                                                      //   setState(() {
+                                                      //     leadSubType =
+                                                      //         leadSubTypeList!
+                                                      //             .data![
+                                                      //                 subIndex]
+                                                      //             .leadSubCategory
+                                                      //             .toString();
+                                                      //     leadSubTypeId =
+                                                      //         leadSubTypeList!
+                                                      //             .data![
+                                                      //                 subIndex]
+                                                      //             .leadSubCategoryId
+                                                      //             .toString();
+                                                      //     Navigator.pop(
+                                                      //         context, true);
+                                                      //   });
+                                                      // },
                                                       onTap: () {
                                                         setState(() {
                                                           leadSubType =
@@ -864,16 +882,21 @@ class _EditFollowupState extends State<EditFollowup> {
                                                                       subIndex]
                                                                   .leadSubCategory
                                                                   .toString();
+
                                                           leadSubTypeId =
                                                               leadSubTypeList!
                                                                   .data![
                                                                       subIndex]
                                                                   .leadSubCategoryId
                                                                   .toString();
+                                                          leadSubTypeVal.text =
+                                                              leadSubType;
+
                                                           Navigator.pop(
                                                               context, true);
                                                         });
                                                       },
+
                                                       child: SizedBox(
                                                         height: 50,
                                                         child: Text(

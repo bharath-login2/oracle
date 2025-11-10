@@ -10,6 +10,7 @@ import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/service/service.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../models/lead_management/cloudCallModel.dart';
 import '../../models/lead_management/viewLeadsModel.dart';
@@ -50,6 +51,9 @@ class Search extends StatefulWidget {
 }
 
 class _SearchState extends State<Search> {
+  bool hasMoreData = true;
+  bool isLoadingMore = false;
+  ScrollController scrollController = ScrollController();
   TextEditingController searchController = TextEditingController();
   SearchDataModel? response;
   ViewLeadsModel? viewLeads;
@@ -67,7 +71,8 @@ class _SearchState extends State<Search> {
   DateTime? todate;
   bool isSort = true;
   int page = 1;
-  int pageSize = 20;
+  int currentPage = 1;
+  int pageSize = 5;
   String? branch;
   var outputFormat = DateFormat('dd-MM-yyyy');
   dynamic status;
@@ -241,7 +246,68 @@ class _SearchState extends State<Search> {
   @override
   void initState() {
     getData('desc', false, status);
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        if (hasMoreData && !isLoadingMore) {
+          loadMoreData();
+        }
+      }
+    });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  loadMoreData() async {
+    if (isLoadingMore || !hasMoreData || searchController.text.isEmpty) return;
+
+    setState(() {
+      isLoadingMore = true;
+    });
+
+    try {
+      currentPage++;
+
+      SearchDataModel? newResponse = await HttpService.getSearchData(
+          searchController.text,
+          page: currentPage,
+          pageSize: pageSize);
+
+      if (newResponse != null && newResponse.status == true) {
+        if (newResponse.data.customers.isEmpty &&
+            newResponse.data.leadData.isEmpty) {
+          // No more data
+          setState(() {
+            hasMoreData = false;
+          });
+        } else {
+          // Append new data to existing data
+          setState(() {
+            response!.data.customers.addAll(newResponse.data.customers);
+            response!.data.leadData.addAll(newResponse.data.leadData);
+          });
+        }
+      } else {
+        // Error or no more data
+        setState(() {
+          hasMoreData = false;
+        });
+      }
+    } catch (e) {
+      log('Error loading more data: $e');
+      setState(() {
+        hasMoreData = false;
+      });
+    } finally {
+      setState(() {
+        isLoadingMore = false;
+      });
+    }
   }
 
   @override
@@ -301,6 +367,7 @@ class _SearchState extends State<Search> {
               ),
             ),
             body: SingleChildScrollView(
+               controller: scrollController,
               child: Column(
                 children: [
                   Padding(
@@ -508,6 +575,8 @@ class _SearchState extends State<Search> {
                                     //    },
                                     //    ),
                                     //  ),
+                                     if (isLoadingMore)
+                                    buildDetailedShimmerLoading(),
                                     if (response!.data.leadData.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -634,8 +703,11 @@ class _SearchState extends State<Search> {
                                                         staff: widget.staff,
                                                         isCalled:
                                                             widget.isCalled,
-                                                        fromDate: widget.fromDate?.toIso8601String(),
-                                                        toDate: widget.toDate?.toIso8601String(),
+                                                        fromDate: widget
+                                                            .fromDate
+                                                            ?.toIso8601String(),
+                                                        toDate: widget.toDate
+                                                            ?.toIso8601String(),
                                                         category:
                                                             widget.category,
                                                         leadType: response!
@@ -666,7 +738,7 @@ class _SearchState extends State<Search> {
                                                             .data
                                                             .leadData[index]
                                                             .cost,
-                                                        address:response!
+                                                        address: response!
                                                             .data
                                                             .leadData[index]
                                                             .address,
@@ -734,9 +806,11 @@ class _SearchState extends State<Search> {
                                                                     isCalled: widget
                                                                         .isCalled,
                                                                     fromDate: widget
-                                                                            .fromDate?.toIso8601String(),
+                                                                        .fromDate
+                                                                        ?.toIso8601String(),
                                                                     toDate: widget
-                                                                            .toDate?.toIso8601String(),
+                                                                        .toDate
+                                                                        ?.toIso8601String(),
                                                                     category: widget
                                                                         .category,
                                                                     leadType: widget
@@ -765,7 +839,7 @@ class _SearchState extends State<Search> {
                                                   }
                                                 }
                                               }
-                                              return null; 
+                                              return null;
                                             },
                                             child:
                                                 leadListWidget(context, index),
@@ -780,7 +854,7 @@ class _SearchState extends State<Search> {
             ),
           )
         : noInternetWidget(context);
-       }
+  }
 
   Scaffold noInternetWidget(BuildContext context) {
     return Scaffold(
@@ -1447,6 +1521,31 @@ class _SearchState extends State<Search> {
       ),
     );
   }
+
+  Widget buildDetailedShimmerLoading() {
+  return ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: 3, 
+    itemBuilder: (context, index) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+        child: Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 1,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Future<dynamic> chooseCallDialog(BuildContext context, int index) {
     return showDialog(

@@ -1,5 +1,6 @@
 // ignore_for_file: must_be_immutable, prefer_const_constructors
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
@@ -9,6 +10,8 @@ import 'package:login2/models/userManagement/deleteStaffModel.dart';
 import 'package:login2/screens/callLogs/callLogs.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:login2/screens/staff_reports/achievementDetailspage.dart';
+import 'package:login2/screens/staff_reports/imageView.dart';
+import 'package:login2/screens/staff_reports/pdfView.dart';
 import 'package:login2/screens/userManagement/changePassword.dart';
 import 'package:login2/screens/userManagement/editStaffPage.dart';
 import 'package:login2/service/service.dart';
@@ -117,6 +120,10 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
       setState(() {});
     } else {}
   }
+
+  bool _isImage(String ext) {
+  return ['jpg', 'jpeg', 'png'].contains(ext.toLowerCase());
+}
 
   initData() async {
     setState(() {
@@ -1000,6 +1007,7 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                                     pageName: 'Total Called',
                                                     fromDate: fromDate,
                                                     toDate: toDate,
+                                                     staffId: widget.id,
                                                     callStatus: "1",
                                                     leadType: "-1",
                                                     callResId: callDetails!
@@ -1081,6 +1089,82 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                 },
                               ),
                             ),
+                            SizedBox(
+                              height: 30.0,
+                            ),
+                            // STAFF DOCUMENT VIEW SECTION
+                            if (staffDetails!.data.userFiles.isNotEmpty) ...[
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 10),
+                                child: Text(
+                                  "Staff Documents",
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: staffDetails!.data.userFiles.length,
+                                itemBuilder: (context, index) {
+                                  final file =
+                                      staffDetails!.data.userFiles[index];
+                                  final isImage = _isImage(file.ext);
+
+                                  return InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => isImage
+                                              ? ImageViewPage(file.link)
+                                              : PdfViewPage(file.link),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 6, horizontal: 20),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          isImage
+                                              ? ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: file.link,
+                                                    width: 50,
+                                                    height: 50,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.picture_as_pdf,
+                                                  size: 40, color: Colors.red),
+                                          const SizedBox(width: 15),
+                                          Expanded(
+                                            child: Text(file.document,
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 15)),
+                                          ),
+                                          const Icon(Icons.arrow_forward_ios,
+                                              size: 16)
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 25),
+                            ],
+
                             Visibility(
                               visible: data.isNotEmpty,
                               child: Column(

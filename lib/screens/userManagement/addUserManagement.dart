@@ -30,6 +30,8 @@ class _AddUserState extends State<AddUser> {
   TextEditingController phoneNumber = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController emailId = TextEditingController();
+  TextEditingController joiningDate = TextEditingController();
+  TextEditingController salary = TextEditingController();
   TextEditingController openingBalance = TextEditingController();
   TextEditingController designationVal = TextEditingController();
 
@@ -437,6 +439,60 @@ class _AddUserState extends State<AddUser> {
                           ),
                         ),
                         const SizedBox(
+                          height: 15,
+                        ),
+                        InputTextField(
+                          hintText: 'Joining Date',
+                          hintTextColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          controller: joiningDate,
+                          width: 0.9,
+                          iconData: Icons.calendar_month,
+                          obscureText: false,
+                          readOnly: true,
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1990),
+                              lastDate: DateTime(2100),
+                            );
+
+                            if (pickedDate != null) {
+                              String formattedDate =
+                                  "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+                              setState(() {
+                                joiningDate.text = formattedDate;
+                              });
+                            }
+                          },
+                        ),
+
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        InputTextField(
+                          hintText: 'Salary',
+                          hintTextColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          controller: salary,
+                          width: 0.9,
+                          iconData: Icons.currency_rupee,
+                          obscureText: true,
+                        ),
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        InputTextField(
+                          hintText: 'Opening Balance',
+                          hintTextColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          controller: openingBalance,
+                          width: 0.9,
+                          iconData: Icons.currency_rupee,
+                          obscureText: true,
+                        ),
+                        const SizedBox(
                           height: 10,
                         ),
                         checkedItemsName.isNotEmpty
@@ -540,7 +596,8 @@ class _AddUserState extends State<AddUser> {
                                     accessWhatsapp = value!;
                                   });
                                 },
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 contentPadding: EdgeInsets.zero,
                               ),
                               CheckboxListTile(
@@ -551,7 +608,8 @@ class _AddUserState extends State<AddUser> {
                                     accessCallLog = value!;
                                   });
                                 },
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 contentPadding: EdgeInsets.zero,
                               ),
                             ],
@@ -659,9 +717,11 @@ class _AddUserState extends State<AddUser> {
                                 'password': password.text,
                                 'name': name.text,
                                 'email': emailId.text,
+                                'joiningDate': joiningDate.text,
+                                'salary': salary.text,
                                 'opening_balance': openingBalance.text,
-                                  "officialWhatsAppAccess": accessWhatsapp,
-                                  "callLogAccess": accessCallLog,
+                                "officialWhatsAppAccess": accessWhatsapp,
+                                "callLogAccess": accessCallLog,
                                 "user_list": checkedItems,
                                 "branchId": branch
                               };

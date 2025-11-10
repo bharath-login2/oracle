@@ -62,6 +62,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   List<Projects> projectList = [];
   List<TitleListDet> titleList = [];
   List<String> participantIds = [];
+  String taskType = "Task";
+  String category = "New Work";
+  final List<String> taskTypes = ["Task", "Complaint"];
+  final List<String> categories = ["New Work", "Re Work"];
+
   bool isLoading = true;
   final TextEditingController search = TextEditingController();
   final TextEditingController selectedProjectController =
@@ -388,7 +393,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
   Future<void> _submitWork() async {
     if (_isAssigning) return;
-    
+
     setState(() {
       _isAssigning = true;
     });
@@ -473,6 +478,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
             dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
         'priority': priority,
         'assigned_to': assignedTo,
+        'task_type': taskType,
+        'category': category,
         'latitude': currentLatitude,
         'longitude': currentLongitude,
         'participant_ids': participantIds.join(','),
@@ -587,8 +594,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                 controller: selectedProjectController,
                                 readOnly: true,
                                 onTap: () async {
-                                  final selected =
-                                      await dropDialogExisting(context, "Projects");
+                                  final selected = await dropDialogExisting(
+                                      context, "Projects");
                                   if (selected != null) {
                                     setState(() {
                                       selectedProjectId = selected['id'];
@@ -706,7 +713,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                                 value: prio.id,
                                                 child: Text(
                                                   prio.priority,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   maxLines: 1,
                                                 ),
                                               );
@@ -738,7 +746,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                     child: InkWell(
                                       onTap: () async {
                                         final selected =
-                                            await _showStaffSearchDialog(context);
+                                            await _showStaffSearchDialog(
+                                                context);
                                         if (selected != null) {
                                           setState(() {
                                             assignedTo = selected['id'];
@@ -777,12 +786,71 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                                       )
                                                       .name
                                                   : 'Select Staff',
-                                              style: const TextStyle(fontSize: 16),
+                                              style:
+                                                  const TextStyle(fontSize: 16),
                                             ),
                                             const Icon(Icons.arrow_drop_down),
                                           ],
                                         ),
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: taskType,
+                                      items: taskTypes.map((type) {
+                                        return DropdownMenuItem(
+                                          value: type,
+                                          child: Text(type),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          taskType = value!;
+                                        });
+                                      },
+                                      decoration: const InputDecoration(
+                                        labelText: 'Task Type *',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please select Task Type';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: category,
+                                      items: categories.map((cat) {
+                                        return DropdownMenuItem(
+                                          value: cat,
+                                          child: Text(cat),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          category = value!;
+                                        });
+                                      },
+                                      decoration: const InputDecoration(
+                                        labelText: 'Category *',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please select Category';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ),
                                 ],
@@ -826,12 +894,13 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                                 : null),
                                         items: allTaskStates.isNotEmpty
                                             ? allTaskStates
-                                                .map((status) => DropdownMenuItem(
+                                                .map((status) =>
+                                                    DropdownMenuItem(
                                                       value: status.id,
                                                       child: Text(
                                                         status.status,
-                                                        overflow:
-                                                            TextOverflow.ellipsis,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                         maxLines: 1,
                                                       ),
                                                     ))
@@ -862,7 +931,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                 ),
                                 const SizedBox(height: 12),
                                 TextField(
-                                  controller: tasks[taskIndex].descriptionController,
+                                  controller:
+                                      tasks[taskIndex].descriptionController,
                                   minLines: 2,
                                   maxLines: 4,
                                   decoration: const InputDecoration(
@@ -903,8 +973,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                         }),
                         Container(
                           padding: const EdgeInsets.all(12),
-                          margin:
-                              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8),
@@ -923,7 +993,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    whatsappNotification = !whatsappNotification;
+                                    whatsappNotification =
+                                        !whatsappNotification;
                                   });
                                 },
                                 child: Row(
@@ -931,7 +1002,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                     Checkbox(
                                       value: whatsappNotification,
                                       onChanged: (value) => setState(() =>
-                                          whatsappNotification = value ?? false),
+                                          whatsappNotification =
+                                              value ?? false),
                                     ),
                                     const Text('WhatsApp Notification'),
                                   ],
@@ -944,8 +1016,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   children: [
                                     Checkbox(
                                       value: pushNotification,
-                                      onChanged: (value) => setState(
-                                          () => pushNotification = value ?? false),
+                                      onChanged: (value) => setState(() =>
+                                          pushNotification = value ?? false),
                                     ),
                                     const Text('Push Notification'),
                                   ],
@@ -954,13 +1026,15 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               const SizedBox(height: 8),
                               GestureDetector(
                                 onTap: () => setState(() =>
-                                    notifyToAssignedStaff = !notifyToAssignedStaff),
+                                    notifyToAssignedStaff =
+                                        !notifyToAssignedStaff),
                                 child: Row(
                                   children: [
                                     Checkbox(
                                       value: notifyToAssignedStaff,
                                       onChanged: (value) => setState(() =>
-                                          notifyToAssignedStaff = value ?? false),
+                                          notifyToAssignedStaff =
+                                              value ?? false),
                                     ),
                                     const Text('Notify to Assigned Staff'),
                                   ],
@@ -968,13 +1042,15 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               ),
                               GestureDetector(
                                 onTap: () => setState(() =>
-                                    notifyOnStatusChange = !notifyOnStatusChange),
+                                    notifyOnStatusChange =
+                                        !notifyOnStatusChange),
                                 child: Row(
                                   children: [
                                     Checkbox(
                                       value: notifyOnStatusChange,
                                       onChanged: (value) => setState(() =>
-                                          notifyOnStatusChange = value ?? false),
+                                          notifyOnStatusChange =
+                                              value ?? false),
                                     ),
                                     const Text('Notify on status change'),
                                   ],
@@ -982,8 +1058,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               ),
                               const SizedBox(height: 8),
                               GestureDetector(
-                                onTap: () =>
-                                    setState(() => notifyOnStart = !notifyOnStart),
+                                onTap: () => setState(
+                                    () => notifyOnStart = !notifyOnStart),
                                 child: Row(
                                   children: [
                                     Checkbox(
@@ -1002,8 +1078,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   children: [
                                     Checkbox(
                                       value: notifyOnComplete,
-                                      onChanged: (value) => setState(
-                                          () => notifyOnComplete = value ?? false),
+                                      onChanged: (value) => setState(() =>
+                                          notifyOnComplete = value ?? false),
                                     ),
                                     const Text('Notify when work completes'),
                                   ],
@@ -1013,7 +1089,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               GestureDetector(
                                 onTap: () => setState(() {
                                   notifyOtherPeople = !notifyOtherPeople;
-                                  if (!notifyOtherPeople) selectedStaffIds.clear();
+                                  if (!notifyOtherPeople)
+                                    selectedStaffIds.clear();
                                 }),
                                 child: Row(
                                   children: [
@@ -1037,8 +1114,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                 const Text('Select Staff to Notify:'),
                                 const SizedBox(height: 4),
                                 InkWell(
-                                  onTap: () =>
-                                      _showMultiStaffSelectionDialog(context, false),
+                                  onTap: () => _showMultiStaffSelectionDialog(
+                                      context, false),
                                   child: InputDecorator(
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
@@ -1071,8 +1148,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                               ),
                               const SizedBox(height: 8),
                               InkWell(
-                                onTap: () =>
-                                    _showMultiStaffSelectionDialog(context, true),
+                                onTap: () => _showMultiStaffSelectionDialog(
+                                    context, true),
                                 child: InputDecorator(
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
@@ -1080,7 +1157,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         horizontal: 12, vertical: 10),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         participantIds.isEmpty
@@ -1104,9 +1182,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                   padding: const EdgeInsets.all(16),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.existingWork != null && widget.Restart != 1
-                          ? Colors.red
-                          : Colors.green,
+                      backgroundColor:
+                          widget.existingWork != null && widget.Restart != 1
+                              ? Colors.red
+                              : Colors.green,
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 50),
                     ),
@@ -1117,18 +1196,20 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : Text(
-                            widget.existingWork != null ? 'STOP WORK' : 'ASSIGN WORK',
+                            widget.existingWork != null
+                                ? 'STOP WORK'
+                                : 'ASSIGN WORK',
                             style: const TextStyle(fontSize: 16),
                           ),
                   ),
                 ),
               ],
             ),
-            
             if (_isAssigning)
               Container(
                 color: Colors.black.withOpacity(0.5),
@@ -1198,82 +1279,82 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                       ),
                     ),
                   )
-                  ],
-                ),
-                content: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: ListView.builder(
-                    itemCount: title == "Projects"
-                        ? filteredProjects.length
-                        : title == "Customers"
-                            ? filteredNames.length
-                            : title == "Template"
-                                ? filteredTemplates.length
-                                : filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final project =
-                          title == "Projects" ? filteredProjects[index] : null;
+                ],
+              ),
+              content: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: ListView.builder(
+                  itemCount: title == "Projects"
+                      ? filteredProjects.length
+                      : title == "Customers"
+                          ? filteredNames.length
+                          : title == "Template"
+                              ? filteredTemplates.length
+                              : filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final project =
+                        title == "Projects" ? filteredProjects[index] : null;
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            color: const Color(0xFFFCFBFA),
-                          ),
-                          child: ListTile(
-                            onTap: () {
-                              if (title == "Projects") {
-                                final project = filteredProjects[index];
-                                selectedProjectId = project.id;
-                                selectedProjectName = project.name;
-                                selectedProjectController.text = project.name;
-                              } else if (title == "Customers") {
-                                customerIdExisting = filteredNames[index].id;
-                                customerNameExisting.text =
-                                    filteredNames[index].name;
-                              } else if (title == "Template") {
-                                templateIdExisting = filteredTemplates[index].id;
-                                remindMeExisting.text =
-                                    filteredTemplates[index].templateName;
-                              } else {
-                                final p = filteredProducts[index];
-                                productIdExisting = p.id;
-                                productNameExisting.text = p.productName;
-                                prodRateExisting.text = p.sellingPrice;
-                                prodTaxExisting.text = p.taxPercent;
-                                typeDuration = p.noOfDays;
-                                calculateTotalExisting();
-                              }
-                              Navigator.pop(context, {
-                                'id': project!.id,
-                                'name': project.name,
-                              });
-                              setState(() {});
-                              search.clear();
-                              return;
-                            },
-                            title: Text(
-                              title == "Projects"
-                                  ? filteredProjects[index].name
-                                  : title == "Customers"
-                                      ? filteredNames[index].name
-                                      : title == "Template"
-                                          ? filteredTemplates[index].templateName
-                                          : filteredProducts[index].productName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                              ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: const Color(0xFFFCFBFA),
+                        ),
+                        child: ListTile(
+                          onTap: () {
+                            if (title == "Projects") {
+                              final project = filteredProjects[index];
+                              selectedProjectId = project.id;
+                              selectedProjectName = project.name;
+                              selectedProjectController.text = project.name;
+                            } else if (title == "Customers") {
+                              customerIdExisting = filteredNames[index].id;
+                              customerNameExisting.text =
+                                  filteredNames[index].name;
+                            } else if (title == "Template") {
+                              templateIdExisting = filteredTemplates[index].id;
+                              remindMeExisting.text =
+                                  filteredTemplates[index].templateName;
+                            } else {
+                              final p = filteredProducts[index];
+                              productIdExisting = p.id;
+                              productNameExisting.text = p.productName;
+                              prodRateExisting.text = p.sellingPrice;
+                              prodTaxExisting.text = p.taxPercent;
+                              typeDuration = p.noOfDays;
+                              calculateTotalExisting();
+                            }
+                            Navigator.pop(context, {
+                              'id': project!.id,
+                              'name': project.name,
+                            });
+                            setState(() {});
+                            search.clear();
+                            return;
+                          },
+                          title: Text(
+                            title == "Projects"
+                                ? filteredProjects[index].name
+                                : title == "Customers"
+                                    ? filteredNames[index].name
+                                    : title == "Template"
+                                        ? filteredTemplates[index].templateName
+                                        : filteredProducts[index].productName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black,
                             ),
-                            leading: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child: (title == "Projects" &&
-                                          filteredProjects.isEmpty) ||
-                                      (title == "Customers" &&
+                          ),
+                          leading: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.white,
+                            child: (title == "Projects" &&
+                                        filteredProjects.isEmpty) ||
+                                    (title == "Customers" &&
                                         filteredNames.isEmpty) ||
                                     (title == "Template" &&
                                         filteredTemplates.isEmpty) ||

@@ -57,6 +57,8 @@ class _AddLeadsState extends State<AddLeads> {
   StateModel? stateDetails;
   CommonConfigureModel? configure;
   LeadSubTypeModel? leadSubTypeList;
+  String callResponse = 'Call Response';
+  String callResponseId = '';
   bool? result = true;
   bool? result1 = true;
   String leadType = 'Lead Category';
@@ -77,6 +79,7 @@ class _AddLeadsState extends State<AddLeads> {
   TextEditingController cost = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController remark = TextEditingController();
+  TextEditingController callResponseVal = TextEditingController();
   TextEditingController leadTypeVal = TextEditingController();
   TextEditingController leadSubTypeVal = TextEditingController();
   TextEditingController assignStaffVal = TextEditingController();
@@ -472,10 +475,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                 TextEditingController
                                                     searchController =
                                                     TextEditingController();
-                                                List<TransferStaff>
+                                                List<Staff>
                                                     filteredList = List.from(
                                                         commonDetails!.data
-                                                            .transferStaffs);
+                                                            .staff);
 
                                                 return StatefulBuilder(
                                                   builder: (context, setState) {
@@ -499,9 +502,9 @@ class _AddLeadsState extends State<AddLeads> {
                                                               setState(() {
                                                                 filteredList = commonDetails!
                                                                     .data
-                                                                    .transferStaffs
+                                                                    .staff
                                                                     .where((staff) => staff
-                                                                        .tranStaffName
+                                                                        .staffName
                                                                         .toLowerCase()
                                                                         .contains(
                                                                             value.toLowerCase()))
@@ -560,16 +563,16 @@ class _AddLeadsState extends State<AddLeads> {
                                                                         () {
                                                                       assignStaff = filteredList[
                                                                               ind]
-                                                                          .tranStaffName
+                                                                          .staffName
                                                                           .toString();
                                                                       assignStaffId = filteredList[
                                                                               ind]
-                                                                          .tranStaffId
+                                                                          .userId
                                                                           .toString();
                                                                       assignStaffVal
                                                                           .text = filteredList[
                                                                               ind]
-                                                                          .tranStaffName
+                                                                          .staffName
                                                                           .toString();
                                                                       Navigator.pop(
                                                                           context,
@@ -587,7 +590,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                       child:
                                                                           Text(
                                                                         filteredList[ind]
-                                                                            .tranStaffName
+                                                                            .staffName
                                                                             .toString(),
                                                                         style: const TextStyle(
                                                                             fontSize:
@@ -795,6 +798,7 @@ class _AddLeadsState extends State<AddLeads> {
                                 //   ),
                                 // ),
 
+                               
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10),
@@ -803,90 +807,7 @@ class _AddLeadsState extends State<AddLeads> {
                                       Expanded(
                                         child: TextFormField(
                                           controller: leadTypeVal,
-                                          // onTap: () {
-                                          //   showDialog(
-                                          //     context: context,
-                                          //     builder: (BuildContext context) {
-                                          //       return AlertDialog(
-                                          //         scrollable: true,
-                                          //         title: const Text(
-                                          //             'Lead Category'),
-                                          //         content: SizedBox(
-                                          //           width:
-                                          //               MediaQuery.of(context)
-                                          //                       .size
-                                          //                       .width *
-                                          //                   .8,
-                                          //           height:
-                                          //               MediaQuery.of(context)
-                                          //                       .size
-                                          //                       .height *
-                                          //                   .46,
-                                          //           child: ListView.builder(
-                                          //             shrinkWrap: true,
-                                          //             itemCount: commonDetails!
-                                          //                 .data
-                                          //                 .leadCategory
-                                          //                 .length,
-                                          //             itemBuilder:
-                                          //                 (context, ind) {
-                                          //               return InkWell(
-                                          //                 onTap: () async {
-                                          //                   leadSubTypeList =
-                                          //                       await HttpService
-                                          //                           .leadSubType(
-                                          //                     commonDetails!
-                                          //                         .data
-                                          //                         .leadCategory[
-                                          //                             ind]
-                                          //                         .leadCategoryId
-                                          //                         .toString(),
-                                          //                   );
-                                          //                   setState(() {
-                                          //                     leadSubType =
-                                          //                         'Lead Sub Category';
-                                          //                     leadSubTypeId =
-                                          //                         '';
-                                          //                     leadType = commonDetails!
-                                          //                         .data
-                                          //                         .leadCategory[
-                                          //                             ind]
-                                          //                         .leadCategory
-                                          //                         .toString();
-                                          //                     leadTypeId = commonDetails!
-                                          //                         .data
-                                          //                         .leadCategory[
-                                          //                             ind]
-                                          //                         .leadCategoryId
-                                          //                         .toString();
-                                          //                     Navigator.pop(
-                                          //                         context,
-                                          //                         true);
-                                          //                   });
-                                          //                 },
-                                          //                 child: SizedBox(
-                                          //                   height: 50,
-                                          //                   child: Text(
-                                          //                     commonDetails!
-                                          //                         .data
-                                          //                         .leadCategory[
-                                          //                             ind]
-                                          //                         .leadCategory
-                                          //                         .toString(),
-                                          //                     style:
-                                          //                         const TextStyle(
-                                          //                             fontSize:
-                                          //                                 18),
-                                          //                   ),
-                                          //                 ),
-                                          //               );
-                                          //             },
-                                          //           ),
-                                          //         ),
-                                          //       );
-                                          //     },
-                                          //   );
-                                          // },
+                                          readOnly: true,
                                           onTap: () {
                                             showDialog(
                                               context: context,
@@ -900,7 +821,8 @@ class _AddLeadsState extends State<AddLeads> {
                                                             .data.leadCategory);
 
                                                 return StatefulBuilder(
-                                                  builder: (context, setState) {
+                                                  builder: (context,
+                                                      setDialogState) {
                                                     return AlertDialog(
                                                       scrollable: true,
                                                       title: const Text(
@@ -924,7 +846,8 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   searchController,
                                                               onChanged:
                                                                   (value) {
-                                                                setState(() {
+                                                                setDialogState(
+                                                                    () {
                                                                   filteredList = commonDetails!
                                                                       .data
                                                                       .leadCategory
@@ -961,8 +884,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                             ),
                                                             const SizedBox(
                                                                 height: 10),
-
-                                                            // 📋 Category list
+                                                            // Category list
                                                             Expanded(
                                                               child: ListView
                                                                   .builder(
@@ -972,36 +894,40 @@ class _AddLeadsState extends State<AddLeads> {
                                                                 itemBuilder:
                                                                     (context,
                                                                         ind) {
+                                                                  final category =
+                                                                      filteredList[
+                                                                          ind];
                                                                   return InkWell(
                                                                     onTap:
                                                                         () async {
-                                                                      leadSubTypeList =
-                                                                          await HttpService
-                                                                              .leadSubType(
-                                                                        filteredList[ind]
-                                                                            .leadCategoryId
-                                                                            .toString(),
-                                                                      );
+                                                                      // Fetch subcategories
+                                                                      final subTypeResponse = await HttpService.leadSubType(category
+                                                                          .leadCategoryId
+                                                                          .toString());
+
+                                                                      // Update parent page state
                                                                       setState(
                                                                           () {
+                                                                        leadType =
+                                                                            category.leadCategory;
+                                                                        leadTypeId = category
+                                                                            .leadCategoryId
+                                                                            .toString();
+                                                                        leadTypeVal.text =
+                                                                            category.leadCategory;
+
+                                                                        leadSubTypeList =
+                                                                            subTypeResponse;
                                                                         leadSubType =
                                                                             'Lead Sub Category';
                                                                         leadSubTypeId =
                                                                             '';
-                                                                        leadType = filteredList[ind]
-                                                                            .leadCategory
-                                                                            .toString();
-                                                                        leadTypeId = filteredList[ind]
-                                                                            .leadCategoryId
-                                                                            .toString();
-                                                                        leadTypeVal
-                                                                            .text = filteredList[
-                                                                                ind]
-                                                                            .leadCategory;
-                                                                        Navigator.pop(
-                                                                            context,
-                                                                            true);
+                                                                        leadSubTypeVal.text =
+                                                                            '';
                                                                       });
+
+                                                                      Navigator.pop(
+                                                                          context); // Close dialog
                                                                     },
                                                                     child:
                                                                         Container(
@@ -1016,7 +942,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                               10),
                                                                       child:
                                                                           Text(
-                                                                        filteredList[ind]
+                                                                        category
                                                                             .leadCategory,
                                                                         style: const TextStyle(
                                                                             fontSize:
@@ -1036,18 +962,8 @@ class _AddLeadsState extends State<AddLeads> {
                                               },
                                             );
                                           },
-
-                                          maxLines: 1,
-                                          readOnly: true,
                                           decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.only(
-                                                    left: 10,
-                                                    top: 2,
-                                                    bottom: 2),
                                             labelText: 'Lead Category',
-                                            fillColor: Colors.white,
-                                            filled: true,
                                             prefixIcon: const Icon(
                                                 Icons
                                                     .arrow_drop_down_circle_outlined,
@@ -1056,12 +972,9 @@ class _AddLeadsState extends State<AddLeads> {
                                               icon: const Icon(Icons.add_circle,
                                                   color: Colors.green),
                                               onPressed: () {
-                                                final scaffoldContext = context;
-
                                                 showDialog(
-                                                  context: scaffoldContext,
-                                                  builder: (BuildContext
-                                                          dialogContext) =>
+                                                  context: context,
+                                                  builder: (context) =>
                                                       AddLeadCategoryDialog(
                                                     onSubmit: (leadName, cost,
                                                         subcategory) async {
@@ -1082,7 +995,6 @@ class _AddLeadsState extends State<AddLeads> {
                                                             await HttpService
                                                                 .addLeadCommonData(
                                                                     token);
-
                                                         setState(() {
                                                           commonDetails =
                                                               refreshed;
@@ -1097,15 +1009,16 @@ class _AddLeadsState extends State<AddLeads> {
                                                               .toString();
                                                           leadTypeVal.text =
                                                               last.leadCategory;
+
                                                           leadSubType =
                                                               'Lead Sub Category';
                                                           leadSubTypeId = '';
+                                                          leadSubTypeVal.text =
+                                                              '';
                                                         });
-
-                                                        Navigator.pop(
-                                                            dialogContext);
+                                                        Navigator.pop(context);
                                                         ScaffoldMessenger.of(
-                                                                scaffoldContext)
+                                                                context)
                                                             .showSnackBar(
                                                           const SnackBar(
                                                             content: Text(
@@ -1116,7 +1029,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                         );
                                                       } else {
                                                         ScaffoldMessenger.of(
-                                                                scaffoldContext)
+                                                                context)
                                                             .showSnackBar(
                                                           const SnackBar(
                                                             content: Text(
@@ -1146,105 +1059,196 @@ class _AddLeadsState extends State<AddLeads> {
                                   ),
                                 ),
 
-                                const SizedBox(
-                                  height: 15,
-                                ),
+                                const SizedBox(height: 15),
+
+// Lead Sub Category Field
                                 leadSubTypeList != null &&
                                         leadSubTypeList!.data!.isNotEmpty
                                     ? Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 20, left: 10, right: 10),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10),
                                         child: TextFormField(
                                           controller: leadSubTypeVal,
+                                          readOnly: true,
                                           onTap: () {
                                             showDialog(
                                               context: context,
-                                              builder: (BuildContext context) {
+                                              builder: (context) {
                                                 return AlertDialog(
                                                   scrollable: true,
                                                   title: const Text(
                                                       'Lead Sub Category'),
-                                                  content:
-                                                      SingleChildScrollView(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: MediaQuery
-                                                                    .of(context)
+                                                  content: SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.8,
+                                                    height:
+                                                        MediaQuery.of(context)
                                                                 .size
                                                                 .height *
-                                                            0.5, // Adjust as needed
-                                                      ),
-                                                      child: ListView.builder(
-                                                        shrinkWrap: true,
-                                                        itemCount:
+                                                            0.5,
+                                                    child: ListView.builder(
+                                                      itemCount:
+                                                          leadSubTypeList!
+                                                              .data!.length,
+                                                      itemBuilder:
+                                                          (context, subIndex) {
+                                                        final subCategory =
                                                             leadSubTypeList!
-                                                                .data!.length,
-                                                        itemBuilder: (context,
-                                                            subIndex) {
-                                                          return InkWell(
-                                                            onTap: () {
-                                                              setState(() {
-                                                                leadSubType = leadSubTypeList!
                                                                     .data![
-                                                                        subIndex]
-                                                                    .leadSubCategory
-                                                                    .toString();
-                                                                leadSubTypeId = leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategoryId
-                                                                    .toString();
-                                                                Navigator.pop(
-                                                                    context,
-                                                                    true);
-                                                              });
-                                                            },
-                                                            child: SizedBox(
-                                                              height: 50,
-                                                              child: Text(
-                                                                leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategory
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                              ),
+                                                                subIndex];
+                                                        return InkWell(
+                                                          onTap: () {
+                                                            setState(() {
+                                                              leadSubType =
+                                                                  subCategory
+                                                                      .leadSubCategory!;
+                                                              leadSubTypeId =
+                                                                  subCategory
+                                                                      .leadSubCategoryId
+                                                                      .toString();
+                                                              leadSubTypeVal
+                                                                      .text =
+                                                                  leadSubType;
+                                                            });
+                                                            Navigator.pop(
+                                                                context);
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        10,
+                                                                    horizontal:
+                                                                        10),
+                                                            child: Text(
+                                                              subCategory
+                                                                  .leadSubCategory!,
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          16),
                                                             ),
-                                                          );
-                                                        },
-                                                      ),
+                                                          ),
+                                                        );
+                                                      },
                                                     ),
                                                   ),
                                                 );
                                               },
                                             );
                                           },
-                                          maxLines: 1,
-                                          readOnly: true,
                                           decoration: const InputDecoration(
-                                              contentPadding: EdgeInsets.only(
-                                                  left: 10, top: 2, bottom: 2),
-                                              labelText: 'Lead Sub Category',
-                                              fillColor: Colors.white,
-                                              filled: true,
-                                              prefixIcon: Icon(
-                                                  Icons
-                                                      .arrow_drop_down_circle_outlined,
-                                                  color: Colors.grey),
-                                              border: OutlineInputBorder(),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.grey),
-                                              ),
-                                              labelStyle: TextStyle(
-                                                  color: Colors.grey)),
+                                            labelText: 'Lead Sub Category',
+                                            prefixIcon: Icon(Icons
+                                                .arrow_drop_down_circle_outlined),
+                                            border: OutlineInputBorder(),
+                                          ),
                                         ),
                                       )
                                     : const SizedBox(),
+
+                                SizedBox(height: 15),
+
+                                // leadSubTypeList != null &&
+                                //         leadSubTypeList!.data!.isNotEmpty
+                                //     ? Padding(
+                                //         padding: const EdgeInsets.only(
+                                //             bottom: 20, left: 10, right: 10),
+                                //         child: TextFormField(
+                                //           controller: leadSubTypeVal,
+                                //           onTap: () {
+                                //             showDialog(
+                                //               context: context,
+                                //               builder: (BuildContext context) {
+                                //                 return AlertDialog(
+                                //                   scrollable: true,
+                                //                   title: const Text(
+                                //                       'Lead Sub Category'),
+                                //                   content:
+                                //                       SingleChildScrollView(
+                                //                     child: ConstrainedBox(
+                                //                       constraints:
+                                //                           BoxConstraints(
+                                //                         maxHeight: MediaQuery
+                                //                                     .of(context)
+                                //                                 .size
+                                //                                 .height *
+                                //                             0.5, // Adjust as needed
+                                //                       ),
+                                //                       child: ListView.builder(
+                                //                         shrinkWrap: true,
+                                //                         itemCount:
+                                //                             leadSubTypeList!
+                                //                                 .data!.length,
+                                //                         itemBuilder: (context,
+                                //                             subIndex) {
+                                //                           return InkWell(
+                                //                             onTap: () {
+                                //                               setState(() {
+                                //                                 leadSubType = leadSubTypeList!
+                                //                                     .data![
+                                //                                         subIndex]
+                                //                                     .leadSubCategory
+                                //                                     .toString();
+                                //                                 leadSubTypeId = leadSubTypeList!
+                                //                                     .data![
+                                //                                         subIndex]
+                                //                                     .leadSubCategoryId
+                                //                                     .toString();
+                                //                                 Navigator.pop(
+                                //                                     context,
+                                //                                     true);
+                                //                               });
+                                //                             },
+                                //                             child: SizedBox(
+                                //                               height: 50,
+                                //                               child: Text(
+                                //                                 leadSubTypeList!
+                                //                                     .data![
+                                //                                         subIndex]
+                                //                                     .leadSubCategory
+                                //                                     .toString(),
+                                //                                 style:
+                                //                                     const TextStyle(
+                                //                                         fontSize:
+                                //                                             18),
+                                //                               ),
+                                //                             ),
+                                //                           );
+                                //                         },
+                                //                       ),
+                                //                     ),
+                                //                   ),
+                                //                 );
+                                //               },
+                                //             );
+                                //           },
+                                //           maxLines: 1,
+                                //           readOnly: true,
+                                //           decoration: const InputDecoration(
+                                //               contentPadding: EdgeInsets.only(
+                                //                   left: 10, top: 2, bottom: 2),
+                                //               labelText: 'Lead Sub Category',
+                                //               fillColor: Colors.white,
+                                //               filled: true,
+                                //               prefixIcon: Icon(
+                                //                   Icons
+                                //                       .arrow_drop_down_circle_outlined,
+                                //                   color: Colors.grey),
+                                //               border: OutlineInputBorder(),
+                                //               focusedBorder: OutlineInputBorder(
+                                //                 borderSide: BorderSide(
+                                //                     color: Colors.grey),
+                                //               ),
+                                //               labelStyle: TextStyle(
+                                //                   color: Colors.grey)),
+                                //         ),
+                                //       )
+                                //     : const SizedBox(),
 
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -1947,7 +1951,7 @@ class _AddLeadsState extends State<AddLeads> {
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),
-                                        labelText: 'Call Result',
+                                        labelText: 'Lead Status',
                                         fillColor: Colors.white,
                                         filled: true,
                                         prefixIcon: Icon(
@@ -1963,9 +1967,181 @@ class _AddLeadsState extends State<AddLeads> {
                                             TextStyle(color: Colors.grey)),
                                   ),
                                 ),
+
                                 const SizedBox(
                                   height: 15,
                                 ),
+                                if (callResultId == '2' ||
+                                    callResultId == '3' ||
+                                    callResultId == '4')
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 10, right: 10),
+                                    child: TextFormField(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            List filteredResponses = List.from(
+                                                commonDetails!
+                                                    .data.callResponseStatus);
+                                            TextEditingController
+                                                searchController =
+                                                TextEditingController();
+
+                                            return StatefulBuilder(
+                                              builder: (context, setState) {
+                                                return AlertDialog(
+                                                  scrollable: true,
+                                                  title: const Text(
+                                                      'Call Response'),
+                                                  content: SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.8,
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.53,
+                                                    child: Column(
+                                                      children: [
+                                                        // Search Box
+                                                        TextField(
+                                                          controller:
+                                                              searchController,
+                                                          decoration:
+                                                              InputDecoration(
+                                                            hintText:
+                                                                "Search...",
+                                                            prefixIcon:
+                                                                const Icon(Icons
+                                                                    .search),
+                                                            border:
+                                                                OutlineInputBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                            ),
+                                                            contentPadding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        10,
+                                                                    vertical:
+                                                                        5),
+                                                          ),
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              filteredResponses = commonDetails!
+                                                                  .data
+                                                                  .callResponseStatus
+                                                                  .where((element) => element
+                                                                      .callResponse
+                                                                      .toString()
+                                                                      .toLowerCase()
+                                                                      .contains(
+                                                                          value
+                                                                              .toLowerCase()))
+                                                                  .toList();
+                                                            });
+                                                          },
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        // List
+                                                        Expanded(
+                                                          child:
+                                                              ListView.builder(
+                                                            shrinkWrap: true,
+                                                            itemCount:
+                                                                filteredResponses
+                                                                    .length,
+                                                            itemBuilder:
+                                                                (context, ind) {
+                                                              return InkWell(
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    callResponse = filteredResponses[
+                                                                            ind]
+                                                                        .callResponse
+                                                                        .toString();
+                                                                    callResponseId = filteredResponses[
+                                                                            ind]
+                                                                        .callResponseId
+                                                                        .toString();
+
+                                                                    /// ✅ Update the TextFormField controller
+                                                                    callResponseVal
+                                                                            .text =
+                                                                        callResponse;
+
+                                                                    Navigator.pop(
+                                                                        context,
+                                                                        true);
+                                                                  });
+                                                                },
+                                                                child: SizedBox(
+                                                                  height: 50,
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        vertical:
+                                                                            8,
+                                                                        horizontal:
+                                                                            5),
+                                                                    child: Text(
+                                                                      filteredResponses[
+                                                                              ind]
+                                                                          .callResponse
+                                                                          .toString(),
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              18),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      maxLines: 1,
+                                      readOnly: true,
+                                      controller: callResponseVal,
+                                      decoration: const InputDecoration(
+                                          contentPadding: EdgeInsets.only(
+                                              left: 10, top: 2, bottom: 2),
+                                          labelText: 'Call Response',
+                                          fillColor: Colors.white,
+                                          filled: true,
+                                          prefixIcon: Icon(Icons.add_call,
+                                              color: Colors.grey),
+                                          border: OutlineInputBorder(),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.grey),
+                                          ),
+                                          labelStyle:
+                                              TextStyle(color: Colors.grey)),
+                                    ),
+                                  ),
+                                SizedBox(
+                                  height: 15,
+                                ),
+
                                 if (callResultId == '2')
                                   Row(
                                     children: [
@@ -2244,7 +2420,6 @@ class _AddLeadsState extends State<AddLeads> {
                                                           checkLeadPhone.message
                                                               .toString()),
                                                       actions: [
-                                                        // The "Yes" button
                                                         TextButton(
                                                             onPressed: () {
                                                               Navigator.of(
@@ -2281,6 +2456,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                       "",
                                                                   remark.text,
                                                                   callResultId,
+                                                                   callResponseId,
                                                                   nextFollowupDate1
                                                                       .text,
                                                                   descriptions,
@@ -2346,6 +2522,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                         "",
                                                     remark.text,
                                                     callResultId,
+                                                    callResponseId,
                                                     nextFollowupDate1.text,
                                                     descriptions,
                                                     code,

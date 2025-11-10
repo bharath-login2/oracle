@@ -78,8 +78,9 @@ class _AllReportState extends State<AllReport> {
   bool? isCalled = true;
   List selectedIUsers = [];
   List selectedUserNumbers = [];
-  bool isCreatedDateChecked = false;
+  bool isCreatedDateChecked = true;
   bool isUpdatedDateChecked = false;
+  bool isFilterApplied = false;
 
   final List<Color> _colors = [
     Colors.black,
@@ -232,72 +233,130 @@ class _AllReportState extends State<AllReport> {
     );
   }
 
+
   void getData() async {
-    //print('scrollIndex1:${widget.scrollToIndex}');
+  if (!isLoading) {
+    setState(() {
+      isLoading = true;
+    });
 
-    if (!isLoading) {
-      setState(() {
-        isLoading = true;
-      });
-      // selectedIUsers.clear();
-      // selectedUserNumbers.clear();
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
-      } else {
-        setState(() {
-          result = false;
-        });
-      }
+    final connectivityResult = await Connectivity().checkConnectivity();
+    result = connectivityResult == ConnectivityResult.mobile ||
+             connectivityResult == ConnectivityResult.wifi;
 
-      roleId = await Common.getSharedPref("roleId");
-      multiBranch = await Common.getSharedPref("multiBranch");
-      int createdFlag = isCreatedDateChecked ? 1 : 0;
-      int updatedFlag = isUpdatedDateChecked ? 1 : 0;
-      Map<String, dynamic> body = {
-        "token": widget.token,
-        "fromDate":
-            fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
-        "toDate":
-            todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
-        "createdDate": createdFlag,
-        "updatedDate": updatedFlag,
-        "page": page,
-        "pageSize": pageSize,
-        "callResultId": checkedCallResultItems,
-        "leadCategoryId": checkedCategoryItems,
-        "priority": checkedPriorityItems,
-        "staffId": checkedAssignedStaffItems,
-        "createdBy": checkedCreatedStaffItems,
-        "branchId": branch,
-        "lead_source_id": checkedLeadSource,
-        "state": StateId ?? "",
-        "district": DistrictId ?? "",
-        //"pincode": pinCode.text,
-      };
-      //print(body);
-      viewLeads = await HttpService.allViewLeads(body);
-      if (viewLeads != null) {
-        setState(() {});
-      }
-      commonDetails = await HttpService.addLeadCommonData(widget.token);
-      if (commonDetails != null) {
-        setState(() {});
-      }
-      configure = await HttpService.configure(widget.token);
-      setState(() {
-        items.addAll(viewLeads!.data.details as Iterable);
-        page++;
-        isLoading = false;
-      });
-    } else {
-      // Handle error
+    roleId = await Common.getSharedPref("roleId");
+    multiBranch = await Common.getSharedPref("multiBranch");
+    int createdFlag = 0;
+    int updatedFlag = 0;
+    if (isFilterApplied) {
+      createdFlag = isCreatedDateChecked ? 1 : 0;
+      updatedFlag = isUpdatedDateChecked ? 1 : 0;
     }
-    loadStates();
+
+    Map<String, dynamic> body = {
+      "token": widget.token,
+      "fromDate": fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
+      "toDate": todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
+      "createdDate": createdFlag,
+      "updatedDate": updatedFlag,
+      "page": page,
+      "pageSize": pageSize,
+      "callResultId": checkedCallResultItems,
+      "leadCategoryId": checkedCategoryItems,
+      "priority": checkedPriorityItems,
+      "staffId": checkedAssignedStaffItems,
+      "createdBy": checkedCreatedStaffItems,
+      "branchId": branch,
+      "lead_source_id": checkedLeadSource,
+      "state": StateId ?? "",
+      "district": DistrictId ?? "",
+    };
+
+    viewLeads = await HttpService.allViewLeads(body);
+    if (viewLeads != null) setState(() {});
+
+    commonDetails = await HttpService.addLeadCommonData(widget.token);
+    if (commonDetails != null) setState(() {});
+
+    configure = await HttpService.configure(widget.token);
+
+    setState(() {
+      items.addAll(viewLeads!.data.details as Iterable);
+      page++;
+      isLoading = false;
+    });
   }
+
+  loadStates();
+}
+
+
+  // void getData() async {
+  //   //print('scrollIndex1:${widget.scrollToIndex}');
+
+  //   if (!isLoading) {
+  //     setState(() {
+  //       isLoading = true;
+  //     });
+  //     // selectedIUsers.clear();
+  //     // selectedUserNumbers.clear();
+  //     final connectivityResult = await (Connectivity().checkConnectivity());
+  //     if (connectivityResult == ConnectivityResult.mobile ||
+  //         connectivityResult == ConnectivityResult.wifi) {
+  //       setState(() {
+  //         result = true;
+  //       });
+  //     } else {
+  //       setState(() {
+  //         result = false;
+  //       });
+  //     }
+
+  //     roleId = await Common.getSharedPref("roleId");
+  //     multiBranch = await Common.getSharedPref("multiBranch");
+  //     int createdFlag = isCreatedDateChecked ? 1 : 0;
+  //     int updatedFlag = isUpdatedDateChecked ? 1 : 0;
+  //     Map<String, dynamic> body = {
+  //       "token": widget.token,
+  //       "fromDate":
+  //           fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
+  //       "toDate":
+  //           todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
+  //       "createdDate": createdFlag,
+  //       "updatedDate": updatedFlag,
+  //       "page": page,
+  //       "pageSize": pageSize,
+  //       "callResultId": checkedCallResultItems,
+  //       "leadCategoryId": checkedCategoryItems,
+  //       "priority": checkedPriorityItems,
+  //       "staffId": checkedAssignedStaffItems,
+  //       "createdBy": checkedCreatedStaffItems,
+  //       "branchId": branch,
+  //       "lead_source_id": checkedLeadSource,
+  //       "state": StateId ?? "",
+  //       "district": DistrictId ?? "",
+  //       //"pincode": pinCode.text,
+  //     };
+  //     //print(body);
+  //     viewLeads = await HttpService.allViewLeads(body);
+  //     if (viewLeads != null) {
+  //       setState(() {});
+  //     }
+  //     commonDetails = await HttpService.addLeadCommonData(widget.token);
+  //     if (commonDetails != null) {
+  //       setState(() {});
+  //     }
+  //     configure = await HttpService.configure(widget.token);
+  //     setState(() {
+  //       items.addAll(viewLeads!.data.details as Iterable);
+  //       page++;
+  //       isLoading = false;
+  //     });
+  //   } else {
+  //     // Handle error
+  //   }
+  //   loadStates();
+  // }
 
   Future<void> loadStates() async {
     var result = await HttpService.getState();
@@ -1888,8 +1947,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.leadCategory.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.leadCategory.length,
+                                            itemCount: commonDetails?.data
+                                                    ?.leadCategory?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -2253,8 +2315,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.callResult.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.callResult.length,
+                                            itemCount: commonDetails?.data
+                                                    ?.callResult?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -2507,8 +2572,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.priority.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.priority.length,
+                                            itemCount: commonDetails
+                                                    ?.data?.priority?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -2887,8 +2955,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.staff.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.staff.length,
+                                            itemCount: commonDetails
+                                                    ?.data?.staff?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -3139,8 +3210,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.transferStaffs.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.transferStaffs.length,
+                                            itemCount: commonDetails?.data
+                                                    ?.transferStaffs?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -3397,8 +3471,11 @@ class _AllReportState extends State<AllReport> {
                                               .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data.leadSource.length,
+                                            // itemCount: commonDetails!
+                                            //     .data.leadSource.length,
+                                            itemCount: commonDetails?.data
+                                                    ?.leadSource?.length ??
+                                                0,
                                             itemBuilder: (context, ind) {
                                               return CheckboxListTile(
                                                 title: SizedBox(
@@ -3633,6 +3710,7 @@ class _AllReportState extends State<AllReport> {
                           child: RawMaterialButton(
                             onPressed: () {
                               setState(() {
+                                 isFilterApplied = true;
                                 items.clear();
                                 page = 1;
                                 getData();

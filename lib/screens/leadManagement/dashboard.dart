@@ -12,9 +12,14 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/models/callLogs/callLogUploadModel.dart';
+import 'package:login2/models/clients/customerListModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
+import 'package:login2/screens/accounts/clients/addInvoice.dart';
+import 'package:login2/screens/accounts/clients/addInvoiceUpdated.dart';
+import 'package:login2/screens/accounts/clients/gstInvoiceList.dart';
+import 'package:login2/screens/accounts/clients/proformaInvoiceList.dart';
 import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
@@ -32,6 +37,7 @@ import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
+import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
@@ -43,6 +49,7 @@ import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
+import 'package:login2/widgets/customerListDropdown.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -123,7 +130,12 @@ class _DashboardState extends State<Dashboard> {
   bool isWorkStarted = false;
   String startOrStop = "";
   String loggedinOnce = "";
-
+  Offset _floatingButtonPosition = Offset.zero;
+    TextEditingController search = TextEditingController();
+  List<Customer> customers = [];
+  List<Customer> filteredCustomers = [];
+  String customerName = "Choose Customer";
+  String customerId = "";
   var fromdate = DateTime.now();
   var todate = DateTime.now();
   var fromdate1 =
@@ -171,6 +183,7 @@ class _DashboardState extends State<Dashboard> {
   bool isVisible = true;
   bool loadmore = false;
   bool moreloading = false;
+  bool _showFloatingOptions = false;
   // final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   //     FlutterLocalNotificationsPlugin();
   final StreamController<String?> selectNotificationStream =
@@ -216,7 +229,9 @@ class _DashboardState extends State<Dashboard> {
     "Receipts",
     "Expense",
     "Customers",
-    "Account Head"
+    "Account Head",
+    "Proforma Invoices",
+    "GST Invoices",
   ];
   List tabColors = [
     Colors.green,
@@ -225,6 +240,8 @@ class _DashboardState extends State<Dashboard> {
     Colors.red,
     Colors.teal,
     Colors.purple,
+    const Color.fromARGB(255, 111, 27, 207),
+    const Color.fromARGB(255, 228, 43, 235),
   ];
   List colorList = [
     const Color(0xFFddd8f5),
@@ -235,6 +252,8 @@ class _DashboardState extends State<Dashboard> {
     const Color(0xFFf3d6d5),
     const Color(0xFFe0f0c8),
     const Color(0xFFf3e8d3),
+    const Color(0xFFf3e8d3),
+    const Color.fromARGB(255, 211, 243, 216),
   ];
 
   final List<Color> _colors = [
@@ -372,10 +391,229 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void initState() {
+    _initializeFloatingButtonPosition();
     super.initState();
 
     getData(widget.token, fromdate, todate);
     _loadWorkStatus();
+  }
+
+  void _initializeFloatingButtonPosition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      setState(() {
+        _floatingButtonPosition = Offset(screenWidth - 130, 400);
+      });
+    });
+  }
+
+   Future<Object?> addInvoiceDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Customer  Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return AlertDialog(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: TextField(
+                                        controller: search,
+                                        autocorrect: false,
+                                        keyboardType:
+                                            TextInputType.visiblePassword,
+                                        autofocus: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            filteredCustomers = customers
+                                                .where((item) => item.name!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        value.toLowerCase()))
+                                                .toList();
+                                          });
+                                        },
+                                        decoration: const InputDecoration(
+                                          contentPadding: EdgeInsets.all(8),
+                                          hintText: 'Search',
+                                          prefixIcon: Icon(Icons.search),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .3,
+                                      width: MediaQuery.of(context).size.width *
+                                          .8,
+                                      child: ListView.builder(
+                                        itemCount: filteredCustomers.length,
+                                        physics: const ScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                              onTap: () {
+                                                customerName =
+                                                    filteredCustomers[index]
+                                                        .name!;
+                                                customerId =
+                                                    filteredCustomers[index]
+                                                        .id!;
+                                                search.clear();
+                                                filteredCustomers =
+                                                    List.from(customers);
+                                                setState(() {});
+                                                if (context.mounted) {
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              title: Text(
+                                                  filteredCustomers[index]
+                                                      .name!));
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                      // onPressed: () {
+                                      //   search.clear();
+                                      //   filteredCustomers.addAll(customers);
+                                      //   if (context.mounted) {
+                                      //     Navigator.pop(context);
+                                      //   }
+                                      // },
+                                      onPressed: () {
+                                        search.clear();
+                                        filteredCustomers =
+                                            List.from(customers);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                      child: const Text("Close")),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    customerName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        if (customerId == '') {
+                          Common.toastMessaage('Choose Client', Colors.red);
+                        } else {
+                          search.clear();
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddInvoice(widget.token??'', customerId, "")),
+                          ).then((_) {
+                            getData(widget.token, fromdate, todate);
+                          });
+                        }
+                      },
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Padding(
+                            padding: EdgeInsets.only(
+                                top: 10, bottom: 10, left: 25, right: 25),
+                            child: Text(
+                              'Submit',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
+  }
+
+
+  void _updateFloatingButtonPosition(Offset newPosition) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    double x = newPosition.dx.clamp(0.0, screenWidth - 80);
+    double y = newPosition.dy.clamp(0.0, screenHeight - 80);
+
+    setState(() {
+      _floatingButtonPosition = Offset(x, y);
+    });
   }
 
   void _loadWorkStatus() async {
@@ -429,26 +667,26 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Future<void> captureFace() async {
-    final faceImage = await Navigator.of(context).push<File>(
-      MaterialPageRoute(
-        builder: (context) => FaceDetectionCamera(
-          onFaceCaptured: (File imageFile) {
-            Navigator.of(context).pop(imageFile);
-          },
-        ),
-      ),
-    );
-    if (faceImage != null && mounted) {
-      final faceHash = await generateFaceHash(faceImage);
-      if (faceHash == null) {
-        Common.toastMessaage('Face hash failed', Colors.red);
-        return;
-      }
-      _faceBase64 = faceHash;
-      setState(() {});
-    }
-  }
+  // Future<void> captureFace() async {
+  //   final faceImage = await Navigator.of(context).push<File>(
+  //     MaterialPageRoute(
+  //       builder: (context) => FaceDetectionCamera(
+  //         onFaceCaptured: (File imageFile) {
+  //           Navigator.of(context).pop(imageFile);
+  //         },
+  //       ),
+  //     ),
+  //   );
+  //   if (faceImage != null && mounted) {
+  //     final faceHash = await generateFaceHash(faceImage);
+  //     if (faceHash == null) {
+  //       Common.toastMessaage('Face hash failed', Colors.red);
+  //       return;
+  //     }
+  //     _faceBase64 = faceHash;
+  //     setState(() {});
+  //   }
+  // }
 
   getData(token, fromDate, toDate) async {
     renewalPermission = await Common.getSharedPref("renewalPermission");
@@ -612,6 +850,7 @@ class _DashboardState extends State<Dashboard> {
         getAccountDash();
         getLeadDash();
         getRenewalDashboard();
+        getCustomerList();
       }
       setState(() {
         timeOut = false;
@@ -631,6 +870,21 @@ class _DashboardState extends State<Dashboard> {
       setState(() {});
     } else {
       setState(() {});
+    }
+  }
+
+   getCustomerList() async {
+    try {
+      CustomerListModel? customerData =
+          await HttpService.customerList(widget.token);
+      if (customerData != null && customerData.status == true) {
+        setState(() {
+          customers = customerData.data ?? [];
+          filteredCustomers = List.from(customers);
+        });
+      }
+    } catch (e) {
+      print("Error loading customers: $e");
     }
   }
 
@@ -763,26 +1017,26 @@ class _DashboardState extends State<Dashboard> {
     String faceDetection = "true";
     String companyLocation = "true";
 
-    Future<void> captureFace() async {
-      final faceImage = await Navigator.of(context).push<File>(
-        MaterialPageRoute(
-          builder: (_) => FaceDetectionCamera(
-            onFaceCaptured: (File imageFile) {
-              Navigator.of(context).pop(imageFile);
-            },
-          ),
-        ),
-      );
+    // Future<void> captureFace() async {
+    //   final faceImage = await Navigator.of(context).push<File>(
+    //     MaterialPageRoute(
+    //       builder: (_) => FaceDetectionCamera(
+    //         onFaceCaptured: (File imageFile) {
+    //           Navigator.of(context).pop(imageFile);
+    //         },
+    //       ),
+    //     ),
+    //   );
 
-      if (faceImage != null && context.mounted) {
-        final faceHash = await generateFaceHash(faceImage);
-        if (faceHash == null) {
-          Common.toastMessaage('Face hash failed', Colors.red);
-          return;
-        }
-        faceBase64 = faceHash;
-      }
-    }
+    //   if (faceImage != null && context.mounted) {
+    //     final faceHash = await generateFaceHash(faceImage);
+    //     if (faceHash == null) {
+    //       Common.toastMessaage('Face hash failed', Colors.red);
+    //       return;
+    //     }
+    //     faceBase64 = faceHash;
+    //   }
+    // }
 
     showDialog(
       context: context,
@@ -927,15 +1181,15 @@ class _DashboardState extends State<Dashboard> {
                       return;
                     }
                   }
-                  if (faceDetection == "true") {
-                    await captureFace();
-                    if (faceBase64 == null || faceBase64!.isEmpty) {
-                      Navigator.of(context).pop();
-                      Common.toastMessaage(
-                          'Face capture required for login', Colors.red);
-                      return;
-                    }
-                  }
+                  // if (faceDetection == "true") {
+                  //   await captureFace();
+                  //   if (faceBase64 == null || faceBase64!.isEmpty) {
+                  //     Navigator.of(context).pop();
+                  //     Common.toastMessaage(
+                  //         'Face capture required for login', Colors.red);
+                  //     return;
+                  //   }
+                  // }
                   final now = DateTime.now();
                   final res = await HttpService.startWork(
                     now,
@@ -1533,6 +1787,7 @@ class _DashboardState extends State<Dashboard> {
                         : 1,
                 child: Scaffold(
                   key: _scaffoldKey,
+                  resizeToAvoidBottomInset: false,
                   backgroundColor: Colors.white,
                   body: TabBarView(
                     children: [
@@ -1770,6 +2025,10 @@ class _DashboardState extends State<Dashboard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              CustomerSearchBox(token: widget.token ?? ''),
+              SizedBox(
+                height: 10,
+              ),
               InkWell(
                 onTap: () {
                   Navigator.push(
@@ -2114,649 +2373,825 @@ class _DashboardState extends State<Dashboard> {
         onRefresh: () async {
           getAccountDash();
         },
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 20.0, horizontal: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        toggle = !toggle;
-                      });
-                      Common.saveSharedPref("acc_toggle", toggle.toString());
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(
-                            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                      ),
-                      child: Column(
-                        children: [
-                          // Container(
-                          //   height: MediaQuery.of(context).size.height * .2,
-                          //   decoration: BoxDecoration(
-                          //       borderRadius: BorderRadius.circular(12),
-                          //       image: DecorationImage(
-                          //           image: AssetImage("assets/main/logo.png"))),
-                          // ),
-                          const SizedBox(
-                            height: 20,
+        child: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20.0, horizontal: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            toggle = !toggle;
+                          });
+                          Common.saveSharedPref(
+                              "acc_toggle", toggle.toString());
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: const LinearGradient(
+                                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
                           ),
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          child: Column(
                             children: [
-                              SizedBox(
-                                width: 20,
+                              // Container(
+                              //   height: MediaQuery.of(context).size.height * .2,
+                              //   decoration: BoxDecoration(
+                              //       borderRadius: BorderRadius.circular(12),
+                              //       image: DecorationImage(
+                              //           image: AssetImage("assets/main/logo.png"))),
+                              // ),
+                              const SizedBox(
+                                height: 20,
                               ),
-                              Text(
-                                "Account Management",
-                                style: TextStyle(
+                              const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  Text(
+                                    "Account Management",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 25,
+                                        shadows: [
+                                          Shadow(
+                                            offset: Offset(2.0, 2.0),
+                                            blurRadius: 5.0,
+                                            color: Colors.grey,
+                                          ),
+                                        ]),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_drop_down_circle_outlined,
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 25,
-                                    shadows: [
-                                      Shadow(
-                                        offset: Offset(2.0, 2.0),
-                                        blurRadius: 5.0,
-                                        color: Colors.grey,
-                                      ),
-                                    ]),
+                                    size: 25,
+                                  )
+                                ],
                               ),
-                              Icon(
-                                Icons.arrow_drop_down_circle_outlined,
-                                color: Colors.white,
-                                size: 25,
-                              )
+                              toggle
+                                  ? SizedBox(
+                                      width: MediaQuery.of(context).size.width *
+                                          .95,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .37,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: GridView.builder(
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: list.length,
+                                          gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                  crossAxisCount: 2,
+                                                  mainAxisSpacing: 15,
+                                                  crossAxisSpacing: 15,
+                                                  childAspectRatio: 3),
+                                          itemBuilder: (context, i) {
+                                            return InkWell(
+                                              onTap: () {
+                                                if (list[i] == "Expense") {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ExpenseList(),
+                                                      ));
+                                                } else if (list[i] ==
+                                                    "Invoices") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            InvoiceList(widget
+                                                                .token
+                                                                .toString())),
+                                                  );
+                                                } else if (list[i] ==
+                                                    "Proforma Invoices") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ProformaInvoiceList(
+                                                                widget.token
+                                                                    .toString())),
+                                                  );
+                                                } else if (list[i] ==
+                                                    "GST Invoices") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            GSTInvoiceList(widget
+                                                                .token
+                                                                .toString())),
+                                                  );
+                                                } else if (list[i] ==
+                                                    "Pending Invoices") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            PendingInvoice(widget
+                                                                .token
+                                                                .toString())),
+                                                  );
+                                                } else if (list[i] ==
+                                                    "Receipts") {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ReceiptList(widget
+                                                                .token
+                                                                .toString())),
+                                                  );
+                                                } else if (list[i] ==
+                                                    "Account Head") {
+                                                  if (accountDashboard!
+                                                      .data.isViewAccHead) {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const AccountHead()),
+                                                    );
+                                                  } else {
+                                                    Common.toastMessaage(
+                                                        "No permission",
+                                                        Colors.red);
+                                                  }
+                                                } else {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ClientList(
+                                                                widget.token!)),
+                                                  );
+                                                }
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      const Color(0xFFf0ebef),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    list[i],
+                                                    style: TextStyle(
+                                                        color: tabColors[i],
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 15),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox(
+                                      height: 20,
+                                    ),
                             ],
                           ),
-                          toggle
-                              ? SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * .95,
-                                  height:
-                                      MediaQuery.of(context).size.height * .3,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: GridView.builder(
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: list.length,
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 2,
-                                              mainAxisSpacing: 15,
-                                              crossAxisSpacing: 15,
-                                              childAspectRatio: 3),
-                                      itemBuilder: (context, i) {
-                                        return InkWell(
-                                          onTap: () {
-                                            if (list[i] == "Expense") {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ExpenseList(),
-                                                  ));
-                                            } else if (list[i] == "Invoices") {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        InvoiceList(widget.token
-                                                            .toString())),
-                                              );
-                                            } else if (list[i] ==
-                                                "Pending Invoices") {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PendingInvoice(widget
-                                                            .token
-                                                            .toString())),
-                                              );
-                                            } else if (list[i] == "Receipts") {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ReceiptList(widget.token
-                                                            .toString())),
-                                              );
-                                            } else if (list[i] ==
-                                                "Account Head") {
-                                              if (accountDashboard!
-                                                  .data.isViewAccHead) {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const AccountHead()),
-                                                );
-                                              } else {
-                                                Common.toastMessaage(
-                                                    "No permission",
-                                                    Colors.red);
-                                              }
-                                            } else {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ClientList(
-                                                            widget.token!)),
-                                              );
-                                            }
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFf0ebef),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                list[i],
-                                                style: TextStyle(
-                                                    color: tabColors[i],
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox(
-                                  height: 20,
-                                ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * .9,
-                  height: MediaQuery.of(context).size.height * .63,
-                  child: GridView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 15,
-                            crossAxisSpacing: 15,
-                            childAspectRatio: 1.5),
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          if (accountDashboard!.data.bankAccCount == "1") {
-                            if (accountDashboard!.data.isViewBankAcc) {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BankAccount(
-                                      accId:
-                                          accountDashboard!.data.bankAccountId,
-                                      accName: accountDashboard!
-                                          .data.bankAccountName,
-                                    ),
-                                  ));
-                            } else {
-                              Common.toastMessaage("No permission", Colors.red);
-                            }
-                          } else if (accountDashboard!.data.bankAccCount ==
-                              "0") {
-                            Common.toastMessaage(
-                                "Please add a 'BANK ACCOUNT'", Colors.red);
-                          } else {
-                            if (accountDashboard!.data.isViewBankAcc) {
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * .9,
+                      height: MediaQuery.of(context).size.height * .63,
+                      child: GridView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 15,
+                                crossAxisSpacing: 15,
+                                childAspectRatio: 1.5),
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              if (accountDashboard!.data.bankAccCount == "1") {
+                                if (accountDashboard!.data.isViewBankAcc) {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BankAccount(
+                                          accId: accountDashboard!
+                                              .data.bankAccountId,
+                                          accName: accountDashboard!
+                                              .data.bankAccountName,
+                                        ),
+                                      ));
+                                } else {
+                                  Common.toastMessaage(
+                                      "No permission", Colors.red);
+                                }
+                              } else if (accountDashboard!.data.bankAccCount ==
+                                  "0") {
+                                Common.toastMessaage(
+                                    "Please add a 'BANK ACCOUNT'", Colors.red);
+                              } else {
+                                if (accountDashboard!.data.isViewBankAcc) {
+                                  if (accountDashboard!
+                                      .data.isViewPendingExpense) {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PendingExpense(
+                                            status: "1",
+                                          ),
+                                        ));
+                                  } else {
+                                    Common.toastMessaage(
+                                        "No permission", Colors.red);
+                                  }
+                                } else {}
+                              }
+                            },
+                            child: gridItem(
+                                "BANK ACCOUNT",
+                                accountDashboard!.data.bankAccount,
+                                Colors.green,
+                                colorList[0]),
+                          ),
+                          InkWell(
+                            onTap: () {
                               if (accountDashboard!.data.isViewPendingExpense) {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => PendingExpense(
-                                        status: "1",
+                                        status: "2",
                                       ),
                                     ));
                               } else {
                                 Common.toastMessaage(
                                     "No permission", Colors.red);
                               }
-                            } else {}
-                          }
-                        },
-                        child: gridItem(
-                            "BANK ACCOUNT",
-                            accountDashboard!.data.bankAccount,
-                            Colors.green,
-                            colorList[0]),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          if (accountDashboard!.data.isViewPendingExpense) {
-                            Navigator.push(
+                            },
+                            child: gridItem(
+                                "PENDING EXPENSE",
+                                accountDashboard!.data.pendingExpense,
+                                Colors.red,
+                                colorList[1]),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PendingExpense(
-                                    status: "2",
+                                  builder: (context) => ReceiptList(
+                                    widget.token!,
+                                    // fdate: DateFormat('dd-MM-yyyy')
+                                    //     .format(DateTime.now()),
+                                    // tdate: DateFormat('dd-MM-yyyy')
+                                    //     .format(DateTime.now()),
+                                    fdate: DateFormat('yyyy-MM-dd')
+                                        .format(DateTime.now()),
+                                    tdate: DateFormat('yyyy-MM-dd')
+                                        .format(DateTime.now()),
                                   ),
-                                ));
-                          } else {
-                            Common.toastMessaage("No permission", Colors.red);
-                          }
-                        },
-                        child: gridItem(
-                            "PENDING EXPENSE",
-                            accountDashboard!.data.pendingExpense,
-                            Colors.red,
-                            colorList[1]),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ReceiptList(
-                                widget.token!,
-                                // fdate: DateFormat('dd-MM-yyyy')
-                                //     .format(DateTime.now()),
-                                // tdate: DateFormat('dd-MM-yyyy')
-                                //     .format(DateTime.now()),
-                                fdate: DateFormat('yyyy-MM-dd')
-                                    .format(DateTime.now()),
-                                tdate: DateFormat('yyyy-MM-dd')
-                                    .format(DateTime.now()),
-                              ),
+                                ),
+                              );
+                            },
+                            child: gridItem(
+                              "TODAYS INCOME",
+                              accountDashboard!.data.todaysIncome,
+                              Colors.black,
+                              colorList[2],
                             ),
-                          );
-                        },
-                        child: gridItem(
-                          "TODAYS INCOME",
-                          accountDashboard!.data.todaysIncome,
-                          Colors.black,
-                          colorList[2],
-                        ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ExpenseList(
+                                      // fdate: DateFormat('dd-MM-yyyy')
+                                      fdate: DateFormat('yyyy-MM-dd')
+                                          .format(DateTime.now()),
+                                      // tdate: DateFormat('dd-MM-yyyy')
+                                      tdate: DateFormat('yyyy-MM-dd')
+                                          .format(DateTime.now()),
+                                    ),
+                                  ));
+                            },
+                            child: gridItem(
+                                "TODAYS EXPENSE",
+                                accountDashboard!.data.todayExpense,
+                                Colors.black,
+                                colorList[3]),
+                          ),
+                          // InkWell(
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) => ReceiptList(
+                          //           widget.token!,
+                          //           // fdate: DateFormat('dd-MM-yyyy')
+                          //           //     .format(DateTime.now()),
+                          //           // tdate: DateFormat('dd-MM-yyyy')
+                          //           //     .format(DateTime.now()),
+                          //            fdate: DateFormat('yyyy-MM-dd')
+                          //               .format(DateTime.now()),
+                          //           tdate: DateFormat('yyyy-MM-dd')
+                          //               .format(DateTime.now()),
+                          //         ),
+                          //       ),
+                          //     );
+                          //   },
+                          //   child: gridItem(
+                          //     "TODAYS INCOME",
+                          //     accountDashboard!.data.todaysIncome,
+                          //     Colors.black,
+                          //     colorList[2],
+                          //   ),
+                          // ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ReceiptList(
+                                      widget.token!,
+                                      fdate: DateFormat('dd-MM-yyyy').format(
+                                          DateTime(DateTime.now().year,
+                                              DateTime.now().month, 1)),
+                                      tdate: DateFormat('dd-MM-yyyy')
+                                          .format(DateTime.now()),
+                                    ),
+                                  ));
+                            },
+                            child: gridItem(
+                                "THIS MONTH INCOME",
+                                accountDashboard!.data.monthlyIncome,
+                                Colors.black,
+                                colorList[4]),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ExpenseList(
+                                      // fdate: DateFormat('dd-MM-yyyy').format(
+                                      fdate: DateFormat('yyyy-MM-dd').format(
+                                          DateTime(DateTime.now().year,
+                                              DateTime.now().month, 1)),
+                                      // tdate: DateFormat('dd-MM-yyyy')
+                                      tdate: DateFormat('yyyy-MM-dd')
+                                          .format(DateTime.now()),
+                                    ),
+                                  ));
+                            },
+                            child: gridItem(
+                                "THIS MONTH EXPENSE",
+                                accountDashboard!.data.monthlyExpense,
+                                Colors.black,
+                                colorList[5]),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PendingInvoice(widget.token!),
+                                  ));
+                            },
+                            child: gridItem(
+                                "PENDING INVOICE",
+                                accountDashboard!.data.pendingIncome,
+                                Colors.black,
+                                colorList[6]),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PendingExpense(
+                                      status: "3",
+                                    ),
+                                  ));
+                            },
+                            child: gridItem(
+                                "ADVANCE AMOUNT",
+                                accountDashboard!.data.advanceAmount,
+                                Colors.green,
+                                colorList[7]),
+                          ),
+                        ],
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ExpenseList(
-                                  // fdate: DateFormat('dd-MM-yyyy')
-                                  fdate: DateFormat('yyyy-MM-dd')
-                                      .format(DateTime.now()),
-                                  // tdate: DateFormat('dd-MM-yyyy')
-                                  tdate: DateFormat('yyyy-MM-dd')
-                                      .format(DateTime.now()),
-                                ),
-                              ));
-                        },
-                        child: gridItem(
-                            "TODAYS EXPENSE",
-                            accountDashboard!.data.todayExpense,
-                            Colors.black,
-                            colorList[3]),
-                      ),
-                      // InkWell(
-                      //   onTap: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //         builder: (context) => ReceiptList(
-                      //           widget.token!,
-                      //           // fdate: DateFormat('dd-MM-yyyy')
-                      //           //     .format(DateTime.now()),
-                      //           // tdate: DateFormat('dd-MM-yyyy')
-                      //           //     .format(DateTime.now()),
-                      //            fdate: DateFormat('yyyy-MM-dd')
-                      //               .format(DateTime.now()),
-                      //           tdate: DateFormat('yyyy-MM-dd')
-                      //               .format(DateTime.now()),
-                      //         ),
-                      //       ),
-                      //     );
-                      //   },
-                      //   child: gridItem(
-                      //     "TODAYS INCOME",
-                      //     accountDashboard!.data.todaysIncome,
-                      //     Colors.black,
-                      //     colorList[2],
-                      //   ),
-                      // ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReceiptList(
-                                  widget.token!,
-                                  fdate: DateFormat('dd-MM-yyyy').format(
-                                      DateTime(DateTime.now().year,
-                                          DateTime.now().month, 1)),
-                                  tdate: DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now()),
-                                ),
-                              ));
-                        },
-                        child: gridItem(
-                            "THIS MONTH INCOME",
-                            accountDashboard!.data.monthlyIncome,
-                            Colors.black,
-                            colorList[4]),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ExpenseList(
-                                  // fdate: DateFormat('dd-MM-yyyy').format(
-                                  fdate: DateFormat('yyyy-MM-dd').format(
-                                      DateTime(DateTime.now().year,
-                                          DateTime.now().month, 1)),
-                                  // tdate: DateFormat('dd-MM-yyyy')
-                                  tdate: DateFormat('yyyy-MM-dd')
-                                      .format(DateTime.now()),
-                                ),
-                              ));
-                        },
-                        child: gridItem(
-                            "THIS MONTH EXPENSE",
-                            accountDashboard!.data.monthlyExpense,
-                            Colors.black,
-                            colorList[5]),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    PendingInvoice(widget.token!),
-                              ));
-                        },
-                        child: gridItem(
-                            "PENDING INVOICE",
-                            accountDashboard!.data.pendingIncome,
-                            Colors.black,
-                            colorList[6]),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PendingExpense(
-                                  status: "3",
-                                ),
-                              ));
-                        },
-                        child: gridItem(
-                            "ADVANCE AMOUNT",
-                            accountDashboard!.data.advanceAmount,
-                            Colors.green,
-                            colorList[7]),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 12.0,
-                    right: 12.0,
-                    bottom: 25.0,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFf0ebef),
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              top: 26.0, bottom: 16, left: 16.0, right: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              GestureDetector(
-                                onTap: () async {
-                                  final selctedDatetimetemp =
-                                      await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime(DateTime.now().year,
-                                        DateTime.now().month, 1),
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime.now(),
-                                  );
-                                  fDate = DateFormat('dd-MM-yyyy')
-                                      .format(selctedDatetimetemp!);
-                                  getAccountDash();
-                                  setState(() {});
-                                },
-                                child: Container(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.37,
-                                  height: 45,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      boxShadow: [
-                                        BoxShadow(
-                                            blurRadius: 0.5,
-                                            color: Colors.grey.shade300,
-                                            offset: const Offset(2.5, 2.5))
-                                      ],
-                                      color: Colors.white),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          fDate,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 12.0,
+                        right: 12.0,
+                        bottom: 25.0,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFf0ebef),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  top: 26.0,
+                                  bottom: 16,
+                                  left: 16.0,
+                                  right: 16.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final selctedDatetimetemp =
+                                          await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime(
+                                            DateTime.now().year,
+                                            DateTime.now().month,
+                                            1),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      fDate = DateFormat('dd-MM-yyyy')
+                                          .format(selctedDatetimetemp!);
+                                      getAccountDash();
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.37,
+                                      height: 45,
+                                      decoration: BoxDecoration(
                                           borderRadius:
-                                              BorderRadius.circular(2),
-                                          color: Colors.white,
-                                        ),
-                                        child: const Icon(
-                                          Icons.calendar_month,
-                                          color: Colors.grey,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const Icon(
-                                Icons.arrow_forward,
-                                size: 16,
-                              ),
-                              GestureDetector(
-                                onTap: () async {
-                                  final toDateSelectTemp = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                  );
-                                  tDate = DateFormat('dd-MM-yyyy')
-                                      .format(toDateSelectTemp!);
-                                  getAccountDash();
-                                  setState(() {});
-                                },
-                                child: Container(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.37,
-                                  height: 45,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Colors.white,
-                                      boxShadow: [
-                                        BoxShadow(
-                                            blurRadius: 0.5,
-                                            color: Colors.grey.shade300,
-                                            offset: const Offset(2.5, 2.5))
-                                      ]),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          tDate,
-                                        ),
+                                              BorderRadius.circular(5),
+                                          boxShadow: [
+                                            BoxShadow(
+                                                blurRadius: 0.5,
+                                                color: Colors.grey.shade300,
+                                                offset: const Offset(2.5, 2.5))
+                                          ],
+                                          color: Colors.white),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: Text(
+                                              fDate,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                              color: Colors.white,
+                                            ),
+                                            child: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.grey,
+                                            ),
+                                          )
+                                        ],
                                       ),
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_forward,
+                                    size: 16,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final toDateSelectTemp =
+                                          await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime(2100),
+                                      );
+                                      tDate = DateFormat('dd-MM-yyyy')
+                                          .format(toDateSelectTemp!);
+                                      getAccountDash();
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.37,
+                                      height: 45,
+                                      decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                                blurRadius: 0.5,
+                                                color: Colors.grey.shade300,
+                                                offset: const Offset(2.5, 2.5))
+                                          ]),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: Text(
+                                              tDate,
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              color: Colors.white,
+                                            ),
+                                            child: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.grey,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(
+                                      bottom: 16.0, left: 16.0, right: 16.0),
+                                  child: Text(
+                                    "Income",
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 25),
+                                  ),
+                                ),
+                                if (accountDashboard!
+                                    .data.incomeGraph.isNotEmpty)
+                                  ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: accountDashboard!
+                                          .data.incomeGraph.length,
+                                      itemBuilder: (context, i) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ReceiptList(
+                                                        widget.token.toString(),
+                                                        type: accountDashboard!
+                                                            .data
+                                                            .incomeGraph[i]
+                                                            .type,
+                                                        fdate: fDate,
+                                                        tdate: tDate,
+                                                      )),
+                                            );
+                                          },
+                                          child: progressItem(
+                                              accountDashboard!
+                                                  .data.incomeGraph[i].category,
+                                              accountDashboard!.data
+                                                  .incomeGraph[i].totalExpense,
+                                              double.parse(accountDashboard!
+                                                  .data.incomeGraph[i].perc)),
+                                        );
+                                      })
+                                else
+                                  const Padding(
+                                    padding: EdgeInsets.only(bottom: 26.0),
+                                    child: Text(
+                                      "Empty",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (accountDashboard!.data.expenseGraph.isNotEmpty)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 16.0, horizontal: 16.0),
+                                    child: Text(
+                                      "Expense",
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 25),
+                                    ),
+                                  ),
+                                  ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: accountDashboard!
+                                          .data.expenseGraph.length,
+                                      itemBuilder: (context, i) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ExpenseList(
+                                                    catId: accountDashboard!
+                                                        .data
+                                                        .expenseGraph[i]
+                                                        .expCatid,
+                                                    catName: accountDashboard!
+                                                        .data
+                                                        .expenseGraph[i]
+                                                        .expCatName,
+                                                    fdate: fDate,
+                                                    tdate: tDate,
+                                                  ),
+                                                ));
+                                          },
+                                          child: progressItem(
+                                              accountDashboard!.data
+                                                  .expenseGraph[i].expCatName,
+                                              accountDashboard!.data
+                                                  .expenseGraph[i].totalExpense,
+                                              double.parse(accountDashboard!
+                                                  .data.expenseGraph[i].perc)),
+                                        );
+                                      }),
+                                ],
+                              )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              right: _floatingButtonPosition.dx == 0 ? 30 : null,
+              bottom: _floatingButtonPosition.dy == 0 ? 100 : null,
+              left: _floatingButtonPosition.dx != 0
+                  ? _floatingButtonPosition.dx
+                  : null,
+              top: _floatingButtonPosition.dy != 0
+                  ? _floatingButtonPosition.dy
+                  : null,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  final newPosition = Offset(
+                    _floatingButtonPosition.dx + details.delta.dx,
+                    _floatingButtonPosition.dy + details.delta.dy,
+                  );
+                  _updateFloatingButtonPosition(newPosition);
+                },
+                child: Column(
+                  children: [
+                    if (_showFloatingOptions) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                child: SizedBox(
+                                  width: 130,
+                                  child: FloatingActionButton.extended(
+                                    heroTag: "simple_invoice",
+                                    onPressed: () {
+                                      setState(() {
+                                        _showFloatingOptions = false;
+                                      });
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              AddInvoiceUpdated(
+                                            widget.token ?? '',
+                                            "",
+                                            "",
+                                          ),
                                         ),
-                                        child: const Icon(
-                                          Icons.calendar_month,
-                                          color: Colors.grey,
-                                        ),
-                                      )
-                                    ],
+                                      );
+                                    },
+                                    label: const Text(
+                                      'Sale',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.receipt,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                child: SizedBox(
+                                  width: 130,
+                                  child: FloatingActionButton.extended(
+                                    heroTag: "complex_invoice",
+                                    onPressed: () {
+                                      setState(() {
+                                        _showFloatingOptions = false;
+                                      });
+                                      addInvoiceDialog(context);
+                                    },
+                                    label: const Text(
+                                      'Invoice',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.description,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    backgroundColor: Colors.blue,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(
-                                  bottom: 16.0, left: 16.0, right: 16.0),
-                              child: Text(
-                                "Income",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 25),
-                              ),
-                            ),
-                            if (accountDashboard!.data.incomeGraph.isNotEmpty)
-                              ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount:
-                                      accountDashboard!.data.incomeGraph.length,
-                                  itemBuilder: (context, i) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => ReceiptList(
-                                                    widget.token.toString(),
-                                                    type: accountDashboard!.data
-                                                        .incomeGraph[i].type,
-                                                    fdate: fDate,
-                                                    tdate: tDate,
-                                                  )),
-                                        );
-                                      },
-                                      child: progressItem(
-                                          accountDashboard!
-                                              .data.incomeGraph[i].category,
-                                          accountDashboard!
-                                              .data.incomeGraph[i].totalExpense,
-                                          double.parse(accountDashboard!
-                                              .data.incomeGraph[i].perc)),
-                                    );
-                                  })
-                            else
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 26.0),
-                                child: Text(
-                                  "Empty",
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                          ],
-                        ),
-                        if (accountDashboard!.data.expenseGraph.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 16.0, horizontal: 16.0),
-                                child: Text(
-                                  "Expense",
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25),
-                                ),
-                              ),
-                              ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: accountDashboard!
-                                      .data.expenseGraph.length,
-                                  itemBuilder: (context, i) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ExpenseList(
-                                                catId: accountDashboard!.data
-                                                    .expenseGraph[i].expCatid,
-                                                catName: accountDashboard!.data
-                                                    .expenseGraph[i].expCatName,
-                                                fdate: fDate,
-                                                tdate: tDate,
-                                              ),
-                                            ));
-                                      },
-                                      child: progressItem(
-                                          accountDashboard!
-                                              .data.expenseGraph[i].expCatName,
-                                          accountDashboard!.data.expenseGraph[i]
-                                              .totalExpense,
-                                          double.parse(accountDashboard!
-                                              .data.expenseGraph[i].perc)),
-                                    );
-                                  }),
-                            ],
-                          )
-                      ],
+                        ],
+                      )
+                    ],
+                    FloatingActionButton(
+                      heroTag: "main_floating_button",
+                      onPressed: () {
+                        setState(() {
+                          _showFloatingOptions = !_showFloatingOptions;
+                        });
+                      },
+                      child: AnimatedSwitcher(
+                        duration: Duration(milliseconds: 300),
+                        child: _showFloatingOptions
+                            ? Icon(Icons.close, color: Colors.white)
+                            : Icon(Icons.add, color: Colors.white),
+                      ),
+                      backgroundColor:
+                          _showFloatingOptions ? Colors.red : Color(0xFF2a86c9),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -5234,8 +5669,7 @@ class _DashboardState extends State<Dashboard> {
                                                   pageName: 'Followup Leads',
                                                   fromDate: DateTime(
                                                           DateTime.now().year,
-                                                          DateTime.now().month -
-                                                              3,
+                                                          DateTime.now().month,
                                                           DateTime.now().day)
                                                       .toString(),
                                                   toDate: todate.toString(),
@@ -6400,40 +6834,179 @@ class _DashboardState extends State<Dashboard> {
                             ),
                           ],
                         )),
+                    // Visibility(
+                    //   //  visible: loadmore == false,
+                    //   visible: loadmore == false,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.only(bottom: 16),
+                    //     child: InkWell(
+                    //       onTap: () async {
+                    //         getStaffwise();
+                    //       },
+                    //       child: Visibility(
+                    //         visible: false,
+                    //         child: Container(
+                    //             height: 32,
+                    //             padding: const EdgeInsets.symmetric(
+                    //                 horizontal: 15, vertical: 5),
+                    //             decoration: BoxDecoration(
+                    //                 border: Border.all(
+                    //                     color: Colors.white, width: 0),
+                    //                 boxShadow: const [
+                    //                   BoxShadow(
+                    //                       color: Colors.grey,
+                    //                       blurRadius: 5,
+                    //                       offset: Offset(1, 1)),
+                    //                 ],
+                    //                 color: Colors.blue,
+                    //                 borderRadius: const BorderRadius.all(
+                    //                     Radius.circular(5))),
+                    //             child: Text(
+                    //               moreloading == true
+                    //                   ? " Loading... "
+                    //                   : "Show more",
+                    //               //  : "Show more",
+                    //               style: const TextStyle(color: Colors.white),
+                    //             )),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // updated button with small size
+                    // Visibility(
+                    //   visible: true,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.only(bottom: 16),
+                    //     child: InkWell(
+                    //       onTap: () async {
+                    //         Navigator.push(
+                    //           context,
+                    //           MaterialPageRoute(
+                    //             builder: (context) => DetailedReportsPage(
+                    //               token: widget.token!,
+                    //               fromDate: fromdate,
+                    //               toDate: todate,
+                    //               fromDate1: fromdate1,
+                    //               toDate1: todate1,
+                    //               updateLeadPermission1: updateLeadPermission1,
+                    //               deleteLeadPermission1: deleteLeadPermission1,
+                    //               cloudCallPermission1: cloudCallPermission1,
+                    //               viewLeadPermission: viewLeadPermission,
+                    //             ),
+                    //           ),
+                    //         );
+                    //       },
+                    //       child: Container(
+                    //         height: 32,
+                    //         padding: const EdgeInsets.symmetric(
+                    //             horizontal: 15, vertical: 5),
+                    //         decoration: BoxDecoration(
+                    //           border: Border.all(color: Colors.white, width: 0),
+                    //           boxShadow: const [
+                    //             BoxShadow(
+                    //               color: Colors.grey,
+                    //               blurRadius: 5,
+                    //               offset: Offset(1, 1),
+                    //             ),
+                    //           ],
+                    //           color: Colors.blue,
+                    //           borderRadius:
+                    //               const BorderRadius.all(Radius.circular(5)),
+                    //         ),
+                    //         child: Text(
+                    //           moreloading == true
+                    //               ? " Loading... "
+                    //               : "Show More",
+                    //           style: const TextStyle(color: Colors.white),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // updated button with small size code ends
+
                     Visibility(
-                      //  visible: loadmore == false,
-                      visible: loadmore == false,
+                      visible: true,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: InkWell(
                           onTap: () async {
-                            getStaffwise();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailedReportsPage(
+                                  token: widget.token!,
+                                  fromDate: fromdate,
+                                  toDate: todate,
+                                  fromDate1: fromdate1,
+                                  toDate1: todate1,
+                                  updateLeadPermission1: updateLeadPermission1,
+                                  deleteLeadPermission1: deleteLeadPermission1,
+                                  cloudCallPermission1: cloudCallPermission1,
+                                  viewLeadPermission: viewLeadPermission,
+                                ),
+                              ),
+                            );
                           },
-                          child: Visibility(
-                            visible: false,
-                            child: Container(
-                                height: 32,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 15, vertical: 5),
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.white, width: 0),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                          color: Colors.grey,
-                                          blurRadius: 5,
-                                          offset: Offset(1, 1)),
-                                    ],
-                                    color: Colors.blue,
-                                    borderRadius: const BorderRadius.all(
-                                        Radius.circular(5))),
-                                child: Text(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Colors.blueAccent, Colors.lightBlue],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(2, 4),
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
                                   moreloading == true
-                                      ? " Loading... "
-                                      : "Show more",
-                                  //  : "Show more",
-                                  style: const TextStyle(color: Colors.white),
-                                )),
+                                      ? "Loading..."
+                                      : "Show More",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                if (moreloading != true) ...[
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ] else ...[
+                                  const SizedBox(width: 8),
+                                  const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -9249,8 +9822,7 @@ class _DashboardState extends State<Dashboard> {
                         },
                         setDashboardLoading: (bool loading) {
                           setState(() {
-                            isLoading =
-                                true; 
+                            isLoading = true;
                           });
                         },
                       )
@@ -9704,7 +10276,7 @@ class _DashboardState extends State<Dashboard> {
                                                               1)
                                                       .toString(),
                                                   status: status,
-                                                  staff: object1!
+                                                  staffName: object1!
                                                       .data!
                                                       .missedLeads![i]
                                                       .missedstaffId

@@ -46,7 +46,7 @@ class _RenewalListState extends State<RenewalList> {
   TextEditingController projectCost = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController customer = TextEditingController();
-   TextEditingController renewalstatus = TextEditingController();
+  TextEditingController renewalstatus = TextEditingController();
   TextEditingController recieverName = TextEditingController();
   TextEditingController contactNumber = TextEditingController();
   TextEditingController expireIn = TextEditingController();
@@ -174,7 +174,7 @@ class _RenewalListState extends State<RenewalList> {
         widget.searchMonth,
         expireIn.text,
         search.text,
-         selectedRenewalValue ?? "");
+        selectedRenewalValue ?? "");
     if (listResponse != null && listResponse!.status == true) {
       // items = listResponse!.data.lists;
       items.addAll(listResponse!.data.lists);
@@ -548,7 +548,7 @@ class _RenewalListState extends State<RenewalList> {
                                                 onTap: () {
                                                   if (items[index].isRenewed ==
                                                       false) {
-                                                    setState(() {
+                                                    setState(() async {
                                                       if (selectedIds
                                                           .isNotEmpty) {
                                                         if (selectedIds
@@ -568,20 +568,41 @@ class _RenewalListState extends State<RenewalList> {
                                                                   .clientName);
                                                         }
                                                       } else {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  RenewalDetails(
-                                                                id: items[index]
-                                                                    .id,
-                                                              ),
-                                                            )).then((_) {
-                                                          page = 1;
-                                                          add = 1;
-                                                          items.clear();
-                                                          getList();
-                                                        });
+                                                        if (selectedIds
+                                                            .isEmpty) {
+                                                          String token =
+                                                              await Common
+                                                                  .getSharedPref(
+                                                                      "token");
+                                                          Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    ClientDetails(
+                                                                        token,
+                                                                        items[index]
+                                                                            .clientId),
+                                                              )).then((_) {
+                                                            page = 1;
+                                                            add = 1;
+                                                            items.clear();
+                                                            getList();
+                                                          });
+                                                        }
+                                                        // Navigator.push(
+                                                        //     context,
+                                                        //     MaterialPageRoute(
+                                                        //       builder: (context) =>
+                                                        //           RenewalDetails(
+                                                        //         id: items[index]
+                                                        //             .id,
+                                                        //       ),
+                                                        //     )).then((_) {
+                                                        //   page = 1;
+                                                        //   add = 1;
+                                                        //   items.clear();
+                                                        //   getList();
+                                                        // });
                                                       }
                                                     });
                                                     if ((items.length -

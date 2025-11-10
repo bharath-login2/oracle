@@ -87,6 +87,9 @@ class _ViewReceiptState extends State<ViewReceipt> {
         tDate == "To Date" ? "" : tDate.toString(),
         customerId,
         staffId,
+        "",
+        "",
+        "",
         typeId);
     if (invoiceList != null) {
       searchData = await HttpService.getInvoiceSearch(widget.token);

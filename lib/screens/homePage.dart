@@ -1408,26 +1408,26 @@ class _HomePageState extends State<HomePage> {
     String faceDetection = "true";
     String companyLocation = "true";
 
-    Future<void> captureFace() async {
-      final faceImage = await Navigator.of(context).push<File>(
-        MaterialPageRoute(
-          builder: (_) => FaceDetectionCamera(
-            onFaceCaptured: (File imageFile) {
-              Navigator.of(context).pop(imageFile);
-            },
-          ),
-        ),
-      );
+    // Future<void> captureFace() async {
+    //   final faceImage = await Navigator.of(context).push<File>(
+    //     MaterialPageRoute(
+    //       builder: (_) => FaceDetectionCamera(
+    //         onFaceCaptured: (File imageFile) {
+    //           Navigator.of(context).pop(imageFile);
+    //         },
+    //       ),
+    //     ),
+    //   );
 
-      if (faceImage != null && context.mounted) {
-        final faceHash = await generateFaceHash(faceImage);
-        if (faceHash == null) {
-          Common.toastMessaage('Face hash failed', Colors.red);
-          return;
-        }
-        faceBase64 = faceHash;
-      }
-    }
+    //   if (faceImage != null && context.mounted) {
+    //     final faceHash = await generateFaceHash(faceImage);
+    //     if (faceHash == null) {
+    //       Common.toastMessaage('Face hash failed', Colors.red);
+    //       return;
+    //     }
+    //     faceBase64 = faceHash;
+    //   }
+    // }
 
     showDialog(
       context: context,
@@ -1572,15 +1572,15 @@ class _HomePageState extends State<HomePage> {
                       return;
                     }
                   }
-                  if (faceDetection == "true") {
-                    await captureFace();
-                    if (faceBase64 == null || faceBase64!.isEmpty) {
-                      Navigator.of(context).pop();
-                      Common.toastMessaage(
-                          'Face capture required for login', Colors.red);
-                      return;
-                    }
-                  }
+                  // if (faceDetection == "true") {
+                  //   await captureFace();
+                  //   if (faceBase64 == null || faceBase64!.isEmpty) {
+                  //     Navigator.of(context).pop();
+                  //     Common.toastMessaage(
+                  //         'Face capture required for login', Colors.red);
+                  //     return;
+                  //   }
+                  // }
                   final now = DateTime.now();
                   final res = await HttpService.startWork(
                     now,

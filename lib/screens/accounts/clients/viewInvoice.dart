@@ -79,6 +79,9 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                 invoiceEditDetails!.data!.productDetails![i].taxPercentage,
             "total_tax_amount":
                 invoiceEditDetails!.data!.productDetails![i].taxAmount,
+            "igst": invoiceEditDetails!.data!.productDetails![i].igst,
+            "cgst": invoiceEditDetails!.data!.productDetails![i].cgst,
+            "sgst": invoiceEditDetails!.data!.productDetails![i].sgst,
             "total_amount": invoiceEditDetails!.data!.productDetails![i].amount,
           });
         }
@@ -89,8 +92,10 @@ class _ViewInvoiceState extends State<ViewInvoice> {
   }
 
   takeScreenshot() async {
-    String? name = '${widget.invoiceNumber}.pdf';
-
+    // String? name = 'Invoice${widget.invoiceNumber}.pdf';
+    String formattedDate =
+        DateTime.now().toString().split(' ')[0].replaceAll('-', '_');
+    String name = 'Invoice${widget.invoiceNumber}_$formattedDate.pdf';
     // Take a screenshot
     Uint8List? screenshot = await screenshotController.capture();
 
@@ -414,200 +419,346 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                           ),
                           Visibility(
                             visible: true,
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 5, right: 5, top: 1, bottom: 1),
-                                  child: Table(
-                                    columnWidths: {
-                                      0: FixedColumnWidth(
-                                          MediaQuery.of(context).size.width *
-                                              0.24), // Using 10%
-                                      1: FixedColumnWidth(
-                                          MediaQuery.of(context).size.width *
-                                              0.18), // Using 30%
-                                      2: FixedColumnWidth(
-                                          MediaQuery.of(context).size.width *
-                                              0.16),
-                                      3: FixedColumnWidth(
-                                          MediaQuery.of(context).size.width *
-                                              0.16), // Using 20%
-                                      4: FixedColumnWidth(
-                                          MediaQuery.of(context).size.width *
-                                              0.24),
-                                    },
-                                    children: [
-                                      TableRow(
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(1),
-                                          color: const Color(0xFFece9fd),
-                                        ),
-                                        children: const [
-                                          Padding(
-                                            padding: EdgeInsets.all(8.0),
-                                            child: Text('Product',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                textAlign: TextAlign.center),
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(8.0),
-                                            child: Text('Rate',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                textAlign: TextAlign.center),
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(8.0),
-                                            child: Text('Qty',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                textAlign: TextAlign.center),
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(
-                                              8.0,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width *
+                                    1.3, // gives room to scroll
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    /// 🔹 Header Table
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 2),
+                                      child: Table(
+                                        columnWidths: const {
+                                          0: FixedColumnWidth(120),
+                                          1: FixedColumnWidth(80),
+                                          2: FixedColumnWidth(60),
+                                          3: FixedColumnWidth(100),
+                                          4: FixedColumnWidth(100),
+                                        },
+                                        children: [
+                                          TableRow(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              color: const Color(0xFFece9fd),
                                             ),
-                                            child: Text('Tax',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                textAlign: TextAlign.center),
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.all(8.0),
-                                            child: Text(
-                                              'Amount',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
-                                              textAlign: TextAlign.center,
-                                            ),
+                                            children: [
+                                              const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('Product',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                    textAlign:
+                                                        TextAlign.center),
+                                              ),
+                                              const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('Rate',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                    textAlign:
+                                                        TextAlign.center),
+                                              ),
+                                              const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('Qty',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                    textAlign:
+                                                        TextAlign.center),
+                                              ),
+
+                                              /// Conditional tax header
+                                              (invoiceEditDetails!
+                                                          .data!
+                                                          .productDetails!
+                                                          .isNotEmpty &&
+                                                      invoiceEditDetails!
+                                                              .data!
+                                                              .productDetails!
+                                                              .first
+                                                              .igst !=
+                                                          null &&
+                                                      invoiceEditDetails!
+                                                          .data!
+                                                          .productDetails!
+                                                          .first
+                                                          .igst
+                                                          .toString()
+                                                          .isNotEmpty &&
+                                                      invoiceEditDetails!
+                                                              .data!
+                                                              .productDetails!
+                                                              .first
+                                                              .igst !=
+                                                          "0")
+                                                  ? const Padding(
+                                                      padding:
+                                                          EdgeInsets.all(8.0),
+                                                      child: Text('IGST',
+                                                          style: TextStyle(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                          textAlign:
+                                                              TextAlign.center),
+                                                    )
+                                                  : const Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  8.0),
+                                                          child: Text('CGST',
+                                                              style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center),
+                                                        ),
+                                                        SizedBox(width: 8),
+                                                        Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  8.0),
+                                                          child: Text('SGST',
+                                                              style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center),
+                                                        ),
+                                                      ],
+                                                    ),
+
+                                              const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Text('Amount',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                    textAlign:
+                                                        TextAlign.center),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: SingleChildScrollView(
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const BouncingScrollPhysics(),
-                                itemCount: products.length,
-                                itemBuilder: (context, index) {
-                                  Color color = index % 2 == 0
-                                      ? const Color(0xFFF3F3F3)
-                                      : const Color(0xFFece9fd);
-                                  return Padding(
-                                    padding: const EdgeInsets.all(1.0),
-                                    child: Table(
-                                      columnWidths: {
-                                        0: FixedColumnWidth(
-                                            MediaQuery.of(context).size.width *
-                                                0.22), // Using 10%
-                                        1: FixedColumnWidth(
-                                            MediaQuery.of(context).size.width *
-                                                0.16), // Using 30%
-                                        2: FixedColumnWidth(
-                                            MediaQuery.of(context).size.width *
-                                                0.16),
-                                        3: FixedColumnWidth(
-                                            MediaQuery.of(context).size.width *
-                                                0.16), // Using 20%
-                                        4: FixedColumnWidth(
-                                            MediaQuery.of(context).size.width *
-                                                0.24),
-                                      },
-                                      children: [
-                                        // Each TableRow represents a row in the Table
-                                        TableRow(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(1),
-                                            color: color,
-                                          ),
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                products[index]['product_name'],
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                products[index]['product_rate'],
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                products[index]['quantity'],
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                products[index]
-                                                    ['total_tax_amount'],
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                products[index]['total_amount'],
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
                                     ),
-                                  );
-                                },
+
+                                    /// 🔹 Product Rows
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.vertical,
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: products.length,
+                                          itemBuilder: (context, index) {
+                                            final color = index.isEven
+                                                ? const Color(0xFFF3F3F3)
+                                                : const Color(0xFFece9fd);
+                                            return Table(
+                                              columnWidths: const {
+                                                0: FixedColumnWidth(120),
+                                                1: FixedColumnWidth(80),
+                                                2: FixedColumnWidth(60),
+                                                3: FixedColumnWidth(100),
+                                                4: FixedColumnWidth(100),
+                                              },
+                                              children: [
+                                                TableRow(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
+                                                    color: color,
+                                                  ),
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        products[index][
+                                                                'product_name'] ??
+                                                            '',
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        products[index][
+                                                                'product_rate'] ??
+                                                            '',
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        products[index]
+                                                                ['quantity'] ??
+                                                            '',
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                    products[index]['igst'] !=
+                                                                null &&
+                                                            products[index]
+                                                                    ['igst']
+                                                                .toString()
+                                                                .isNotEmpty
+                                                        ? Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(8.0),
+                                                            child: Text(
+                                                              products[index]
+                                                                      ['igst']
+                                                                  .toString(),
+                                                              maxLines: 2,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          12),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                            ),
+                                                          )
+                                                        : Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child: Text(
+                                                                  products[index]
+                                                                              [
+                                                                              'cgst']
+                                                                          ?.toString() ??
+                                                                      '',
+                                                                  maxLines: 2,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12),
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 8),
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child: Text(
+                                                                  products[index]
+                                                                              [
+                                                                              'sgst']
+                                                                          ?.toString() ??
+                                                                      '',
+                                                                  maxLines: 2,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12),
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        products[index][
+                                                                'total_amount'] ??
+                                                            '',
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

@@ -278,22 +278,22 @@ class Followup {
     });
 
     factory Followup.fromJson(Map<String, dynamic> json) => Followup(
-        dispalyDate: json["dispaly_date"],
-        dispalyTime: json["dispaly_time"],
-        isSetReminder: json["isSetReminder"],
-        isReminder: json["isReminder"],
-        time: json["time"],
-        reminderId: json["reminder_id"],
-        rowId: json["row_id"],
-        remarks: json["remarks"],
-        leadStatus: json["lead_status"],
-        leadStatusName: json["lead_status_name"],
-        staffName: json["staff_name"],
-        proPicThumb: json["pro_pic_thumb"],
-        isCompleted: json["is_completed"],
+        dispalyDate: json["dispaly_date"]??"",
+        dispalyTime: json["dispaly_time"]??"",
+        isSetReminder: json["isSetReminder"]??"",
+        isReminder: json["isReminder"]??"",
+        time: json["time"]??"",
+        reminderId: json["reminder_id"]??"",
+        rowId: json["row_id"]??"",
+        remarks: json["remarks"]??"",
+        leadStatus: json["lead_status"]??"",
+        leadStatusName: json["lead_status_name"]??"",
+        staffName: json["staff_name"]??"",
+        proPicThumb: json["pro_pic_thumb"]??"",
+        isCompleted: json["is_completed"]??"",
         nextFollowupDate: DateTime.parse(json["next_followup_date"]),
-        calledDate: json["called_date"],
-        isEditable: json["is_editable"],
+        calledDate: json["called_date"]??"",
+        isEditable: json["is_editable"]??"",
     );
 
     Map<String, dynamic> toJson() => {

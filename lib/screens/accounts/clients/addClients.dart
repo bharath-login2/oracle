@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/lead_management/addLeadCommonDataModel.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
@@ -98,10 +100,22 @@ class _AddClientsState extends State<AddClients> {
   List<TargetGroup> filteredTargets = [];
   List targetGroups = [];
   List targetGroupNames = [];
+  StateModel? stateModel;
+  List<StateList> stateList = [];
+  String? selectedStateId;
+
+  DistrictModel? districtModel;
+  List<DistrictList> districtList = [];
+  String? selectedDistrictId;
+  bool isLoadingState = true;
+  bool isLoadingDistrict = false;
+  //String? selectedTaxType;
+  String selectedTaxType = "Intrastate";
   @override
   void initState() {
     super.initState();
     getData();
+    getStates();
   }
 
   getData() async {
@@ -133,6 +147,37 @@ class _AddClientsState extends State<AddClients> {
     if (commonDetails != null) {
       filteredStaff.addAll(commonDetails!.data.colloctedStaff);
       filteredTargets.addAll(commonDetails!.data.targetGroups);
+    }
+  }
+
+  Future<void> getStates() async {
+    setState(() => isLoadingState = true);
+    final response = await HttpService.getState();
+    if (response != null && response.status == true) {
+      setState(() {
+        stateList = response.data;
+        isLoadingState = false;
+      });
+    } else {
+      setState(() => isLoadingState = false);
+    }
+  }
+
+  Future<void> getDistricts(String stateId) async {
+    setState(() {
+      isLoadingDistrict = true;
+      districtList = [];
+      selectedDistrictId = null;
+    });
+
+    final response = await HttpService.getDistrict(stateId);
+    if (response != null && response.status == true) {
+      setState(() {
+        districtList = response.data;
+        isLoadingDistrict = false;
+      });
+    } else {
+      setState(() => isLoadingDistrict = false);
     }
   }
 
@@ -422,6 +467,106 @@ class _AddClientsState extends State<AddClients> {
                           ),
                           const SizedBox(
                             height: 15,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              isLoadingState
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : DropdownButtonFormField<String>(
+                                      value: selectedStateId,
+                                      hint: const Text("Select State"),
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                      ),
+                                      items: stateList.map((state) {
+                                        return DropdownMenuItem<String>(
+                                          value: state.id,
+                                          child: Text(state.name),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedStateId = value;
+                                        });
+                                        if (value != null) getDistricts(value);
+                                      },
+                                    ),
+                              if (isLoadingDistrict)
+                                const Center(child: CircularProgressIndicator())
+                              else if (districtList.isEmpty)
+                                SizedBox(
+                                  height: 10,
+                                )
+                              else
+                                SizedBox(
+                                  height: 10,
+                                ),
+                              DropdownButtonFormField<String>(
+                                value: selectedDistrictId,
+                                hint: const Text("Choose District"),
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                ),
+                                items: districtList.map((district) {
+                                  return DropdownMenuItem<String>(
+                                    value: district.id,
+                                    child: Text(district.name),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedDistrictId = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 15,
+                          ),
+                          const SizedBox(height: 10),
+                          DropdownButtonFormField<String>(
+                            value: selectedTaxType,
+                            hint: const Text("Select Tax Type"),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: "Interstate",
+                                child: Text("Other State"),
+                              ),
+                              DropdownMenuItem(
+                                value: "Intrastate",
+                                child: Text("State"),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                selectedTaxType = value!;
+                              });
+                            },
+                          ),
+                          SizedBox(
+                            height: 10,
                           ),
                           postal != null
                               ? TextFormField(
@@ -918,17 +1063,21 @@ class _AddClientsState extends State<AddClients> {
                               ],
                             ),
                           ),
-                          CheckboxListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('Create Order'),
-                              value:
-                                  createOrder, // initial value of the checkbox
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  createOrder = value!;
-                                });
-                              },
-                              controlAffinity: ListTileControlAffinity.leading),
+                          Visibility(
+                            visible: false,
+                            child: CheckboxListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text('Create Order'),
+                                value:
+                                    createOrder, // initial value of the checkbox
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    createOrder = value!;
+                                  });
+                                },
+                                controlAffinity:
+                                    ListTileControlAffinity.leading),
+                          ),
                           Visibility(
                             visible: createOrder &&
                                 commonDetails!
@@ -1700,7 +1849,6 @@ class _AddClientsState extends State<AddClients> {
                                       height: 5,
                                     ),
                                     const Divider(),
-
                                     Padding(
                                       padding: const EdgeInsets.only(right: 10),
                                       child: Row(
@@ -2208,136 +2356,6 @@ class _AddClientsState extends State<AddClients> {
                                         ],
                                       ),
                                     ),
-                                    // const SizedBox(
-                                    //   height: 10,
-                                    // ),
-                                    // paymentMethod == '2'
-                                    //     ? Container(
-                                    //         child: templateImage == null
-                                    //             ? Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Align(
-                                    //                   alignment:
-                                    //                       Alignment.topRight,
-                                    //                   child: InkWell(
-                                    //                     onTap: _selectFile,
-                                    //                     child: Container(
-                                    //                         width: MediaQuery.of(
-                                    //                                     context)
-                                    //                                 .size
-                                    //                                 .width *
-                                    //                             0.4,
-                                    //                         height: 35,
-                                    //                         decoration: BoxDecoration(
-                                    //                             color: Colors
-                                    //                                 .grey
-                                    //                                 .shade300,
-                                    //                             borderRadius:
-                                    //                                 BorderRadius
-                                    //                                     .circular(
-                                    //                                         5)),
-                                    //                         child:
-                                    //                             const Padding(
-                                    //                           padding: EdgeInsets
-                                    //                               .only(
-                                    //                                   left: 10,
-                                    //                                   right: 10,
-                                    //                                   top: 5,
-                                    //                                   bottom:
-                                    //                                       5),
-                                    //                           child: Center(
-                                    //                               child: Text(
-                                    //                                   'Choose File')),
-                                    //                         )),
-                                    //                   ),
-                                    //                 ),
-                                    //               )
-                                    //             : Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Stack(
-                                    //                   children: [
-                                    //                     Align(
-                                    //                       alignment: Alignment
-                                    //                           .topRight,
-                                    //                       child: InkWell(
-                                    //                         onTap: _selectFile,
-                                    //                         child: Container(
-                                    //                             width: MediaQuery.of(
-                                    //                                         context)
-                                    //                                     .size
-                                    //                                     .width *
-                                    //                                 0.6,
-                                    //                             height: 80,
-                                    //                             decoration: BoxDecoration(
-                                    //                                 color: Colors
-                                    //                                     .grey
-                                    //                                     .shade300,
-                                    //                                 borderRadius:
-                                    //                                     BorderRadius.circular(
-                                    //                                         5)),
-                                    //                             child: Padding(
-                                    //                               padding:
-                                    //                                   const EdgeInsets
-                                    //                                       .only(
-                                    //                                 right: 10,
-                                    //                               ),
-                                    //                               child: Row(
-                                    //                                 children: [
-                                    //                                   Container(
-                                    //                                     height:
-                                    //                                         80,
-                                    //                                     width:
-                                    //                                         90,
-                                    //                                     decoration:
-                                    //                                         BoxDecoration(
-                                    //                                       image:
-                                    //                                           DecorationImage(
-                                    //                                         fit:
-                                    //                                             BoxFit.fitWidth,
-                                    //                                         image:
-                                    //                                             FileImage(
-                                    //                                           File(templateImage!),
-                                    //                                         ),
-                                    //                                       ),
-                                    //                                     ),
-                                    //                                     // Add your image widget here
-                                    //                                   ),
-                                    //                                   const SizedBox(
-                                    //                                     width:
-                                    //                                         20,
-                                    //                                   ),
-                                    //                                   const Center(
-                                    //                                       child:
-                                    //                                           Text('Change File')),
-                                    //                                 ],
-                                    //                               ),
-                                    //                             )),
-                                    //                       ),
-                                    //                     ),
-                                    //                     Positioned(
-                                    //                       right: 0.0,
-                                    //                       top: 0.0,
-                                    //                       child: InkWell(
-                                    //                         onTap: () {
-                                    //                           templateImage =
-                                    //                               null;
-                                    //                           setState(() {});
-                                    //                         },
-                                    //                         child: const Icon(
-                                    //                           Icons
-                                    //                               .remove_circle,
-                                    //                           color: Colors.red,
-                                    //                         ),
-                                    //                       ),
-                                    //                     )
-                                    //                   ],
-                                    //                 ),
-                                    //               ))
-                                    //     : const SizedBox(),
                                   ],
                                 ),
                                 const SizedBox(
@@ -2350,8 +2368,7 @@ class _AddClientsState extends State<AddClients> {
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
-                                value:
-                                    createRenewal, // initial value of the checkbox
+                                value: createRenewal,
                                 onChanged: (bool? value) {
                                   setState(() {
                                     createRenewal = value!;
@@ -2890,6 +2907,18 @@ class _AddClientsState extends State<AddClients> {
                               } else if (address1.text.isEmpty) {
                                 Common.toastMessaage(
                                     'Address1 cannot be empty', Colors.red);
+                              } else if (selectedStateId == null ||
+                                  selectedStateId!.isEmpty) {
+                                Common.toastMessaage(
+                                    'Please select a State', Colors.red);
+                              } else if (selectedDistrictId == null ||
+                                  selectedDistrictId!.isEmpty) {
+                                Common.toastMessaage(
+                                    'Please select a District', Colors.red);
+                              } else if (selectedTaxType == null ||
+                                  selectedTaxType!.isEmpty) {
+                                Common.toastMessaage(
+                                    'Please select Tax Type', Colors.red);
                               } else if (createOrder == true &&
                                   products.isEmpty &&
                                   commonDetails!
@@ -2975,6 +3004,9 @@ class _AddClientsState extends State<AddClients> {
                                   'address': address1.text,
                                   'address2': address2.text,
                                   'address3': address3.text,
+                                  "state_id": selectedStateId,
+                                  "district_id": selectedDistrictId,
+                                  "tax_type": selectedTaxType ?? "",
                                   'pincode': pinCode.text,
                                   'post_office': postOffice.text,
                                   'gst_num': gstNumber.text,
@@ -3012,7 +3044,7 @@ class _AddClientsState extends State<AddClients> {
                                       object.message, Colors.green);
                                   if (mounted) {
                                     Navigator.pop(context);
-                                    Navigator.pop(context);
+                                    Navigator.pop(context, true);
                                   }
                                 } else {
                                   Common.toastMessaage(

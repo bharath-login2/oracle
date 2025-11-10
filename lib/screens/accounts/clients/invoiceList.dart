@@ -4,8 +4,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
+import 'package:login2/screens/accounts/clients/gstInvoice.dart';
+import 'package:login2/screens/accounts/clients/print_invoice_view.dart';
 import 'package:login2/screens/accounts/clients/receiptByInvoice.dart';
-import 'package:login2/screens/accounts/clients/viewInvoice.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:lottie/lottie.dart';
@@ -46,8 +47,17 @@ class _InvoiceListState extends State<InvoiceList> {
   List<Type> filteredTypes = [];
   String typeId = "";
   String typeName = "Choose Type";
+  String statusName = "";
   TextEditingController search = TextEditingController();
   bool isSearch = false;
+  Offset? _tapPosition;
+  List<String> collectedByNames = [];
+  List<String> collectedByIds = [];
+  List<String> createdByNames = [];
+  List<String> createdByIds = [];
+
+  List<String> selectedStaffIds = [];
+  List<String> selectedStaffNames = [];
 
   @override
   void initState() {
@@ -67,13 +77,17 @@ class _InvoiceListState extends State<InvoiceList> {
         result = false;
       });
     }
-
+    String collectedByStaffIds = collectedByIds.join(',');
+    String createdByStaffIds = createdByIds.join(',');
     invoiceList = await HttpService.invoiceList(
         widget.token,
         fDate == "From Date" ? "" : fDate.toString(),
         tDate == "To Date" ? "" : tDate.toString(),
         customerId,
         staffId,
+        collectedByStaffIds,
+        createdByStaffIds,
+        statusName,
         typeId);
     if (invoiceList != null) {
       searchData = await HttpService.getInvoiceSearch(widget.token);
@@ -240,7 +254,15 @@ class _InvoiceListState extends State<InvoiceList> {
                                                   ],
                                                   borderRadius:
                                                       BorderRadius.circular(5),
-                                                  color: Colors.white),
+                                                  color: invoiceList!
+                                                              .data
+                                                              .lists[index]
+                                                              .gstinvoiceCreated
+                                                              .toString() ==
+                                                          "1"
+                                                      ? const Color.fromARGB(
+                                                          255, 228, 248, 216)
+                                                      : Colors.white),
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.all(14.0),
@@ -558,32 +580,65 @@ class _InvoiceListState extends State<InvoiceList> {
                                                         Row(
                                                           children: [
                                                             InkWell(
-                                                              onTap: () {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) => ViewInvoice(
-                                                                          widget
-                                                                              .token,
-                                                                          invoiceList!
-                                                                              .data
-                                                                              .lists[
-                                                                                  index]
-                                                                              .id
-                                                                              .toString(),
-                                                                          invoiceList!
-                                                                              .data
-                                                                              .lists[
-                                                                                  index]
-                                                                              .clientId
-                                                                              .toString(),
-                                                                          invoiceList!
-                                                                              .data
-                                                                              .lists[index]
-                                                                              .invoiceNumber
-                                                                              .toString())),
+                                                              onTap: () async {
+                                                                final pdfPath =
+                                                                    await HttpService
+                                                                        .printInvoice(
+                                                                  widget.token,
+                                                                  invoiceList!
+                                                                      .data
+                                                                      .lists[
+                                                                          index]
+                                                                      .id
+                                                                      .toString(),
                                                                 );
+
+                                                                if (pdfPath !=
+                                                                    null) {
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder: (_) =>
+                                                                          PrintInvoiceView(
+                                                                              pdfPath: pdfPath),
+                                                                    ),
+                                                                  );
+                                                                } else {
+                                                                  ScaffoldMessenger.of(
+                                                                          context)
+                                                                      .showSnackBar(const SnackBar(
+                                                                          content:
+                                                                              Text("Failed to load invoice")));
+                                                                }
                                                               },
+
+                                                              // onTap: () {
+                                                              //   Navigator.push(
+                                                              //     context,
+                                                              //     MaterialPageRoute(
+                                                              //         builder: (context) => ViewInvoice(
+                                                              //             widget
+                                                              //                 .token,
+                                                              //             invoiceList!
+                                                              //                 .data
+                                                              //                 .lists[
+                                                              //                     index]
+                                                              //                 .id
+                                                              //                 .toString(),
+                                                              //             invoiceList!
+                                                              //                 .data
+                                                              //                 .lists[
+                                                              //                     index]
+                                                              //                 .clientId
+                                                              //                 .toString(),
+                                                              //             invoiceList!
+                                                              //                 .data
+                                                              //                 .lists[index]
+                                                              //                 .invoiceNumber
+                                                              //                 .toString())),
+                                                              //   );
+                                                              // },
                                                               child: Container(
                                                                 decoration: BoxDecoration(
                                                                     borderRadius:
@@ -721,61 +776,150 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                     width: 10,
                                                                   ),
                                                                   InkWell(
-                                                                    onTap: () {
-                                                                      showDialog(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                    onTapDown:
+                                                                        (TapDownDetails
+                                                                            details) {
+                                                                      _tapPosition =
+                                                                          details
+                                                                              .globalPosition;
+                                                                    },
+                                                                    onTap:
+                                                                        () async {
+                                                                      final Offset
+                                                                          pos =
+                                                                          _tapPosition ??
+                                                                              Offset(MediaQuery.of(context).size.width / 2, MediaQuery.of(context).size.height / 2);
+
+                                                                      final RenderBox
+                                                                          overlay =
+                                                                          Overlay.of(context)
+                                                                              .context
+                                                                              .findRenderObject() as RenderBox;
+
+                                                                      final RelativeRect
+                                                                          position =
+                                                                          RelativeRect
+                                                                              .fromRect(
+                                                                        Rect.fromLTWH(
+                                                                          pos.dx,
+                                                                          pos.dy,
+                                                                          0,
+                                                                          0,
+                                                                        ),
+                                                                        Offset.zero &
+                                                                            overlay.size,
+                                                                      );
+
+                                                                      final value =
+                                                                          await showMenu<
+                                                                              String>(
+                                                                        context:
+                                                                            context,
+                                                                        position:
+                                                                            position,
+                                                                        shape: RoundedRectangleBorder(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(8)),
+                                                                        elevation:
+                                                                            8,
+                                                                        items: [
+                                                                          if (invoiceList!.data.lists[index].gstinvoiceCreated ==
+                                                                              "0")
+                                                                            const PopupMenuItem(
+                                                                              value: 'view',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.auto_graph_outlined, color: Colors.purple),
+                                                                                  SizedBox(width: 8),
+                                                                                  Text("Create GST Invoice"),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          const PopupMenuItem(
+                                                                            value:
+                                                                                'delete',
+                                                                            child:
+                                                                                Row(
+                                                                              children: [
+                                                                                Icon(Icons.delete_outline, color: Colors.red),
+                                                                                SizedBox(width: 8),
+                                                                                Text("Delete"),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      );
+
+                                                                      if (value ==
+                                                                          'view') {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => GstInvoice(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
+                                                                        ).then(
+                                                                            (_) {
+                                                                          getData();
+                                                                        });
+                                                                      } else if (value ==
+                                                                          'delete') {
+                                                                        showDialog(
                                                                           context:
                                                                               context,
                                                                           builder:
-                                                                              (BuildContext context) {
+                                                                              (BuildContext ctx) {
                                                                             return AlertDialog(
                                                                               scrollable: true,
                                                                               title: const Text('Please Confirm'),
-                                                                              content: const Text('Are you sure to Delete?'),
+                                                                              content: const Text('Are you sure you want to delete this invoice?'),
                                                                               actions: [
                                                                                 TextButton(
-                                                                                    onPressed: () {
-                                                                                      Navigator.of(context).pop();
-                                                                                    },
-                                                                                    child: const Text('No')),
+                                                                                  onPressed: () => Navigator.of(ctx).pop(),
+                                                                                  child: const Text('No'),
+                                                                                ),
                                                                                 TextButton(
-                                                                                    onPressed: () async {
-                                                                                      Common.showProgressDialog(context, "Loading..");
-                                                                                      DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, invoiceList!.data.lists[index].id);
-                                                                                      if (deleteInvoice.data == true) {
-                                                                                        Common.toastMessaage(deleteInvoice.message, Colors.green);
-                                                                                        if (context.mounted) {
-                                                                                          Navigator.pop(context);
-                                                                                          Navigator.pop(context);
-                                                                                        }
-                                                                                        getData();
-                                                                                      } else {
-                                                                                        Common.toastMessaage(deleteInvoice.message, Colors.red);
-                                                                                        if (context.mounted) {
-                                                                                          Navigator.of(context).pop();
-                                                                                        }
+                                                                                  onPressed: () async {
+                                                                                    Common.showProgressDialog(ctx, "Loading..");
+                                                                                    DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(
+                                                                                      widget.token,
+                                                                                      invoiceList!.data.lists[index].id,
+                                                                                    );
+                                                                                    if (deleteInvoice.data == true) {
+                                                                                      Common.toastMessaage(deleteInvoice.message, Colors.green);
+                                                                                      if (context.mounted) {
+                                                                                        Navigator.pop(ctx);
+                                                                                        Navigator.pop(context);
                                                                                       }
-                                                                                    },
-                                                                                    child: const Text('Yes')),
+                                                                                      getData();
+                                                                                    } else {
+                                                                                      Common.toastMessaage(deleteInvoice.message, Colors.red);
+                                                                                      if (context.mounted) Navigator.of(ctx).pop();
+                                                                                    }
+                                                                                  },
+                                                                                  child: const Text('Yes'),
+                                                                                ),
                                                                               ],
                                                                             );
-                                                                          });
+                                                                          },
+                                                                        );
+                                                                      }
                                                                     },
                                                                     child:
-                                                                        Container(
-                                                                      decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                              2),
-                                                                          color:
-                                                                              const Color(0xfffcbcbc)),
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              6.0),
                                                                       child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(8.0),
-                                                                        child: Icon(
-                                                                            Icons
-                                                                                .delete_outline,
-                                                                            color:
-                                                                                Colors.red),
+                                                                          Icon(
+                                                                        Icons
+                                                                            .more_horiz_outlined,
+                                                                        color: Colors
+                                                                            .black54,
+                                                                        size:
+                                                                            26,
                                                                       ),
                                                                     ),
                                                                   ),
@@ -1153,7 +1297,7 @@ class _InvoiceListState extends State<InvoiceList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    AddInvoice(widget.token, customerId)),
+                                    AddInvoice(widget.token, customerId, "")),
                           ).then((_) {
                             getData();
                           });
@@ -1354,8 +1498,9 @@ class _InvoiceListState extends State<InvoiceList> {
                           children: [
                             const Text("Collected by"),
                             GestureDetector(
-                              onTap: () {
-                                staffDialog(context);
+                              onTap: () async {
+                                await staffDialog(context, 'collected');
+                                (context as Element).markNeedsBuild();
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -1363,26 +1508,62 @@ class _InvoiceListState extends State<InvoiceList> {
                                   border: Border.all(color: Colors.black),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Center(
-                                    child: Padding(
+                                child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16.0, vertical: 12.0),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.35,
-                                          child: Text(
-                                            staffName,
-                                            overflow: TextOverflow.ellipsis,
-                                          )),
+                                      Expanded(
+                                        child: Text(
+                                          collectedByNames.isNotEmpty
+                                              ? collectedByNames.join(', ')
+                                              : "Select staff",
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                      const Icon(Icons.arrow_drop_down),
                                     ],
                                   ),
-                                )),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Created by"),
+                            GestureDetector(
+                              onTap: () async {
+                                await staffDialog(context, 'created');
+                                (context as Element).markNeedsBuild();
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0, vertical: 12.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          createdByNames.isNotEmpty
+                                              ? createdByNames.join(', ')
+                                              : "Select staff",
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                      const Icon(Icons.arrow_drop_down),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1470,6 +1651,50 @@ class _InvoiceListState extends State<InvoiceList> {
                           ],
                         ),
                         const SizedBox(
+                          height: 10,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Status"),
+                            const SizedBox(height: 6),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: Colors.black),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 4.0),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: (statusName == 'Paid' ||
+                                          statusName == 'Unpaid' ||
+                                          statusName == 'Partial Paid')
+                                      ? statusName
+                                      : null,
+                                  hint: const Text("Select Status"),
+                                  isExpanded: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 'Paid', child: Text('Paid')),
+                                    DropdownMenuItem(
+                                        value: 'Unpaid', child: Text('Unpaid')),
+                                    DropdownMenuItem(
+                                        value: 'Partial Paid',
+                                        child: Text('Partial Paid')),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      statusName = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
                           height: 20,
                         ),
                         InkWell(
@@ -1504,12 +1729,101 @@ class _InvoiceListState extends State<InvoiceList> {
         });
   }
 
-  Future<dynamic> staffDialog(BuildContext context) {
+  // Future<dynamic> staffDialog(BuildContext context) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return StatefulBuilder(builder: (context, setState) {
+  //         return AlertDialog(
+  //           content: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Padding(
+  //                 padding: const EdgeInsets.all(8.0),
+  //                 child: TextField(
+  //                   controller: search,
+  //                   autocorrect: false,
+  //                   keyboardType: TextInputType.visiblePassword,
+  //                   autofocus: true,
+  //                   onChanged: (value) {
+  //                     setState(() {
+  //                       filteredStaffs = staffs
+  //                           .where((item) => item.accountName
+  //                               .toLowerCase()
+  //                               .contains(value.toLowerCase()))
+  //                           .toList();
+  //                     });
+  //                   },
+  //                   decoration: const InputDecoration(
+  //                     contentPadding: EdgeInsets.all(8),
+  //                     hintText: 'Search',
+  //                     prefixIcon: Icon(Icons.search),
+  //                   ),
+  //                 ),
+  //               ),
+  //               SizedBox(
+  //                 height: MediaQuery.of(context).size.height * .3,
+  //                 width: MediaQuery.of(context).size.width * .8,
+  //                 child: ListView.builder(
+  //                   itemCount: filteredStaffs.length,
+  //                   physics: const ScrollPhysics(),
+  //                   shrinkWrap: true,
+  //                   itemBuilder: (context, index) {
+  //                     return ListTile(
+  //                         onTap: () {
+  //                           staffName = filteredStaffs[index].accountName;
+  //                           staffId = filteredStaffs[index].accountId;
+  //                           search.clear();
+  //                           filteredStaffs.clear();
+  //                           filteredStaffs.addAll(staffs);
+  //                           setState(() {});
+  //                           if (context.mounted) {
+  //                             Navigator.pop(context);
+  //                           }
+  //                         },
+  //                         title: Text(filteredStaffs[index].accountName));
+  //                   },
+  //                 ),
+  //               )
+  //             ],
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () {
+  //                   search.clear();
+  //                   filteredStaffs.clear();
+  //                   filteredStaffs.addAll(staffs);
+  //                   if (context.mounted) {
+  //                     Navigator.pop(context);
+  //                   }
+  //                 },
+  //                 child: const Text("Close")),
+  //           ],
+  //         );
+  //       });
+  //     },
+  //   );
+  // }
+
+  Future<dynamic> staffDialog(BuildContext context, String type) {
+    List<String> tempSelectedIds = [];
+    List<String> tempSelectedNames = [];
+
+    // Initialize selection only once, outside setState
+    if (type == 'collected') {
+      tempSelectedIds = List.from(collectedByIds);
+      tempSelectedNames = List.from(collectedByNames);
+    } else if (type == 'created') {
+      tempSelectedIds = List.from(createdByIds);
+      tempSelectedNames = List.from(createdByNames);
+    }
+
     return showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
+            title: const Text("Select Staff"),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1517,9 +1831,6 @@ class _InvoiceListState extends State<InvoiceList> {
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
                     controller: search,
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
                     onChanged: (value) {
                       setState(() {
                         filteredStaffs = staffs
@@ -1530,49 +1841,61 @@ class _InvoiceListState extends State<InvoiceList> {
                       });
                     },
                     decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
+                      hintText: 'Search staff',
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
                 ),
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * .3,
+                  height: MediaQuery.of(context).size.height * .4,
                   width: MediaQuery.of(context).size.width * .8,
                   child: ListView.builder(
                     itemCount: filteredStaffs.length,
-                    physics: const ScrollPhysics(),
-                    shrinkWrap: true,
                     itemBuilder: (context, index) {
-                      return ListTile(
-                          onTap: () {
-                            staffName = filteredStaffs[index].accountName;
-                            staffId = filteredStaffs[index].accountId;
-                            search.clear();
-                            filteredStaffs.clear();
-                            filteredStaffs.addAll(staffs);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
+                      final staff = filteredStaffs[index];
+                      final selected =
+                          tempSelectedIds.contains(staff.accountId);
+
+                      return CheckboxListTile(
+                        title: Text(staff.accountName),
+                        value: selected,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              if (!tempSelectedIds.contains(staff.accountId)) {
+                                tempSelectedIds.add(staff.accountId);
+                                tempSelectedNames.add(staff.accountName);
+                              }
+                            } else {
+                              tempSelectedIds.remove(staff.accountId);
+                              tempSelectedNames.remove(staff.accountName);
                             }
-                          },
-                          title: Text(filteredStaffs[index].accountName));
+                          });
+                        },
+                      );
                     },
                   ),
-                )
+                ),
               ],
             ),
             actions: [
               TextButton(
-                  onPressed: () {
-                    search.clear();
-                    filteredStaffs.clear();
-                    filteredStaffs.addAll(staffs);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (type == 'collected') {
+                    collectedByIds = List.from(tempSelectedIds);
+                    collectedByNames = List.from(tempSelectedNames);
+                  } else {
+                    createdByIds = List.from(tempSelectedIds);
+                    createdByNames = List.from(tempSelectedNames);
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text("Done"),
+              ),
             ],
           );
         });

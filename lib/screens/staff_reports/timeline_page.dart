@@ -589,7 +589,7 @@ class _TimelinePageState extends State<TimelinePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Summary cards moved to top
+                       
                           buildBottomSummarySection(staffCallDuration!),
                           const SizedBox(height: 16),
                           
@@ -633,7 +633,7 @@ class _TimelinePageState extends State<TimelinePage> {
                   ),
                 ),
                 
-                // Right Panel (existing time summary)
+             
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -684,7 +684,7 @@ class _TimelinePageState extends State<TimelinePage> {
                   ),
                 ),
                 
-                // Left Panel (new call statistics)
+            
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,

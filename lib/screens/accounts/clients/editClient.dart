@@ -8,6 +8,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/branchListModel.dart';
@@ -34,6 +36,9 @@ class _EditClientsState extends State<EditClients> {
   TextEditingController address1 = TextEditingController();
   TextEditingController address2 = TextEditingController();
   TextEditingController address3 = TextEditingController();
+  TextEditingController stateId = TextEditingController();
+  TextEditingController districtId = TextEditingController();
+  TextEditingController taxType = TextEditingController();
   TextEditingController pinCode = TextEditingController();
   TextEditingController gstNumber = TextEditingController();
   TextEditingController remarks = TextEditingController();
@@ -50,6 +55,16 @@ class _EditClientsState extends State<EditClients> {
   IsCustomerExistModel? isExist;
   var code = '91';
 
+  StateModel? stateModel;
+  List<StateList> stateList = [];
+  String? selectedStateId;
+
+  DistrictModel? districtModel;
+  List<DistrictList> districtList = [];
+  String? selectedDistrictId;
+  bool isLoadingState = true;
+  bool isLoadingDistrict = false;
+  String? selectedTaxType;
   @override
   void initState() {
     // TODO: implement initState
@@ -84,6 +99,21 @@ class _EditClientsState extends State<EditClients> {
       address1.text = mainClientDetail!.data.address1.toString();
       address2.text = mainClientDetail!.data.address2.toString();
       address3.text = mainClientDetail!.data.address3.toString();
+      stateId.text = mainClientDetail!.data.stateId.toString();
+      districtId.text = mainClientDetail!.data.districtId.toString();
+      await getStates();
+      setState(() {
+        selectedStateId = stateId.text.isNotEmpty ? stateId.text : null;
+      });
+      if (selectedStateId != null) {
+        await getDistricts(selectedStateId!);
+      }
+
+      setState(() {
+        selectedDistrictId =
+            districtId.text.isNotEmpty ? districtId.text : null;
+      });
+      taxType.text = mainClientDetail!.data.taxType.toString();
       pinCode.text = mainClientDetail!.data.pincode.toString();
       gstNumber.text = mainClientDetail!.data.gstNum.toString();
       remarks.text = mainClientDetail!.data.remarks.toString();
@@ -111,6 +141,37 @@ class _EditClientsState extends State<EditClients> {
         }
       }
       setState(() {});
+    }
+  }
+
+  Future<void> getStates() async {
+    setState(() => isLoadingState = true);
+    final response = await HttpService.getState();
+    if (response != null && response.status == true) {
+      setState(() {
+        stateList = response.data;
+        isLoadingState = false;
+      });
+    } else {
+      setState(() => isLoadingState = false);
+    }
+  }
+
+  Future<void> getDistricts(String stateId) async {
+    setState(() {
+      isLoadingDistrict = true;
+      districtList = [];
+      selectedDistrictId = null;
+    });
+
+    final response = await HttpService.getDistrict(stateId);
+    if (response != null && response.status == true) {
+      setState(() {
+        districtList = response.data;
+        isLoadingDistrict = false;
+      });
+    } else {
+      setState(() => isLoadingDistrict = false);
     }
   }
 
@@ -367,6 +428,111 @@ class _EditClientsState extends State<EditClients> {
                                 ),
                                 labelStyle: TextStyle(color: Colors.grey)),
                           ),
+                          const SizedBox(height: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              isLoadingState
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : DropdownButtonFormField<String>(
+                                      value: selectedStateId != null
+                                          ? selectedStateId
+                                          : stateId.text.isNotEmpty
+                                              ? stateId.text
+                                              : null,
+                                      hint: const Text("Select State *"),
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                      ),
+                                      items: stateList.map((state) {
+                                        return DropdownMenuItem<String>(
+                                          value: state.id,
+                                          child: Text(state.name),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedStateId = value;
+                                          selectedDistrictId = null;
+                                          districtList.clear();
+                                        });
+                                        if (value != null) getDistricts(value);
+                                      },
+                                    ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isLoadingDistrict)
+                                const Center(child: CircularProgressIndicator())
+                              else
+                                DropdownButtonFormField<String>(
+                                  value: selectedDistrictId != null
+                                      ? selectedDistrictId
+                                      : districtId.text.isNotEmpty
+                                          ? districtId.text
+                                          : null,
+                                  hint: const Text("Choose District *"),
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                  ),
+                                  items: districtList.map((district) {
+                                    return DropdownMenuItem<String>(
+                                      value: district.id,
+                                      child: Text(district.name),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedDistrictId = value;
+                                    });
+                                  },
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          DropdownButtonFormField<String>(
+                            value: selectedTaxType != null
+                                ? selectedTaxType
+                                : taxType.text.isNotEmpty
+                                    ? taxType.text
+                                    : null,
+                            hint: const Text("Select Tax Type *"),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: "Interstate",
+                                  child: Text("Interstate")),
+                              DropdownMenuItem(
+                                  value: "Intrastate",
+                                  child: Text("Intrastate")),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                selectedTaxType = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 15),
                           const SizedBox(
                             height: 15,
                           ),
@@ -912,6 +1078,14 @@ class _EditClientsState extends State<EditClients> {
                                 Common.toastMessaage(
                                     'PhoneNumber is already exists',
                                     Colors.red);
+                              } else if (selectedStateId == null ||
+                                  selectedStateId!.isEmpty) {
+                                Common.toastMessaage(
+                                    'Please select a State', Colors.red);
+                              } else if (selectedDistrictId == null ||
+                                  selectedDistrictId!.isEmpty) {
+                                Common.toastMessaage(
+                                    'Please select a District', Colors.red);
                               } else {
                                 if (context.mounted) {
                                   Common.showProgressDialog(
@@ -927,6 +1101,9 @@ class _EditClientsState extends State<EditClients> {
                                   'address': address1.text,
                                   'address2': address2.text,
                                   'address3': address3.text,
+                                  "state_id": selectedStateId,
+                                  "district_id": selectedDistrictId,
+                                  "tax_type": selectedTaxType ?? "",
                                   'pincode': pinCode.text,
                                   'post_office': postOffice.text,
                                   'gst_num': gstNumber.text,

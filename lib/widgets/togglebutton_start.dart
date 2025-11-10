@@ -87,27 +87,27 @@ class _StartStopToggleState extends State<StartStopToggle> {
     return base64Encode(utf8.encode(combined));
   }
 
-  Future<void> captureFace() async {
-    final faceImage = await Navigator.of(context).push<File>(
-      MaterialPageRoute(
-        builder: (context) => FaceDetectionCamera(
-          onFaceCaptured: (File imageFile) {
-            Navigator.of(context).pop(imageFile);
-          },
-        ),
-      ),
-    );
+  // Future<void> captureFace() async {
+  //   final faceImage = await Navigator.of(context).push<File>(
+  //     MaterialPageRoute(
+  //       builder: (context) => FaceDetectionCamera(
+  //         onFaceCaptured: (File imageFile) {
+  //           Navigator.of(context).pop(imageFile);
+  //         },
+  //       ),
+  //     ),
+  //   );
 
-    if (faceImage != null && mounted) {
-      final faceHash = await generateFaceHash(faceImage);
-      if (faceHash == null) {
-        Common.toastMessaage('Face hash failed', Colors.red);
-        return;
-      }
-      _faceBase64 = faceHash;
-      setState(() {});
-    }
-  }
+  //   if (faceImage != null && mounted) {
+  //     final faceHash = await generateFaceHash(faceImage);
+  //     if (faceHash == null) {
+  //       Common.toastMessaage('Face hash failed', Colors.red);
+  //       return;
+  //     }
+  //     _faceBase64 = faceHash;
+  //     setState(() {});
+  //   }
+  // }
 
   void toggleSwitch({bool skipConfirmation = false}) async {
     final now = DateTime.now();
@@ -309,8 +309,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        toggleSwitch(
-                            skipConfirmation: true); // skip confirmation
+                        toggleSwitch(skipConfirmation: true);
                       },
                       child: const Text("Retry"),
                     ),
@@ -326,15 +325,15 @@ class _StartStopToggleState extends State<StartStopToggle> {
           }
         }
 
-        if (faceDetection == "true") {
-          await captureFace();
-          if (_faceBase64 == null || _faceBase64!.isEmpty) {
-            Common.toastMessaage('Face capture required for login', Colors.red);
-            setState(() => isLoading = false);
-            widget.setDashboardLoading(false);
-            return;
-          }
-        }
+        // if (faceDetection == "true") {
+        //   await captureFace();
+        //   if (_faceBase64 == null || _faceBase64!.isEmpty) {
+        //     Common.toastMessaage('Face capture required for login', Colors.red);
+        //     setState(() => isLoading = false);
+        //     widget.setDashboardLoading(false);
+        //     return;
+        //   }
+        // }
 
         final response = await HttpService.startWork(
           now,

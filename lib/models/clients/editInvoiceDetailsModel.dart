@@ -68,7 +68,7 @@ class Data {
     receiptId = json['receipt_id'];
     displayInvoice = json['display_invoice'];
     invoiceDate = json['invoice_date'];
-    invoicePaymentStatus = json['invoice_payment_status'];
+    invoicePaymentStatus = json['invoice_payment_status']??"";
     subTotal = json['sub_total'];
     estimatedTax = json['estimated_tax'];
     discountAmount = json['discount_amount'];
@@ -140,6 +140,9 @@ class ProductDetails {
   String? qty;
   String? taxPercentage;
   String? taxAmount;
+    String? igst;
+      String? cgst;
+        String? sgst;
   String? amount;
 
   ProductDetails(
@@ -151,6 +154,9 @@ class ProductDetails {
         this.qty,
         this.taxPercentage,
         this.taxAmount,
+         this.igst,
+          this.cgst,
+           this.sgst,
         this.amount});
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
@@ -162,6 +168,9 @@ class ProductDetails {
     qty = json['qty'];
     taxPercentage = json['tax_percentage'];
     taxAmount = json['tax_amount'];
+     igst = json['igst'];
+      cgst = json['cgst'];
+       sgst = json['sgst'];
     amount = json['amount'];
   }
 
@@ -175,6 +184,9 @@ class ProductDetails {
     data['qty'] = qty;
     data['tax_percentage'] = taxPercentage;
     data['tax_amount'] = taxAmount;
+      data['igst'] = igst;
+        data['cgst'] = cgst;
+          data['sgst'] = sgst;
     data['amount'] = amount;
     return data;
   }

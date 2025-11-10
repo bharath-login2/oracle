@@ -22,7 +22,7 @@ class PendingInvoice extends StatefulWidget {
   State<PendingInvoice> createState() => _PendingInvoiceState();
 }
 
-class _PendingInvoiceState extends State<PendingInvoice> {
+class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAliveClientMixin {
   dynamic client;
   PendingInvoiceListModel? invoiceResponse;
   CustomerListModel? customerList;
@@ -35,12 +35,32 @@ class _PendingInvoiceState extends State<PendingInvoice> {
   String customerName = "Customer";
   TextEditingController search = TextEditingController();
   TextEditingController invSearch = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  double _scrollPosition = 0.0;
   bool isSearch = false;
-
+  @override
+  bool get wantKeepAlive => true;
   @override
   void initState() {
     super.initState();
     getData();
+    _scrollController.addListener(() {
+      _scrollPosition = _scrollController.offset;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _restoreScrollPosition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollPosition);
+      }
+    });
   }
 
   getData() async {
@@ -84,6 +104,8 @@ class _PendingInvoiceState extends State<PendingInvoice> {
 
   @override
   Widget build(BuildContext context) {
+       super.build(context);
+    _restoreScrollPosition();
     return result == true
         ? Scaffold(
             backgroundColor: Colors.grey.shade300,
@@ -187,7 +209,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                               keyboardType:
                                                                   TextInputType
                                                                       .visiblePassword,
-                                                              autofocus: true,
+                                                             // autofocus: true,
                                                               onChanged:
                                                                   (value) {
                                                                 setState(() {
@@ -389,7 +411,8 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                       builder: (context) =>
                                                           AddInvoice(
                                                               widget.token,
-                                                              customerId)),
+                                                              customerId,
+                                                              "")),
                                                 ).then((_) {
                                                   getData();
                                                 });
@@ -457,7 +480,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                 controller: invSearch,
                                 autocorrect: false,
                                 keyboardType: TextInputType.visiblePassword,
-                                autofocus: true,
+                               // autofocus: true,
                                 onChanged: (value) {
                                   filterInvoices(value);
                                 },

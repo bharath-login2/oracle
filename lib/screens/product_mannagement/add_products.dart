@@ -96,7 +96,7 @@ class _AddProductsState extends State<AddProducts> {
         productImage.toString());
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
-      Navigator.pop(context);
+       Navigator.pop(context, true); 
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
       Navigator.pop(context);

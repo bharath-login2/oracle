@@ -594,7 +594,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                       builder: (context) =>
                                                           AddInvoice(
                                                               widget.token,
-                                                              widget.clientId)),
+                                                              widget.clientId,"")),
                                                 ).then((_) {
                                                   getData();
                                                 });

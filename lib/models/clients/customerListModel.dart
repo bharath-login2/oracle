@@ -39,13 +39,13 @@ class Customer {
 
   Customer(
       {this.id,
-        this.name,
-        this.contactNo,
-        this.address,
-        this.address2,
-        this.address3,
-        this.pincode,
-        this.gstNum});
+      this.name,
+      this.contactNo,
+      this.address,
+      this.address2,
+      this.address3,
+      this.pincode,
+      this.gstNum});
 
   Customer.fromJson(Map<String, dynamic> json) {
     id = json['id'];

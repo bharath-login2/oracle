@@ -700,7 +700,7 @@ class _ClientListState extends State<ClientList> {
                                                                               .token,
                                                                           items[index]
                                                                               .id
-                                                                              .toString())),
+                                                                              .toString(),"")),
                                                                 ).then((_) {
                                                                   items.clear();
                                                                   page = 1;

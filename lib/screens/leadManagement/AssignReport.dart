@@ -178,6 +178,245 @@ class _AssignReportState extends State<AssignReport> {
     });
   }
 
+  void _showEditWorkDialog(BuildContext context, AssignedWork item) {
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController projectController =
+        TextEditingController(text: item.projectName);
+    final TextEditingController moduleController =
+        TextEditingController(text: item.moduleName);
+    final TextEditingController clientController =
+        TextEditingController(text: item.clientName);
+    final TextEditingController descriptionController =
+        TextEditingController(text: item.taskDescription);
+    final TextEditingController dueDateController =
+        TextEditingController(text: item.dueDate);
+    String selectedPriority = item.priority;
+    List<String> selectedStaffIds = List.from(item.notification.staffIds);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: const [
+                  Icon(Icons.edit, color: Color(0xFF3A2F87)),
+                  SizedBox(width: 8),
+                  Text("Edit Work Details",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Project Name
+                      TextFormField(
+                        controller: projectController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Project Name",
+                          prefixIcon: const Icon(Icons.business_center),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Module Name
+                      TextFormField(
+                        controller: moduleController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Module Name",
+                          prefixIcon: const Icon(Icons.widgets_outlined),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Client Name
+                      TextFormField(
+                        controller: clientController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Client Name",
+                          prefixIcon: const Icon(Icons.person_outline),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        value: selectedPriority,
+                        items: const [
+                          DropdownMenuItem(value: "1", child: Text("Normal")),
+                          DropdownMenuItem(value: "2", child: Text("High")),
+                          DropdownMenuItem(value: "3", child: Text("Critical")),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => selectedPriority = val!),
+                        decoration: InputDecoration(
+                          labelText: "Priority",
+                          prefixIcon: const Icon(Icons.flag_outlined),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: dueDateController,
+                        readOnly: true,
+                        onTap: () async {
+                          DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              dueDateController.text =
+                                  "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                            });
+                          }
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Due Date",
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: descriptionController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: "Work Description",
+                          prefixIcon: const Icon(Icons.description_outlined),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      InkWell(
+                        onTap: () async {
+                          final selected = await _showMultiStaffSelectionDialog(
+                            context,
+                            false,
+                            item.assignedToId,
+                            selectedStaffIds,
+                            item,
+                          );
+                          if (selected != null) {
+                            setState(() => selectedStaffIds = selected);
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            labelText: "Assigned Staff",
+                            prefixIcon: const Icon(Icons.people_outline),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  selectedStaffIds.isEmpty
+                                      ? 'Select Staff'
+                                      : '${selectedStaffIds.length} selected',
+                                  style: const TextStyle(fontSize: 15),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save, size: 18),
+                  label: const Text("Update"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF94CC51),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      try {
+                        final response = await HttpService.editAssignedWork(
+                          workId: item.id,
+                          projectName: projectController.text,
+                          moduleName: moduleController.text,
+                          clientName: clientController.text,
+                          description: descriptionController.text,
+                          priority: selectedPriority,
+                          dueDate: dueDateController.text,
+                          staffIds: selectedStaffIds,
+                        );
+
+                        if (response != null && response.status) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(response.message),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text(response?.message ?? "Update failed"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Error: $e"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,7 +543,7 @@ class _AssignReportState extends State<AssignReport> {
               children: [
                 Flexible(
                   child: SizedBox(
-                    width: double.infinity, 
+                    width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
@@ -316,8 +555,7 @@ class _AssignReportState extends State<AssignReport> {
                                 ? Colors.white
                                 : Colors.black,
                         minimumSize: const Size(0, 36),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8), 
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       onPressed: () {
                         setState(() {
@@ -426,7 +664,7 @@ class _AssignReportState extends State<AssignReport> {
               child: Row(
                 children: [
                   const Icon(Icons.filter_alt, size: 16, color: Colors.orange),
-                  const SizedBox(width:8),
+                  const SizedBox(width: 8),
                   const Text('Filters applied',
                       style: TextStyle(color: Colors.orange)),
                   const Spacer(),
@@ -519,6 +757,9 @@ class _AssignReportState extends State<AssignReport> {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 16),
+      color: item.status == "Completed"
+          ? const Color.fromARGB(255, 238, 255, 234)
+          : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -581,22 +822,86 @@ class _AssignReportState extends State<AssignReport> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildInfoRow(
-                  Icons.person_outline, "Assigned to", item.assignedTo),
               Row(
                 children: [
                   Expanded(
                     child: _buildInfoRow(
-                        Icons.person, "Assigned by", item.assignedBy),
+                      Icons.person_outline,
+                      "Assigned to",
+                      item.assignedTo,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // item.startStatus =="Not Started"?
+                  item.status != "Completed"
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.compare_arrows_outlined,
+                            color: const Color.fromARGB(255, 49, 222, 245),
+                          ),
+                          onPressed: () =>
+                              _showShareDialogTransfer(context, item),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.blue.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(
+                                color: Color.fromARGB(255, 20, 212, 94),
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox(),
+                ],
+              ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoRow(
+                      Icons.person,
+                      "Assigned by",
+                      item.assignedBy,
+                    ),
                   ),
                   if (name?.toLowerCase() == item.assignedTo.toLowerCase())
                     _buildStatusChip(item.status),
                 ],
               ),
-              item.dueDate != ""
-                  ? _buildInfoRow(
-                      Icons.calendar_today, "Due date", item.dueDate)
-                  : SizedBox(),
+
+              const SizedBox(height: 6),
+
+              Row(
+                children: [
+                  if (item.dueDate.isNotEmpty)
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.calendar_today,
+                        "Due date",
+                        item.dueDate,
+                      ),
+                    ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Color.fromARGB(255, 245, 138, 67),
+                    ),
+                    onPressed: () => _showEditWorkDialog(
+                        context, item), // ✅ replaced with edit dialog
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.blue.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(
+                          color: Color.fromARGB(255, 154, 212, 20),
+                        ),
+                      ),
+                    ),
+                    tooltip: "Edit Work",
+                  ),
+                ],
+              ),
+
               //  _buildInfoRow(
               //     Icons.disabled_visible_outlined,
               //     "Completion",
@@ -680,7 +985,9 @@ class _AssignReportState extends State<AssignReport> {
                                     ? Icons.list
                                     : item.status == "Pending"
                                         ? Icons.pending
-                                        : Icons.play_circle_outline,
+                                        : item.status == "Pending"
+                                            ? Icons.pause
+                                            : Icons.play_circle_outline,
                             size: 16,
                             color: Colors.white,
                           ),
@@ -763,18 +1070,23 @@ class _AssignReportState extends State<AssignReport> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.notification_add,
-                        color: const Color.fromARGB(255, 146, 180, 20)),
-                    onPressed: () => _showShareDialog(context, item),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                            color: const Color.fromARGB(255, 20, 212, 94)),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notification_add,
+                            color: Color.fromARGB(255, 146, 180, 20)),
+                        onPressed: () => _showShareDialog(context, item),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.blue.shade50,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(
+                                color: Color.fromARGB(255, 20, 212, 94)),
+                          ),
+                        ),
                       ),
-                    ),
+                    
+                    ],
                   ),
                 ],
               ),
@@ -1776,6 +2088,159 @@ class _AssignReportState extends State<AssignReport> {
     );
   }
 
+  void _showShareDialogTransfer(BuildContext context, AssignedWork item) {
+    final _formKey = GlobalKey<FormState>();
+    TextEditingController descriptionController = TextEditingController();
+    List<String> selectedStaffIds = []; // Keep track of selected staff
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Transfer Work"),
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Project Name (Read-only)
+                    TextFormField(
+                      initialValue: item.projectName,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Project Name",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Module Name (Read-only)
+                    TextFormField(
+                      initialValue: item.moduleName,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Module Name",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Staff Selection
+                    InkWell(
+                      onTap: () async {
+                        final selected = await _showMultiStaffSelectionDialog(
+                          context,
+                          false,
+                          item.assignedToId,
+                          selectedStaffIds,
+                          item,
+                        );
+                        if (selected != null) {
+                          setState(() => selectedStaffIds = selected);
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          labelText: "Transfer To",
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              selectedStaffIds.isEmpty
+                                  ? 'Select Staff'
+                                  : '${selectedStaffIds.length} staff selected',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Description
+                    TextFormField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: "Reason / Description",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? "Enter a reason"
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      if (selectedStaffIds.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("Select at least one staff")),
+                        );
+                        return;
+                      }
+
+                      try {
+                        final response = await HttpService.transferWork(
+                          workId: item.id.toString(),
+                          staffIds: selectedStaffIds,
+                          description: descriptionController.text,
+                        );
+
+                        if (response != null && response.status) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                response.message,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              margin: const EdgeInsets.all(12),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    response?.message ?? "Transfer failed")),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error: $e")),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("Transfer"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<List<String>?> _showMultiStaffSelectionDialog(
     BuildContext context,
     bool isForParticipants,
@@ -1943,35 +2408,6 @@ class _AssignReportState extends State<AssignReport> {
     );
   }
 
-  // void _showFilters() {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setModalState) {
-  //           return SingleChildScrollView(
-  //             child: Padding(
-  //               padding: EdgeInsets.only(
-  //                 bottom: MediaQuery.of(context).viewInsets.bottom,
-  //               ),
-  //               child: FilterWidget(
-  //                 pageId: 2,
-  //                 initialFilters: currentFilters,
-  //                 onApplyFilters: (filters) {
-  //                   setState(() {
-  //                     currentFilters = Map.from(filters);
-  //                     _loadData();
-  //                   });
-  //                 },
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
   void _showFilters() {
     showModalBottomSheet(
       context: context,
@@ -2021,11 +2457,11 @@ class _AssignReportState extends State<AssignReport> {
   String _getPriorityText(String priority) {
     switch (priority) {
       case "1":
-        return "Low";
+        return "Normal";
       case "2":
-        return "Medium";
-      case "3":
         return "High";
+      case "3":
+        return "Ciritical";
       default:
         return "__";
     }

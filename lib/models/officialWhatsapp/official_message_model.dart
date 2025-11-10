@@ -90,6 +90,9 @@ class MessageText {
   String latitude;
   String longitude;
   String footer;
+  String firstName;
+  String companyName;
+  String contactNo;
   List<Button> buttons;
 
   MessageText({
@@ -103,6 +106,9 @@ class MessageText {
     required this.buttons,
     required this.latitude,
     required this.longitude,
+    required this.firstName,
+    required this.companyName,
+    required this.contactNo,
   });
 
   factory MessageText.fromJson(Map<String, dynamic> json) => MessageText(
@@ -113,8 +119,11 @@ class MessageText {
         headerSubText: json["headerSubText"] ?? "",
         messageBody: json["messageBody"] ?? "",
         footer: json["footer"] ?? "",
-        latitude: json["latitude"],
-        longitude: json["longitude"],
+        latitude: json["latitude"] ?? "",
+        longitude: json["longitude"] ?? "",
+        firstName: json["first_name"] ?? "",
+        companyName: json["company_name"] ?? "",
+        contactNo: json["contact_no"] ?? "",
         buttons: json["buttons"] == null
             ? []
             : List<Button>.from(json["buttons"].map((x) => Button.fromJson(x))),

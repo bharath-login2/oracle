@@ -65,6 +65,7 @@ class ListElement {
   bool isPaid;
   String clientId;
   List<Product> products;
+   String gstinvoiceCreated;
 
   ListElement({
     required this.id,
@@ -83,6 +84,7 @@ class ListElement {
     required this.renewalType,
     required this.installmentId,
     required this.products,
+      required this.gstinvoiceCreated,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -103,6 +105,7 @@ class ListElement {
         installmentId: json["installment_id"],
         products: List<Product>.from(
             json["products"].map((x) => Product.fromJson(x))),
+             gstinvoiceCreated: json["gst_invoice_created"],
       );
 }
 

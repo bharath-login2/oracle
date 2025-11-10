@@ -1,10 +1,13 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:login2/screens/officialWhatsapp/fileSendingScreen.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:lottie/lottie.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
 import '../../service/service.dart';
+import 'fileSendingScreen.dart';
 
 class ListFileManager extends StatefulWidget {
   String? format;
@@ -18,20 +21,63 @@ class ListFileManager extends StatefulWidget {
 
 class _ListFileManagerState extends State<ListFileManager> {
   MediaModel? mediaDetails;
+  bool isRecording = false;
+  FlutterSoundRecorder? _recorder;
+  String? recordedFilePath;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _recorder = FlutterSoundRecorder();
+    _recorder!.openRecorder();
     getData(widget.format);
   }
 
-  getData(format) async {
+  Future<void> getData(String? format) async {
     mediaDetails = await HttpService.getTemplateMedia(format);
-    if (mediaDetails != null) {
-      setState(() {});
-    } else {
-      setState(() {});
+    setState(() {});
+  }
+
+  Future<void> startRecording() async {
+    Directory tempDir = await getTemporaryDirectory();
+    String path =
+        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.aac';
+    await _recorder!.startRecorder(
+      toFile: path,
+      codec: Codec.aacADTS,
+    );
+    setState(() {
+      isRecording = true;
+      recordedFilePath = path;
+    });
+  }
+
+  Future<void> stopRecording() async {
+    await _recorder!.stopRecorder();
+    setState(() {
+      isRecording = false;
+    });
+
+    if (recordedFilePath != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FileSendingScreen(
+            documentUrl: recordedFilePath!,
+            title: "Recorded Audio",
+            extension: 'aac',
+            groupId: widget.groupId,
+          ),
+        ),
+      ).then((_) => getData(widget.format));
     }
+  }
+
+  @override
+  void dispose() {
+    _recorder!.closeRecorder();
+    _recorder = null;
+    super.dispose();
   }
 
   @override
@@ -47,161 +93,119 @@ class _ListFileManagerState extends State<ListFileManager> {
                 LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(
-                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        height: 25,
-                        width: 25,
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
-                            shape: BoxShape.circle),
-                        child: const Icon(
-                          Icons.arrow_back_ios_outlined,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 25,
-                    ),
-                    const Text(
-                      'Upload',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ],
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    height: 25,
+                    width: 25,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        shape: BoxShape.circle),
+                    child: const Icon(Icons.arrow_back_ios_outlined,
+                        color: Colors.white, size: 16),
+                  ),
                 ),
+                const SizedBox(width: 20),
+                const Text('Upload',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
               ],
             ),
           ),
         ),
       ),
       body: mediaDetails != null
-          ? SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 15,
-                  ),
+          ? Column(
+              children: [
+                if (widget.format == 'audio')
                   Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                                  4, // Number of columns in the grid
-                              crossAxisSpacing: 2, // Spacing between columns
-                              mainAxisSpacing: 2, // Spacing between rows
-                              childAspectRatio: 1),
-                      itemCount: mediaDetails!.data!.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FileSendingScreen(
-                                  documentUrl:
-                                      mediaDetails!.data![index].url.toString(),
-                                  title: mediaDetails!.data![index].fileName
-                                      .toString(),
-                                  extension: mediaDetails!
-                                      .data![index].extension
-                                      .toString(),
-                                  groupId: widget.groupId,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            color: Colors.white,
-                            child: Column(
-                              children: [
-                                Container(
-                                  height: 50.0,
-                                  width: 50.0,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      image: mediaDetails!.data![index].extension == 'M4A' ||
-                                              mediaDetails!.data![index].extension ==
-                                                  'm4a' ||
-                                              mediaDetails!.data![index].extension ==
-                                                  'wav' ||
-                                              mediaDetails!.data![index].extension ==
-                                                  'WAV'
-                                          ? const AssetImage(
-                                              'assets/icons/audio.png')
-                                          : mediaDetails!.data![index].extension == 'doc' ||
-                                                  mediaDetails!.data![index].extension ==
-                                                      'docx'
-                                              ? const AssetImage(
-                                                  'assets/icons/doc.png')
-                                              : mediaDetails!.data![index].extension == 'pdf' ||
-                                                      mediaDetails!.data![index]
-                                                              .extension ==
-                                                          'PDF'
-                                                  ? const AssetImage(
-                                                      'assets/icons/pdf.png')
-                                                  : mediaDetails!.data![index].extension == 'pptx' ||
-                                                          mediaDetails!
-                                                                  .data![index]
-                                                                  .extension ==
-                                                              'pptm' ||
-                                                          mediaDetails!
-                                                                  .data![index]
-                                                                  .extension ==
-                                                              'ppt'
-                                                      ? const AssetImage(
-                                                          'assets/icons/ppt.png')
-                                                      : mediaDetails!.data![index].extension == 'csv' ||
-                                                              mediaDetails!
-                                                                      .data![index]
-                                                                      .extension ==
-                                                                  'xls' ||
-                                                              mediaDetails!.data![index].extension == 'xlsx'
-                                                          ? const AssetImage('assets/icons/xls.png')
-                                                          : mediaDetails!.data![index].extension == 'mp4' || mediaDetails!.data![index].extension == 'mkv' || mediaDetails!.data![index].extension == 'webm'
-                                                              ? const AssetImage('assets/icons/mp4.png')
-                                                              : const AssetImage('assets/icons/picture.png'),
-                                      fit: BoxFit.fill,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 3,
-                                ),
-                                SizedBox(
-                                  width: 100,
-                                  child: Center(
-                                    child: Text(
-                                      mediaDetails!.data![index].fileName
-                                          .toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed:
+                              isRecording ? stopRecording : startRecording,
+                          icon: Icon(isRecording ? Icons.stop : Icons.mic),
+                          label: Text(
+                              isRecording ? "Stop Recording" : "Record Audio"),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(10),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 2,
+                      mainAxisSpacing: 2,
+                      childAspectRatio: 1,
+                    ),
+                    itemCount: mediaDetails!.data!.length,
+                    itemBuilder: (context, index) {
+                      final file = mediaDetails!.data![index];
+                      String extension = file.extension!.toLowerCase();
+                      String iconPath = 'assets/icons/picture.png';
+
+                      if (['aac', 'm4a', 'wav', 'mp3'].contains(extension))
+                        iconPath = 'assets/icons/audio.png';
+                      else if (['doc', 'docx'].contains(extension))
+                        iconPath = 'assets/icons/doc.png';
+                      else if (['pdf'].contains(extension))
+                        iconPath = 'assets/icons/pdf.png';
+                      else if (['ppt', 'pptx', 'pptm'].contains(extension))
+                        iconPath = 'assets/icons/ppt.png';
+                      else if (['xls', 'xlsx', 'csv'].contains(extension))
+                        iconPath = 'assets/icons/xls.png';
+                      else if (['mp4', 'mkv', 'webm'].contains(extension))
+                        iconPath = 'assets/icons/mp4.png';
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FileSendingScreen(
+                                documentUrl: file.url,
+                                title: file.fileName,
+                                extension: file.extension,
+                                groupId: widget.groupId,
+                              ),
+                            ),
+                          ).then((_) => getData(widget.format));
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage(iconPath),
+                                  fit: BoxFit.fill,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            SizedBox(
+                              width: 100,
+                              child: Center(
+                                child: Text(
+                                  file.fileName ?? "Unknown",
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             )
           : Center(
               child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),

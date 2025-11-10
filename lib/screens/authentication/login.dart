@@ -218,27 +218,27 @@ class _LoginState extends State<Login> {
     return base64Encode(utf8.encode(combined));
   }
 
-  Future<void> captureFace() async {
-    final faceImage = await Navigator.of(context).push<File>(
-      MaterialPageRoute(
-        builder: (context) => FaceDetectionCamera(
-          onFaceCaptured: (File imageFile) {
-            Navigator.of(context).pop(imageFile);
-          },
-        ),
-      ),
-    );
+  // Future<void> captureFace() async {
+  //   final faceImage = await Navigator.of(context).push<File>(
+  //     MaterialPageRoute(
+  //       builder: (context) => FaceDetectionCamera(
+  //         onFaceCaptured: (File imageFile) {
+  //           Navigator.of(context).pop(imageFile);
+  //         },
+  //       ),
+  //     ),
+  //   );
 
-    if (faceImage != null && mounted) {
-      final faceHash = await generateFaceHash(faceImage);
-      if (faceHash == null) {
-        Common.toastMessaage('Face hash failed', Colors.red);
-        return;
-      }
-      _faceBase64 = faceHash;
-      setState(() {});
-    }
-  }
+  //   if (faceImage != null && mounted) {
+  //     final faceHash = await generateFaceHash(faceImage);
+  //     if (faceHash == null) {
+  //       Common.toastMessaage('Face hash failed', Colors.red);
+  //       return;
+  //     }
+  //     _faceBase64 = faceHash;
+  //     setState(() {});
+  //   }
+  // }
 
   login() async {
     try {

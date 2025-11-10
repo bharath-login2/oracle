@@ -1,7 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/clients/customerListModel.dart' as customer_list;
+import 'package:login2/models/clients/receiptListAccountsModel.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
+import 'package:login2/screens/accounts/clients/addInvoice.dart';
+import 'package:login2/screens/accounts/clients/addInvoiceUpdated.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
 import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
@@ -13,6 +17,8 @@ import '../../../models/clients/receiptDeleteModel.dart';
 import '../../../models/clients/receiptListModel.dart';
 import '../../../service/service.dart';
 import '../../leadManagement/webview.dart';
+import 'package:login2/models/clients/getInvoiceSearchData.dart'
+    as invoice_search;
 import 'clientDetails.dart';
 
 // ignore: must_be_immutable
@@ -42,6 +48,8 @@ class _ReceiptListState extends State<ReceiptList> {
   int pageSize = 15;
   bool _isDetailedView = true;
   String headName = "Select Head";
+  bool _showFloatingOptions = false;
+  Offset _floatingButtonPosition = Offset(16, 16);
   bool get isFiltered =>
       currentFilters.isNotEmpty ||
       (!_ignoreWidgetDates && (widget.fdate != null || widget.tdate != null));
@@ -54,10 +62,22 @@ class _ReceiptListState extends State<ReceiptList> {
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
   final bool _useInitialDates = true;
+  bool _showAccountTotals = false;
+  List<ReceiptAccountData> accountTotals = [];
+  bool _loadingAccountTotals = false;
+  List<customer_list.Customer> customers = [];
+  List<customer_list.Customer> filteredCustomers = [];
+  String customerId = "";
+  String customerName = "Choose Customer";
+  List<invoice_search.Staff> staffs = [];
+  List<invoice_search.Staff> filteredStaffs = [];
+  String staffId = "";
+  String staffName = "Choose Staff";
   @override
   void initState() {
     super.initState();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
+
     type = widget.type ?? "0";
     if (widget.fdate != null && widget.tdate != null) {
       try {
@@ -75,6 +95,19 @@ class _ReceiptListState extends State<ReceiptList> {
     getData();
     getDetails();
     getList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeFloatingButtonPosition();
+    });
+  }
+
+  void _initializeFloatingButtonPosition() {
+    final screenSize = MediaQuery.of(context).size;
+    setState(() {
+      _floatingButtonPosition = Offset(
+        screenSize.width - 130,
+        screenSize.height - 300,
+      );
+    });
   }
 
   void _onLoadMore() {
@@ -85,6 +118,12 @@ class _ReceiptListState extends State<ReceiptList> {
       getList();
       add++;
     }
+  }
+
+  void _updateFloatingButtonPosition(Offset newPosition) {
+    setState(() {
+      _floatingButtonPosition = newPosition;
+    });
   }
 
   void _initializeFilters(Map<String, dynamic>? filters) {
@@ -151,13 +190,10 @@ class _ReceiptListState extends State<ReceiptList> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            // Process dates from currentFilters
             final createdFrom =
                 parseAndValidateDate(currentFilters['created_from']);
             final createdTo =
                 parseAndValidateDate(currentFilters['created_to']);
-
-            // Use widget dates if not ignoring them and current filter dates are invalid
             final fromDate = !_ignoreWidgetDates && createdFrom == null
                 ? widget.fdate
                 : createdFrom?.toIso8601String();
@@ -184,8 +220,6 @@ class _ReceiptListState extends State<ReceiptList> {
                   onApplyFilters: (filters) {
                     setState(() {
                       currentFilters = Map.from(filters);
-
-                      // Handle date formatting with validation
                       final from =
                           parseAndValidateDate(filters['created_from']);
                       final to = parseAndValidateDate(filters['created_to']);
@@ -240,6 +274,22 @@ class _ReceiptListState extends State<ReceiptList> {
       });
     }
     getList();
+    getCustomerList();
+  }
+
+  getCustomerList() async {
+    try {
+      customer_list.CustomerListModel? customerData =
+          await HttpService.customerList(widget.token);
+      if (customerData != null && customerData.status == true) {
+        setState(() {
+          customers = customerData.data ?? [];
+          filteredCustomers = List.from(customers);
+        });
+      }
+    } catch (e) {
+      print("Error loading customers: $e");
+    }
   }
 
   getList() async {
@@ -260,6 +310,7 @@ class _ReceiptListState extends State<ReceiptList> {
     try {
       ReceiptListModel? newData = await HttpService.receptList(widget.token,
           fDateFilter, tDateFilter, page, pageSize, headId, search.text, type);
+      _fetchAccountTotals(fDateFilter, tDateFilter, headId, search.text, type);
       if (newData != null) {
         setState(() {
           if (page == 1) {
@@ -272,6 +323,39 @@ class _ReceiptListState extends State<ReceiptList> {
       }
     } catch (e) {
       print("Error loading data: $e");
+    }
+  }
+
+  Future<void> _fetchAccountTotals(String? fDateFilter, String? tDateFilter,
+      String headId, String searchKey, String type) async {
+    setState(() {
+      _loadingAccountTotals = true;
+    });
+
+    try {
+      ReceiptListAccountsModel? accountData =
+          await HttpService.receptListAccounts(
+        widget.token,
+        fDateFilter ?? "",
+        tDateFilter ?? "",
+        1,
+        100,
+        headId,
+        searchKey,
+        type,
+      );
+
+      if (accountData != null && accountData.status == true) {
+        setState(() {
+          accountTotals = accountData.data ?? [];
+        });
+      }
+    } catch (e) {
+      print("Error loading account totals: $e");
+    } finally {
+      setState(() {
+        _loadingAccountTotals = false;
+      });
     }
   }
 
@@ -435,11 +519,11 @@ class _ReceiptListState extends State<ReceiptList> {
                               children: [
                                 const SizedBox(height: 8),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 15),
+                                  padding: const EdgeInsets.only(left: 12),
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: FractionallySizedBox(
-                                      widthFactor: 0.94,
+                                      widthFactor: 0.97,
                                       child: TextFormField(
                                         controller: search,
                                         onChanged: (val) {
@@ -788,6 +872,44 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                     child: Text(
                                                                       items[index]
                                                                           .collectedStaff,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            12,
+                                                                        color: Colors
+                                                                            .grey,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ]),
+                                                                const SizedBox(
+                                                                    height: 6),
+                                                                Row(children: [
+                                                                  const Icon(
+                                                                      Icons
+                                                                          .lock_clock,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      size: 16),
+                                                                  const SizedBox(
+                                                                      width: 6),
+                                                                  Text(
+                                                                      items[index]
+                                                                          .createdAt,
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            12,
+                                                                        color: Colors
+                                                                            .grey,
+                                                                      )),
+                                                                  const Spacer(),
+                                                                  Flexible(
+                                                                    child: Text(
+                                                                      "Created By: ${items[index].collectedStaff}",
                                                                       overflow:
                                                                           TextOverflow
                                                                               .ellipsis,
@@ -1277,20 +1399,370 @@ class _ReceiptListState extends State<ReceiptList> {
                                 )
                               ],
                             ),
+                            // items.isNotEmpty
+                            //     ? Container(
+                            //         height: 36.0,
+                            //         color: Colors.grey.shade200,
+                            //         child: Center(
+                            //             child: Text(
+                            //           'Total : ${receiptList!.data.receiptSum}',
+                            //           style: const TextStyle(
+                            //               color: Colors.green,
+                            //               fontSize: 18,
+                            //               fontWeight: FontWeight.bold),
+                            //         )),
+                            //       )
+                            //     : const SizedBox(),
                             items.isNotEmpty
                                 ? Container(
-                                    height: 36.0,
+                                    height: 56.0,
                                     color: Colors.grey.shade200,
-                                    child: Center(
-                                        child: Text(
-                                      'Total : ${receiptList!.data.receiptSum}',
-                                      style: const TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    )),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              'Total : ${receiptList!.data.receiptSum}',
+                                              style: const TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (accountTotals.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 16.0),
+                                            child: InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  _showAccountTotals =
+                                                      !_showAccountTotals;
+                                                });
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade400),
+                                                ),
+                                                child: Icon(
+                                                  _showAccountTotals
+                                                      ? Icons.keyboard_arrow_up
+                                                      : Icons.keyboard_arrow_up,
+                                                  color: Colors.grey.shade600,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   )
-                                : const SizedBox()
+                                : const SizedBox(),
+
+                            if (_showAccountTotals && accountTotals.isNotEmpty)
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.6,
+                                margin: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Account Wise Receipts',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                _showAccountTotals = false;
+                                              });
+                                            },
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    Colors.red.withOpacity(0.1),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.red,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Expanded(
+                                        child: _loadingAccountTotals
+                                            ? const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                        strokeWidth: 2),
+                                              )
+                                            : ListView.separated(
+                                                physics:
+                                                    const BouncingScrollPhysics(),
+                                                itemCount: accountTotals.length,
+                                                separatorBuilder: (context,
+                                                        index) =>
+                                                    const Divider(height: 8),
+                                                itemBuilder: (context, index) {
+                                                  final account =
+                                                      accountTotals[index];
+                                                  return Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          account.accountName ??
+                                                              'Unknown Account',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 15,
+                                                            color:
+                                                                Colors.black87,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Text(
+                                                        "₹ ${account.totalReceipt ?? '0'}",
+                                                        style: const TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors.green,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const Divider(thickness: 1),
+                                      Builder(
+                                        builder: (context) {
+                                          final double total =
+                                              accountTotals.fold(
+                                            0.0,
+                                            (sum, item) =>
+                                                sum +
+                                                (double.tryParse(
+                                                        item.totalReceipt ??
+                                                            '0') ??
+                                                    0),
+                                          );
+                                          return Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                'Total Receipt:',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                              Text(
+                                                "₹ ${total.toStringAsFixed(2)}",
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blueAccent,
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                            Positioned(
+                              right:
+                                  _floatingButtonPosition.dx == 0 ? 30 : null,
+                              bottom:
+                                  _floatingButtonPosition.dy == 0 ? 100 : null,
+                              left: _floatingButtonPosition.dx != 0
+                                  ? _floatingButtonPosition.dx
+                                  : null,
+                              top: _floatingButtonPosition.dy != 0
+                                  ? _floatingButtonPosition.dy
+                                  : null,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  final newPosition = Offset(
+                                    _floatingButtonPosition.dx +
+                                        details.delta.dx,
+                                    _floatingButtonPosition.dy +
+                                        details.delta.dy,
+                                  );
+                                  _updateFloatingButtonPosition(newPosition);
+                                },
+                                child: Column(
+                                  children: [
+                                    if (_showFloatingOptions) ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 10),
+                                                child: SizedBox(
+                                                  width: 130,
+                                                  child: FloatingActionButton
+                                                      .extended(
+                                                    heroTag: "simple_invoice",
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _showFloatingOptions =
+                                                            false;
+                                                      });
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AddInvoiceUpdated(
+                                                            widget.token,
+                                                            "",
+                                                            "",
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    label: const Text(
+                                                      'Sale',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.receipt,
+                                                      color: Colors.white,
+                                                      size: 24,
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                margin: const EdgeInsets.only(
+                                                    bottom: 10),
+                                                child: SizedBox(
+                                                  width: 130,
+                                                  child: FloatingActionButton
+                                                      .extended(
+                                                    heroTag: "complex_invoice",
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _showFloatingOptions =
+                                                            false;
+                                                      });
+                                                      addInvoiceDialog(context);
+                                                    },
+                                                    label: const Text(
+                                                      'Invoice',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.description,
+                                                      color: Colors.white,
+                                                      size: 24,
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.blue,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )
+                                    ],
+                                    FloatingActionButton(
+                                      heroTag: "main_floating_button",
+                                      onPressed: () {
+                                        setState(() {
+                                          _showFloatingOptions =
+                                              !_showFloatingOptions;
+                                        });
+                                      },
+                                      child: AnimatedSwitcher(
+                                        duration: Duration(milliseconds: 300),
+                                        child: _showFloatingOptions
+                                            ? Icon(Icons.close,
+                                                color: Colors.white)
+                                            : Icon(Icons.add,
+                                                color: Colors.white),
+                                      ),
+                                      backgroundColor: _showFloatingOptions
+                                          ? Colors.red
+                                          : Color(0xFF2a86c9),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1355,6 +1827,203 @@ class _ReceiptListState extends State<ReceiptList> {
                 ],
               ),
             ));
+  }
+
+  Future<Object?> addInvoiceDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Customer  Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return AlertDialog(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: TextField(
+                                        controller: search,
+                                        autocorrect: false,
+                                        keyboardType:
+                                            TextInputType.visiblePassword,
+                                        autofocus: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            filteredCustomers = customers
+                                                .where((item) => item.name!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        value.toLowerCase()))
+                                                .toList();
+                                          });
+                                        },
+                                        decoration: const InputDecoration(
+                                          contentPadding: EdgeInsets.all(8),
+                                          hintText: 'Search',
+                                          prefixIcon: Icon(Icons.search),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .3,
+                                      width: MediaQuery.of(context).size.width *
+                                          .8,
+                                      child: ListView.builder(
+                                        itemCount: filteredCustomers.length,
+                                        physics: const ScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                              onTap: () {
+                                                customerName =
+                                                    filteredCustomers[index]
+                                                        .name!;
+                                                customerId =
+                                                    filteredCustomers[index]
+                                                        .id!;
+                                                search.clear();
+                                                filteredCustomers =
+                                                    List.from(customers);
+                                                setState(() {});
+                                                if (context.mounted) {
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              title: Text(
+                                                  filteredCustomers[index]
+                                                      .name!));
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                      // onPressed: () {
+                                      //   search.clear();
+                                      //   filteredCustomers.addAll(customers);
+                                      //   if (context.mounted) {
+                                      //     Navigator.pop(context);
+                                      //   }
+                                      // },
+                                      onPressed: () {
+                                        search.clear();
+                                        filteredCustomers =
+                                            List.from(customers);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                      child: const Text("Close")),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    customerName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        if (customerId == '') {
+                          Common.toastMessaage('Choose Client', Colors.red);
+                        } else {
+                          search.clear();
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddInvoice(widget.token, customerId, "")),
+                          ).then((_) {
+                            getData();
+                          });
+                        }
+                      },
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Padding(
+                            padding: EdgeInsets.only(
+                                top: 10, bottom: 10, left: 25, right: 25),
+                            child: Text(
+                              'Submit',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
   }
 
   Future<dynamic> accountHeadDialog(BuildContext context) {
