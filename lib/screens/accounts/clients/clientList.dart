@@ -31,6 +31,8 @@ class _ClientListState extends State<ClientList> {
   TextEditingController searchController = TextEditingController();
   String fDate = "From Date";
   String tDate = "To Date";
+  int _lastScrollIndex = 0;
+  bool _shouldRestoreScroll = false;
   int page = 1;
   int add = 1;
   int pageSize = 15;
@@ -54,6 +56,27 @@ class _ClientListState extends State<ClientList> {
     getData();
   }
 
+  // getData() async {
+  //   final connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi) {
+  //     setState(() {
+  //       result = true;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       result = false;
+  //     });
+  //   }
+
+  //   mainClients = await HttpService.mainClients(
+  //       widget.token, searchController.text, fDate, tDate, page, pageSize);
+  //   if (mainClients != null) {
+  //     items.addAll(mainClients!.data);
+  //     page++;
+  //     setState(() {});
+  //   }
+  // }
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -72,6 +95,18 @@ class _ClientListState extends State<ClientList> {
     if (mainClients != null) {
       items.addAll(mainClients!.data);
       page++;
+      if (_shouldRestoreScroll && items.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_lastScrollIndex < items.length) {
+            itemScrollController.scrollTo(
+              index: _lastScrollIndex,
+              duration: const Duration(milliseconds: 300),
+            );
+          }
+          _shouldRestoreScroll = false;
+        });
+      }
+
       setState(() {});
     }
   }
@@ -132,11 +167,12 @@ class _ClientListState extends State<ClientList> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => AddClients(widget.token)),
+                                builder: (context) => AddClients(widget.token, createOrder: true)),
                           ).then((_) {
                             items.clear();
                             page = 1;
                             add = 1;
+                            _shouldRestoreScroll = false;
                             getData();
                           });
                         },
@@ -307,6 +343,7 @@ class _ClientListState extends State<ClientList> {
                                   items.clear();
                                   page = 1;
                                   add = 1;
+                                  _shouldRestoreScroll = false;
                                   setState(() {
                                     getData();
                                   });
@@ -346,7 +383,9 @@ class _ClientListState extends State<ClientList> {
                                         (items.length + 15 == page * pageSize
                                             ? 1
                                             : 0),
-                                    initialScrollIndex: 0,
+                                    initialScrollIndex: _shouldRestoreScroll
+                                        ? _lastScrollIndex
+                                        : 0,
                                     itemBuilder: (context, index) {
                                       if (index == items.length) {
                                         return buildLoaderListItem();
@@ -355,20 +394,42 @@ class _ClientListState extends State<ClientList> {
                                           padding:
                                               const EdgeInsets.only(bottom: 10),
                                           child: InkWell(
+                                            // onTap: () {
+                                            //   Navigator.push(
+                                            //     context,
+                                            //     MaterialPageRoute(
+                                            //         builder: (context) =>
+                                            //             ClientDetails(
+                                            //                 widget.token,
+                                            //                 items[index]
+                                            //                     .id
+                                            //                     .toString())),
+                                            //   ).then((_) {
+                                            //     items.clear();
+                                            //     page = 1;
+                                            //     add = 1;
+                                            //     getData();
+                                            //   });
+                                            // },
                                             onTap: () {
+                                              _lastScrollIndex = index;
+                                              _shouldRestoreScroll = true;
+
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ClientDetails(
-                                                            widget.token,
-                                                            items[index]
-                                                                .id
-                                                                .toString())),
+                                                  builder: (context) =>
+                                                      ClientDetails(
+                                                          widget.token,
+                                                          items[index]
+                                                              .id
+                                                              .toString()),
+                                                ),
                                               ).then((_) {
                                                 items.clear();
                                                 page = 1;
                                                 add = 1;
+                                                _shouldRestoreScroll = false;
                                                 getData();
                                               });
                                             },
@@ -700,11 +761,14 @@ class _ClientListState extends State<ClientList> {
                                                                               .token,
                                                                           items[index]
                                                                               .id
-                                                                              .toString(),"")),
+                                                                              .toString(),
+                                                                          "")),
                                                                 ).then((_) {
                                                                   items.clear();
                                                                   page = 1;
                                                                   add = 1;
+                                                                  _shouldRestoreScroll =
+                                                                      false;
                                                                   getData();
                                                                 });
                                                               },
@@ -748,6 +812,8 @@ class _ClientListState extends State<ClientList> {
                                                                   items.clear();
                                                                   page = 1;
                                                                   add = 1;
+                                                                  _shouldRestoreScroll =
+                                                                      false;
                                                                   getData();
                                                                 });
                                                               },
@@ -859,6 +925,8 @@ class _ClientListState extends State<ClientList> {
                                                                   items.clear();
                                                                   page = 1;
                                                                   add = 1;
+                                                                  _shouldRestoreScroll =
+                                                                      false;
                                                                   getData();
                                                                 });
                                                               },

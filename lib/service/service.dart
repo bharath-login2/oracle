@@ -48,6 +48,7 @@ import 'package:login2/models/lead_management/callDataModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
@@ -1478,14 +1479,35 @@ class HttpService {
     }
   }
 
-  static Future postUserData(body) async {
+  // static Future postUserData(body) async {
+  //   try {
+  //     var result = await _dio.post("${await Config.getUrl()}add_staff",
+  //         data: jsonEncode(body));
+  //     AddUserModel model = AddUserModel.fromJson(result.data);
+  //     return model;
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  // }
+  static Future<AddUserModel> postUserData(FormData formData) async {
     try {
-      var result = await _dio.post("${await Config.getUrl()}add_staff",
-          data: jsonEncode(body));
+      var result = await _dio.post(
+        "${await Config.getUrl()}add_staff",
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
       AddUserModel model = AddUserModel.fromJson(result.data);
       return model;
     } catch (e) {
       log("error: $e");
+
+      return AddUserModel(
+        status: false,
+        message: 'Failed to add user: $e',
+      );
     }
   }
 
@@ -2548,15 +2570,46 @@ class HttpService {
     }
   }
 
+  // static Future invoiceList(
+  //   String token,
+  //   String fromDate,
+  //   String toDate,
+  //   String clientId,
+  //   String collectedByStaffIds,
+  //   String createdByStaffIds,
+  //   String staff,
+  //   String statusName,
+  //   String type,
+  // ) async {
+  //   var formData = FormData.fromMap({
+  //     'token': token,
+  //     'from_date': fromDate,
+  //     'to_date': toDate,
+  //     'client_id': clientId,
+  //     'collected_by': collectedByStaffIds,
+  //     'created_by': createdByStaffIds,
+  //     'staff_id': staff,
+  //     'status_name': statusName,
+  //     'invoice_type': type
+  //   });
+  //   try {
+  //     var result = await _dio.post("${await Config.getUrl()}getInvoiceLists",
+  //         data: formData);
+  //     InvoiceListModel model = InvoiceListModel.fromJson(result.data);
+  //     return model;
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  // }
   static Future invoiceList(
     String token,
     String fromDate,
     String toDate,
     String clientId,
-    String collectedBy,
-    String createdBy,
-    String staff,
-      String statusName,
+    String collectedByStaffIds,
+    String createdByStaffIds,
+    String staffId,
+    String statusName,
     String type,
   ) async {
     var formData = FormData.fromMap({
@@ -2564,12 +2617,20 @@ class HttpService {
       'from_date': fromDate,
       'to_date': toDate,
       'client_id': clientId,
-      'collected_by': collectedBy,
-      'created_by': createdBy,
-      'staff_id': staff,
-       'status_name': statusName,
+      'collected_by': collectedByStaffIds,
+     // 'created_by_staff_ids': createdByStaffIds,
+      'created_by': staffId,
+      'status_name': statusName,
       'invoice_type': type
     });
+    print('Sending to API:');
+    print('client_id: $clientId');
+    print('collected_by_staff_ids: $collectedByStaffIds');
+    print('created_by_staff_ids: $createdByStaffIds');
+    print('staff_id: $staffId');
+    print('status_name: $statusName');
+    print('invoice_type: $type');
+
     try {
       var result = await _dio.post("${await Config.getUrl()}getInvoiceLists",
           data: formData);
@@ -2589,6 +2650,7 @@ class HttpService {
     String createdBy,
     String staff,
     String type,
+    String statusFilter,
   ) async {
     var formData = FormData.fromMap({
       'token': token,
@@ -2598,7 +2660,8 @@ class HttpService {
       'collected_by': collectedBy,
       'created_by': createdBy,
       'staff_id': staff,
-      'invoice_type': type
+      'invoice_type': type,
+      'status': statusFilter
     });
     try {
       var result = await _dio
@@ -7959,6 +8022,88 @@ class HttpService {
     } catch (e) {
       log("Exception @receptListAccounts: $e");
       return null;
+    }
+  }
+
+  static Future<DocumentListModel?> getDocumentType() async {
+    try {
+      final token = await Common.getSharedPref('token');
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getDocumentTypes",
+        data: FormData.fromMap({'token': token}),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data['status'] == true) {
+          return DocumentListModel.fromJson(data);
+        } else {
+          print("⚠️ Server returned false status: ${data['message']}");
+          return null;
+        }
+      } else {
+        print("❌ HTTP Error: ${response.statusCode}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception while fetching document types: $e");
+      print(stackTrace);
+      return null;
+    }
+  }
+
+  static Future<bool> approveProforma(String id) async {
+    var token = await Common.getSharedPref('token');
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}approve_proforma",
+        data: FormData.fromMap({
+          'token': token,
+          'id': id,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        print("✅ Proforma approved successfully: ${response.data}");
+        return true;
+      } else {
+        print("❌ Approve proforma failed: ${response.data}");
+        return false;
+      }
+    } catch (e) {
+      print("🔥 Exception while approving proforma: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> rejectProforma(String id) async {
+    final token = await Common.getSharedPref('token');
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}reject_proforma",
+        data: FormData.fromMap({
+          'token': token,
+          'id': id,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Reject proforma response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print("🔥 Exception while rejecting proforma: $e");
+      return false;
     }
   }
 }

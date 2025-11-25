@@ -131,7 +131,7 @@ class _DashboardState extends State<Dashboard> {
   String startOrStop = "";
   String loggedinOnce = "";
   Offset _floatingButtonPosition = Offset.zero;
-    TextEditingController search = TextEditingController();
+  TextEditingController search = TextEditingController();
   List<Customer> customers = [];
   List<Customer> filteredCustomers = [];
   String customerName = "Choose Customer";
@@ -396,6 +396,52 @@ class _DashboardState extends State<Dashboard> {
 
     getData(widget.token, fromdate, todate);
     _loadWorkStatus();
+    _checkDashboardPermission();
+  }
+
+  void _checkDashboardPermission() async {
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigateToDashboard();
+    });
+  }
+
+  void _navigateToDashboard() {
+    if (ProjectDashboardPermission == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ProjectDashboard()),
+      );
+    } else if (AccountsDashboardPermission == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => AccountsDashboard(token: widget.token!)),
+      );
+    } else if (MenuDashboard == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(widget.token)),
+      );
+    } else if (RenewalDashboardPermission == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => RenewalDashboard()),
+      );
+    } else if (NewleadDashboardPermission == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MinimalDashboard(widget.token)),
+      );
+    }
   }
 
   void _initializeFloatingButtonPosition() {
@@ -407,7 +453,7 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-   Future<Object?> addInvoiceDialog(BuildContext context) {
+  Future<Object?> addInvoiceDialog(BuildContext context) {
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
       barrierDismissible: true,
@@ -565,8 +611,8 @@ class _DashboardState extends State<Dashboard> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    AddInvoice(widget.token??'', customerId, "")),
+                                builder: (context) => AddInvoice(
+                                    widget.token ?? '', customerId, "")),
                           ).then((_) {
                             getData(widget.token, fromdate, todate);
                           });
@@ -603,7 +649,6 @@ class _DashboardState extends State<Dashboard> {
       },
     );
   }
-
 
   void _updateFloatingButtonPosition(Offset newPosition) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -873,7 +918,7 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-   getCustomerList() async {
+  getCustomerList() async {
     try {
       CustomerListModel? customerData =
           await HttpService.customerList(widget.token);
@@ -6924,7 +6969,7 @@ class _DashboardState extends State<Dashboard> {
                     //   ),
                     // ),
                     // updated button with small size code ends
-
+// needddddddddddddddddddddddddddddddddddssssssssssss     tooooooooooooooooo  unnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiiiidddddddddddddddddddddddddddddddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
                     Visibility(
                       visible: true,
                       child: Padding(

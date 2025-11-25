@@ -104,6 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
   int argCount = 0;
   bool _isValid = false;
   late final WebSocketChannel socket;
+  String? ProjectDashboardPermission;
 
   @override
   void initState() {
@@ -212,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     String phoneNumber = _cleanPhoneNumber(officialMessageModel!.phoneNumber);
     if (phoneNumber.startsWith('+91')) {
-      phoneNumber = phoneNumber.substring(3); 
+      phoneNumber = phoneNumber.substring(3);
     }
 
     String url = "https://wa.me/91$phoneNumber";

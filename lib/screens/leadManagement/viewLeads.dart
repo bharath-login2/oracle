@@ -31,42 +31,114 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+// Cache management class
+class LeadCacheManager {
+  static final Map<String, Map<int, List<Detail>>> _leadCache = {};
+  static final Map<String, int> _cacheTotalCounts = {};
+  static final Set<String> _currentSessionLoadedIds = HashSet<String>();
+
+  static void storePage(String cacheKey, int page, List<Detail> items) {
+    if (!_leadCache.containsKey(cacheKey)) {
+      _leadCache[cacheKey] = {};
+    }
+    _leadCache[cacheKey]![page] = List.from(items);
+    for (var item in items) {
+      _currentSessionLoadedIds.add(item.callMasterId);
+    }
+  }
+
+  static List<Detail>? getPage(String cacheKey, int page) {
+    return _leadCache[cacheKey]?[page];
+  }
+
+  static bool hasPage(String cacheKey, int page) {
+    return _leadCache.containsKey(cacheKey) &&
+        _leadCache[cacheKey]!.containsKey(page);
+  }
+
+  static void setTotalCount(String cacheKey, int totalCount) {
+    _cacheTotalCounts[cacheKey] = totalCount;
+  }
+
+  static int getTotalCount(String cacheKey) {
+    return _cacheTotalCounts[cacheKey] ?? 0;
+  }
+
+  static bool isIdLoadedInSession(String leadId) {
+    return _currentSessionLoadedIds.contains(leadId);
+  }
+
+  static void clearCacheForKey(String cacheKey) {
+    _leadCache.remove(cacheKey);
+    _cacheTotalCounts.remove(cacheKey);
+  }
+
+  static void removeLeadFromAllCaches(String leadId) {
+    for (final cacheEntry in _leadCache.entries) {
+      final cacheKey = cacheEntry.key;
+      final pageMap = cacheEntry.value;
+
+      for (final pageEntry in pageMap.entries) {
+        final pageNum = pageEntry.key;
+        final details = pageEntry.value;
+        final newDetails =
+            details.where((d) => d.callMasterId != leadId).toList();
+
+        if (newDetails.length != details.length) {
+          _leadCache[cacheKey]![pageNum] = newDetails;
+          if (_cacheTotalCounts.containsKey(cacheKey)) {
+            _cacheTotalCounts[cacheKey] = _cacheTotalCounts[cacheKey]! - 1;
+          }
+        }
+      }
+    }
+    _currentSessionLoadedIds.remove(leadId);
+  }
+
+  static void clearSession() {
+    _currentSessionLoadedIds.clear();
+  }
+
+  static void clearAllCache() {
+    _leadCache.clear();
+    _cacheTotalCounts.clear();
+    _currentSessionLoadedIds.clear();
+  }
+}
+
 // ignore: must_be_immutable
 class ViewLeads extends StatefulWidget {
-  String? token;
-  bool editLead;
-  bool deleteLead;
-  bool cloudCall;
-  String? fromDate;
-  String? toDate;
-  String? staffId;
-  String? status;
+  final String? token;
+  final bool editLead;
+  final bool deleteLead;
+  final bool cloudCall;
+  final String? fromDate;
+  final String? toDate;
+  final String? staffId;
+  final String? status;
+  final String? category;
+  final String? staff;
+  final String? categoryName;
+  final String? staffName;
+  final String? pageName;
+  final bool? isCalled;
+  final int? scrollToIndex;
+  final int? page;
+  final int? pageSize;
+  final String? leadType;
+  final String? callStatus;
+  final String? callResId;
+  final String? callResName;
+  final DateTime? preservedFromDate;
+  final DateTime? preservedToDate;
+  final String? preservedSortOrder;
+  final bool? preservedSortAscending;
+  final List<String>? preservedCategoryItems;
+  final List<String>? preservedPriorityItems;
+  final List<String>? preservedAssignedStaffItems;
+  final List<String>? preservedResponseItems;
+  final List<StateList>? stateDetails;
 
-  String? category;
-  String? staff;
-  String? categoryName;
-  String? staffName;
-  String? pageName;
-  bool? isCalled;
-  int? scrollToIndex;
-  int? page;
-  int? pageSize;
-  String? leadType;
-  String? callStatus;
-  String? callResId;
-  String? callResName;
-  DateTime? preservedFromDate;
-  DateTime? preservedToDate;
-  String? preservedSortOrder;
-  bool? preservedSortAscending;
-  List<String>? preservedCategoryItems;
-  List<String>? preservedPriorityItems;
-  List<String>? preservedAssignedStaffItems;
-  List<String>? preservedResponseItems;
-  List<StateList>? stateDetails;
-  final Set<String> _loadedLeadIds = HashSet<String>();
-  final Map<String, int> _leadIdToIndexMap = {};
-  bool _isCacheInitialized = false;
   ViewLeads(
     this.token,
     this.editLead,
@@ -98,10 +170,12 @@ class ViewLeads extends StatefulWidget {
     this.preservedPriorityItems,
     this.preservedAssignedStaffItems,
     this.preservedResponseItems,
+    this.stateDetails,
   });
 
   @override
   State<ViewLeads> createState() => _ViewLeadsState();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -126,13 +200,13 @@ class _ViewLeadsState extends State<ViewLeads>
   LeadMileStoneListModel? mileStone;
   ListFolderNameModel? listFolder;
   FileManagerPermissionModel? fileManagerPermission;
+  PostalCodeModel? postalCodeModel;
   bool? result = true;
   bool? result1 = true;
   DateTime? fromdate;
   DateTime? todate;
   String currentSortOrder = 'desc';
   bool sortAscending = false;
-  // var outputFormat = DateFormat('dd-MM-yyyy');
   var outputFormat = DateFormat('yyyy-MM-dd');
   dynamic status;
   dynamic staff;
@@ -150,7 +224,6 @@ class _ViewLeadsState extends State<ViewLeads>
   TextEditingController stateVal = TextEditingController();
   TextEditingController pinCode = TextEditingController();
   TextEditingController districtVal = TextEditingController();
-  PostalCodeModel? postalCodeModel;
   List<PostOffice> postOffices = [];
   List<DistrictList> districtList = [];
   PostOffice? selectedPostOffice;
@@ -188,9 +261,6 @@ class _ViewLeadsState extends State<ViewLeads>
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
-  static final Map<String, Map<int, List<Detail>>> _leadCache = {};
-  static final Map<String, int> _cacheTotalCounts = {};
-  String? _currentCacheKey;
   List<Detail> items = [];
   int page = 1;
   int pageSize = 10;
@@ -205,6 +275,8 @@ class _ViewLeadsState extends State<ViewLeads>
   List checkedPriorityItemsName = [];
   List checkedAssignedStaffItems = [];
   List checkedAssignedStaffItemsName = [];
+  List<String> checkedSubCategoryItems = [];
+  List<String> checkedSubCategoryItemsName = [];
   List<TransferStaff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
@@ -219,9 +291,12 @@ class _ViewLeadsState extends State<ViewLeads>
   String multiBranch = '';
   String transferPermission = '';
   String phoneCallLogPermission = '';
+
+  // Data management
   CommonResponse? loginOrNot;
   bool _isDataLoaded = false;
-  String? _lastApiCallHash;
+  String? _currentCacheKey;
+  final Map<String, List<dynamic>> _categorySubcategories = {};
 
   @override
   void initState() {
@@ -234,45 +309,36 @@ class _ViewLeadsState extends State<ViewLeads>
     });
   }
 
+  // @override
+  // void dispose() {
+  //   itemScrollController.dispose();
+  //   super.dispose();
+  // }
+
   void _restoreFromCache() {
     final cacheKey = _generateCacheKey();
-    if (_leadCache.containsKey(cacheKey) && items.isEmpty) {
-      final cachedPages = _leadCache[cacheKey]!;
+    if (LeadCacheManager.hasPage(cacheKey, 1) && items.isEmpty) {
       final allItems = <Detail>[];
-      final sortedKeys = cachedPages.keys.toList()..sort();
-      for (var pageNum in sortedKeys) {
-        allItems.addAll(cachedPages[pageNum]!);
+      int pageNum = 1;
+
+      while (LeadCacheManager.hasPage(cacheKey, pageNum)) {
+        final cachedItems = LeadCacheManager.getPage(cacheKey, pageNum) ?? [];
+        allItems.addAll(cachedItems);
+        pageNum++;
       }
 
       setState(() {
         items.addAll(allItems);
-        page = cachedPages.keys.length + 1;
+        page = pageNum;
       });
     }
   }
 
-  // void _initializeData() {
-  //   fromdate = widget.preservedFromDate ??
-  //       (widget.fromDate != null ? DateTime.parse(widget.fromDate!) : null);
-  //   todate = widget.preservedToDate ??
-  //       (widget.toDate != null ? DateTime.parse(widget.toDate!) : null);
-  //   currentSortOrder = widget.preservedSortOrder ?? 'desc';
-  //   sortAscending = widget.preservedSortAscending ?? false;
-  //   _initializeFilterItems();
-  //   if (widget.page != null) page = widget.page! - 1;
-  //   if (widget.pageSize != null) pageSize = widget.pageSize!;
-  //   status = widget.status == "0" ? null : widget.status;
-  //   staff = widget.staff;
-  //   _handlePageSpecificLogic();
-  //   if (!_isDataLoaded) {
-  //     getData(currentSortOrder, true, status);
-  //   }
-  // }
   void _initializeData() {
     fromdate = widget.preservedFromDate ??
         (widget.fromDate != null
             ? DateTime.parse(widget.fromDate!)
-            : DateTime.now());
+            : DateTime.now().subtract(const Duration(days: 30)));
     todate = widget.preservedToDate ??
         (widget.toDate != null
             ? DateTime.parse(widget.toDate!)
@@ -281,15 +347,26 @@ class _ViewLeadsState extends State<ViewLeads>
     currentSortOrder = widget.preservedSortOrder ?? 'desc';
     sortAscending = widget.preservedSortAscending ?? false;
     _initializeFilterItems();
-    if (widget.page != null) page = widget.page! - 1;
+
+    if (widget.page != null) page = widget.page!;
     if (widget.pageSize != null) pageSize = widget.pageSize!;
+
     status = widget.status == "0" ? null : widget.status;
     staff = widget.staff;
     _handlePageSpecificLogic();
+    _isDataLoaded = false;
+    final currentCacheKey = _generateCacheKey();
+    LeadCacheManager.clearCacheForKey(currentCacheKey);
 
-    if (!_isDataLoaded) {
-      getData(currentSortOrder, true, status);
-    }
+    getData(currentSortOrder, true, status);
+  }
+
+  void _showFollowupSuccessMessage() {
+    Common.toastMessaage("Followup initiated", Colors.green);
+  }
+
+  void _showCallInitiatedMessage() {
+    Common.toastMessaage("Call initiated", Colors.green);
   }
 
   void _initializeFilterItems() {
@@ -334,8 +411,12 @@ class _ViewLeadsState extends State<ViewLeads>
     }
   }
 
-  String _generateApiCallHash() {
-    return '$fromdate$todate$status${checkedCategoryItems.join()}${checkedResponseItems.join()}${checkedAssignedStaffItems.join()}${checkedPriorityItems.join()}$currentSortOrder$page$pageSize$branch$StateId$DistrictId';
+  String _generateCacheKey() {
+    return '${fromdate?.toIso8601String()}_${todate?.toIso8601String()}_$status'
+        '_${checkedCategoryItems.join()}_${checkedSubCategoryItems.join()}'
+        '_${checkedResponseItems.join()}_${checkedAssignedStaffItems.join()}'
+        '_${checkedPriorityItems.join()}_$currentSortOrder'
+        '_${branch ?? ""}_${StateId ?? ""}_${DistrictId ?? ""}_${widget.pageName}';
   }
 
   Future<void> loadStates() async {
@@ -348,34 +429,28 @@ class _ViewLeadsState extends State<ViewLeads>
     }
   }
 
-  // void initListner() {
-  //   itemPositionsListener.itemPositions.addListener(() {
-  //     if (itemPositionsListener.itemPositions.value.last.index ==
-  //         items.length - 1) {
-  //       if (items.length < (viewLeads?.data.totalLeads ?? 0)) {
-  //         getData(currentSortOrder, false, status);
-  //       }
-  //     }
-  //   });
-  // }
-
   void initListner() {
     itemPositionsListener.itemPositions.addListener(() {
       final positions = itemPositionsListener.itemPositions.value;
-      if (positions.isEmpty) return;
+      if (positions.isEmpty || isLoading) return;
+
       final lastIndex = positions.last.index;
-      if (lastIndex >= items.length - 3 && !isLoading) {
+      if (lastIndex >= items.length - 3) {
         final cacheKey = _generateCacheKey();
-        final totalLeads =
-            _cacheTotalCounts[cacheKey] ?? viewLeads?.data.totalLeads ?? 0;
+        final totalLeads = LeadCacheManager.getTotalCount(cacheKey);
+
         if (items.length < totalLeads) {
           final nextPage = (items.length ~/ pageSize) + 1;
-          if (_leadCache.containsKey(cacheKey) &&
-              _leadCache[cacheKey]!.containsKey(nextPage)) {
-            final cachedItems = _leadCache[cacheKey]![nextPage]!;
-            setState(() {
-              items.addAll(cachedItems);
-            });
+          if (LeadCacheManager.hasPage(cacheKey, nextPage)) {
+            final cachedItems =
+                LeadCacheManager.getPage(cacheKey, nextPage) ?? [];
+            final uniqueItems = _getUniqueItems(cachedItems, items);
+
+            if (uniqueItems.isNotEmpty) {
+              setState(() {
+                items.addAll(uniqueItems);
+              });
+            }
           } else {
             getData(currentSortOrder, false, status);
           }
@@ -384,10 +459,190 @@ class _ViewLeadsState extends State<ViewLeads>
     });
   }
 
-  String _generateCacheKey() {
-    return '$fromdate$todate$status${checkedCategoryItems.join()}'
-        '${checkedResponseItems.join()}${checkedAssignedStaffItems.join()}'
-        '${checkedPriorityItems.join()}$currentSortOrder$branch$StateId$DistrictId';
+  List<Detail> _getUniqueItems(
+      List<Detail> newItems, List<Detail> existingItems) {
+    final existingIds = existingItems.map((item) => item.callMasterId).toSet();
+    return newItems
+        .where((newItem) => !existingIds.contains(newItem.callMasterId))
+        .toList();
+  }
+
+  Future<void> getData(String sort, bool isFirst, dynamic status1) async {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final currentCacheKey = _generateCacheKey();
+    _currentCacheKey = currentCacheKey;
+    final currentPage = page;
+
+    // Clear items if cache key changed
+    if (isFirst && _currentCacheKey != currentCacheKey) {
+      items.clear();
+      page = 1;
+    }
+
+    // Check cache first
+    if (LeadCacheManager.hasPage(currentCacheKey, currentPage)) {
+      final cachedItems =
+          LeadCacheManager.getPage(currentCacheKey, currentPage) ?? [];
+      final itemsToAdd =
+          isFirst ? cachedItems : _getUniqueItems(cachedItems, items);
+
+      setState(() {
+        if (isFirst) {
+          items = List.from(itemsToAdd);
+        } else {
+          items.addAll(itemsToAdd);
+        }
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult != ConnectivityResult.mobile &&
+          connectivityResult != ConnectivityResult.wifi) {
+        setState(() {
+          result = false;
+          isLoading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        result = true;
+      });
+
+      // Load user preferences
+      await _loadUserPreferences();
+
+      ViewLeadsModel? apiResponse;
+      if (statusWise == 'yes') {
+        apiResponse = await HttpService.viewLeadsSts(
+            widget.token,
+            fromdate,
+            todate,
+            type,
+            statusCatId,
+            statusWiseId,
+            sort,
+            currentPage,
+            pageSize,
+            isFirst,
+            branch);
+      } else {
+        Map<String, dynamic> body =
+            _buildRequestBody(status1, sort, currentPage, isFirst);
+        log("API Request Body: $body");
+        apiResponse = await HttpService.viewLeads(body);
+      }
+
+      if (apiResponse != null) {
+        await _processApiResponse(
+            apiResponse, currentCacheKey, currentPage, isFirst);
+      }
+    } catch (e) {
+      log("Error loading data: $e");
+      setState(() {
+        isLoading = false;
+        timeOut = true;
+        _isDataLoaded = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserPreferences() async {
+    statusWise = await Common.getSharedPref("statusWise");
+    roleId = await Common.getSharedPref("roleId");
+    multiBranch = await Common.getSharedPref("multiBranch");
+    transferPermission = await Common.getSharedPref("transferLeads");
+    userId = await Common.getSharedPref("userId");
+    name = await Common.getSharedPref("name");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+
+    if (statusWise == 'yes') {
+      statusWiseId = await Common.getSharedPref("statusWisId");
+      statusCatId = await Common.getSharedPref("statusCatId");
+      type = await Common.getSharedPref("type");
+    }
+
+    if (commonDetails == null) {
+      commonDetails = await HttpService.addLeadCommonData(widget.token);
+      if (commonDetails != null) {
+        filteredStaff.addAll(commonDetails!.data.transferStaffs);
+      }
+    }
+
+    if (configure == null) {
+      configure = await HttpService.configure(widget.token);
+    }
+  }
+
+  Map<String, dynamic> _buildRequestBody(
+      dynamic status1, String sort, int currentPage, bool isFirst) {
+    Map<String, dynamic> body = {
+      "token": widget.token,
+      "callResultId": status1 ?? "",
+      "leadCategoryId": checkedCategoryItems,
+      "leadSubcategoryId": checkedSubCategoryItems,
+      "callResponseId": checkedResponseItems,
+      "staffId": (checkedAssignedStaffItems.isNotEmpty)
+          ? checkedAssignedStaffItems
+          : widget.staffId,
+      "isCalled": isCalled,
+      "priority": checkedPriorityItems,
+      "sort": sort,
+      "page": currentPage,
+      "pageSize": pageSize,
+      "isFirst": isFirst,
+      "leadType": widget.leadType ?? "",
+      "state": StateId ?? "",
+      "district": DistrictId ?? "",
+      "branchId": branch ?? ""
+    };
+
+    bool shouldSendDates = isFilterApplied ||
+        widget.leadType == "-1" ||
+        (status1 != null && status1 == "4");
+    body["filterStatus"] = shouldSendDates ? 1 : 0;
+    body["fromDate"] = shouldSendDates && fromdate != null
+        ? outputFormat.format(fromdate!)
+        : "";
+    body["toDate"] =
+        shouldSendDates && todate != null ? outputFormat.format(todate!) : "";
+
+    return body;
+  }
+
+  Future<void> _processApiResponse(ViewLeadsModel apiResponse, String cacheKey,
+      int currentPage, bool isFirst) async {
+    final newItems = apiResponse.data.details;
+
+    // Store in cache
+    LeadCacheManager.storePage(cacheKey, currentPage, newItems);
+    LeadCacheManager.setTotalCount(cacheKey, apiResponse.data.totalLeads);
+
+    // Process items for display
+    final itemsToAdd = isFirst ? newItems : _getUniqueItems(newItems, items);
+
+    setState(() {
+      if (isFirst) {
+        items.clear();
+        items.addAll(itemsToAdd);
+      } else {
+        items.addAll(itemsToAdd);
+      }
+      page = currentPage + 1;
+      viewLeads = apiResponse;
+      isLoading = false;
+      _isDataLoaded = true;
+      isInitialLoad = false;
+    });
   }
 
   Future<StateList?> selectStateDialog(BuildContext context) async {
@@ -498,404 +753,34 @@ class _ViewLeadsState extends State<ViewLeads>
     }
   }
 
-
-  Future<void> getData(String sort, bool isFirst, dynamic status1) async {
-    if (isLoading) return;
-    setState(() {
-      _isLoading = true;
-    });
-    String currentCacheKey = _generateCacheKey();
-    _currentCacheKey = currentCacheKey;
-    final currentPage = page;
-    if (_leadCache.containsKey(currentCacheKey) &&
-        _leadCache[currentCacheKey]!.containsKey(currentPage)) {
-      final cachedPageItems = _leadCache[currentCacheKey]![currentPage]!;
-
-      setState(() {
-        if (isFirst) {
-          items = List.from(cachedPageItems);
-        } else {
-          items.addAll(cachedPageItems);
-        }
-        //isLoading = false;
-      });
-      // return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
-      } else {
-        setState(() {
-          result = false;
-          isLoading = false;
-        });
-        return;
-      }
-
-      statusWise = await Common.getSharedPref("statusWise");
-      roleId = await Common.getSharedPref("roleId");
-      multiBranch = await Common.getSharedPref("multiBranch");
-      transferPermission = await Common.getSharedPref("transferLeads");
-      userId = await Common.getSharedPref("userId");
-      name = await Common.getSharedPref("name");
-      if (statusWise == 'yes') {
-        statusWiseId = await Common.getSharedPref("statusWisId");
-        statusCatId = await Common.getSharedPref("statusCatId");
-        type = await Common.getSharedPref("type");
-        viewLeads = await HttpService.viewLeadsSts(
-            widget.token,
-            fromdate,
-            todate,
-            type,
-            statusCatId,
-            statusWiseId,
-            sort,
-            currentPage,
-            pageSize,
-            isFirst,
-            branch);
-      } else {
-        Map<String, dynamic> body = {
-          "token": widget.token,
-          "callResultId": status1 ?? "",
-          "leadCategoryId": checkedCategoryItems,
-          "leadSubcategoryId": checkedSubCategoryItems,
-          "callResponseId": checkedResponseItems,
-          //  "staffId": checkedAssignedStaffItems !=""? checkedAssignedStaffItems:widget.staffId,
-          "staffId": (checkedAssignedStaffItems != null &&
-                  checkedAssignedStaffItems.isNotEmpty)
-              ? checkedAssignedStaffItems
-              : widget.staffId,
-          "isCalled": isCalled,
-          "priority": checkedPriorityItems,
-          "sort": sort,
-          "page": currentPage,
-          "pageSize": pageSize,
-          "isFirst": isFirst,
-          "leadType": widget.leadType ?? "",
-          "state": StateId ?? "",
-          "district": DistrictId ?? "",
-          "branchId": branch ?? ""
-        };
-        bool shouldSendDates = isFilterApplied ||
-            widget.leadType == "-1" ||
-            (status1 != null && status1 == "4");
-        body["filterStatus"] = shouldSendDates ? 1 : 0;
-        body["fromDate"] = shouldSendDates && fromdate != null
-            ? outputFormat.format(fromdate!)
-            : "";
-        body["toDate"] = shouldSendDates && todate != null
-            ? outputFormat.format(todate!)
-            : "";
-        log(body.toString());
-        viewLeads = await HttpService.viewLeads(body);
-      }
-
-      if (commonDetails == null) {
-        commonDetails = await HttpService.addLeadCommonData(widget.token);
-        if (commonDetails != null) {
-          filteredStaff.addAll(commonDetails!.data.transferStaffs);
-        }
-      }
-
-      if (configure == null) {
-        configure = await HttpService.configure(widget.token);
-      }
-
-      if (viewLeads != null) {
-        final newItems = viewLeads!.data.details;
-        if (!_leadCache.containsKey(currentCacheKey)) {
-          _leadCache[currentCacheKey] = {};
-          _cacheTotalCounts[currentCacheKey] = viewLeads!.data.totalLeads;
-        }
-        _leadCache[currentCacheKey]![currentPage] = List.from(newItems);
-
-        setState(() {
-          if (isFirst) {
-            items.clear();
-            items.addAll(newItems);
-          } else {
-            items.addAll(newItems);
-          }
-          page = currentPage + 1;
-          isLoading = false;
-          _isDataLoaded = true;
-          isInitialLoad = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        timeOut = true;
-        _isDataLoaded = false;
-      });
-      log("error: $e");
-    }
-
-    phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission");
-  }
-
   @override
   bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return RefreshIndicator(
-      // onRefresh: () async {
-      //   setState(() {
-      //     _isDataLoaded = false;
-      //     _lastApiCallHash = null;
-      //   });
-      //   items.clear();
-      //   page = 1;
-      //   await getData(currentSortOrder, true, status);
-      // },
       onRefresh: () async {
+        final currentCacheKey = _generateCacheKey();
+        LeadCacheManager.clearCacheForKey(currentCacheKey);
+        LeadCacheManager.clearSession();
+
         setState(() {
           _isDataLoaded = false;
+          items.clear();
+          page = 1;
         });
-        final cacheKey = _generateCacheKey();
-        if (_leadCache.containsKey(cacheKey)) {
-          _leadCache.remove(cacheKey);
-        }
-        final currentItems = List<Detail>.from(items);
-        page = 1;
 
-        try {
-          await getData(currentSortOrder, true, status);
-        } catch (e) {
-          setState(() {
-            items = currentItems;
-          });
-          rethrow;
-        }
+        await getData(currentSortOrder, true, status);
       },
       child: result == true && timeOut == false
           ? Scaffold(
               backgroundColor: Colors.grey.shade200,
-              appBar: PreferredSize(
-                preferredSize:
-                    Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-                child: Container(
-                  padding:
-                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                height: 25,
-                                width: 25,
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white),
-                                    shape: BoxShape.circle),
-                                child: const Icon(
-                                  Icons.arrow_back_ios_outlined,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 25),
-                            searchField == true
-                                ? TextFormField(
-                                    onChanged: (value) {},
-                                    decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Search',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(Icons.person,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle: TextStyle(color: Colors.grey),
-                                    ),
-                                  )
-                                : Text(
-                                    widget.pageName.toString(),
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 18),
-                                  ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            if (!searchField)
-                              InkWell(
-                                onTap: _toggleSortOrder,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 6),
-                                  margin: const EdgeInsets.only(right: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                        color: Colors.white.withOpacity(0.3)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        sortAscending ? 'Oldest' : 'Newest',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        sortAscending
-                                            ? Icons.arrow_upward
-                                            : Icons.arrow_downward,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (selectedIUsers.isNotEmpty)
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 13,
-                                    backgroundColor: Colors.white,
-                                    child: Text(
-                                      selectedIUsers.length.toString(),
-                                      style: const TextStyle(
-                                          color: Colors.blue, fontSize: 17),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  InkWell(
-                                      onTap: () {
-                                        if (transferPermission == "true") {
-                                          transferLeads(context);
-                                        } else {
-                                          _dialogue(
-                                              context, "transfer permission");
-                                        }
-                                      },
-                                      child: const Icon(
-                                        Icons.compare_arrows_rounded,
-                                        color: Colors.white,
-                                      )),
-                                  const SizedBox(width: 15),
-                                  InkWell(
-                                      onTap: () {
-                                        if (widget.deleteLead == true) {
-                                          _showDeleteConfirmationDialog();
-                                        } else {
-                                          Common.toastMessaage(
-                                              "You don't have permission to delete",
-                                              Colors.red);
-                                        }
-                                      },
-                                      child: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      )),
-                                ],
-                              )
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              appBar: _buildAppBar(),
               body: viewLeads != null && configure != null
                   ? Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 15, right: 10, top: 15),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                children: [
-                                  // if (fromdate != null && todate != null)
-                                  // Row(
-                                  //   children: [
-                                  //     const Text('Date from ',
-                                  //         style: TextStyle(fontSize: 16)),
-                                  //     const SizedBox(width: 5),
-                                  //     Text(outputFormat.format(fromdate!),
-                                  //         style: const TextStyle(
-                                  //             fontSize: 16,
-                                  //             fontWeight: FontWeight.bold)),
-                                  //     const SizedBox(width: 5),
-                                  //     const Text(' to ',
-                                  //         style: TextStyle(fontSize: 16)),
-                                  //     const SizedBox(width: 5),
-                                  //     Text(outputFormat.format(todate!),
-                                  //         style: const TextStyle(
-                                  //             fontSize: 16,
-                                  //             fontWeight: FontWeight.bold)),
-                                  //     const SizedBox(width: 5),
-                                  //   ],
-                                  // ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                      'Total Leads : ${viewLeads!.data.totalLeads}',
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 10),
-                                ],
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  filtrationSheet(context);
-                                },
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      color: const Color(0xFFd5f5f4),
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: Center(
-                                      child: Image.asset(
-                                          "assets/icons/filter.png",
-                                          width: 20)),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
+                        _buildHeader(),
                         viewLeads!.data.details.isNotEmpty
                             ? Expanded(
                                 child: ScrollablePositionedList.builder(
@@ -946,68 +831,35 @@ class _ViewLeadsState extends State<ViewLeads>
 
   Widget _buildLeadListItem(BuildContext context, int index) {
     if (index == items.length) {
-      final cacheKey = _generateCacheKey();
-      final totalLeads =
-          _cacheTotalCounts[cacheKey] ?? viewLeads?.data.totalLeads ?? 0;
-
-      if (items.length < totalLeads && isLoading) {
-        return _buildLoaderListItem();
-      } else if (items.length < totalLeads) {
-        return Container(
-          height: 60,
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      } else {
-        return Container();
-      }
+      return _buildLoaderListItem();
     }
+
+    if (index < 0 || index >= items.length) {
+      return Container();
+    }
+
     return Dismissible(
-      key: Key(items[index].callMasterId.toString()),
-      background: Container(
-        color: Colors.green,
-        child: const Align(
-          alignment: Alignment.centerLeft,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(width: 20),
-              Icon(Icons.call, color: Colors.white),
-              Text(" Call",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-            ],
-          ),
-        ),
-      ),
-      secondaryBackground: Container(
-        color: Colors.blue,
-        child: const Align(
-          alignment: Alignment.centerRight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              Icon(Icons.add, color: Colors.white),
-              Text("Add Followup",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-              SizedBox(width: 20),
-            ],
-          ),
-        ),
-      ),
+      key:
+          Key('${items[index].callMasterId}_${index}_${items[index].hashCode}'),
+      background: _buildDismissibleBackground(true),
+      secondaryBackground: _buildDismissibleBackground(false),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
-          return _handleFollowupAction(index);
-        } else {
-          return _handleCallAction(index);
+          return await _handleFollowupAction(index);
+        } else if (direction == DismissDirection.startToEnd) {
+          return await _handleCallAction(index);
+        }
+        return false;
+      },
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          _showFollowupSuccessMessage();
+        } else if (direction == DismissDirection.startToEnd) {
+          _showCallInitiatedMessage();
         }
       },
       child: InkWell(
-        onLongPress: () {
-          _handleLongPress(index);
-        },
+        onLongPress: () => _handleLongPress(index),
         onTap: () {
           if (selectedIUsers.isNotEmpty) {
             _handleLongPress(index);
@@ -1015,9 +867,28 @@ class _ViewLeadsState extends State<ViewLeads>
             _navigateToLeadDetails(index);
           }
         },
-        child: index < items.length
-            ? leadListWidget(context, index)
-            : const SizedBox(),
+        child: leadListWidget(context, index),
+      ),
+    );
+  }
+
+  Widget _buildDismissibleBackground(bool isCall) {
+    return Container(
+      color: isCall ? Colors.green : Colors.blue,
+      child: Align(
+        alignment: isCall ? Alignment.centerLeft : Alignment.centerRight,
+        child: Row(
+          mainAxisAlignment:
+              isCall ? MainAxisAlignment.start : MainAxisAlignment.end,
+          children: <Widget>[
+            SizedBox(width: isCall ? 20 : 0),
+            Icon(isCall ? Icons.call : Icons.add, color: Colors.white),
+            Text(isCall ? " Call" : "Add Followup",
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w700)),
+            SizedBox(width: isCall ? 0 : 20),
+          ],
+        ),
       ),
     );
   }
@@ -1072,25 +943,39 @@ class _ViewLeadsState extends State<ViewLeads>
     return Future.value(false);
   }
 
-  Future<bool?> _handleCallAction(int index) {
-    if (viewLeads!.data.callPermission == false) {
-      _showCallPermissionDialog(index);
-    } else {
-      if (widget.cloudCall == true) {
-        chooseCallDialog(context, index);
+  Future<bool?> _handleCallAction(int index) async {
+    if (index >= items.length) return false;
+
+    try {
+      if (viewLeads!.data.callPermission == false) {
+        _showCallPermissionDialog(index);
+        return false;
       } else {
-        Common.dialPad(items[index].contactNumber1);
+        if (widget.cloudCall == true) {
+          await chooseCallDialog(context, index);
+          return true;
+        } else {
+          Common.dialPad(items[index].contactNumber1);
+          return true;
+        }
       }
+    } catch (e) {
+      log("Error in call action: $e");
+      Common.toastMessaage("Failed to initiate call", Colors.red);
+      return false;
     }
-    return Future.value(false);
   }
 
   void _handleLongPress(int index) {
+    if (index >= items.length) return;
+
     setState(() {
       items[index].isSelected = !items[index].isSelected;
-      if (items[index].isSelected == true) {
-        selectedIUsers.add(items[index].callMasterId);
-        selectedUserNumbers.add(items[index].contactNumber1);
+      if (items[index].isSelected) {
+        if (!selectedIUsers.contains(items[index].callMasterId)) {
+          selectedIUsers.add(items[index].callMasterId);
+          selectedUserNumbers.add(items[index].contactNumber1);
+        }
       } else {
         selectedIUsers.remove(items[index].callMasterId);
         selectedUserNumbers.remove(items[index].contactNumber1);
@@ -1099,71 +984,44 @@ class _ViewLeadsState extends State<ViewLeads>
   }
 
   void _navigateToLeadDetails(int index) {
+    if (index >= items.length) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => MinimalLeadDetails(
-                widget.token!,
-                widget.editLead,
-                widget.deleteLead,
-                widget.cloudCall,
-                items[index].callMasterId.toString(),
-                pageName: widget.pageName.toString(),
-                status: widget.status,
-                staff: widget.staff,
-                isCalled: widget.isCalled,
-                fromDate: widget.fromDate,
-                toDate: widget.toDate,
-                category: widget.category,
-                scrollToIndex: index,
-                page: page,
-                pageSize: page * pageSize,
-                leadType: widget.leadType,
-                preservedFromDate: fromdate,
-                preservedToDate: todate,
-                preservedSortOrder: currentSortOrder,
-                preservedSortAscending: sortAscending,
-                preservedCategoryItems: List<String>.from(checkedCategoryItems),
-                preservedPriorityItems: List<String>.from(checkedPriorityItems),
-                preservedAssignedStaffItems:
-                    List<String>.from(checkedAssignedStaffItems),
-                preservedResponseItems: List<String>.from(checkedResponseItems),
-              )),
+        builder: (context) => MinimalLeadDetails(
+          widget.token!,
+          widget.editLead,
+          widget.deleteLead,
+          widget.cloudCall,
+          items[index].callMasterId.toString(),
+          pageName: widget.pageName.toString(),
+          status: widget.status,
+          staff: widget.staff,
+          isCalled: widget.isCalled,
+          fromDate: widget.fromDate,
+          toDate: widget.toDate,
+          category: widget.category,
+          scrollToIndex: index,
+          page: page,
+          pageSize: page * pageSize,
+          leadType: widget.leadType,
+          preservedFromDate: fromdate,
+          preservedToDate: todate,
+          preservedSortOrder: currentSortOrder,
+          preservedSortAscending: sortAscending,
+          preservedCategoryItems: List<String>.from(checkedCategoryItems),
+          preservedPriorityItems: List<String>.from(checkedPriorityItems),
+          preservedAssignedStaffItems:
+              List<String>.from(checkedAssignedStaffItems),
+          preservedResponseItems: List<String>.from(checkedResponseItems),
+        ),
+      ),
     ).then((returnedData) {
       _handleReturnedData(returnedData);
     });
   }
 
-  // void _handleReturnedData(dynamic returnedData) {
-  //   if (returnedData != null && returnedData is Map) {
-  //     setState(() {
-  //       fromdate = returnedData['preservedFromDate'];
-  //       todate = returnedData['preservedToDate'];
-  //       currentSortOrder =
-  //           returnedData['preservedSortOrder'] ?? currentSortOrder;
-  //       sortAscending = returnedData['preservedSortAscending'] ?? sortAscending;
-  //       checkedCategoryItems = List<String>.from(
-  //           returnedData['preservedCategoryItems'] ?? checkedCategoryItems);
-  //       checkedPriorityItems = List<String>.from(
-  //           returnedData['preservedPriorityItems'] ?? checkedPriorityItems);
-  //       checkedAssignedStaffItems = List<String>.from(
-  //           returnedData['preservedAssignedStaffItems'] ??
-  //               checkedAssignedStaffItems);
-  //       checkedResponseItems = List<String>.from(
-  //           returnedData['preservedResponseItems'] ?? checkedResponseItems);
-  //     });
-  //   }
-
-  //   final newCacheKey = _generateCacheKey();
-  //   if (_currentCacheKey != newCacheKey) {
-  //     setState(() {
-  //       _isDataLoaded = false;
-  //     });
-  //     items.clear();
-  //     page = 1;
-  //     getData(currentSortOrder, true, status);
-  //   }
-  // }
   void _handleReturnedData(dynamic returnedData) {
     if (returnedData != null && returnedData is Map) {
       setState(() {
@@ -1186,15 +1044,11 @@ class _ViewLeadsState extends State<ViewLeads>
 
     final String? updatedLeadId = returnedData?['updatedLeadId'];
     if (updatedLeadId != null) {
-      _removeLeadFromAllCaches(updatedLeadId);
+      LeadCacheManager.removeLeadFromAllCaches(updatedLeadId);
       items.removeWhere((detail) => detail.callMasterId == updatedLeadId);
       if (widget.pageName == "Followup Leads") {
         setState(() {});
-      } else {
-        _refreshSingleLead(updatedLeadId);
       }
-    } else {
-      _smartCacheInvalidation();
     }
 
     final newCacheKey = _generateCacheKey();
@@ -1204,62 +1058,6 @@ class _ViewLeadsState extends State<ViewLeads>
       getData(currentSortOrder, true, status);
     } else {
       setState(() {});
-    }
-  }
-
-  void _removeLeadFromAllCaches(String leadId) {
-    for (final cacheEntry in _leadCache.entries) {
-      final cacheKey = cacheEntry.key;
-      final pageMap = cacheEntry.value;
-
-      for (final pageEntry in pageMap.entries) {
-        final pageNum = pageEntry.key;
-        final details = pageEntry.value;
-        final newDetails =
-            details.where((d) => d.callMasterId != leadId).toList();
-
-        if (newDetails.length != details.length) {
-          _leadCache[cacheKey]![pageNum] = newDetails;
-          if (_cacheTotalCounts.containsKey(cacheKey)) {
-            _cacheTotalCounts[cacheKey] = _cacheTotalCounts[cacheKey]! - 1;
-          }
-        }
-      }
-    }
-  }
-
-  void _refreshSingleLead(String leadId) {
-    final cacheKey = _generateCacheKey();
-    if (_leadCache.containsKey(cacheKey)) {}
-  }
-
-  void _smartCacheInvalidation() {
-    final cacheKey = _generateCacheKey();
-    if (_leadCache.containsKey(cacheKey)) {
-      final cachedPages = _leadCache[cacheKey]!;
-      final pagesToKeep =
-          cachedPages.keys.where((pageNum) => pageNum <= 2).toList();
-      final pagesToRemove =
-          cachedPages.keys.where((pageNum) => pageNum > 2).toList();
-
-      for (final pageNum in pagesToRemove) {
-        cachedPages.remove(pageNum);
-      }
-    }
-
-    setState(() {
-      _isDataLoaded = false;
-    });
-
-    if (items.isNotEmpty) {
-      final currentItems = List<Detail>.from(items);
-      items.clear();
-      page = 1;
-
-      getData(currentSortOrder, true, status).then((_) {
-        if (items.length < currentItems.length ~/ 2) {
-        } else {}
-      });
     }
   }
 
@@ -1306,6 +1104,182 @@ class _ViewLeadsState extends State<ViewLeads>
             ],
           );
         });
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+      child: Container(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        decoration: const BoxDecoration(
+          gradient:
+              LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(
+              left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      height: 25,
+                      width: 25,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          shape: BoxShape.circle),
+                      child: const Icon(
+                        Icons.arrow_back_ios_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 25),
+                  searchField == true
+                      ? TextFormField(
+                          onChanged: (value) {},
+                          decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                            labelText: 'Search',
+                            fillColor: Colors.white,
+                            filled: true,
+                            prefixIcon: Icon(Icons.person, color: Colors.grey),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : Text(
+                          widget.pageName.toString(),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 18),
+                        ),
+                ],
+              ),
+              Row(
+                children: [
+                  if (!searchField)
+                    InkWell(
+                      onTap: _toggleSortOrder,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 6),
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              sortAscending ? 'Oldest' : 'Newest',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              sortAscending
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (selectedIUsers.isNotEmpty) ..._buildSelectionActions(),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildSelectionActions() {
+    return [
+      CircleAvatar(
+        radius: 13,
+        backgroundColor: Colors.white,
+        child: Text(
+          selectedIUsers.length.toString(),
+          style: const TextStyle(color: Colors.blue, fontSize: 17),
+        ),
+      ),
+      const SizedBox(width: 15),
+      InkWell(
+        onTap: () {
+          if (transferPermission == "true") {
+            transferLeads(context);
+          } else {
+            _dialogue(context, "transfer permission");
+          }
+        },
+        child: const Icon(Icons.compare_arrows_rounded, color: Colors.white),
+      ),
+      const SizedBox(width: 15),
+      InkWell(
+        onTap: () {
+          if (widget.deleteLead == true) {
+            _showDeleteConfirmationDialog();
+          } else {
+            Common.toastMessaage(
+                "You don't have permission to delete", Colors.red);
+          }
+        },
+        child: const Icon(Icons.delete, color: Colors.red),
+      ),
+    ];
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 15, right: 10, top: 15),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            children: [
+              const SizedBox(height: 5),
+              Text('Total Leads : ${viewLeads!.data.totalLeads}',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+            ],
+          ),
+          InkWell(
+            onTap: () => filtrationSheet(context),
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  color: const Color(0xFFd5f5f4),
+                  borderRadius: BorderRadius.circular(5)),
+              child: Center(
+                  child: Image.asset("assets/icons/filter.png", width: 20)),
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _buildLoadingState() {
@@ -1390,7 +1364,6 @@ class _ViewLeadsState extends State<ViewLeads>
               onTap: () {
                 setState(() {
                   _isDataLoaded = false;
-                  _lastApiCallHash = null;
                 });
                 page = 1;
                 items.clear();
@@ -1424,63 +1397,6 @@ class _ViewLeadsState extends State<ViewLeads>
       ),
     );
   }
-
-  // void _showDeleteConfirmationDialog() {
-  //   showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return AlertDialog(
-  //           title: const Text('Please Confirm'),
-  //           content: const Text('Are you sure to Delete Selected Leads?'),
-  //           actions: [
-  //             TextButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 child: const Text('No')),
-  //             TextButton(
-  //                 onPressed: () async {
-  //                   Map<String, dynamic> body = {
-  //                     "token": widget.token,
-  //                     'leadMasterIds': selectedIUsers,
-  //                   };
-  //                   BulkDeleteLeadModel deleteBulk =
-  //                       await HttpService.bulkDeleteLead(body);
-  //                   // if (deleteBulk.data == true) {
-  //                   //   Common.toastMessaage(deleteBulk.message, Colors.green);
-  //                   //   selectedIUsers.clear();
-  //                   //   if (context.mounted) {
-  //                   //     Navigator.pop(context);
-  //                   //     setState(() {
-  //                   //       _isDataLoaded = false;
-  //                   //       _lastApiCallHash = null;
-  //                   //     });
-  //                   //     page = 1;
-  //                   //     items.clear();
-  //                   //     getData('desc', false, status);
-  //                   //   }
-  //                   // } else {
-  //                   //   Common.toastMessaage(deleteBulk.message, Colors.red);
-  //                   //   if (context.mounted) Navigator.of(context).pop();
-  //                   // }
-  //                   if (deleteBulk.data == true) {
-  //                     Common.toastMessaage(deleteBulk.message, Colors.green);
-
-  //                     if (context.mounted) {
-  //                       Navigator.pop(context);
-  //                       Navigator.pop(context);
-  //                       _refreshCurrentListAfterDelete();
-  //                     }
-  //                   } else {
-  //                     Common.toastMessaage(deleteBulk.message, Colors.red);
-  //                     if (context.mounted) {
-  //                       Navigator.pop(context);
-  //                     }
-  //                   }
-  //                 },
-  //                 child: const Text('Yes')),
-  //           ],
-  //         );
-  //       });
-  // }
 
   void _showDeleteConfirmationDialog() {
     showDialog(
@@ -1539,9 +1455,9 @@ class _ViewLeadsState extends State<ViewLeads>
 
   void _refreshListAfterDelete() {
     final currentCacheKey = _generateCacheKey();
-    _leadCache.remove(currentCacheKey);
-    _cacheTotalCounts.remove(currentCacheKey);
+    LeadCacheManager.clearCacheForKey(currentCacheKey);
     final deletedCount = selectedIUsers.length;
+
     setState(() {
       selectedIUsers.clear();
       selectedUserNumbers.clear();
@@ -1549,10 +1465,12 @@ class _ViewLeadsState extends State<ViewLeads>
         item.isSelected = false;
       }
     });
+
     if (viewLeads != null) {
       viewLeads!.data.totalLeads = (viewLeads!.data.totalLeads - deletedCount)
           .clamp(0, double.maxFinite.toInt());
     }
+
     _reloadCurrentData();
   }
 
@@ -1571,122 +1489,6 @@ class _ViewLeadsState extends State<ViewLeads>
       }
     });
   }
-
-  // Future<dynamic> transferLeads(BuildContext context) {
-  //   return showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return StatefulBuilder(builder: (context, setState) {
-  //           return AlertDialog(
-  //             backgroundColor: Colors.white,
-  //             title: const Text('Transfer'),
-  //             content: FormField<String>(
-  //               builder: (FormFieldState<String> state) {
-  //                 return Container(
-  //                   height: 50,
-  //                   width: MediaQuery.of(context).size.width * 0.43,
-  //                   decoration: BoxDecoration(
-  //                       border:
-  //                           Border.all(color: Colors.grey.shade900, width: 0),
-  //                       color: Colors.white,
-  //                       borderRadius:
-  //                           const BorderRadius.all(Radius.circular(5))),
-  //                   child: GestureDetector(
-  //                     onTap: () {
-  //                       collectedStaffDialog(context);
-  //                     },
-  //                     child: Container(
-  //                       decoration: BoxDecoration(
-  //                         color: Colors.white,
-  //                         borderRadius: BorderRadius.circular(4),
-  //                       ),
-  //                       child: Center(
-  //                           child: Padding(
-  //                         padding: const EdgeInsets.only(left: 16.0),
-  //                         child: Row(
-  //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                           children: [
-  //                             SizedBox(
-  //                                 width:
-  //                                     MediaQuery.of(context).size.width * 0.38,
-  //                                 child: Text(
-  //                                   staffName,
-  //                                   overflow: TextOverflow.ellipsis,
-  //                                   style: const TextStyle(
-  //                                       fontWeight: FontWeight.bold),
-  //                                 )),
-  //                             Icon(
-  //                               Icons.arrow_drop_down,
-  //                               color: Colors.grey.shade600,
-  //                             )
-  //                           ],
-  //                         ),
-  //                       )),
-  //                     ),
-  //                   ),
-  //                 );
-  //               },
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: const Text('No')),
-  //               TextButton(
-  //                 onPressed: () async {
-  //                   if (staffId == null || staffId.toString().isEmpty) {
-  //                     Common.toastMessaage("Please select a staff", Colors.red);
-  //                     return;
-  //                   }
-  //                   Common.showProgressDialog(context, "Loading..");
-  //                   Map<String, dynamic> body = {
-  //                     "token": widget.token,
-  //                     'leadMasterIds': selectedIUsers,
-  //                     'staffId': staffId
-  //                   };
-  //                   BulkTransferLeadModel bulkTransfer =
-  //                       await HttpService.bulkTransferLead(body);
-
-  //                   if (bulkTransfer.data == true) {
-  //                     Common.toastMessaage(bulkTransfer.message, Colors.green);
-
-  //                     if (context.mounted) {
-  //                       Navigator.pop(context);
-  //                       Navigator.pop(context);
-  //                       setState(() {
-  //                         selectedIUsers.clear();
-  //                         selectedUserNumbers.clear();
-  //                         for (var item in items) {
-  //                           item.isSelected = false;
-  //                         }
-  //                       });
-  //                       int currentPage = page;
-  //                       items.clear();
-  //                       page = 1;
-  //                       getData('desc', false, status);
-
-  //                       if (itemScrollController.isAttached) {
-  //                         itemScrollController.scrollTo(
-  //                           index: (currentPage - 1) * pageSize,
-  //                           duration: const Duration(milliseconds: 500),
-  //                         );
-  //                       }
-  //                     }
-  //                   } else {
-  //                     Common.toastMessaage(bulkTransfer.message, Colors.red);
-  //                     if (context.mounted) {
-  //                       Navigator.of(context).pop();
-  //                     }
-  //                   }
-  //                 },
-  //                 child: const Text('Yes'),
-  //               ),
-  //             ],
-  //           );
-  //         });
-  //       });
-  // }
 
   Future<dynamic> transferLeads(BuildContext context) {
     return showDialog(
@@ -1751,7 +1553,7 @@ class _ViewLeadsState extends State<ViewLeads>
                     child: const Text('No')),
                 TextButton(
                   onPressed: () async {
-                    if (staffId == null || staffId.toString().isEmpty) {
+                    if (staffId.isEmpty) {
                       Common.toastMessaage("Please select a staff", Colors.red);
                       return;
                     }
@@ -1799,10 +1601,7 @@ class _ViewLeadsState extends State<ViewLeads>
   }
 
   void _nuclearReset() {
-    _leadCache.clear();
-    _cacheTotalCounts.clear();
-    _currentCacheKey = null;
-    _lastApiCallHash = null;
+    LeadCacheManager.clearAllCache();
     setState(() {
       selectedIUsers.clear();
       selectedUserNumbers.clear();
@@ -2735,9 +2534,7 @@ class _ViewLeadsState extends State<ViewLeads>
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
                                     )),
-                                const SizedBox(
-                                  height: 5,
-                                ),
+                                const SizedBox(height: 5),
                                 SizedBox(
                                   width:
                                       MediaQuery.of(context).size.width * 0.43,
@@ -2745,7 +2542,6 @@ class _ViewLeadsState extends State<ViewLeads>
                                     child: DateTimePicker(
                                       decoration: InputDecoration(
                                           filled: true,
-                                          //<-- SEE HERE
                                           fillColor: Colors.white,
                                           prefixIcon: const Icon(
                                             Icons.arrow_right,
@@ -2765,9 +2561,7 @@ class _ViewLeadsState extends State<ViewLeads>
                                       firstDate: DateTime(1995),
                                       lastDate: DateTime.now()
                                           .add(const Duration(days: 365)),
-                                      validator: (value) {
-                                        return null;
-                                      },
+                                      validator: (value) => null,
                                       onChanged: (value) {
                                         if (value.isNotEmpty) {
                                           setState(() {
@@ -2795,9 +2589,7 @@ class _ViewLeadsState extends State<ViewLeads>
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
                                     )),
-                                const SizedBox(
-                                  height: 5,
-                                ),
+                                const SizedBox(height: 5),
                                 SizedBox(
                                   width:
                                       MediaQuery.of(context).size.width * 0.43,
@@ -2824,9 +2616,7 @@ class _ViewLeadsState extends State<ViewLeads>
                                       firstDate: DateTime(1995),
                                       lastDate: DateTime.now()
                                           .add(const Duration(days: 365)),
-                                      validator: (value) {
-                                        return null;
-                                      },
+                                      validator: (value) => null,
                                       onChanged: (value) {
                                         if (value.isNotEmpty) {
                                           setState(() {
@@ -2870,7 +2660,6 @@ class _ViewLeadsState extends State<ViewLeads>
                               setState(() {
                                 isFilterApplied = true;
                                 _isDataLoaded = false;
-                                _lastApiCallHash = null;
                               });
                               items.clear();
                               page = 1;
@@ -3024,8 +2813,6 @@ class _ViewLeadsState extends State<ViewLeads>
         const SizedBox(height: 13),
         const Text('Lead Category'),
         const SizedBox(height: 10),
-
-        // Main Category Selection
         InkWell(
           onTap: () {
             _showCategorySelectionDialog(setState);
@@ -3142,8 +2929,6 @@ class _ViewLeadsState extends State<ViewLeads>
                   ),
           ),
         ),
-
-        // Subcategory Selection (only shows when subcategories exist)
         if (_hasSelectedCategoriesWithSubcategories())
           _buildSubCategoryFilter(setState),
       ],
@@ -3151,8 +2936,6 @@ class _ViewLeadsState extends State<ViewLeads>
   }
 
   bool _hasSelectedCategoriesWithSubcategories() {
-    // Check if any selected category has subcategories
-    // You might need to implement this based on your data structure
     return checkedCategoryItems.isNotEmpty;
   }
 
@@ -3524,196 +3307,6 @@ class _ViewLeadsState extends State<ViewLeads>
       checkedSubCategoryItemsName.remove(subCategory.leadSubCategory);
     }
   }
-
-  final Map<String, List<dynamic>> _categorySubcategories = {};
-  List<String> checkedSubCategoryItems = [];
-  List<String> checkedSubCategoryItemsName = [];
-
-  // Widget _buildCategoryFilter(StateSetter setState) {
-  //   return Column(
-  //     mainAxisAlignment: MainAxisAlignment.start,
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const SizedBox(height: 13),
-  //       const Text('Lead Category'),
-  //       const SizedBox(height: 10),
-  //       InkWell(
-  //         onTap: () {
-  //           showDialog(
-  //               context: context,
-  //               builder: (BuildContext context) {
-  //                 return AlertDialog(
-  //                   scrollable: true,
-  //                   title: const Text('Lead Category'),
-  //                   content: SizedBox(
-  //                     height: MediaQuery.of(context).size.height * .32,
-  //                     width: MediaQuery.of(context).size.height * .8,
-  //                     child: ListView.builder(
-  //                       shrinkWrap: true,
-  //                       itemCount: commonDetails?.data.leadCategory.length ?? 0,
-  //                       itemBuilder: (context, ind) {
-  //                         return CheckboxListTile(
-  //                           title: SizedBox(
-  //                             width: 200,
-  //                             child: Text(
-  //                               commonDetails!
-  //                                   .data.leadCategory[ind].leadCategory
-  //                                   .toString(),
-  //                               style: const TextStyle(
-  //                                   color: Colors.black,
-  //                                   fontWeight: FontWeight.w400,
-  //                                   fontSize: 14),
-  //                             ),
-  //                           ),
-  //                           value: checkedCategoryItems.contains(commonDetails!
-  //                               .data.leadCategory[ind].leadCategoryId
-  //                               .toString()),
-  //                           onChanged: (bool? value) {
-  //                             if (value == true) {
-  //                               setState(() {
-  //                                 checkedCategoryItems.add(commonDetails!
-  //                                     .data.leadCategory[ind].leadCategoryId
-  //                                     .toString());
-  //                                 checkedCategoryItemsName.add(commonDetails!
-  //                                     .data.leadCategory[ind].leadCategory
-  //                                     .toString());
-  //                                 Navigator.pop(context, true);
-  //                               });
-  //                             } else {
-  //                               setState(() {
-  //                                 checkedCategoryItems.remove(commonDetails!
-  //                                     .data.leadCategory[ind].leadCategoryId
-  //                                     .toString());
-  //                                 checkedCategoryItemsName.remove(commonDetails!
-  //                                     .data.leadCategory[ind].leadCategory
-  //                                     .toString());
-  //                                 Navigator.pop(context, true);
-  //                               });
-  //                             }
-  //                           },
-  //                           controlAffinity: ListTileControlAffinity.leading,
-  //                         );
-  //                       },
-  //                     ),
-  //                   ),
-  //                 );
-  //               });
-  //         },
-  //         child: Container(
-  //           width: MediaQuery.of(context).size.width * 1,
-  //           height: 50,
-  //           decoration: BoxDecoration(
-  //             border: Border.all(),
-  //             borderRadius: BorderRadius.circular(5),
-  //           ),
-  //           child: checkedCategoryItems.isEmpty
-  //               ? const Padding(
-  //                   padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-  //                   child: Text('Lead Category'))
-  //               : Padding(
-  //                   padding: const EdgeInsets.only(right: 40),
-  //                   child: SizedBox(
-  //                     height: 35,
-  //                     child: ListView.builder(
-  //                       scrollDirection: Axis.horizontal,
-  //                       itemCount: checkedCategoryItemsName.length,
-  //                       itemBuilder: (context, i) {
-  //                         return Padding(
-  //                           padding: const EdgeInsets.only(left: 5, right: 5),
-  //                           child: InkWell(
-  //                             onTap: () {
-  //                               setState(() {});
-  //                             },
-  //                             child: Row(
-  //                               children: [
-  //                                 Container(
-  //                                   height: 35,
-  //                                   decoration: BoxDecoration(
-  //                                       border: Border.all(
-  //                                           color: Colors.grey, width: 0),
-  //                                       color: Colors.white,
-  //                                       borderRadius: const BorderRadius.only(
-  //                                           topLeft: Radius.circular(6),
-  //                                           bottomLeft: Radius.circular(6))),
-  //                                   child: Center(
-  //                                     child: Row(
-  //                                       mainAxisAlignment:
-  //                                           MainAxisAlignment.center,
-  //                                       children: [
-  //                                         Padding(
-  //                                           padding: const EdgeInsets.all(10),
-  //                                           child: Text(
-  //                                             checkedCategoryItemsName[i],
-  //                                             style: const TextStyle(
-  //                                                 color: Colors.black),
-  //                                           ),
-  //                                         ),
-  //                                       ],
-  //                                     ),
-  //                                   ),
-  //                                 ),
-  //                                 InkWell(
-  //                                   onTap: () {
-  //                                     showDialog(
-  //                                         context: context,
-  //                                         builder: (BuildContext context) {
-  //                                           return AlertDialog(
-  //                                             title:
-  //                                                 const Text('Please Confirm'),
-  //                                             content: const Text(
-  //                                                 'Are you sure to Remove this Number?'),
-  //                                             actions: [
-  //                                               TextButton(
-  //                                                   onPressed: () =>
-  //                                                       Navigator.of(context)
-  //                                                           .pop(),
-  //                                                   child: const Text('No')),
-  //                                               TextButton(
-  //                                                   onPressed: () async {
-  //                                                     setState(() {
-  //                                                       checkedCategoryItemsName
-  //                                                           .remove(
-  //                                                               checkedCategoryItemsName[
-  //                                                                   i]);
-  //                                                       checkedCategoryItems.remove(
-  //                                                           checkedCategoryItems[
-  //                                                               i]);
-  //                                                     });
-  //                                                     Navigator.of(context)
-  //                                                         .pop();
-  //                                                   },
-  //                                                   child: const Text('Yes')),
-  //                                             ],
-  //                                           );
-  //                                         });
-  //                                   },
-  //                                   child: Container(
-  //                                     height: 35,
-  //                                     width: 30,
-  //                                     decoration: BoxDecoration(
-  //                                         border: Border.all(
-  //                                             color: Colors.grey, width: 0),
-  //                                         color: Colors.grey.shade100,
-  //                                         borderRadius: const BorderRadius.only(
-  //                                             topRight: Radius.circular(6),
-  //                                             bottomRight: Radius.circular(6))),
-  //                                     child: const Icon(Icons.close,
-  //                                         color: Colors.red),
-  //                                   ),
-  //                                 ),
-  //                               ],
-  //                             ),
-  //                           ),
-  //                         );
-  //                       },
-  //                     ),
-  //                   ),
-  //                 ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildPriorityFilter(StateSetter setState) {
     return Column(
@@ -4657,9 +4250,7 @@ class MessageViewWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
         decoration: BoxDecoration(
           color: Colors.blue.shade100,
-          borderRadius: const BorderRadius.all(
-            Radius.circular(10.0),
-          ),
+          borderRadius: const BorderRadius.all(Radius.circular(10.0)),
         ),
         child: Text(label));
   }

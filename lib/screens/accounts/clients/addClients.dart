@@ -24,7 +24,8 @@ import '../../../service/service.dart';
 
 class AddClients extends StatefulWidget {
   String token;
-  AddClients(this.token, {super.key});
+  bool createOrder;
+  AddClients(this.token, {this.createOrder = false, super.key});
   @override
   State<AddClients> createState() => _AddClientsState();
 }
@@ -1064,12 +1065,11 @@ class _AddClientsState extends State<AddClients> {
                             ),
                           ),
                           Visibility(
-                            visible: false,
+                            visible: widget.createOrder,
                             child: CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Order'),
-                                value:
-                                    createOrder, // initial value of the checkbox
+                                value: createOrder,
                                 onChanged: (bool? value) {
                                   setState(() {
                                     createOrder = value!;
@@ -2907,14 +2907,6 @@ class _AddClientsState extends State<AddClients> {
                               } else if (address1.text.isEmpty) {
                                 Common.toastMessaage(
                                     'Address1 cannot be empty', Colors.red);
-                              } else if (selectedStateId == null ||
-                                  selectedStateId!.isEmpty) {
-                                Common.toastMessaage(
-                                    'Please select a State', Colors.red);
-                              } else if (selectedDistrictId == null ||
-                                  selectedDistrictId!.isEmpty) {
-                                Common.toastMessaage(
-                                    'Please select a District', Colors.red);
                               } else if (selectedTaxType == null ||
                                   selectedTaxType!.isEmpty) {
                                 Common.toastMessaage(

@@ -22,7 +22,8 @@ class PendingInvoice extends StatefulWidget {
   State<PendingInvoice> createState() => _PendingInvoiceState();
 }
 
-class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAliveClientMixin {
+class _PendingInvoiceState extends State<PendingInvoice>
+    with AutomaticKeepAliveClientMixin {
   dynamic client;
   PendingInvoiceListModel? invoiceResponse;
   CustomerListModel? customerList;
@@ -82,7 +83,9 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
       filteredInvoices.addAll(invoices);
       customerList = await HttpService.customerList(widget.token);
       items = customerList!.data!;
-      filteredItems.addAll(items);
+      // filteredItems.addAll(items);
+      filteredItems = List.from(items);
+
       if (isSearch == true) {
         isSearch = false;
         if (mounted) {
@@ -104,7 +107,7 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-       super.build(context);
+    super.build(context);
     _restoreScrollPosition();
     return result == true
         ? Scaffold(
@@ -176,7 +179,7 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                             MainAxisAlignment.center,
                                         children: [
                                           const Text(
-                                            'Customer Details',
+                                            'Customer  Details',
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 18),
@@ -209,7 +212,7 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                                               keyboardType:
                                                                   TextInputType
                                                                       .visiblePassword,
-                                                             // autofocus: true,
+                                                              autofocus: true,
                                                               onChanged:
                                                                   (value) {
                                                                 setState(() {
@@ -258,6 +261,20 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                                                   (context,
                                                                       index) {
                                                                 return ListTile(
+                                                                    // onTap: () {
+                                                                    //   customerName =
+                                                                    //       filteredCustomers[index]
+                                                                    //           .name;
+                                                                    //   customerId =
+                                                                    //       filteredCustomers[index].id;
+                                                                    //   search.clear();
+                                                                    //   filteredCustomers
+                                                                    //       .addAll(customers);
+                                                                    //   setState(() {});
+                                                                    //   if (context.mounted) {
+                                                                    //     Navigator.pop(context);
+                                                                    //   }
+                                                                    // },
                                                                     onTap: () {
                                                                       customerName =
                                                                           filteredItems[index]
@@ -288,6 +305,13 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                                       ),
                                                       actions: [
                                                         TextButton(
+                                                            // onPressed: () {
+                                                            //   search.clear();
+                                                            //   filteredCustomers.addAll(customers);
+                                                            //   if (context.mounted) {
+                                                            //     Navigator.pop(context);
+                                                            //   }
+                                                            // },
                                                             onPressed: () {
                                                               search.clear();
                                                               filteredItems
@@ -346,54 +370,6 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                               )),
                                             ),
                                           ),
-                                          // Container(
-                                          //   width: MediaQuery.of(context)
-                                          //       .size
-                                          //       .width *
-                                          //       0.9,
-                                          //   decoration: BoxDecoration(
-                                          //       border: Border.all(
-                                          //           color: Colors
-                                          //               .grey.shade900,
-                                          //           width:
-                                          //           0),
-                                          //       color: Colors
-                                          //           .white,
-                                          //       borderRadius: const BorderRadius
-                                          //           .all(
-                                          //           Radius.circular(5))),
-                                          //   child:
-                                          //   DropdownButtonHideUnderline(
-                                          //     child: DropdownButton<
-                                          //         String>(
-                                          //       isExpanded:
-                                          //       true,
-                                          //       hint:
-                                          //       const Padding(
-                                          //         padding:
-                                          //         EdgeInsets.only(left: 20),
-                                          //         child:
-                                          //         Text('Customer'),
-                                          //       ),
-                                          //       value: newClient,
-                                          //       items:customerList!.data!.map((data) {
-                                          //         return DropdownMenuItem(
-                                          //           value: data.id.toString(),
-                                          //           child: Padding(
-                                          //             padding: const EdgeInsets.only(left: 20),
-                                          //             child: Text(data.name.toString()),
-                                          //           ),
-                                          //         );
-                                          //       }).toList(),
-                                          //       onChanged:
-                                          //           (newValue1) {
-                                          //         setState(() {
-                                          //           newClient = newValue1;
-                                          //         });
-                                          //       },
-                                          //     ),
-                                          //   ),
-                                          // ),
                                           const SizedBox(
                                             height: 20,
                                           ),
@@ -405,6 +381,7 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                                     Colors.red);
                                               } else {
                                                 search.clear();
+                                                Navigator.pop(context);
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
@@ -480,7 +457,7 @@ class _PendingInvoiceState extends State<PendingInvoice> with AutomaticKeepAlive
                                 controller: invSearch,
                                 autocorrect: false,
                                 keyboardType: TextInputType.visiblePassword,
-                               // autofocus: true,
+                                // autofocus: true,
                                 onChanged: (value) {
                                   filterInvoices(value);
                                 },

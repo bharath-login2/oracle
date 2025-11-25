@@ -50,6 +50,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   String staffName = "Choose Staff";
   List<Type> types = [];
   List<Type> filteredTypes = [];
+  Map<int, bool> _pdfLoadingStates = {};
   String typeId = "";
   String typeName = "Choose Type";
   TextEditingController search = TextEditingController();
@@ -61,54 +62,149 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
 
   List<String> selectedStaffIds = [];
   List<String> selectedStaffNames = [];
+  List<String> selectedStatuses = [];
+  List<String> selectedCustomerIds = [];
+  List<String> selectedCustomerNames = [];
+  List<String> selectedTypeIds = [];
+  List<String> selectedTypeNames = [];
+
+  bool _isStatusSelected(String status) {
+    return selectedStatuses.contains(status);
+  }
+
+  void _addStatus(String status) {
+    if (!selectedStatuses.contains(status)) {
+      selectedStatuses.add(status);
+    }
+  }
+
+  void _removeStatus(String status) {
+    selectedStatuses.remove(status);
+  }
+
+  void _clearAllStatuses() {
+    selectedStatuses.clear();
+  }
+
+  List<String> _getSelectedStatuses() {
+    return List.from(selectedStatuses);
+  }
+
   @override
   void initState() {
     super.initState();
     getData();
   }
 
+  // getData() async {
+  //   customers.clear();
+  //   filteredCustomers.clear();
+  //   final connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi) {
+  //     setState(() {
+  //       result = true;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       result = false;
+  //     });
+  //   }
+  //   String collectedByStaffIds = collectedByIds.join(',');
+  //   String createdByStaffIds = createdByIds.join(',');
+  //   invoiceList = await HttpService.invoiceListTemp(
+  //       widget.token,
+  //       fDate == "From Date" ? "" : fDate.toString(),
+  //       tDate == "To Date" ? "" : tDate.toString(),
+  //       customerId,
+  //       collectedByStaffIds,
+  //       createdByStaffIds,
+  //       staffId,
+  //       typeId);
+  //   if (invoiceList != null) {
+  //     searchData = await HttpService.getInvoiceSearchTemp(widget.token);
+  //     customers = searchData!.data.customers;
+  //     filteredCustomers.addAll(customers);
+  //     staffs = searchData!.data.staff;
+  //     filteredStaffs.addAll(staffs);
+  //     types = searchData!.data.types;
+  //     filteredTypes.addAll(types);
+  //     if (isSearch == true) {
+  //       isSearch = false;
+  //       if (mounted) {
+  //         Navigator.pop(context);
+  //       }
+  //     }
+  //     setState(() {});
+  //   }
+  // }
+
   getData() async {
-    customers.clear();
-    filteredCustomers.clear();
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
-    } else {
-      setState(() {
-        result = false;
-      });
-    }
-    String collectedByStaffIds = collectedByIds.join(',');
-    String createdByStaffIds = createdByIds.join(',');
-    invoiceList = await HttpService.invoiceListTemp(
-        widget.token,
-        fDate == "From Date" ? "" : fDate.toString(),
-        tDate == "To Date" ? "" : tDate.toString(),
-        customerId,
-        collectedByStaffIds,
-        createdByStaffIds,
-        staffId,
-        typeId);
-    if (invoiceList != null) {
-      searchData = await HttpService.getInvoiceSearchTemp(widget.token);
-      customers = searchData!.data.customers;
-      filteredCustomers.addAll(customers);
-      staffs = searchData!.data.staff;
-      filteredStaffs.addAll(staffs);
-      types = searchData!.data.types;
-      filteredTypes.addAll(types);
-      if (isSearch == true) {
-        isSearch = false;
-        if (mounted) {
-          Navigator.pop(context);
-        }
-      }
-      setState(() {});
-    }
+  customers.clear();
+  filteredCustomers.clear();
+  final connectivityResult = await (Connectivity().checkConnectivity());
+  if (connectivityResult == ConnectivityResult.mobile ||
+      connectivityResult == ConnectivityResult.wifi) {
+    setState(() {
+      result = true;
+    });
+  } else {
+    setState(() {
+      result = false;
+    });
   }
+
+  String collectedByStaffIds = collectedByIds.join(',');
+  String createdByStaffIds = createdByIds.join(',');
+  String statusFilter = selectedStatuses.join(',');
+  String customerFilter = selectedCustomerIds.join(',');
+  String typeFilter = selectedTypeIds.join(',');
+
+  invoiceList = await HttpService.invoiceListTemp(
+      widget.token,
+      fDate == "From Date" ? "" : fDate.toString(),
+      tDate == "To Date" ? "" : tDate.toString(),
+      customerFilter, 
+      collectedByStaffIds,
+      createdByStaffIds,
+      staffId,
+      typeFilter, 
+      statusFilter);
+      
+  if (invoiceList != null) {
+    searchData = await HttpService.getInvoiceSearchTemp(widget.token);
+    customers = searchData!.data.customers;
+    filteredCustomers = List.from(customers);
+    staffs = searchData!.data.staff;
+    filteredStaffs = List.from(staffs);
+    types = searchData!.data.types;
+    filteredTypes = List.from(types);
+    if (isSearch == true) {
+      isSearch = false;
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    }
+    setState(() {});
+  }
+}
+
+  void clearAllFilters() {
+  fDate = "From Date";
+  tDate = "To Date";
+  staffId = "";
+  staffName = "Choose Staff";
+  createdByIds.clear();
+  createdByNames.clear();
+  selectedStatuses.clear();
+  selectedCustomerIds.clear();
+  selectedCustomerNames.clear();
+  selectedTypeIds.clear();
+  selectedTypeNames.clear();
+  filteredCustomers = List.from(customers);
+  filteredStaffs = List.from(staffs);
+  filteredTypes = List.from(types);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -229,20 +325,20 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                           padding:
                                               const EdgeInsets.only(bottom: 10),
                                           child: InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ReceiptByInvoice(
-                                                            widget.token,
-                                                            invoiceList!.data
-                                                                .lists[index].id
-                                                                .toString())),
-                                              ).then((_) {
-                                                getData();
-                                              });
-                                            },
+                                            // onTap: () {
+                                            //   Navigator.push(
+                                            //     context,
+                                            //     MaterialPageRoute(
+                                            //         builder: (context) =>
+                                            //             ReceiptByInvoice(
+                                            //                 widget.token,
+                                            //                 invoiceList!.data
+                                            //                     .lists[index].id
+                                            //                     .toString())),
+                                            //   ).then((_) {
+                                            //     getData();
+                                            //   });
+                                            // },
                                             child: Container(
                                               decoration: BoxDecoration(
                                                   boxShadow: [
@@ -265,7 +361,23 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                           "1"
                                                       ? const Color.fromARGB(
                                                           255, 228, 248, 216)
-                                                      : Colors.white),
+                                                      : invoiceList!
+                                                                  .data
+                                                                  .lists[index]
+                                                                  .isApproved
+                                                                  .toString() ==
+                                                              "Y"
+                                                          ? const Color.fromARGB(
+                                                              255, 243, 248, 216)
+                                                          : invoiceList!
+                                                                      .data
+                                                                      .lists[
+                                                                          index]
+                                                                      .isRejected
+                                                                      .toString() ==
+                                                                  "Y"
+                                                              ? const Color.fromARGB(255, 248, 216, 216)
+                                                              : Colors.white),
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.all(14.0),
@@ -358,16 +470,29 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                               .toString() ==
                                                                           '1'
                                                                       ? "Created"
-                                                                      : "Not Created",
+                                                                      : invoiceList!.data.lists[index].isApproved.toString() ==
+                                                                              "Y"
+                                                                          ? "Approved"
+                                                                          : invoiceList!.data.lists[index].isRejected.toString() ==
+                                                                                  "Y"
+                                                                              ? "Rejected"
+                                                                              : "Not Created",
                                                                   style:
                                                                       TextStyle(
-                                                                    color: invoiceList!.data.lists[index].invoiceCreated
-                                                                                .toString() ==
+                                                                    color: invoiceList!.data.lists[index].invoiceCreated.toString() ==
                                                                             '1'
                                                                         ? Colors
                                                                             .white
-                                                                        : Colors
-                                                                            .red,
+                                                                        : invoiceList!.data.lists[index].isApproved.toString() ==
+                                                                                "Y"
+                                                                            ? const Color.fromARGB(
+                                                                                255,
+                                                                                240,
+                                                                                255,
+                                                                                154)
+                                                                            : invoiceList!.data.lists[index].isRejected.toString() == "Y"
+                                                                                ? const Color.fromARGB(255, 255, 126, 180)
+                                                                                : Colors.red,
                                                                     fontSize:
                                                                         14,
                                                                     fontWeight:
@@ -584,90 +709,187 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                         Row(
                                                           children: [
                                                             InkWell(
-                                                              onTap: () async {
-                                                                final pdfPath =
-                                                                    await HttpService
-                                                                        .printInvoiceTemp(
-                                                                  widget.token,
-                                                                  invoiceList!
-                                                                      .data
-                                                                      .lists[
-                                                                          index]
-                                                                      .id
-                                                                      .toString(),
-                                                                );
+                                                              onTap: _pdfLoadingStates[
+                                                                          index] ==
+                                                                      true
+                                                                  ? null // Disable tap when loading
+                                                                  : () async {
+                                                                      setState(
+                                                                          () {
+                                                                        _pdfLoadingStates[index] =
+                                                                            true;
+                                                                      });
 
-                                                                if (pdfPath !=
-                                                                    null) {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder: (_) =>
-                                                                          PrintInvoiceViewTemp(
-                                                                              pdfPath: pdfPath),
-                                                                    ),
-                                                                  );
-                                                                } else {
-                                                                  ScaffoldMessenger.of(
-                                                                          context)
-                                                                      .showSnackBar(const SnackBar(
-                                                                          content:
-                                                                              Text("Failed to load invoice")));
-                                                                }
-                                                              },
-                                                              // onTap: () {
-                                                              //   Navigator.push(
-                                                              //     context,
-                                                              //     MaterialPageRoute(
-                                                              //         builder: (context) => ViewInvoiceTemp(
-                                                              //             widget
-                                                              //                 .token,
-                                                              //             invoiceList!
-                                                              //                 .data
-                                                              //                 .lists[
-                                                              //                     index]
-                                                              //                 .id
-                                                              //                 .toString(),
-                                                              //             invoiceList!
-                                                              //                 .data
-                                                              //                 .lists[
-                                                              //                     index]
-                                                              //                 .clientId
-                                                              //                 .toString(),
-                                                              //             invoiceList!
-                                                              //                 .data
-                                                              //                 .lists[index]
-                                                              //                 .invoiceNumber
-                                                              //                 .toString())),
-                                                              //   );
-                                                              // },
+                                                                      final pdfPath =
+                                                                          await HttpService
+                                                                              .printInvoiceTemp(
+                                                                        widget
+                                                                            .token,
+                                                                        invoiceList!
+                                                                            .data
+                                                                            .lists[index]
+                                                                            .id
+                                                                            .toString(),
+                                                                      );
+
+                                                                      setState(
+                                                                          () {
+                                                                        _pdfLoadingStates[index] =
+                                                                            false;
+                                                                      });
+
+                                                                      if (pdfPath !=
+                                                                          null) {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (_) =>
+                                                                                PrintInvoiceViewTemp(pdfPath: pdfPath),
+                                                                          ),
+                                                                        );
+                                                                      } else {
+                                                                        ScaffoldMessenger.of(context)
+                                                                            .showSnackBar(
+                                                                          const SnackBar(
+                                                                              content: Text("Failed to load invoice")),
+                                                                        );
+                                                                      }
+                                                                    },
                                                               child: Container(
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(
-                                                                                2),
-                                                                    color: Colors
-                                                                        .green
-                                                                        .shade100),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
+                                                                  color: _pdfLoadingStates[
+                                                                              index] ==
+                                                                          true
+                                                                      ? Colors
+                                                                          .green
+                                                                          .shade300
+                                                                      : Colors
+                                                                          .green
+                                                                          .shade100,
+                                                                ),
                                                                 child: Padding(
                                                                   padding:
                                                                       const EdgeInsets
                                                                           .all(
                                                                           8.0),
-                                                                  child:
-                                                                      Container(
-                                                                    height: 20,
-                                                                    width: 20,
-                                                                    decoration:
-                                                                        const BoxDecoration(
-                                                                            image:
-                                                                                DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
-                                                                  ),
+                                                                  child: _pdfLoadingStates[
+                                                                              index] ==
+                                                                          true
+                                                                      ? SizedBox(
+                                                                          height:
+                                                                              20,
+                                                                          width:
+                                                                              20,
+                                                                          child:
+                                                                              CircularProgressIndicator(
+                                                                            strokeWidth:
+                                                                                2,
+                                                                            valueColor:
+                                                                                AlwaysStoppedAnimation<Color>(Colors.green.shade800),
+                                                                          ),
+                                                                        )
+                                                                      : Container(
+                                                                          height:
+                                                                              20,
+                                                                          width:
+                                                                              20,
+                                                                          decoration:
+                                                                              const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
+                                                                        ),
                                                                 ),
                                                               ),
                                                             ),
+                                                            // InkWell(
+                                                            //   onTap: () async {
+                                                            //     final pdfPath =
+                                                            //         await HttpService
+                                                            //             .printInvoiceTemp(
+                                                            //       widget.token,
+                                                            //       invoiceList!
+                                                            //           .data
+                                                            //           .lists[
+                                                            //               index]
+                                                            //           .id
+                                                            //           .toString(),
+                                                            //     );
+
+                                                            //     if (pdfPath !=
+                                                            //         null) {
+                                                            //       Navigator
+                                                            //           .push(
+                                                            //         context,
+                                                            //         MaterialPageRoute(
+                                                            //           builder: (_) =>
+                                                            //               PrintInvoiceViewTemp(
+                                                            //                   pdfPath: pdfPath),
+                                                            //         ),
+                                                            //       );
+                                                            //     } else {
+                                                            //       ScaffoldMessenger.of(
+                                                            //               context)
+                                                            //           .showSnackBar(const SnackBar(
+                                                            //               content:
+                                                            //                   Text("Failed to load invoice")));
+                                                            //     }
+                                                            //   },
+                                                            //   // onTap: () {
+                                                            //   //   Navigator.push(
+                                                            //   //     context,
+                                                            //   //     MaterialPageRoute(
+                                                            //   //         builder: (context) => ViewInvoiceTemp(
+                                                            //   //             widget
+                                                            //   //                 .token,
+                                                            //   //             invoiceList!
+                                                            //   //                 .data
+                                                            //   //                 .lists[
+                                                            //   //                     index]
+                                                            //   //                 .id
+                                                            //   //                 .toString(),
+                                                            //   //             invoiceList!
+                                                            //   //                 .data
+                                                            //   //                 .lists[
+                                                            //   //                     index]
+                                                            //   //                 .clientId
+                                                            //   //                 .toString(),
+                                                            //   //             invoiceList!
+                                                            //   //                 .data
+                                                            //   //                 .lists[index]
+                                                            //   //                 .invoiceNumber
+                                                            //   //                 .toString())),
+                                                            //   //   );
+                                                            //   // },
+                                                            //   child: Container(
+                                                            //     decoration: BoxDecoration(
+                                                            //         borderRadius:
+                                                            //             BorderRadius
+                                                            //                 .circular(
+                                                            //                     2),
+                                                            //         color: Colors
+                                                            //             .green
+                                                            //             .shade100),
+                                                            //     child: Padding(
+                                                            //       padding:
+                                                            //           const EdgeInsets
+                                                            //               .all(
+                                                            //               8.0),
+                                                            //       child:
+                                                            //           Container(
+                                                            //         height: 20,
+                                                            //         width: 20,
+                                                            //         decoration:
+                                                            //             const BoxDecoration(
+                                                            //                 image:
+                                                            //                     DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
+                                                            //       ),
+                                                            //     ),
+                                                            //   ),
+                                                            // ),
                                                             Visibility(
                                                               visible: invoiceList!
                                                                           .data
@@ -846,6 +1068,55 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                 ),
                                                                               );
                                                                             } else if (value ==
+                                                                                'approve') {
+                                                                              Common.showProgressDialog(context, "Approving...");
+                                                                              bool result = await HttpService.approveProforma(
+                                                                                invoiceList!.data.lists[index].id.toString(),
+                                                                              );
+                                                                              Navigator.pop(context);
+                                                                              if (result) {
+                                                                                Common.toastMessaage("Proforma Approved Successfully", Colors.green);
+                                                                                getData();
+                                                                              } else {
+                                                                                Common.toastMessaage("Failed to approve proforma", Colors.red);
+                                                                              }
+                                                                            } else if (value ==
+                                                                                'reject') {
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                builder: (BuildContext context) {
+                                                                                  return AlertDialog(
+                                                                                    title: const Text('Please Confirm'),
+                                                                                    content: const Text('Are you sure you want to reject this proforma?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                        onPressed: () => Navigator.of(context).pop(),
+                                                                                        child: const Text('No'),
+                                                                                      ),
+                                                                                      TextButton(
+                                                                                        onPressed: () async {
+                                                                                          Navigator.of(context).pop();
+                                                                                          //  Common.showProgressDialog(context, "Rejecting...");
+
+                                                                                          bool result = await HttpService.rejectProforma(
+                                                                                            invoiceList!.data.lists[index].id.toString(),
+                                                                                          );
+
+                                                                                          if (context.mounted) Navigator.pop(context);
+                                                                                          if (result) {
+                                                                                            Common.toastMessaage("Proforma rejected successfully", Colors.green);
+                                                                                            getData();
+                                                                                          } else {
+                                                                                            Common.toastMessaage("Failed to reject proforma", Colors.red);
+                                                                                          }
+                                                                                        },
+                                                                                        child: const Text('Yes'),
+                                                                                      ),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            } else if (value ==
                                                                                 'edit') {
                                                                               Navigator.push(
                                                                                 context,
@@ -858,16 +1129,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                           itemBuilder:
                                                                               (context) => [
                                                                             const PopupMenuItem(
-                                                                              value: 'delete',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.delete_outline, color: Colors.red),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Delete Proforma'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                            const PopupMenuItem(
                                                                               value: 'create',
                                                                               child: Row(
                                                                                 children: [
@@ -878,12 +1139,42 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                               ),
                                                                             ),
                                                                             const PopupMenuItem(
+                                                                              value: 'approve',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.check, color: Colors.green),
+                                                                                  SizedBox(width: 10),
+                                                                                  Text('Approve'),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                            const PopupMenuItem(
+                                                                              value: 'reject',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.close, color: Color.fromARGB(255, 155, 74, 26)),
+                                                                                  SizedBox(width: 10),
+                                                                                  Text('Reject'),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                            const PopupMenuItem(
                                                                               value: 'edit',
                                                                               child: Row(
                                                                                 children: [
                                                                                   Icon(Icons.edit, color: Color.fromARGB(255, 78, 169, 206)),
                                                                                   SizedBox(width: 10),
                                                                                   Text('Edit Proforma'),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                            const PopupMenuItem(
+                                                                              value: 'delete',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.delete_outline, color: Colors.red),
+                                                                                  SizedBox(width: 10),
+                                                                                  Text('Delete Proforma'),
                                                                                 ],
                                                                               ),
                                                                             ),
@@ -1469,16 +1760,55 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   //                           ),
   //                         ],
   //                       ),
-  //                       const SizedBox(
-  //                         height: 10,
-  //                       ),
+  //                       // const SizedBox(
+  //                       //   height: 10,
+  //                       // ),
+  //                       // Column(
+  //                       //   crossAxisAlignment: CrossAxisAlignment.start,
+  //                       //   children: [
+  //                       //     const Text("Collected by"),
+  //                       //     GestureDetector(
+  //                       //       onTap: () async {
+  //                       //         await staffDialog(context, 'collected');
+  //                       //         (context as Element).markNeedsBuild();
+  //                       //       },
+  //                       //       child: Container(
+  //                       //         decoration: BoxDecoration(
+  //                       //           color: Colors.white,
+  //                       //           border: Border.all(color: Colors.black),
+  //                       //           borderRadius: BorderRadius.circular(4),
+  //                       //         ),
+  //                       //         child: Padding(
+  //                       //           padding: const EdgeInsets.symmetric(
+  //                       //               horizontal: 16.0, vertical: 12.0),
+  //                       //           child: Row(
+  //                       //             children: [
+  //                       //               Expanded(
+  //                       //                 child: Text(
+  //                       //                   collectedByNames.isNotEmpty
+  //                       //                       ? collectedByNames.join(', ')
+  //                       //                       : "Select staff",
+  //                       //                   overflow: TextOverflow.ellipsis,
+  //                       //                   maxLines: 2,
+  //                       //                 ),
+  //                       //               ),
+  //                       //               const Icon(Icons.arrow_drop_down),
+  //                       //             ],
+  //                       //           ),
+  //                       //         ),
+  //                       //       ),
+  //                       //     ),
+  //                       //   ],
+  //                       // ),
+  //                       const SizedBox(height: 10),
   //                       Column(
   //                         crossAxisAlignment: CrossAxisAlignment.start,
   //                         children: [
-  //                           const Text("Collected by"),
+  //                           const Text("Created by"),
   //                           GestureDetector(
-  //                             onTap: () {
-  //                               staffDialog(context);
+  //                             onTap: () async {
+  //                               await staffDialog(context, 'created');
+  //                               (context as Element).markNeedsBuild();
   //                             },
   //                             child: Container(
   //                               decoration: BoxDecoration(
@@ -1486,26 +1816,24 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   //                                 border: Border.all(color: Colors.black),
   //                                 borderRadius: BorderRadius.circular(4),
   //                               ),
-  //                               child: Center(
-  //                                   child: Padding(
+  //                               child: Padding(
   //                                 padding: const EdgeInsets.symmetric(
   //                                     horizontal: 16.0, vertical: 12.0),
   //                                 child: Row(
-  //                                   mainAxisAlignment:
-  //                                       MainAxisAlignment.spaceBetween,
   //                                   children: [
-  //                                     SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.35,
-  //                                         child: Text(
-  //                                           staffName,
-  //                                           overflow: TextOverflow.ellipsis,
-  //                                         )),
+  //                                     Expanded(
+  //                                       child: Text(
+  //                                         createdByNames.isNotEmpty
+  //                                             ? createdByNames.join(', ')
+  //                                             : "Select staff",
+  //                                         overflow: TextOverflow.ellipsis,
+  //                                         maxLines: 2,
+  //                                       ),
+  //                                     ),
+  //                                     const Icon(Icons.arrow_drop_down),
   //                                   ],
   //                                 ),
-  //                               )),
+  //                               ),
   //                             ),
   //                           ),
   //                         ],
@@ -1626,361 +1954,963 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   //         );
   //       });
   // }
+
   Future<dynamic> filtrationSheet(BuildContext context) {
     return showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        builder: (BuildContext context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.6,
-                width: double.maxFinite,
-                clipBehavior: Clip.antiAlias,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
+      isScrollControlled: true,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        String selectedTab = "Created By";
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-                child: Material(
-                  color: Colors.white,
-                  child: SingleChildScrollView(
-                    child: Column(
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Filters",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.black54),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Filtration',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          width: 130,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildFilterTab(
+                                icon: Icons.person_outline,
+                                title: "Created By",
+                                selected: selectedTab == "Created By",
+                                onTap: () {
+                                  setState(() {
+                                    selectedTab = "Created By";
+                                  });
+                                },
+                              ),
+                              _buildFilterTab(
+                                icon: Icons.date_range,
+                                title: "Date Range",
+                                selected: selectedTab == "Date Range",
+                                onTap: () {
+                                  setState(() {
+                                    selectedTab = "Date Range";
+                                  });
+                                },
+                              ),
+                              _buildFilterTab(
+                                icon: Icons.people_alt_outlined,
+                                title: "Customer",
+                                selected: selectedTab == "Customer",
+                                onTap: () {
+                                  setState(() {
+                                    selectedTab = "Customer";
+                                  });
+                                },
+                              ),
+                              _buildFilterTab(
+                                icon: Icons.list_alt,
+                                title: "Type",
+                                selected: selectedTab == "Type",
+                                onTap: () {
+                                  setState(() {
+                                    selectedTab = "Type";
+                                  });
+                                },
+                              ),
+                              _buildFilterTab(
+                                icon: Icons.verified_outlined,
+                                title: "Status",
+                                selected: selectedTab == "Status",
+                                onTap: () {
+                                  setState(() {
+                                    selectedTab = "Status";
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("From Date"),
-                                GestureDetector(
-                                  onTap: () async {
-                                    final selctedDatetimetemp =
-                                        await showDatePicker(
-                                      context: context,
-                                      initialDate: DateTime(DateTime.now().year,
-                                          DateTime.now().month, 1),
-                                      firstDate: DateTime(2000),
-                                      lastDate: DateTime.now(),
-                                    );
-                                    fDate = DateFormat('dd-MM-yyyy')
-                                        .format(selctedDatetimetemp!);
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.45,
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(),
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: Colors.white),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10),
-                                          child: Text(
-                                            fDate,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w400,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(2),
-                                            color: Colors.white,
-                                          ),
-                                          child: const Icon(
-                                            Icons.calendar_month,
-                                            color: Colors.grey,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("To Date"),
-                                GestureDetector(
-                                  onTap: () async {
-                                    final toDateSelectTemp =
-                                        await showDatePicker(
-                                      context: context,
-                                      initialDate: DateTime.now(),
-                                      firstDate: DateTime(2000),
-                                      lastDate: DateTime(2100),
-                                    );
-                                    tDate = DateFormat('dd-MM-yyyy')
-                                        .format(toDateSelectTemp!);
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.45,
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(),
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Colors.white,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10),
-                                          child: Text(
-                                            tDate,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                            color: Colors.white,
-                                          ),
-                                          child: const Icon(
-                                            Icons.calendar_month,
-                                            color: Colors.grey,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildRightFilterSection(
+                              selectedTab, setState, context),
                         ),
-                        // const SizedBox(
-                        //   height: 10,
-                        // ),
-                        // Column(
-                        //   crossAxisAlignment: CrossAxisAlignment.start,
-                        //   children: [
-                        //     const Text("Collected by"),
-                        //     GestureDetector(
-                        //       onTap: () async {
-                        //         await staffDialog(context, 'collected');
-                        //         (context as Element).markNeedsBuild();
-                        //       },
-                        //       child: Container(
-                        //         decoration: BoxDecoration(
-                        //           color: Colors.white,
-                        //           border: Border.all(color: Colors.black),
-                        //           borderRadius: BorderRadius.circular(4),
-                        //         ),
-                        //         child: Padding(
-                        //           padding: const EdgeInsets.symmetric(
-                        //               horizontal: 16.0, vertical: 12.0),
-                        //           child: Row(
-                        //             children: [
-                        //               Expanded(
-                        //                 child: Text(
-                        //                   collectedByNames.isNotEmpty
-                        //                       ? collectedByNames.join(', ')
-                        //                       : "Select staff",
-                        //                   overflow: TextOverflow.ellipsis,
-                        //                   maxLines: 2,
-                        //                 ),
-                        //               ),
-                        //               const Icon(Icons.arrow_drop_down),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
-                        const SizedBox(height: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Created by"),
-                            GestureDetector(
-                              onTap: () async {
-                                await staffDialog(context, 'created');
-                                (context as Element).markNeedsBuild();
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.black),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 12.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          createdByNames.isNotEmpty
-                                              ? createdByNames.join(', ')
-                                              : "Select staff",
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                      const Icon(Icons.arrow_drop_down),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Customer"),
-                            GestureDetector(
-                              onTap: () {
-                                customerDialog(context);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.black),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                    child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 12.0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.35,
-                                          child: Text(
-                                            customerName,
-                                            overflow: TextOverflow.ellipsis,
-                                          )),
-                                    ],
-                                  ),
-                                )),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Types"),
-                            GestureDetector(
-                              onTap: () {
-                                typesDialog(context);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.black),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                    child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 12.0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.35,
-                                          child: Text(
-                                            typeName,
-                                            overflow: TextOverflow.ellipsis,
-                                          )),
-                                    ],
-                                  ),
-                                )),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                            isSearch = true;
-                            Common.showProgressDialog(context, "Searching..");
-                            getData();
-                          },
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                                color: const Color(0xff2590cf)),
-                            child: const Center(
-                              child: Text("Filter",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                            ),
-                          ),
-                        )
                       ],
                     ),
                   ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      isSearch = true;
+                      Common.showProgressDialog(context, "Applying filters...");
+                      getData();
+                    },
+                    child: Container(
+                      height: 50,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 49, 133, 243),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "Apply Filters",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 🔹 Build Right Filter Section based on selected tab
+  Widget _buildRightFilterSection(
+      String selectedTab, StateSetter setState, BuildContext context) {
+    switch (selectedTab) {
+      case "Created By":
+        return _buildCreatedBySection(setState, context);
+      case "Date Range":
+        return _buildDateRangeSection(setState, context);
+      case "Customer":
+        return _buildCustomerSection(setState, context);
+      case "Type":
+        return _buildTypeSection(setState, context);
+      case "Status":
+        return _buildStatusSection(setState, context);
+      default:
+        return _buildCreatedBySection(setState, context);
+    }
+  }
+
+  /// 🔹 Created By Section - Updated with inline checkbox list
+  Widget _buildCreatedBySection(StateSetter setState, BuildContext context) {
+    return ListView(
+      children: [
+        const Text(
+          "Created By",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+
+        const SizedBox(height: 16),
+        TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search staff...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (value) {
+            setState(() {
+              filteredStaffs = staffs
+                  .where((item) => item.accountName
+                      .toLowerCase()
+                      .contains(value.toLowerCase()))
+                  .toList();
+            });
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Inline checkbox list for staff selection
+        Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: filteredStaffs.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No staff members found',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: filteredStaffs.length,
+                  itemBuilder: (context, index) {
+                    final staff = filteredStaffs[index];
+                    final isSelected = createdByIds.contains(staff.accountId);
+
+                    return CheckboxListTile(
+                      title: Text(
+                        staff.accountName,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            if (!createdByIds.contains(staff.accountId)) {
+                              createdByIds.add(staff.accountId);
+                              createdByNames.add(staff.accountName);
+                            }
+                          } else {
+                            createdByIds.remove(staff.accountId);
+                            createdByNames.remove(staff.accountName);
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    );
+                  },
                 ),
+        ),
+
+        // Selected staff chips
+        if (createdByNames.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text(
+            "Selected Staff:",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: createdByNames.map((name) {
+              return Chip(
+                label: Text(
+                  name,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onDeleted: () {
+                  final index = createdByNames.indexOf(name);
+                  if (index != -1) {
+                    createdByNames.removeAt(index);
+                    createdByIds.removeAt(index);
+                    setState(() {});
+                  }
+                },
+                deleteIcon: const Icon(Icons.close, size: 16),
+                backgroundColor: Colors.blue.shade50,
               );
+            }).toList(),
+          ),
+
+          // Clear all button
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              createdByIds.clear();
+              createdByNames.clear();
+              setState(() {});
             },
-          );
-        });
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.clear_all, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    "Clear All",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDateRangeSection(StateSetter setState, BuildContext context) {
+    return ListView(
+      children: [
+        const Text(
+          "Date Range",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "From Date",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87),
+            ),
+            const SizedBox(height: 8),
+            _buildDatePickerTile(
+              context: context,
+              title: "Select from date",
+              date: fDate,
+              onSelect: (date) {
+                fDate = date;
+                setState(() {});
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "To Date",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87),
+            ),
+            const SizedBox(height: 8),
+            _buildDatePickerTile(
+              context: context,
+              title: "Select to date",
+              date: tDate,
+              onSelect: (date) {
+                tDate = date;
+                setState(() {});
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (fDate != "From Date" || tDate != "To Date")
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade100),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today,
+                    color: Colors.blue.shade600, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Selected: ${fDate != "From Date" ? fDate : "Any"} - ${tDate != "To Date" ? tDate : "Any"}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.blue.shade800,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (fDate != "From Date" || tDate != "To Date") ...[
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              fDate = "From Date";
+              tDate = "To Date";
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.clear, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    "Clear Dates",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDatePickerTile({
+    required BuildContext context,
+    required String title,
+    required String date,
+    required Function(String) onSelect,
+  }) {
+    final bool hasDate =
+        date.isNotEmpty && date != "From Date" && date != "To Date";
+
+    return GestureDetector(
+      onTap: () async {
+        final pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (pickedDate != null) {
+          onSelect(DateFormat('dd-MM-yyyy').format(pickedDate));
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: hasDate ? const Color(0xff2590cf) : Colors.grey.shade400,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: hasDate ? const Color(0xffe7f3ff) : Colors.white,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                hasDate ? date : title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color:
+                      hasDate ? const Color(0xff2590cf) : Colors.grey.shade600,
+                  fontWeight: hasDate ? FontWeight.w500 : FontWeight.normal,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.calendar_month,
+              color: hasDate ? const Color(0xff2590cf) : Colors.grey.shade500,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerSection(StateSetter setState, BuildContext context) {
+    // Reset filtered list only if needed
+    if (filteredCustomers.isEmpty ||
+        filteredCustomers.length != customers.length) {
+      filteredCustomers = List.from(customers);
+    }
+
+    return ListView(
+      children: [
+        const Text(
+          "Customer",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search customers...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (value) {
+            setState(() {
+              if (value.isEmpty) {
+                filteredCustomers = List.from(customers);
+              } else {
+                filteredCustomers = customers
+                    .where((item) =>
+                        item.name.toLowerCase().contains(value.toLowerCase()))
+                    .toList();
+              }
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: filteredCustomers.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No customers found',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: filteredCustomers.length,
+                  itemBuilder: (context, index) {
+                    final customer = filteredCustomers[index];
+                    final isSelected =
+                        selectedCustomerIds.contains(customer.id);
+
+                    return CheckboxListTile(
+                      title: Text(
+                        customer.name,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            if (!selectedCustomerIds.contains(customer.id)) {
+                              selectedCustomerIds.add(customer.id);
+                              selectedCustomerNames.add(customer.name);
+                            }
+                          } else {
+                            selectedCustomerIds.remove(customer.id);
+                            selectedCustomerNames.remove(customer.name);
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    );
+                  },
+                ),
+        ),
+
+        // Selected customers chips
+        if (selectedCustomerNames.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text(
+            "Selected Customers:",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: selectedCustomerNames.map((name) {
+              return Chip(
+                label: Text(
+                  name,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onDeleted: () {
+                  final index = selectedCustomerNames.indexOf(name);
+                  if (index != -1) {
+                    selectedCustomerNames.removeAt(index);
+                    selectedCustomerIds.removeAt(index);
+                    setState(() {});
+                  }
+                },
+                deleteIcon: const Icon(Icons.close, size: 16),
+                backgroundColor: Colors.blue.shade50,
+              );
+            }).toList(),
+          ),
+
+          // Clear all button
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              selectedCustomerIds.clear();
+              selectedCustomerNames.clear();
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.clear_all, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    "Clear All",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTypeSection(StateSetter setState, BuildContext context) {
+    if (filteredTypes.isEmpty || filteredTypes.length != types.length) {
+      filteredTypes = List.from(types);
+    }
+
+    return ListView(
+      children: [
+        const Text(
+          "Type",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search types...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (value) {
+            setState(() {
+              if (value.isEmpty) {
+                filteredTypes = List.from(types);
+              } else {
+                filteredTypes = types
+                    .where((item) => item.typeName
+                        .toLowerCase()
+                        .contains(value.toLowerCase()))
+                    .toList();
+              }
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: filteredTypes.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No types found',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: filteredTypes.length,
+                  itemBuilder: (context, index) {
+                    final type = filteredTypes[index];
+                    final isSelected =
+                        selectedTypeIds.contains(type.id.toString());
+
+                    return CheckboxListTile(
+                      title: Text(
+                        type.typeName,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      value: isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            if (!selectedTypeIds.contains(type.id.toString())) {
+                              selectedTypeIds.add(type.id.toString());
+                              selectedTypeNames.add(type.typeName);
+                            }
+                          } else {
+                            selectedTypeIds.remove(type.id.toString());
+                            selectedTypeNames.remove(type.typeName);
+                          }
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    );
+                  },
+                ),
+        ),
+
+        // Selected types chips
+        if (selectedTypeNames.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text(
+            "Selected Types:",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: selectedTypeNames.map((name) {
+              return Chip(
+                label: Text(
+                  name,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onDeleted: () {
+                  final index = selectedTypeNames.indexOf(name);
+                  if (index != -1) {
+                    selectedTypeNames.removeAt(index);
+                    selectedTypeIds.removeAt(index);
+                    setState(() {});
+                  }
+                },
+                deleteIcon: const Icon(Icons.close, size: 16),
+                backgroundColor: Colors.blue.shade50,
+              );
+            }).toList(),
+          ),
+
+          // Clear all button
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              selectedTypeIds.clear();
+              selectedTypeNames.clear();
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.clear_all, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    "Clear All",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStatusSection(StateSetter setState, BuildContext context) {
+    return ListView(
+      children: [
+        const Text(
+          "Status",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search status...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (value) {},
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListView(
+            children: [
+              _buildStatusCheckbox(
+                "Pending",
+                "",
+                setState,
+              ),
+              _buildStatusCheckbox(
+                "Approved",
+                "",
+                setState,
+              ),
+              _buildStatusCheckbox(
+                "Rejected",
+                "",
+                setState,
+              ),
+              _buildStatusCheckbox(
+                "Created",
+                "",
+                setState,
+              ),
+              _buildStatusCheckbox(
+                "All",
+                "",
+                setState,
+              ),
+            ],
+          ),
+        ),
+        if (_getSelectedStatuses().isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text(
+            "Selected Status:",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _getSelectedStatuses().map((status) {
+              return Chip(
+                label: Text(
+                  status,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onDeleted: () {
+                  _removeStatus(status);
+                  setState(() {});
+                },
+                deleteIcon: const Icon(Icons.close, size: 16),
+                backgroundColor: Colors.blue.shade50,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () {
+              _clearAllStatuses();
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.clear_all, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    "Clear All",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStatusCheckbox(
+      String status, String description, StateSetter setState) {
+    final isSelected = _isStatusSelected(status);
+
+    return CheckboxListTile(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            status,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+      value: isSelected,
+      onChanged: (bool? value) {
+        if (value == true) {
+          _addStatus(status);
+        } else {
+          _removeStatus(status);
+        }
+        setState(() {});
+      },
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    );
+  }
+
+  Widget _buildFilterTab({
+    required IconData icon,
+    required String title,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xffe7f3ff) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: selected
+              ? Border.all(color: const Color(0xff2590cf), width: 1)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                color: selected ? const Color(0xff2590cf) : Colors.grey,
+                size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  color: selected ? const Color(0xff2590cf) : Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<dynamic> staffDialog(BuildContext context, String type) {
     List<String> tempSelectedIds = [];
     List<String> tempSelectedNames = [];
-
-    // Initialize selection only once, outside setState
+    TextEditingController search = TextEditingController();
     if (type == 'collected') {
       tempSelectedIds = List.from(collectedByIds);
       tempSelectedNames = List.from(collectedByNames);
@@ -1988,88 +2918,93 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
       tempSelectedIds = List.from(createdByIds);
       tempSelectedNames = List.from(createdByNames);
     }
+    List<Staff> filteredStaffs = List.from(staffs);
 
     return showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            title: const Text("Select Staff"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: search,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredStaffs = staffs
-                            .where((item) => item.accountName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Search staff',
-                      prefixIcon: Icon(Icons.search),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Select Staff"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      controller: search,
+                      onChanged: (value) {
+                        setState(() {
+                          // Always filter from original list `staffs`
+                          filteredStaffs = staffs
+                              .where((item) => item.accountName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Search staff',
+                        prefixIcon: Icon(Icons.search),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .4,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
-                    itemCount: filteredStaffs.length,
-                    itemBuilder: (context, index) {
-                      final staff = filteredStaffs[index];
-                      final selected =
-                          tempSelectedIds.contains(staff.accountId);
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .4,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      itemCount: filteredStaffs.length,
+                      itemBuilder: (context, index) {
+                        final staff = filteredStaffs[index];
+                        final selected =
+                            tempSelectedIds.contains(staff.accountId);
 
-                      return CheckboxListTile(
-                        title: Text(staff.accountName),
-                        value: selected,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              if (!tempSelectedIds.contains(staff.accountId)) {
-                                tempSelectedIds.add(staff.accountId);
-                                tempSelectedNames.add(staff.accountName);
+                        return CheckboxListTile(
+                          title: Text(staff.accountName),
+                          value: selected,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                if (!tempSelectedIds
+                                    .contains(staff.accountId)) {
+                                  tempSelectedIds.add(staff.accountId);
+                                  tempSelectedNames.add(staff.accountName);
+                                }
+                              } else {
+                                tempSelectedIds.remove(staff.accountId);
+                                tempSelectedNames.remove(staff.accountName);
                               }
-                            } else {
-                              tempSelectedIds.remove(staff.accountId);
-                              tempSelectedNames.remove(staff.accountName);
-                            }
-                          });
-                        },
-                      );
-                    },
+                            });
+                          },
+                        );
+                      },
+                    ),
                   ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (type == 'collected') {
+                      collectedByIds = List.from(tempSelectedIds);
+                      collectedByNames = List.from(tempSelectedNames);
+                    } else {
+                      createdByIds = List.from(tempSelectedIds);
+                      createdByNames = List.from(tempSelectedNames);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Done"),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (type == 'collected') {
-                    collectedByIds = List.from(tempSelectedIds);
-                    collectedByNames = List.from(tempSelectedNames);
-                  } else {
-                    createdByIds = List.from(tempSelectedIds);
-                    createdByNames = List.from(tempSelectedNames);
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text("Done"),
-              ),
-            ],
-          );
-        });
+            );
+          },
+        );
       },
     );
   }

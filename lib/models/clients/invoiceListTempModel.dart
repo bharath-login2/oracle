@@ -53,7 +53,7 @@ class ListElement {
   String invType;
   String renewalId;
   String renewalType;
-   String createdBy;
+  String createdBy;
   String installmentId;
   String invoiceNumber;
   String invoiceDate;
@@ -66,15 +66,17 @@ class ListElement {
   String status;
   bool isPaid;
   String clientId;
+    String isApproved;
+      String isRejected;
   List<ProductTemp> products;
-   String invoiceCreated;
+  String invoiceCreated;
 
   ListElement({
     required this.id,
     required this.invType,
     required this.invoiceNumber,
     required this.invoiceDate,
-     required this.invoiceAt,
+    required this.invoiceAt,
     required this.customerName,
     required this.paymentMode,
     required this.totalAmount,
@@ -86,32 +88,36 @@ class ListElement {
     required this.renewalId,
     required this.renewalType,
     required this.installmentId,
-      required this.createdBy,
+    required this.createdBy,
+     required this.isApproved,
+      required this.isRejected,
     required this.products,
-      required this.invoiceCreated,
+    required this.invoiceCreated,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
-        id: json["id"]??"",
-        invType: json["inv_type"]??"",
-        invoiceNumber: json["invoice_number"]??"",
-        invoiceDate: json["invoice_date"]??"",
-         invoiceAt: json["created_at"]??"",
-        customerName: json["customer_name"]??"",
-        paymentMode: json["payment_mode"]??"",
-        totalAmount: json["total_amount"]??"",
-        totalPaid: json["total_paid"]??"",
-        balance: json["balance"]??"",
-        status: json["status"]??"",
-        isPaid: json["is_paid"]??"",
-        clientId: json["client_id"]??"",
-        renewalId: json["renewal_id"]??"",
-        renewalType: json["renewal_id"]??"",
-        installmentId: json["installment_id"]??"",
-        createdBy: json["created_by"]??"",
+        id: json["id"] ?? "",
+        invType: json["inv_type"] ?? "",
+        invoiceNumber: json["invoice_number"] ?? "",
+        invoiceDate: json["invoice_date"] ?? "",
+        invoiceAt: json["created_at"] ?? "",
+        customerName: json["customer_name"] ?? "",
+        paymentMode: json["payment_mode"] ?? "",
+        totalAmount: json["total_amount"] ?? "",
+        totalPaid: json["total_paid"] ?? "",
+        balance: json["balance"] ?? "",
+        status: json["status"] ?? "",
+        isPaid: json["is_paid"] ?? "",
+        clientId: json["client_id"] ?? "",
+        renewalId: json["renewal_id"] ?? "",
+        renewalType: json["renewal_id"] ?? "",
+        installmentId: json["installment_id"] ?? "",
+        createdBy: json["created_by"] ?? "",
+         isApproved: json["is_approved"] ?? "",
+          isRejected: json["is_rejected"] ?? "",
         products: List<ProductTemp>.from(
             json["products"].map((x) => ProductTemp.fromJson(x))),
-             invoiceCreated: json["invoice_created"],
+        invoiceCreated: json["invoice_created"],
       );
 }
 
@@ -120,12 +126,16 @@ class ProductTemp {
   String qty;
   String amount;
   String productName;
+  final String? discountAmount;
+  final String? shippingAmount;
 
   ProductTemp({
     required this.productId,
     required this.qty,
     required this.amount,
     required this.productName,
+    required this.discountAmount,
+    required this.shippingAmount,
   });
 
   factory ProductTemp.fromJson(Map<String, dynamic> json) => ProductTemp(
@@ -133,6 +143,8 @@ class ProductTemp {
         qty: json["qty"],
         amount: json["amount"],
         productName: json["product_name"],
+        discountAmount: json["discount_amount"]?.toString() ?? "0.00",
+        shippingAmount: json["shipping_amount"]?.toString() ?? "0.00",
       );
 
   Map<String, dynamic> toJson() => {
@@ -140,5 +152,7 @@ class ProductTemp {
         "qty": qty,
         "amount": amount,
         "product_name": productName,
+        "discount_amount": discountAmount,
+        "shipping_amount": shippingAmount,
       };
 }

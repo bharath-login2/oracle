@@ -72,8 +72,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
   List productNameListExisting = [];
   List productNameListNew = [];
   double totalProductCostExisting = 0; // Sum of rate*qty
-    double totalCostExisting = 0; 
-  double totalProductCostNew = 0;      // Sum of rate*qty
+  double totalCostExisting = 0;
+  double totalProductCostNew = 0; // Sum of rate*qty
   double totalProductTaxExisting = 0;
   double totalProductTaxNew = 0;
   bool uploading = false;
@@ -127,7 +127,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController prodAmountNew = TextEditingController();
   TextEditingController prodDetailsExisting = TextEditingController();
   TextEditingController prodDetailsNew = TextEditingController();
-  TextEditingController productQuantityExisting = TextEditingController(text: '1');
+  TextEditingController productQuantityExisting =
+      TextEditingController(text: '1');
   TextEditingController productQuantityNew = TextEditingController(text: '1');
   TextEditingController subTotalNew = TextEditingController();
   TextEditingController totalTaxNew = TextEditingController();
@@ -258,30 +259,30 @@ class _CustomRenewalState extends State<CustomRenewal> {
     }
   }
 
-  void filterCustomers(
-    String query,
-  ) {
-    filteredNames = detailsResponse!.data.customer
-        .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void filterCustomers(String query) {
+    if (detailsResponse != null && detailsResponse!.data.customer.isNotEmpty) {
+      filteredNames = detailsResponse!.data.customer
+          .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
   }
 
-  void filterProducts(
-    String query,
-  ) {
-    filteredProducts = detailsResponse!.data.products
-        .where((map) =>
-            map.productName.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void filterProducts(String query) {
+    if (detailsResponse != null && detailsResponse!.data.products.isNotEmpty) {
+      filteredProducts = detailsResponse!.data.products
+          .where((map) =>
+              map.productName.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
   }
 
-  void filterTemplates(
-    String query,
-  ) {
-    filteredTemplates = detailsResponse!.data.template
-        .where((map) =>
-            map.templateName.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void filterTemplates(String query) {
+    if (detailsResponse != null && detailsResponse!.data.template.isNotEmpty) {
+      filteredTemplates = detailsResponse!.data.template
+          .where((map) =>
+              map.templateName.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
   }
 
   postExisting() async {
@@ -817,7 +818,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       // totalProductCostExisting += double.parse(
                                       //     (await productsExisting[i])[
                                       //         "total_amount"]);
-                                                totalProductCostExisting += double.parse(
+                                      totalProductCostExisting += double.parse(
                                           (await productsExisting[i])[
                                               "product_rate"]);
                                       totalProductTaxExisting += double.parse(
@@ -3492,6 +3493,151 @@ class _CustomRenewalState extends State<CustomRenewal> {
     );
   }
 
+  // Future<dynamic> dropDialogNew(BuildContext context, String title) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return Builder(builder: (context) {
+  //         return StatefulBuilder(builder: (context, setState) {
+  //           return AlertDialog(
+  //               scrollable: true,
+  //               title: Column(
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.end,
+  //                     children: [
+  //                       GestureDetector(
+  //                           onTap: () {
+  //                             search.clear();
+  //                             if (context.mounted) {
+  //                               Navigator.pop(context);
+  //                             }
+  //                           },
+  //                           child: const Icon(Icons.close)),
+  //                     ],
+  //                   ),
+  //                   Padding(
+  //                     padding: const EdgeInsets.symmetric(vertical: 4.0),
+  //                     child: TextField(
+  //                       controller: search,
+  //                       autocorrect: false,
+  //                       keyboardType: TextInputType.visiblePassword,
+  //                       autofocus: true,
+  //                       onChanged: ((value) {
+  //                         if (title == "Customers") {
+  //                           setState(() {
+  //                             filterCustomers(value);
+  //                           });
+  //                         } else if (title == "Template") {
+  //                           setState(() {
+  //                             filterTemplates(value);
+  //                           });
+  //                         } else {
+  //                           setState(() {
+  //                             filterProducts(value);
+  //                           });
+  //                         }
+  //                       }),
+  //                       decoration: const InputDecoration(
+  //                         contentPadding: EdgeInsets.only(left: 8),
+  //                         labelStyle: TextStyle(
+  //                           color: Colors.grey,
+  //                         ),
+  //                         labelText: 'Search...',
+  //                         border: OutlineInputBorder(
+  //                           borderRadius:
+  //                               BorderRadius.all(Radius.circular(10.0)),
+  //                         ),
+  //                         focusedBorder: OutlineInputBorder(
+  //                           borderSide: BorderSide(color: Colors.black),
+  //                           borderRadius:
+  //                               BorderRadius.all(Radius.circular(15.0)),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               content: SizedBox(
+  //                 height: MediaQuery.of(context).size.height * .4,
+  //                 width: MediaQuery.of(context).size.width * .8,
+  //                 child: ListView.builder(
+  //                   shrinkWrap: true,
+  //                   itemCount: title == "Customers"
+  //                       ? filteredNames.length
+  //                       : title == "Template"
+  //                           ? filteredTemplates.length
+  //                           : filteredProducts.length,
+  //                   itemBuilder: (context, index) {
+  //                     return Padding(
+  //                       padding: const EdgeInsets.symmetric(vertical: 4.0),
+  //                       child: Container(
+  //                         decoration: BoxDecoration(
+  //                             borderRadius: BorderRadius.circular(15),
+  //                             color: const Color(0xFFFCFBFA)),
+  //                         child: ListTile(
+  //                           onTap: () async {
+  //                             if (title == "Customers") {
+  //                               customerNameNew.text =
+  //                                   filteredNames[index].name;
+  //                               customerIdNew = filteredNames[index].id;
+  //                             } else if (title == "Template") {
+  //                               remindMeNew.text =
+  //                                   filteredTemplates[index].templateName;
+  //                               templateIdNew = filteredTemplates[index].id;
+  //                             } else {
+  //                               productIdNew = filteredProducts[index].id;
+  //                               productNameNew.text =
+  //                                   filteredProducts[index].productName;
+  //                               prodRateNew.text =
+  //                                   filteredProducts[index].sellingPrice;
+  //                               prodTaxNew.text =
+  //                                   filteredProducts[index].taxPercent;
+  //                               typeDuration = filteredProducts[index].noOfDays;
+  //                               calculateTotalNew();
+  //                             }
+  //                             Navigator.pop(context);
+  //                             setState(() {});
+  //                             filterCustomers("");
+  //                             filteredProducts;
+  //                             filteredTemplates;
+  //                           },
+  //                           title: SizedBox(
+  //                             width: 200,
+  //                             child: Text(
+  //                               title == "Customers"
+  //                                   ? filteredNames[index].name.toString()
+  //                                   : title == "Template"
+  //                                       ? filteredTemplates[index].templateName
+  //                                       : filteredProducts[index]
+  //                                           .productName
+  //                                           .toString(),
+  //                               style: const TextStyle(
+  //                                   color: Colors.black,
+  //                                   fontWeight: FontWeight.w400,
+  //                                   fontSize: 14),
+  //                             ),
+  //                           ),
+  //                           leading: CircleAvatar(
+  //                             radius: 15,
+  //                             backgroundColor: Colors.white,
+  //                             child: Text(title == "Customers"
+  //                                 ? filteredNames[index].name[0]
+  //                                 : title == "Template"
+  //                                     ? filteredTemplates[index].templateName[0]
+  //                                     : filteredProducts[index].productName[0]),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //               ));
+  //         });
+  //       });
+  //     },
+  //   );
+  // }
   Future<dynamic> dropDialogNew(BuildContext context, String title) {
     return showDialog(
       context: context,
@@ -3508,6 +3654,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         GestureDetector(
                             onTap: () {
                               search.clear();
+                              _resetFilteredLists(title);
                               if (context.mounted) {
                                 Navigator.pop(context);
                               }
@@ -3595,11 +3742,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 typeDuration = filteredProducts[index].noOfDays;
                                 calculateTotalNew();
                               }
+                              search.clear();
+                              _resetFilteredLists(title);
                               Navigator.pop(context);
                               setState(() {});
-                              filterCustomers("");
-                              filteredProducts;
-                              filteredTemplates;
                             },
                             title: SizedBox(
                               width: 200,
@@ -3635,8 +3781,168 @@ class _CustomRenewalState extends State<CustomRenewal> {
           });
         });
       },
-    );
+    ).then((_) {
+      search.clear();
+      _resetFilteredLists(title);
+    });
   }
+
+  void _resetFilteredLists(String title) {
+    if (title == "Customers") {
+      filteredNames = detailsResponse!.data.customer;
+    } else if (title == "Template") {
+      filteredTemplates = detailsResponse!.data.template;
+    } else {
+      filteredProducts = detailsResponse!.data.products;
+    }
+  }
+
+  // Future<dynamic> dropDialogExisting(BuildContext context, String title) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return Builder(builder: (context) {
+  //         return StatefulBuilder(builder: (context, setState) {
+  //           return AlertDialog(
+  //               scrollable: true,
+  //               title: Column(
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.end,
+  //                     children: [
+  //                       GestureDetector(
+  //                           onTap: () {
+  //                             search.clear();
+  //                             if (context.mounted) {
+  //                               Navigator.pop(context);
+  //                             }
+  //                           },
+  //                           child: const Icon(Icons.close)),
+  //                     ],
+  //                   ),
+  //                   Padding(
+  //                     padding: const EdgeInsets.symmetric(vertical: 4.0),
+  //                     child: TextField(
+  //                       controller: search,
+  //                       autocorrect: false,
+  //                       keyboardType: TextInputType.visiblePassword,
+  //                       autofocus: true,
+  //                       onChanged: ((value) {
+  //                         if (title == "Customers") {
+  //                           setState(() {
+  //                             filterCustomers(value);
+  //                           });
+  //                         } else if (title == "Template") {
+  //                           setState(() {
+  //                             filterTemplates(value);
+  //                           });
+  //                         } else {
+  //                           setState(() {
+  //                             filterProducts(value);
+  //                           });
+  //                         }
+  //                       }),
+  //                       decoration: const InputDecoration(
+  //                         contentPadding: EdgeInsets.only(left: 8),
+  //                         labelStyle: TextStyle(
+  //                           color: Colors.grey,
+  //                         ),
+  //                         labelText: 'Search...',
+  //                         border: OutlineInputBorder(
+  //                           borderRadius:
+  //                               BorderRadius.all(Radius.circular(10.0)),
+  //                         ),
+  //                         focusedBorder: OutlineInputBorder(
+  //                           borderSide: BorderSide(color: Colors.black),
+  //                           borderRadius:
+  //                               BorderRadius.all(Radius.circular(15.0)),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               content: SizedBox(
+  //                 height: MediaQuery.of(context).size.height * .4,
+  //                 width: MediaQuery.of(context).size.width * .8,
+  //                 child: ListView.builder(
+  //                   shrinkWrap: true,
+  //                   itemCount: title == "Customers"
+  //                       ? filteredNames.length
+  //                       : title == "Template"
+  //                           ? filteredTemplates.length
+  //                           : filteredProducts.length,
+  //                   itemBuilder: (context, index) {
+  //                     return Padding(
+  //                       padding: const EdgeInsets.symmetric(vertical: 4.0),
+  //                       child: Container(
+  //                         decoration: BoxDecoration(
+  //                             borderRadius: BorderRadius.circular(15),
+  //                             color: const Color(0xFFFCFBFA)),
+  //                         child: ListTile(
+  //                           onTap: () async {
+  //                             if (title == "Customers") {
+  //                               customerNameExisting.text =
+  //                                   filteredNames[index].name;
+  //                               customerIdExisting = filteredNames[index].id;
+  //                             } else if (title == "Template") {
+  //                               remindMeExisting.text =
+  //                                   filteredTemplates[index].templateName;
+  //                               templateIdExisting =
+  //                                   filteredTemplates[index].id;
+  //                             } else {
+  //                               productIdExisting = filteredProducts[index].id;
+  //                               productNameExisting.text =
+  //                                   filteredProducts[index].productName;
+  //                               prodRateExisting.text =
+  //                                   filteredProducts[index].sellingPrice;
+  //                               prodTaxExisting.text =
+  //                                   filteredProducts[index].taxPercent;
+  //                               typeDuration = filteredProducts[index].noOfDays;
+  //                               calculateTotalExisting();
+  //                             }
+  //                             Navigator.pop(context);
+  //                             setState(() {});
+  //                             filterCustomers("");
+  //                             filteredProducts;
+  //                             filteredTemplates;
+  //                           },
+  //                           title: SizedBox(
+  //                             width: 200,
+  //                             child: Text(
+  //                               title == "Customers"
+  //                                   ? filteredNames[index].name.toString()
+  //                                   : title == "Template"
+  //                                       ? filteredTemplates[index].templateName
+  //                                       : filteredProducts[index]
+  //                                           .productName
+  //                                           .toString(),
+  //                               style: const TextStyle(
+  //                                   color: Colors.black,
+  //                                   fontWeight: FontWeight.w400,
+  //                                   fontSize: 14),
+  //                             ),
+  //                           ),
+  //                           leading: CircleAvatar(
+  //                             radius: 15,
+  //                             backgroundColor: Colors.white,
+  //                             child: Text(title == "Customers"
+  //                                 ? filteredNames[index].name[0]
+  //                                 : title == "Template"
+  //                                     ? filteredTemplates[index].templateName[0]
+  //                                     : filteredProducts[index].productName[0]),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //               ));
+  //         });
+  //       });
+  //     },
+  //   );
+  // }
 
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
     return showDialog(
@@ -3654,6 +3960,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         GestureDetector(
                             onTap: () {
                               search.clear();
+                              _resetFilteredLists(title);
                               if (context.mounted) {
                                 Navigator.pop(context);
                               }
@@ -3742,11 +4049,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 typeDuration = filteredProducts[index].noOfDays;
                                 calculateTotalExisting();
                               }
+                              search.clear();
+                              _resetFilteredLists(title);
                               Navigator.pop(context);
                               setState(() {});
-                              filterCustomers("");
-                              filteredProducts;
-                              filteredTemplates;
                             },
                             title: SizedBox(
                               width: 200,
@@ -3782,7 +4088,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
           });
         });
       },
-    );
+    ).then((_) {
+      search.clear();
+      _resetFilteredLists(title);
+    });
   }
 
   calculateTotalExisting() {
@@ -3824,7 +4133,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
         for (int i = 0; i < productsExisting.length; i++) {
           totalProductCostExisting +=
               double.parse((await productsExisting[i])["total_amount"]);
-               totalCostExisting +=
+          totalCostExisting +=
               double.parse((await productsExisting[i])["product_rate"]);
           totalProductTaxExisting +=
               double.parse((await productsExisting[i])["total_tax_amount"]);

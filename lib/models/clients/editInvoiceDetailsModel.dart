@@ -195,6 +195,8 @@ class ProductDetails {
 class BillingAddress {
   String? billingName;
   String? billingAddress;
+    String? billingAddress2;
+      String? billingAddress3;
   String? billingCountryCode;
   String? billingContactNo;
   String? billingGst;
@@ -204,6 +206,8 @@ class BillingAddress {
   BillingAddress(
       {this.billingName,
         this.billingAddress,
+         this.billingAddress2,
+          this.billingAddress3,
         this.billingCountryCode,
         this.billingContactNo,
         this.billingGst,
@@ -213,6 +217,8 @@ class BillingAddress {
   BillingAddress.fromJson(Map<String, dynamic> json) {
     billingName = json['billing_name'];
     billingAddress = json['billing_address'];
+      billingAddress2 = json['billing_address2'];
+        billingAddress3 = json['billing_address3'];
     billingCountryCode = json['billing_country_code'];
     billingContactNo = json['billing_contact_no'];
     billingGst = json['billing_gst'];
@@ -224,6 +230,8 @@ class BillingAddress {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['billing_name'] = billingName;
     data['billing_address'] = billingAddress;
+     data['billing_address2'] = billingAddress2;
+      data['billing_address3'] = billingAddress3;
     data['billing_country_code'] = billingCountryCode;
     data['billing_contact_no'] = billingContactNo;
     data['billing_gst'] = billingGst;
@@ -236,6 +244,8 @@ class BillingAddress {
 class ShippingAddress {
   String? shippingName;
   String? shippingAddress;
+   String? shippingAddress2;
+    String? shippingAddress3;
   String? shippingCountryCode;
   String? shippingContactNo;
   String? shippingGst;
@@ -245,6 +255,8 @@ class ShippingAddress {
   ShippingAddress(
       {this.shippingName,
         this.shippingAddress,
+          this.shippingAddress2,
+            this.shippingAddress3,
         this.shippingCountryCode,
         this.shippingContactNo,
         this.shippingGst,
@@ -254,6 +266,8 @@ class ShippingAddress {
   ShippingAddress.fromJson(Map<String, dynamic> json) {
     shippingName = json['shipping_name'];
     shippingAddress = json['shipping_address'];
+     shippingAddress2 = json['shipping_address2'];
+      shippingAddress3 = json['shipping_address3'];
     shippingCountryCode = json['shipping_country_code'];
     shippingContactNo = json['shipping_contact_no'];
     shippingGst = json['shipping_gst'];
@@ -265,6 +279,8 @@ class ShippingAddress {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['shipping_name'] = shippingName;
     data['shipping_address'] = shippingAddress;
+     data['shipping_address2'] = shippingAddress2;
+      data['shipping_address3'] = shippingAddress3;
     data['shipping_country_code'] = shippingCountryCode;
     data['shipping_contact_no'] = shippingContactNo;
     data['shipping_gst'] = shippingGst;

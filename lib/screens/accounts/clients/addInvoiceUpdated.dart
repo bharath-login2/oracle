@@ -1,11 +1,16 @@
+import 'dart:io';
+
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/models/product_mannagement/product_list_model.dart';
 import 'package:login2/screens/accounts/clients/addClients.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/widgets/accountHeadDialog.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../models/clients/customerListModel.dart';
 import '../../../models/clients/ivoiceAddCommonDetailsModel.dart';
 import '../../../service/service.dart';
@@ -257,68 +262,76 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
   }
 
   Future<void> _saveInvoice({bool download = false}) async {
-    if (selectedCustomer == null) {
+  if (selectedCustomer == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please select a customer')),
+    );
+    return;
+  }
+
+  if (addedProducts.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please add at least one product')),
+    );
+    return;
+  }
+
+  if (paymentStatus == "Partial" || paymentStatus == "Paid") {
+    if (staffId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a customer')),
+        const SnackBar(content: Text('Please select an account head')),
       );
       return;
     }
+  }
 
-    if (addedProducts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one product')),
-      );
-      return;
-    }
-
-    if (paymentStatus == "Partial" || paymentStatus == "Paid") {
-      if (staffId.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select an account head')),
-        );
-        return;
-      }
-    }
-
-    setState(() => saving = true);
-    try {
-      final invoiceItems = addedProducts.entries.map((entry) {
-        final ProductList p = entry.value['product'] as ProductList;
-        final int qty = entry.value['qty'] as int;
-        return {
-          'product_id': p.id,
-          'qty': qty,
-          'rate': p.totalAmount,
-          'total': (double.tryParse(p.totalAmount) ?? 0) * qty,
-        };
-      }).toList();
-      // final String paymentStatusLower = paymentStatus?.toLowerCase() ?? 'paid';
-      String paymentMethodValue;
-      if ((paymentMethod ?? '').toLowerCase() == 'cash') {
-        paymentMethodValue = '1';
-      } else if ((paymentMethod ?? '').toLowerCase() == 'Bank Transfer') {
-        paymentMethodValue = '5';
-      } else {
-        paymentMethodValue = '0';
-      }
-
-      final payload = {
-        'client_id': widget.clientId,
-        'customer_id': selectedCustomer,
-        'products': invoiceItems,
-        'total': total.toStringAsFixed(2),
-        'payment_status': paymentStatus ?? 'Paid',
-        'payment_method': paymentMethodValue,
-        'paid_amount':
-            paidAmount.text.trim().isEmpty ? '0' : paidAmount.text.trim(),
-        'paid_date': paidDate,
-        'collected_by': staffId,
-        'account_head_name': staffName,
-        'download': download ? '1' : '0',
-        'token': widget.token,
+  setState(() => saving = true);
+  try {
+    final invoiceItems = addedProducts.entries.map((entry) {
+      final ProductList p = entry.value['product'] as ProductList;
+      final int qty = entry.value['qty'] as int;
+      return {
+        'product_id': p.id,
+        'qty': qty,
+        'rate': p.totalAmount,
+        'total': (double.tryParse(p.totalAmount) ?? 0) * qty,
       };
-      final response = await HttpService.addInvoiceUpdated(payload);
-      if (response.status == true) {
+    }).toList();
+
+    String paymentMethodValue;
+    if ((paymentMethod ?? '').toLowerCase() == 'cash') {
+      paymentMethodValue = '1';
+    } else if ((paymentMethod ?? '').toLowerCase() == 'Bank Transfer') {
+      paymentMethodValue = '5';
+    } else {
+      paymentMethodValue = '0';
+    }
+
+    final payload = {
+      'client_id': widget.clientId,
+      'customer_id': selectedCustomer,
+      'products': invoiceItems,
+      'total': total.toStringAsFixed(2),
+      'payment_status': paymentStatus ?? 'Paid',
+      'payment_method': paymentMethodValue,
+      'paid_amount':
+          paidAmount.text.trim().isEmpty ? '0' : paidAmount.text.trim(),
+      'paid_date': paidDate,
+      'collected_by': staffId,
+      'account_head_name': staffName,
+      'is_download': download ? '1' : '0', 
+      'token': widget.token,
+    };
+
+    final response = await HttpService.addInvoiceUpdated(payload);
+    
+    if (response.status == true) {
+   
+      if (download && response.data is String && (response.data as String).contains('http')) {
+        final pdfUrl = response.data as String;
+        await _handlePdfDownload(pdfUrl);
+      } else {
+        // Regular save success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -336,30 +349,111 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
             duration: const Duration(seconds: 2),
           ),
         );
-
-        setState(() {
-          addedProducts.clear();
-          total = 0;
-          paidAmount.clear();
-          _clearProductSearch();
-          searchResults.clear();
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Failed to save invoice'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
-    } catch (e) {
+
+      setState(() {
+        addedProducts.clear();
+        total = 0;
+        paidAmount.clear();
+        _clearProductSearch();
+        searchResults.clear();
+      });
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(
+          content: Text(response.message ?? 'Failed to save invoice'),
+          backgroundColor: Colors.red,
+        ),
       );
-    } finally {
-      setState(() => saving = false);
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    setState(() => saving = false);
   }
+}
+
+
+  Future<void> _handlePdfDownload(String pdfUrl) async {
+  try {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Invoice Generated'),
+          content: const Text('What would you like to do with the invoice?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'view'),
+              child: const Text('View PDF'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'download'),
+              child: const Text('Download PDF'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'cancel'),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (action == 'view') {
+      await _viewPdf(pdfUrl);
+    } else if (action == 'download') {
+      await _downloadPdf(pdfUrl);
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error handling PDF: $e')),
+    );
+  }
+}
+
+Future<void> _viewPdf(String url) async {
+  final Uri pdfUri = Uri.parse(url);
+  
+  if (await canLaunchUrl(pdfUri)) {
+    await launchUrl(
+      pdfUri,
+      mode: LaunchMode.externalApplication, 
+    );
+  } else {
+    throw 'Could not launch $url';
+  }
+}
+
+Future<void> _downloadPdf(String url) async {
+  try {
+  
+    final Directory? downloadsDir = await getExternalStorageDirectory();
+    final String savePath = '${downloadsDir?.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+   
+    await FlutterDownloader.enqueue(
+      url: url,
+      savedDir: downloadsDir?.path ?? '',
+      fileName: 'invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      showNotification: true,
+      openFileFromNotification: true,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('PDF download started'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Download failed: $e')),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -476,7 +570,7 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        AddClients(widget.token)),
+                                        AddClients(widget.token, createOrder: false)),
                               );
 
                               if (result == true) {

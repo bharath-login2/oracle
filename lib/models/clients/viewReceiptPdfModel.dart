@@ -78,7 +78,7 @@ class Data {
       });
     }
        CollectByName = json['CollectByName'];
-          TargetGroup = json['TargetGroup'];
+          TargetGroup = json['TargetGroup']??"";
   }
 
   Map<String, dynamic> toJson() {

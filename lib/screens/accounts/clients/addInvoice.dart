@@ -41,12 +41,16 @@ class _AddInvoiceState extends State<AddInvoice> {
   var fromdate = DateTime.now();
   TextEditingController billingName = TextEditingController();
   TextEditingController billingAddress = TextEditingController();
+  TextEditingController billingAddress2 = TextEditingController();
+  TextEditingController billingAddress3 = TextEditingController();
   TextEditingController billingPhone = TextEditingController();
   TextEditingController billingGstNo = TextEditingController();
   TextEditingController billingPinCode = TextEditingController();
   TextEditingController billingPostOffice = TextEditingController();
   TextEditingController shippingName = TextEditingController();
   TextEditingController shippingAddress = TextEditingController();
+  TextEditingController shippingAddress2 = TextEditingController();
+  TextEditingController shippingAddress3 = TextEditingController();
   TextEditingController shippingPhone = TextEditingController();
   TextEditingController shippingGstNo = TextEditingController();
   TextEditingController shippingPinCode = TextEditingController();
@@ -118,17 +122,19 @@ class _AddInvoiceState extends State<AddInvoice> {
     List<Map<String, dynamic>> allProducts = [];
     if (widget.products != null) {
       for (var product in widget.products!) {
-         allProducts.add({
-        'product_name': product.productName,
-        'product_id': product.productId ?? '', 
-        'description':  '',
-        'product_rate': product.amount,
-        'quantity': product.qty,
-        'tax_percent': '0', 
-        'total_tax_amount': '0.00',
-        'total_amount': product.amount,
-        'type': 'pre_added',
-      });
+        allProducts.add({
+          'product_name': product.productName,
+          'product_id': product.productId ?? '',
+          'description': '',
+          'product_rate': product.amount,
+          'quantity': product.qty,
+          'tax_percent': '0',
+          'discount_amount': product.discountAmount ?? '0.00',
+          'shipping_charge': product.shippingAmount ?? '0.00',
+          'total_tax_amount': '0.00',
+          'total_amount': product.amount,
+          'type': 'pre_added',
+        });
       }
     }
     allProducts.addAll(products);
@@ -136,54 +142,76 @@ class _AddInvoiceState extends State<AddInvoice> {
     return allProducts;
   }
 
- void _removeProduct(int index) {
-  final allProducts = _getAllProducts();
-  if (index >= allProducts.length) return; 
-  final productToRemove = allProducts[index];
-  if (productToRemove['type'] == 'pre_added') {
-    if (widget.products != null && index < widget.products!.length) {
-      widget.products!.removeAt(index);
-    }
-  } else {
-    final productsIndex = index - (widget.products?.length ?? 0);
-    if (productsIndex >= 0 && productsIndex < products.length) {
-      subTotal = subTotal - double.parse(products[productsIndex]['total_amount']);
-      totalTaxAmount = totalTaxAmount - double.parse(products[productsIndex]['total_tax_amount']);
-      products.removeAt(productsIndex);
-    }
-  }
-  _updateTotals();
-  setState(() {});
-}
-
   void _updateTotals() {
     final allProducts = _getAllProducts();
     subTotal = 0.00;
     notsubTotal = 0.00;
     totalTaxAmount = 0.00;
-    if (widget.products != null) {
-      for (var product in widget.products!) {
-        final amount = double.tryParse(product.amount) ?? 0.0;
-        final qty = double.tryParse(product.qty) ?? 1.0;
-        subTotal += amount;
-        notsubTotal += amount;
-      }
-    }
+    for (var product in allProducts) {
+      final amount = double.tryParse(product['total_amount']) ?? 0.0;
+      final rate = double.tryParse(product['product_rate']) ?? 0.0;
+      final qty = double.tryParse(product['quantity']) ?? 1.0;
+      final tax = double.tryParse(product['total_tax_amount']) ?? 0.0;
 
-    for (var product in products) {
-      subTotal += double.parse(product['total_amount']);
-      notsubTotal += double.parse(product['product_rate']) *
-          double.parse(product['quantity']);
-      totalTaxAmount += double.parse(product['total_tax_amount']);
+      subTotal += amount;
+      notsubTotal += rate * qty;
+      totalTaxAmount += tax;
     }
+    double totalDiscount = double.tryParse(discount.text) ?? 0.0;
+    double totalShipping = double.tryParse(shippingCharge.text) ?? 0.0;
+    allTotal = (notsubTotal + totalTaxAmount) + totalShipping - totalDiscount;
 
-    final discountAmount = double.tryParse(discount.text) ?? 0.0;
-    final shippingAmount = double.tryParse(shippingCharge.text) ?? 0.0;
-    allTotal = subTotal + shippingAmount - discountAmount;
     if (paymentStatus == "paid") {
       paidAmount.text = allTotal.toStringAsFixed(2);
     }
 
+    setState(() {});
+  }
+
+  void _initializeDiscountAndShipping() {
+    double preAddedDiscount = 0.0;
+    double preAddedShipping = 0.0;
+    if (widget.products != null) {
+      for (var product in widget.products!) {
+        preAddedDiscount +=
+            double.tryParse(product.discountAmount ?? '0.0') ?? 0.0;
+        preAddedShipping +=
+            double.tryParse(product.shippingAmount ?? '0.0') ?? 0.0;
+      }
+    }
+    if (discount.text.isEmpty && preAddedDiscount > 0) {
+      discount.text = preAddedDiscount.toStringAsFixed(2);
+    }
+    if (shippingCharge.text.isEmpty && preAddedShipping > 0) {
+      shippingCharge.text = preAddedShipping.toStringAsFixed(2);
+    }
+  }
+
+  void _removeProduct(int index) {
+    final allProducts = _getAllProducts();
+    if (index >= allProducts.length) return;
+    final productToRemove = allProducts[index];
+    if (productToRemove['type'] == 'pre_added') {
+      if (widget.products != null && index < widget.products!.length) {
+        final removedProduct = widget.products![index];
+        final removedDiscount =
+            double.tryParse(removedProduct.discountAmount ?? '0.0') ?? 0.0;
+        final removedShipping =
+            double.tryParse(removedProduct.shippingAmount ?? '0.0') ?? 0.0;
+        widget.products!.removeAt(index);
+        final currentDiscount = double.tryParse(discount.text) ?? 0.0;
+        final currentShipping = double.tryParse(shippingCharge.text) ?? 0.0;
+        discount.text = (currentDiscount - removedDiscount).toStringAsFixed(2);
+        shippingCharge.text =
+            (currentShipping - removedShipping).toStringAsFixed(2);
+      }
+    } else {
+      final productsIndex = index - (widget.products?.length ?? 0);
+      if (productsIndex >= 0 && productsIndex < products.length) {
+        products.removeAt(productsIndex);
+      }
+    }
+    _updateTotals();
     setState(() {});
   }
 
@@ -214,6 +242,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     super.initState();
     getData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeDiscountAndShipping();
       _updateTotals();
     });
   }
@@ -240,6 +269,10 @@ class _AddInvoiceState extends State<AddInvoice> {
       billingName.text = invDetails!.data.billingAddress.billingName.toString();
       billingAddress.text =
           invDetails!.data.billingAddress.billingAddress.toString();
+      billingAddress2.text =
+          invDetails!.data.billingAddress.billingAddress2.toString();
+      billingAddress3.text =
+          invDetails!.data.billingAddress.billingAddress3.toString();
       billingPhone.text =
           invDetails!.data.billingAddress.billingContactNo.toString();
       billingGstNo.text = invDetails!.data.billingAddress.billingGst.toString();
@@ -257,6 +290,11 @@ class _AddInvoiceState extends State<AddInvoice> {
           invDetails!.data.shippingAddress.shippingName.toString();
       shippingAddress.text =
           invDetails!.data.shippingAddress.shippingAddress.toString();
+           shippingAddress2.text =
+          invDetails!.data.shippingAddress.shippingAddress2.toString();
+           shippingAddress3.text =
+          invDetails!.data.shippingAddress.shippingAddress3.toString();
+          
       shippingPhone.text =
           invDetails!.data.shippingAddress.shippingContactNo.toString();
       shippingGstNo.text =
@@ -670,15 +708,97 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                         maxLines: 2,
                                                         decoration:
                                                             const InputDecoration(
-                                                                contentPadding: EdgeInsets
-                                                                    .only(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
                                                                         left:
                                                                             10,
                                                                         top: 2,
                                                                         bottom:
                                                                             2),
                                                                 labelText:
-                                                                    'Address',
+                                                                    'Address 1',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress2,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 2',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress3,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 3',
                                                                 fillColor:
                                                                     Colors
                                                                         .white,
@@ -1185,7 +1305,57 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                           decoration:
                                                               const InputDecoration(
                                                                   labelText:
-                                                                      'Address',
+                                                                      'Address 1',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .location_on,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingAddress2,
+                                                          maxLines: 2,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Address 2',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .location_on,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingAddress3,
+                                                          maxLines: 2,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Address 3',
                                                                   prefixIcon: Icon(
                                                                       Icons
                                                                           .location_on,
@@ -2041,33 +2211,82 @@ class _AddInvoiceState extends State<AddInvoice> {
                             const SizedBox(
                               height: 5,
                             ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(right: 10),
+                            //   child: Row(
+                            //     mainAxisAlignment: MainAxisAlignment.end,
+                            //     children: [
+                            //       const Text('Discount:'),
+                            //       const SizedBox(
+                            //         width: 10,
+                            //       ),
+                            //       SizedBox(
+                            //         width:
+                            //             MediaQuery.of(context).size.width * 0.3,
+                            //         height: 35,
+                            //         child: TextFormField(
+                            //           onChanged: (value) {
+                            //             if (products.isNotEmpty) {
+                            //               if (value == '') {
+                            //                 value = '0';
+                            //               }
+                            //               allTotal = subTotal +
+                            //                   double.parse(
+                            //                       shippingCharge.text == ''
+                            //                           ? '0'
+                            //                           : shippingCharge.text) -
+                            //                   double.parse(value);
+                            //               paidAmount.text = allTotal.toString();
+                            //               setState(() {});
+                            //             } else {
+                            //               discount.clear();
+                            //               Common.toastMessaage(
+                            //                   'choose at least one product',
+                            //                   Colors.red);
+                            //             }
+                            //           },
+                            //           controller: discount,
+                            //           keyboardType: TextInputType.number,
+                            //           decoration: InputDecoration(
+                            //               border: const OutlineInputBorder(
+                            //                 // width: 0.0 produces a thin "hairline" border
+                            //                 borderRadius: BorderRadius.all(
+                            //                     Radius.circular(5)),
+                            //                 borderSide: BorderSide.none,
+                            //               ),
+                            //               contentPadding: const EdgeInsets.only(
+                            //                   left: 10, top: 2, bottom: 2),
+                            //               //labelText: 'Invoice Number',
+                            //               fillColor: Colors.grey[300],
+                            //               filled: true,
+                            //               // border: const OutlineInputBorder(),
+                            //               focusedBorder: OutlineInputBorder(
+                            //                 borderSide: BorderSide(
+                            //                     color: Colors.grey.shade300),
+                            //               ),
+                            //               labelStyle: const TextStyle(
+                            //                   color: Colors.black)),
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   const Text('Discount:'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
+                                  const SizedBox(width: 10),
                                   SizedBox(
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
                                     height: 35,
                                     child: TextFormField(
                                       onChanged: (value) {
-                                        if (products.isNotEmpty) {
-                                          if (value == '') {
-                                            value = '0';
-                                          }
-                                          allTotal = subTotal +
-                                              double.parse(
-                                                  shippingCharge.text == ''
-                                                      ? '0'
-                                                      : shippingCharge.text) -
-                                              double.parse(value);
-                                          paidAmount.text = allTotal.toString();
-                                          setState(() {});
+                                        final allProducts = _getAllProducts();
+                                        if (allProducts.isNotEmpty) {
+                                          _updateTotals();
                                         } else {
                                           discount.clear();
                                           Common.toastMessaage(
@@ -2078,24 +2297,22 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       controller: discount,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                          border: const OutlineInputBorder(
-                                            // width: 0.0 produces a thin "hairline" border
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(5)),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          contentPadding: const EdgeInsets.only(
-                                              left: 10, top: 2, bottom: 2),
-                                          //labelText: 'Invoice Number',
-                                          fillColor: Colors.grey[300],
-                                          filled: true,
-                                          // border: const OutlineInputBorder(),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300),
-                                          ),
-                                          labelStyle: const TextStyle(
-                                              color: Colors.black)),
+                                        border: const OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(5)),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        contentPadding: const EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        fillColor: Colors.grey[300],
+                                        filled: true,
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        labelStyle: const TextStyle(
+                                            color: Colors.black),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -2136,34 +2353,82 @@ class _AddInvoiceState extends State<AddInvoice> {
                             const SizedBox(
                               height: 5,
                             ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(right: 10),
+                            //   child: Row(
+                            //     mainAxisAlignment: MainAxisAlignment.end,
+                            //     children: [
+                            //       const Text('Shipping Charge:'),
+                            //       const SizedBox(
+                            //         width: 10,
+                            //       ),
+                            //       SizedBox(
+                            //         width:
+                            //             MediaQuery.of(context).size.width * 0.3,
+                            //         height: 35,
+                            //         child: TextFormField(
+                            //           onChanged: (value) {
+                            //             if (products.isNotEmpty) {
+                            //               if (value == '') {
+                            //                 value = '0';
+                            //               }
+
+                            //               allTotal = subTotal +
+                            //                   double.parse(value) -
+                            //                   double.parse(discount.text == ''
+                            //                       ? '0'
+                            //                       : discount.text);
+                            //               paidAmount.text = allTotal.toString();
+
+                            //               setState(() {});
+                            //             } else {
+                            //               shippingCharge.clear();
+                            //               Common.toastMessaage(
+                            //                   'choose at least one product',
+                            //                   Colors.red);
+                            //             }
+                            //           },
+                            //           controller: shippingCharge,
+                            //           keyboardType: TextInputType.number,
+                            //           decoration: InputDecoration(
+                            //               contentPadding: const EdgeInsets.only(
+                            //                   left: 10, top: 2, bottom: 2),
+                            //               //labelText: 'Invoice Number',
+                            //               fillColor: Colors.grey[300],
+                            //               filled: true,
+                            //               border: const OutlineInputBorder(
+                            //                 // width: 0.0 produces a thin "hairline" border
+                            //                 borderRadius: BorderRadius.all(
+                            //                     Radius.circular(5)),
+                            //                 borderSide: BorderSide.none,
+                            //               ),
+                            //               focusedBorder: OutlineInputBorder(
+                            //                 borderSide: BorderSide(
+                            //                     color: Colors.grey.shade300),
+                            //               ),
+                            //               labelStyle: const TextStyle(
+                            //                   color: Colors.black)),
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   const Text('Shipping Charge:'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
+                                  const SizedBox(width: 10),
                                   SizedBox(
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
                                     height: 35,
                                     child: TextFormField(
                                       onChanged: (value) {
-                                        if (products.isNotEmpty) {
-                                          if (value == '') {
-                                            value = '0';
-                                          }
-
-                                          allTotal = subTotal +
-                                              double.parse(value) -
-                                              double.parse(discount.text == ''
-                                                  ? '0'
-                                                  : discount.text);
-                                          paidAmount.text = allTotal.toString();
-
-                                          setState(() {});
+                                        final allProducts = _getAllProducts();
+                                        if (allProducts.isNotEmpty) {
+                                          _updateTotals(); // This will recalculate with the new shipping charge
                                         } else {
                                           shippingCharge.clear();
                                           Common.toastMessaage(
@@ -2174,23 +2439,22 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       controller: shippingCharge,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                          contentPadding: const EdgeInsets.only(
-                                              left: 10, top: 2, bottom: 2),
-                                          //labelText: 'Invoice Number',
-                                          fillColor: Colors.grey[300],
-                                          filled: true,
-                                          border: const OutlineInputBorder(
-                                            // width: 0.0 produces a thin "hairline" border
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(5)),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300),
-                                          ),
-                                          labelStyle: const TextStyle(
-                                              color: Colors.black)),
+                                        contentPadding: const EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        fillColor: Colors.grey[300],
+                                        filled: true,
+                                        border: const OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(5)),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        labelStyle: const TextStyle(
+                                            color: Colors.black),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -3268,7 +3532,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     "shipping_post_office":
                                         shippingPostOffice.text,
                                     'amount_paid': paidAmount.text,
-                                    'product_details': jsonEncode(_getAllProducts()),
+                                    'product_details':
+                                        jsonEncode(_getAllProducts()),
                                     'upload_file': templateImage != null
                                         ? await MultipartFile.fromFile(
                                             templateImage.toString())
@@ -3676,7 +3941,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "tax_percent": productTaxPercent.text,
                                 "total_tax_amount": productTaxAmount.text,
                                 "total_amount": productTotalAmount.text,
+                                "discount_amount": "0.00",
+                                "shipping_charge": "0.00",
                               });
+
                               renProducts.add({
                                 "product_name": productName,
                                 "product_id": productId,
@@ -3686,6 +3954,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "tax_percent": productTaxPercent.text,
                                 "total_tax_amount": productTaxAmount.text,
                                 "total_amount": productTotalAmount.text,
+                                "discount_amount": "0.00",
+                                "shipping_charge": "0.00",
                               });
 
                               _updateTotals();
@@ -3697,13 +3967,21 @@ class _AddInvoiceState extends State<AddInvoice> {
                               productTaxPercent.clear();
                               productTaxAmount.clear();
                               productTotalAmount.clear();
-
+                              final durationDays =
+                                  int.tryParse(typeDuration) ?? 0;
                               final endValue = DateTime.now()
-                                  .add(Duration(days: int.parse(typeDuration)));
+                                  .add(Duration(days: durationDays));
                               endDate.text =
                                   DateFormat('dd-MM-yyyy').format(endValue);
                               Navigator.of(context).pop();
                               setState(() {});
+
+                              // final endValue = DateTime.now()
+                              //     .add(Duration(days: int.parse(typeDuration)));
+                              // endDate.text =
+                              //     DateFormat('dd-MM-yyyy').format(endValue);
+                              // Navigator.of(context).pop();
+                              // setState(() {});
                             }
                           },
                           // onTap: () {

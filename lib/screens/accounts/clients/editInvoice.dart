@@ -36,6 +36,8 @@ class _EditInvoiceState extends State<EditInvoice> {
   var fromdate = DateTime.now();
   TextEditingController billingName = TextEditingController();
   TextEditingController billingAddress = TextEditingController();
+  TextEditingController billingAddress2 = TextEditingController();
+  TextEditingController billingAddress3 = TextEditingController();
   TextEditingController billingPhone = TextEditingController();
   TextEditingController billingGstNo = TextEditingController();
   TextEditingController billingPinCode = TextEditingController();
@@ -139,6 +141,12 @@ class _EditInvoiceState extends State<EditInvoice> {
             invoiceEditDetails!.data!.billingAddress!.billingName.toString();
         billingAddress.text =
             invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+        billingAddress2.text = invoiceEditDetails!
+            .data!.billingAddress!.billingAddress2
+            .toString();
+        billingAddress3.text = invoiceEditDetails!
+            .data!.billingAddress!.billingAddress3
+            .toString();
         billingPhone.text = invoiceEditDetails!
             .data!.billingAddress!.billingContactNo
             .toString();
@@ -351,6 +359,477 @@ class _EditInvoiceState extends State<EditInvoice> {
   //     setState(() {});
   //   }
   // }
+
+  void _editProduct(int index) {
+    // Populate the form fields with existing product data
+    productName = products[index]['product_name'];
+    productId = products[index]['product_id'];
+    productDescription.text = products[index]['description'] ?? '';
+    productRate.text = products[index]['product_rate'];
+    productQty.text = products[index]['quantity'];
+    productTaxPercent.text = products[index]['tax_percent'];
+    productTaxAmount.text =
+        products[index]['tax_per_unit'] ?? products[index]['total_tax_amount'];
+    productTotalAmount.text = products[index]['total_amount'];
+
+    // Store the index of the product being edited
+    int editingIndex = index;
+
+    showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Edit Product Details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddProducts(),
+                                )).then((_) {
+                              getData();
+                            });
+                          },
+                          child: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [
+                                Color(0xFF2a86c9),
+                                Color(0xFF406dbe)
+                              ]),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return AlertDialog(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: TextField(
+                                        controller: search,
+                                        autocorrect: false,
+                                        keyboardType:
+                                            TextInputType.visiblePassword,
+                                        autofocus: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            filteredItems = items
+                                                .where((item) => item
+                                                    .productName
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        value.toLowerCase()))
+                                                .toList();
+                                          });
+                                        },
+                                        decoration: const InputDecoration(
+                                          contentPadding: EdgeInsets.all(8),
+                                          hintText: 'Search',
+                                          prefixIcon: Icon(Icons.search),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .3,
+                                      width: MediaQuery.of(context).size.width *
+                                          .8,
+                                      child: ListView.builder(
+                                        itemCount: filteredItems.length,
+                                        physics: const ScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                              onTap: () {
+                                                if (productQty.text == "") {
+                                                  productQty.text = "1";
+                                                }
+                                                productName =
+                                                    filteredItems[index]
+                                                        .productName;
+                                                productId =
+                                                    filteredItems[index].id;
+                                                productRate.text =
+                                                    filteredItems[index]
+                                                        .sellingPrice;
+                                                productTaxPercent.text =
+                                                    filteredItems[index]
+                                                        .taxPercent;
+                                                productTaxAmount.text =
+                                                    filteredItems[index]
+                                                        .taxAmount;
+                                                productTotalAmount
+                                                    .text = ((double.parse(
+                                                            productRate.text)) *
+                                                        double.parse(
+                                                            productQty.text))
+                                                    .toString();
+                                                productTotalAmountTax
+                                                    .text = ((double.parse(
+                                                                productRate
+                                                                    .text) +
+                                                            double.parse(
+                                                                productTaxAmount
+                                                                    .text)) *
+                                                        double.parse(
+                                                            productQty.text))
+                                                    .toString();
+                                                productTotalAmount
+                                                    .text = double.parse(
+                                                        productTotalAmount.text)
+                                                    .toStringAsFixed(2);
+                                                setState(() {});
+                                                if (context.mounted) {
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              title: Text(filteredItems[index]
+                                                  .productName));
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () {
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                      child: const Text("Close")),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    productName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.31,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              productCalculation();
+                            },
+                            controller: productRate,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Rate',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Color.fromARGB(255, 12, 12, 12)),
+                                ),
+                                labelStyle: TextStyle(
+                                    color: Color.fromARGB(255, 16, 15, 15))),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.30,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              productCalculation();
+                            },
+                            controller: productQty,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Qty',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(
+                                    color: Color.fromARGB(255, 31, 30, 30))),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.30,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              productCalculation();
+                            },
+                            controller: productTaxPercent,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Percent',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(
+                                    color: Color.fromARGB(255, 25, 25, 25))),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.31,
+                          child: TextFormField(
+                            controller: productTaxAmount,
+                            keyboardType: TextInputType.number,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Amount',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(
+                                    color: Color.fromARGB(255, 26, 26, 26))),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      child: TextFormField(
+                        controller: productTotalAmount,
+                        keyboardType: TextInputType.number,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                            labelText: 'Total Amount',
+                            fillColor: Colors.white,
+                            filled: true,
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(
+                                color: Color.fromARGB(255, 31, 30, 30))),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            _resetProductForm();
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 30, right: 30),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              )),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () {
+                            if (productRate.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Rate', Colors.red);
+                            } else if (productQty.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Qty', Colors.red);
+                            } else if (productTaxPercent.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Percent', Colors.red);
+                            } else if (productTaxAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Amount', Colors.red);
+                            } else if (productTotalAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Total Amount', Colors.red);
+                            } else if (double.parse(productTaxPercent.text) >
+                                100) {
+                              Common.toastMessaage(
+                                  'Enter valid tax percentage', Colors.red);
+                            } else {
+                              // Remove the old product values from totals
+                              double oldProductAmount = double.parse(
+                                  products[editingIndex]['total_amount']);
+                              double oldProductTax = double.parse(
+                                  products[editingIndex]['total_tax_amount']);
+
+                              subTotal = subTotal - oldProductAmount;
+                              totalTaxAmount = totalTaxAmount - oldProductTax;
+
+                              // Calculate new values
+                              double rate = double.parse(productRate.text);
+                              double qty = double.parse(productQty.text);
+                              double taxPercent =
+                                  double.parse(productTaxPercent.text);
+                              double taxPerUnit =
+                                  double.parse(productTaxAmount.text);
+                              double totalAmount =
+                                  double.parse(productTotalAmount.text);
+                              double totalTaxForProduct = taxPerUnit * qty;
+
+                              // Update the product
+                              products[editingIndex] = {
+                                "product_name": productName,
+                                "product_id": productId,
+                                "description": productDescription.text,
+                                "product_rate": rate.toStringAsFixed(2),
+                                "quantity": qty.toStringAsFixed(2),
+                                "tax_percent": taxPercent.toStringAsFixed(2),
+                                "tax_per_unit": taxPerUnit.toStringAsFixed(2),
+                                "total_tax_amount":
+                                    totalTaxForProduct.toStringAsFixed(2),
+                                "total_amount": totalAmount.toStringAsFixed(2),
+                              };
+
+                              // Add new values to totals
+                              subTotal = subTotal + totalAmount;
+                              totalTaxAmount =
+                                  totalTaxAmount + totalTaxForProduct;
+
+                              allTotal = subTotal +
+                                  double.parse(shippingCharge.text == ''
+                                      ? '0'
+                                      : shippingCharge.text) -
+                                  double.parse(discount.text == ''
+                                      ? '0'
+                                      : discount.text);
+
+                              paidAmount.text = allTotal.toStringAsFixed(2);
+                              _resetProductForm();
+                              Navigator.of(context).pop();
+                              setState(() {});
+                            }
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 25, right: 25),
+                                child: Text(
+                                  'Update',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    ).then((_) {
+      setState(() {});
+    });
+  }
+
+  void _resetProductForm() {
+    productName = "Choose Product";
+    productId = "";
+    productDescription.clear();
+    productRate.clear();
+    productQty.clear();
+    productTaxPercent.clear();
+    productTaxAmount.clear();
+    productTotalAmount.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -743,15 +1222,97 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                         maxLines: 2,
                                                         decoration:
                                                             const InputDecoration(
-                                                                contentPadding: EdgeInsets
-                                                                    .only(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
                                                                         left:
                                                                             10,
                                                                         top: 2,
                                                                         bottom:
                                                                             2),
                                                                 labelText:
-                                                                    'Address',
+                                                                    'Address 1',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress2,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 2',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress3,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 3',
                                                                 fillColor:
                                                                     Colors
                                                                         .white,
@@ -2584,6 +3145,16 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                   fontWeight: FontWeight.bold),
                                               textAlign: TextAlign.center),
                                         ),
+                                         Padding(
+                                          padding: EdgeInsets.all(
+                                            8.0,
+                                          ),
+                                          child: Text(' ',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold),
+                                              textAlign: TextAlign.center),
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -2609,7 +3180,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                     columnWidths: {
                                       0: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.2), // Using 10%
+                                              0.16), // Using 10%
                                       1: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.16), // Using 30%
@@ -2688,6 +3259,19 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               style:
                                                   const TextStyle(fontSize: 12),
                                               textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              _editProduct(index);
+                                            },
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(8.0),
+                                              child: Icon(
+                                                Icons.edit_outlined,
+                                                color: Colors.blue,
+                                                size: 18,
+                                              ),
                                             ),
                                           ),
                                           GestureDetector(

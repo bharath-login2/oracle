@@ -41,48 +41,48 @@ class Data {
   int checkId;
   String displayInvoice;
   String totalAmountDue;
-   String stateId;
-     String districtId;
+  String stateId;
+  String districtId;
   List<PaymentStatus> paymentStatus;
   List<PaymentMethod> paymentMethods;
   List<CompanyDetail> companyDetails;
   BillingAddress billingAddress;
   ShippingAddress shippingAddress;
-  
+
   List<Product> products;
   List<Staff> staff;
   List<Template> template;
   bool createRenewal;
   List<TargetGroup> targetGroups;
 
-  Data(
-      {required this.customerId,
-      required this.invoiceNumber,
-      required this.checkId,
-      required this.displayInvoice,
-      required this.totalAmountDue,
-       required this.stateId,
-        required this.districtId,
-      required this.paymentStatus,
-      required this.paymentMethods,
-      required this.companyDetails,
-      required this.billingAddress,
-      required this.shippingAddress,
-      required this.products,
-      required this.staff,
-      required this.template,
-      required this.createRenewal,
-      required this.targetGroups,
-      });
+  Data({
+    required this.customerId,
+    required this.invoiceNumber,
+    required this.checkId,
+    required this.displayInvoice,
+    required this.totalAmountDue,
+    required this.stateId,
+    required this.districtId,
+    required this.paymentStatus,
+    required this.paymentMethods,
+    required this.companyDetails,
+    required this.billingAddress,
+    required this.shippingAddress,
+    required this.products,
+    required this.staff,
+    required this.template,
+    required this.createRenewal,
+    required this.targetGroups,
+  });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        customerId: json["customer_id"]??"",
-        invoiceNumber: json["invoice_number"]??"",
-        checkId: json["check_id"]??"",
-        displayInvoice: json["display_invoice"]??"",
-        totalAmountDue: json["total_amount_due"]??"",
-          stateId: json["stateId"]??"",
-            districtId: json["districtId"]??"",
+        customerId: json["customer_id"] ?? "",
+        invoiceNumber: json["invoice_number"] ?? "",
+        checkId: json["check_id"] ?? "",
+        displayInvoice: json["display_invoice"] ?? "",
+        totalAmountDue: json["total_amount_due"] ?? "",
+        stateId: json["stateId"] ?? "",
+        districtId: json["districtId"] ?? "",
         paymentStatus: List<PaymentStatus>.from(
             json["payment_status"].map((x) => PaymentStatus.fromJson(x))),
         paymentMethods: List<PaymentMethod>.from(
@@ -97,8 +97,8 @@ class Data {
         template: List<Template>.from(
             json["template"].map((x) => Template.fromJson(x))),
         createRenewal: json["create_renewal"],
-      targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
-
+        targetGroups: List<TargetGroup>.from(
+            json["target_groups"].map((x) => TargetGroup.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -107,8 +107,8 @@ class Data {
         "check_id": checkId,
         "display_invoice": displayInvoice,
         "total_amount_due": totalAmountDue,
-          "stateId": stateId,
-            "districtId": districtId,
+        "stateId": stateId,
+        "districtId": districtId,
         "payment_status":
             List<dynamic>.from(paymentStatus.map((x) => x.toJson())),
         "payment_methods":
@@ -126,6 +126,8 @@ class Data {
 class BillingAddress {
   String billingName;
   dynamic billingAddress;
+  dynamic billingAddress2;
+  dynamic billingAddress3;
   String billingCountryCode;
   String billingContactNo;
   String billingGst;
@@ -135,6 +137,8 @@ class BillingAddress {
   BillingAddress({
     required this.billingName,
     required this.billingAddress,
+    required this.billingAddress2,
+    required this.billingAddress3,
     required this.billingCountryCode,
     required this.billingContactNo,
     required this.billingGst,
@@ -143,18 +147,22 @@ class BillingAddress {
   });
 
   factory BillingAddress.fromJson(Map<String, dynamic> json) => BillingAddress(
-        billingName: json["billing_name"]??"",
-        billingAddress: json["billing_address"]??"",
-        billingCountryCode: json["billing_country_code"]??"",
-        billingContactNo: json["billing_contact_no"]??"",
-        billingGst: json["billing_gst"]??"",
-        billingPincode: json["billing_pincode"]??"",
-        billingPostOffice: json["billing_post_office"]??"",
+        billingName: json["billing_name"] ?? "",
+        billingAddress: json["billing_address"] ?? "",
+        billingAddress2: json["billing_address2"] ?? "",
+        billingAddress3: json["billing_address3"] ?? "",
+        billingCountryCode: json["billing_country_code"] ?? "",
+        billingContactNo: json["billing_contact_no"] ?? "",
+        billingGst: json["billing_gst"] ?? "",
+        billingPincode: json["billing_pincode"] ?? "",
+        billingPostOffice: json["billing_post_office"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
         "billing_name": billingName,
         "billing_address": billingAddress,
+        "billing_address2": billingAddress2,
+        "billing_address3": billingAddress3,
         "billing_country_code": billingCountryCode,
         "billing_contact_no": billingContactNo,
         "billing_gst": billingGst,
@@ -183,13 +191,13 @@ class CompanyDetail {
   });
 
   factory CompanyDetail.fromJson(Map<String, dynamic> json) => CompanyDetail(
-        companyLogo: json["company_logo"]??"",
-        companyAddress: json["company_address"]??"",
-        companyPincode: json["company_pincode"]??"",
-        companyRegNo: json["company_reg_no"]??"",
-        companyEmail: json["company_email"]??"",
-        companyWebsite: json["company_website"]??"",
-        companyContactNo: json["company_contact_no"]??"",
+        companyLogo: json["company_logo"] ?? "",
+        companyAddress: json["company_address"] ?? "",
+        companyPincode: json["company_pincode"] ?? "",
+        companyRegNo: json["company_reg_no"] ?? "",
+        companyEmail: json["company_email"] ?? "",
+        companyWebsite: json["company_website"] ?? "",
+        companyContactNo: json["company_contact_no"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -233,8 +241,8 @@ class PaymentStatus {
   });
 
   factory PaymentStatus.fromJson(Map<String, dynamic> json) => PaymentStatus(
-        paymentStatus: json["payment_status"]??"",
-        displaySts: json["display_sts"]??"",
+        paymentStatus: json["payment_status"] ?? "",
+        displaySts: json["display_sts"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -259,17 +267,17 @@ class Product {
     required this.taxPercent,
     required this.taxAmount,
     required this.noOfDays,
-     required this.imageUrl,
+    required this.imageUrl,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-        id: json["id"]??"",
-        productName: json["product_name"]??"",
-        sellingPrice: json["selling_price"]??"",
-        taxPercent: json["tax_percent"]??"",
-        taxAmount: json["tax_amount"]??"",
-        noOfDays: json["no_of_days"]??"",
-         imageUrl: json["image_url"]??"",
+        id: json["id"] ?? "",
+        productName: json["product_name"] ?? "",
+        sellingPrice: json["selling_price"] ?? "",
+        taxPercent: json["tax_percent"] ?? "",
+        taxAmount: json["tax_amount"] ?? "",
+        noOfDays: json["no_of_days"] ?? "",
+        imageUrl: json["image_url"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -279,13 +287,15 @@ class Product {
         "tax_percent": taxPercent,
         "tax_amount": taxAmount,
         "no_of_days": noOfDays,
-          "image_url": imageUrl
+        "image_url": imageUrl
       };
 }
 
 class ShippingAddress {
   String shippingName;
   dynamic shippingAddress;
+   dynamic shippingAddress2;
+    dynamic shippingAddress3;
   String shippingCountryCode;
   String shippingContactNo;
   String shippingGst;
@@ -295,6 +305,8 @@ class ShippingAddress {
   ShippingAddress({
     required this.shippingName,
     required this.shippingAddress,
+     required this.shippingAddress2,
+      required this.shippingAddress3,
     required this.shippingCountryCode,
     required this.shippingContactNo,
     required this.shippingGst,
@@ -304,18 +316,22 @@ class ShippingAddress {
 
   factory ShippingAddress.fromJson(Map<String, dynamic> json) =>
       ShippingAddress(
-        shippingName: json["shipping_name"]??"",
-        shippingAddress: json["shipping_address"]??"",
-        shippingCountryCode: json["shipping_country_code"]??"",
-        shippingContactNo: json["shipping_contact_no"]??"",
-        shippingGst: json["shipping_gst"]??"",
-        shippingPincode: json["shipping_pincode"]??"",
-        shippingPostOffice: json["shipping_post_office"]??"",
+        shippingName: json["shipping_name"] ?? "",
+        shippingAddress: json["shipping_address"] ?? "",
+        shippingAddress2: json["shipping_address2"] ?? "",
+        shippingAddress3: json["shipping_address3"] ?? "",
+        shippingCountryCode: json["shipping_country_code"] ?? "",
+        shippingContactNo: json["shipping_contact_no"] ?? "",
+        shippingGst: json["shipping_gst"] ?? "",
+        shippingPincode: json["shipping_pincode"] ?? "",
+        shippingPostOffice: json["shipping_post_office"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
         "shipping_name": shippingName,
         "shipping_address": shippingAddress,
+         "shipping_address2": shippingAddress2,
+          "shipping_address3": shippingAddress3,
         "shipping_country_code": shippingCountryCode,
         "shipping_contact_no": shippingContactNo,
         "shipping_gst": shippingGst,
@@ -334,8 +350,8 @@ class Staff {
   });
 
   factory Staff.fromJson(Map<String, dynamic> json) => Staff(
-        accountId: json["account_id"]??"",
-        accountName: json["account_name"]??"",
+        accountId: json["account_id"] ?? "",
+        accountName: json["account_name"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -354,8 +370,8 @@ class Template {
   });
 
   factory Template.fromJson(Map<String, dynamic> json) => Template(
-        id: json["id"]??"",
-        templateName: json["template_name"]??"",
+        id: json["id"] ?? "",
+        templateName: json["template_name"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -365,21 +381,21 @@ class Template {
 }
 
 class TargetGroup {
-    String id;
-    String groupName;
+  String id;
+  String groupName;
 
-    TargetGroup({
-        required this.id,
-        required this.groupName,
-    });
+  TargetGroup({
+    required this.id,
+    required this.groupName,
+  });
 
-    factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
-        id: json["id"]??"",
-        groupName: json["group_name"]??"",
-    );
+  factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
+        id: json["id"] ?? "",
+        groupName: json["group_name"] ?? "",
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "id": id,
         "group_name": groupName,
-    };
+      };
 }

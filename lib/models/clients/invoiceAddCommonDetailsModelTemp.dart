@@ -128,6 +128,8 @@ class Data {
 class BillingAddress {
   String billingName;
   dynamic billingAddress;
+  dynamic billingAddress2;
+  dynamic billingAddress3;
   String billingCountryCode;
   String billingContactNo;
   String billingGst;
@@ -137,6 +139,8 @@ class BillingAddress {
   BillingAddress({
     required this.billingName,
     required this.billingAddress,
+      required this.billingAddress2,
+        required this.billingAddress3,
     required this.billingCountryCode,
     required this.billingContactNo,
     required this.billingGst,
@@ -147,6 +151,8 @@ class BillingAddress {
   factory BillingAddress.fromJson(Map<String, dynamic> json) => BillingAddress(
         billingName: json["billing_name"] ?? "",
         billingAddress: json["billing_address"] ?? "",
+          billingAddress2: json["billing_address2"] ?? "",
+            billingAddress3: json["billing_address3"] ?? "",
         billingCountryCode: json["billing_country_code"] ?? "",
         billingContactNo: json["billing_contact_no"] ?? "",
         billingGst: json["billing_gst"] ?? "",
@@ -157,6 +163,8 @@ class BillingAddress {
   Map<String, dynamic> toJson() => {
         "billing_name": billingName,
         "billing_address": billingAddress,
+         "billing_address2": billingAddress2,
+          "billing_address3": billingAddress3,
         "billing_country_code": billingCountryCode,
         "billing_contact_no": billingContactNo,
         "billing_gst": billingGst,
@@ -284,6 +292,8 @@ class Product {
 class ShippingAddress {
   String shippingName;
   dynamic shippingAddress;
+   dynamic shippingAddress2;
+    dynamic shippingAddress3;
   String shippingCountryCode;
   String shippingContactNo;
   String shippingGst;
@@ -293,6 +303,8 @@ class ShippingAddress {
   ShippingAddress({
     required this.shippingName,
     required this.shippingAddress,
+     required this.shippingAddress2,
+      required this.shippingAddress3,
     required this.shippingCountryCode,
     required this.shippingContactNo,
     required this.shippingGst,
@@ -304,6 +316,8 @@ class ShippingAddress {
       ShippingAddress(
         shippingName: json["shipping_name"] ?? "",
         shippingAddress: json["shipping_address"] ?? "",
+         shippingAddress2: json["shipping_address2"] ?? "",
+          shippingAddress3: json["shipping_address3"] ?? "",
         shippingCountryCode: json["shipping_country_code"] ?? "",
         shippingContactNo: json["shipping_contact_no"] ?? "",
         shippingGst: json["shipping_gst"] ?? "",
@@ -314,6 +328,8 @@ class ShippingAddress {
   Map<String, dynamic> toJson() => {
         "shipping_name": shippingName,
         "shipping_address": shippingAddress,
+         "shipping_address2": shippingAddress2,
+          "shipping_address3": shippingAddress3,
         "shipping_country_code": shippingCountryCode,
         "shipping_contact_no": shippingContactNo,
         "shipping_gst": shippingGst,

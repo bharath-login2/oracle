@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:login2/models/lead_management/documentListModel.dart';
+import 'package:login2/screens/userManagement/accountSection.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/userManagement/addUserCommonDataModel.dart';
@@ -31,11 +34,12 @@ class _AddUserState extends State<AddUser> {
   TextEditingController password = TextEditingController();
   TextEditingController emailId = TextEditingController();
   TextEditingController joiningDate = TextEditingController();
+  TextEditingController dateController1 = TextEditingController();
+  TextEditingController dateController2 = TextEditingController();
   TextEditingController salary = TextEditingController();
   TextEditingController openingBalance = TextEditingController();
+  TextEditingController pettyBalance = TextEditingController();
   TextEditingController designationVal = TextEditingController();
-
-  //TextEditingController accessibleUsersVal = TextEditingController();
 
   String designation = 'Designation';
   String designationId = '';
@@ -53,6 +57,15 @@ class _AddUserState extends State<AddUser> {
   String multiBranch = '';
   bool accessWhatsapp = false;
   bool accessCallLog = false;
+  bool salaryAccountEnabled = true;
+  bool pettyCashAccountEnabled = false;
+  List<File> _uploadedFiles = [];
+  List<Map<String, dynamic>> _fileDetails = [];
+  TextEditingController documentNameController = TextEditingController();
+  String selectedDocumentType = 'Certificate';
+  List<DocumentData> documentTypes = [];
+  String? selectedDocumentTypeId;
+  String selectedDocumentTypeName = 'Select Document';
 
   Future<void> retriveLostData() async {
     final LostData response = (await _picker.retrieveLostData()) as LostData;
@@ -69,13 +82,32 @@ class _AddUserState extends State<AddUser> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
+    getDocumentTypes();
+  }
+
+  getDocumentTypes() async {
+    DocumentListModel? documentList = await HttpService.getDocumentType();
+    if (documentList != null && documentList.status == true) {
+      setState(() {
+        documentTypes = documentList.data;
+        if (documentTypes.isNotEmpty) {
+          selectedDocumentTypeId = documentTypes.first.id;
+          selectedDocumentTypeName = documentTypes.first.documentName;
+        } else {
+          selectedDocumentTypeName = 'No documents available';
+        }
+      });
+    } else {
+      Common.toastMessaage('Failed to load document types', Colors.red);
+      setState(() {
+        selectedDocumentTypeName = 'Failed to load';
+      });
+    }
   }
 
   getData() async {
-    //
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -98,7 +130,7 @@ class _AddUserState extends State<AddUser> {
   @override
   Widget build(BuildContext context) {
     designationVal.text = designation;
-    // accessibleUsersVal.text=users;
+
     return result == true
         ? Scaffold(
             backgroundColor: Colors.grey.shade200,
@@ -157,9 +189,7 @@ class _AddUserState extends State<AddUser> {
                 ? SingleChildScrollView(
                     child: Column(
                       children: [
-                        const SizedBox(
-                          height: 10,
-                        ),
+                        const SizedBox(height: 10),
                         multiBranch == 'true' && roleId == '2'
                             ? Padding(
                                 padding: const EdgeInsets.only(
@@ -184,7 +214,6 @@ class _AddUserState extends State<AddUser> {
                                     fillColor: Colors.white,
                                     filled: true,
                                     border: OutlineInputBorder(
-                                      // Custom border
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     labelText: 'Select Branch',
@@ -204,9 +233,7 @@ class _AddUserState extends State<AddUser> {
                           width: 0.9,
                           iconData: Icons.person,
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         InputTextField(
                           hintText: 'Phone Number',
                           hintTextColor: Colors.white,
@@ -215,9 +242,7 @@ class _AddUserState extends State<AddUser> {
                           width: 0.9,
                           iconData: Icons.call,
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         InputTextField(
                           hintText: 'Password',
                           hintTextColor: Colors.white,
@@ -227,9 +252,7 @@ class _AddUserState extends State<AddUser> {
                           iconData: Icons.lock,
                           obscureText: true,
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         Padding(
                           padding: const EdgeInsets.only(left: 20, right: 20),
                           child: SizedBox(
@@ -311,9 +334,7 @@ class _AddUserState extends State<AddUser> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         InputTextField(
                           hintText: 'Email Id',
                           hintTextColor: Colors.white,
@@ -321,11 +342,8 @@ class _AddUserState extends State<AddUser> {
                           controller: emailId,
                           width: 0.9,
                           iconData: Icons.email,
-                          obscureText: true,
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         Padding(
                           padding: const EdgeInsets.only(left: 20, right: 20),
                           child: SizedBox(
@@ -387,9 +405,6 @@ class _AddUserState extends State<AddUser> {
                                                               .users![ind]
                                                               .staffName
                                                               .toString());
-
-                                                      Navigator.pop(
-                                                          context, true);
                                                     });
                                                   } else {
                                                     setState(() {
@@ -405,9 +420,6 @@ class _AddUserState extends State<AddUser> {
                                                               .users![ind]
                                                               .staffName
                                                               .toString());
-
-                                                      Navigator.pop(
-                                                          context, true);
                                                     });
                                                   }
                                                 },
@@ -418,6 +430,14 @@ class _AddUserState extends State<AddUser> {
                                             },
                                           ),
                                         ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Done'),
+                                          ),
+                                        ],
                                       );
                                     });
                               },
@@ -438,39 +458,73 @@ class _AddUserState extends State<AddUser> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ),
-                        InputTextField(
-                          hintText: 'Joining Date',
-                          hintTextColor: Colors.white,
-                          backgroundColor: Colors.white,
-                          controller: joiningDate,
-                          width: 0.9,
-                          iconData: Icons.calendar_month,
-                          obscureText: false,
-                          readOnly: true,
-                          onTap: () async {
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(1990),
-                              lastDate: DateTime(2100),
-                            );
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20, right: 20),
+                          child: SizedBox(
+                            height: 50,
+                            child: TextFormField(
+                              controller: joiningDate,
+                              readOnly: true,
+                              onTap: () async {
+                                DateTime? pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(1990),
+                                  lastDate: DateTime(2100),
+                                );
 
-                            if (pickedDate != null) {
-                              String formattedDate =
-                                  "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
-                              setState(() {
-                                joiningDate.text = formattedDate;
-                              });
-                            }
-                          },
+                                if (pickedDate != null) {
+                                  String formattedDate =
+                                      "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+                                  setState(() {
+                                    joiningDate.text = formattedDate;
+                                  });
+                                }
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Joining Date',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon: Icon(Icons.calendar_month,
+                                    color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                          ),
                         ),
+                        const SizedBox(height: 15),
+                        // const SizedBox(height: 15),
+                        // InputTextField(
+                        //   hintText: 'Joining Date',
+                        //   hintTextColor: Colors.white,
+                        //   backgroundColor: Colors.white,
+                        //   controller: joiningDate,
+                        //   width: 0.9,
+                        //   iconData: Icons.calendar_month,
+                        //   readOnly: true,
+                        //   onTap: () async {
+                        //     DateTime? pickedDate = await showDatePicker(
+                        //       context: context,
+                        //       initialDate: DateTime.now(),
+                        //       firstDate: DateTime(1990),
+                        //       lastDate: DateTime(2100),
+                        //     );
 
-                        const SizedBox(
-                          height: 15,
-                        ),
+                        //     if (pickedDate != null) {
+                        //       String formattedDate =
+                        //           "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
+                        //       setState(() {
+                        //         joiningDate.text = formattedDate;
+                        //       });
+                        //     }
+                        //   },
+                        // ),
+                        // const SizedBox(height: 15),
                         InputTextField(
                           hintText: 'Salary',
                           hintTextColor: Colors.white,
@@ -478,23 +532,31 @@ class _AddUserState extends State<AddUser> {
                           controller: salary,
                           width: 0.9,
                           iconData: Icons.currency_rupee,
-                          obscureText: true,
                         ),
-                        const SizedBox(
-                          height: 15,
+                        const SizedBox(height: 15),
+                        _buildAccountSectionWithCheckbox(
+                          title: "Salary A/C",
+                          isEnabled: salaryAccountEnabled,
+                          openingBalanceController: openingBalance,
+                          dateController: dateController1,
+                          onChanged: (value) {
+                            setState(() {
+                              salaryAccountEnabled = value ?? false;
+                            });
+                          },
                         ),
-                        InputTextField(
-                          hintText: 'Opening Balance',
-                          hintTextColor: Colors.white,
-                          backgroundColor: Colors.white,
-                          controller: openingBalance,
-                          width: 0.9,
-                          iconData: Icons.currency_rupee,
-                          obscureText: true,
+                        _buildAccountSectionWithCheckbox(
+                          title: "Petty Cash A/C",
+                          isEnabled: pettyCashAccountEnabled,
+                          openingBalanceController: pettyBalance,
+                          dateController: dateController2,
+                          onChanged: (value) {
+                            setState(() {
+                              pettyCashAccountEnabled = value ?? false;
+                            });
+                          },
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
+                        const SizedBox(height: 10),
                         checkedItemsName.isNotEmpty
                             ? Padding(
                                 padding:
@@ -570,18 +632,7 @@ class _AddUserState extends State<AddUser> {
                                   ),
                                 ),
                               ),
-                        const SizedBox(
-                          height: 15,
-                        ),
-                        // InputTextField(
-                        //   hintText: 'Opening Balance',
-                        //   hintTextColor: Colors.white,
-                        //   backgroundColor: Colors.white,
-                        //   controller: openingBalance,
-                        //   width: 0.9,
-                        //   iconData: Icons.currency_rupee,
-                        //   obscureText: true,
-                        // ),
+                        const SizedBox(height: 15),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(
@@ -645,7 +696,7 @@ class _AddUserState extends State<AddUser> {
                                               width: 15,
                                             ),
                                             Text(
-                                              'Add Photo',
+                                              'Add Profile Photo',
                                               style: TextStyle(
                                                   fontSize: 18,
                                                   color: Colors.black,
@@ -656,21 +707,15 @@ class _AddUserState extends State<AddUser> {
                                       ),
                                     )),
                               )
-                            : const SizedBox(
-                                height: 10,
-                              ),
+                            : const SizedBox(height: 10),
                         Container(
                           decoration: const BoxDecoration(
                             boxShadow: [
-                              //color: Colors.white, //background color of box
                               BoxShadow(
                                 color: Colors.white,
-                                blurRadius: 25.0, // soften the shadow
-                                spreadRadius: 5.0, //extend the shadow
-                                offset: Offset(
-                                  15.0, // Move to right 10  horizontally
-                                  15.0, // Move to bottom 10 Vertically
-                                ),
+                                blurRadius: 25.0,
+                                spreadRadius: 5.0,
+                                offset: Offset(15.0, 15.0),
                               ),
                             ],
                           ),
@@ -690,6 +735,7 @@ class _AddUserState extends State<AddUser> {
                             },
                           ),
                         ),
+                        _buildDocumentUploadSection(),
                         InkWell(
                           onTap: () async {
                             if (multiBranch == 'true' &&
@@ -710,7 +756,46 @@ class _AddUserState extends State<AddUser> {
                                   'Choose Designation', Colors.red);
                             } else {
                               Common.showProgressDialog(context, "Loading..");
-                              Map<String, dynamic> body = {
+                              Map<String, dynamic> accountData = {};
+                              if (salaryAccountEnabled) {
+                                accountData['salary_account_balance'] =
+                                    openingBalance.text;
+                                accountData['salary_account_date'] =
+                                    dateController1.text;
+                              }
+                              if (pettyCashAccountEnabled) {
+                                accountData['petty_cash_balance'] =
+                                    pettyBalance.text;
+                                accountData['petty_cash_date'] =
+                                    dateController2.text;
+                              }
+
+                              // Map<String, dynamic> body = {
+                              //   'token': widget.token,
+                              //   "designation": designationId,
+                              //   'phoneNumber': phoneNumber.text,
+                              //   'password': password.text,
+                              //   'name': name.text,
+                              //   'email': emailId.text,
+                              //   'joiningDate': joiningDate.text,
+                              //   'salary': salary.text,
+                              //   'officialWhatsAppAccess': accessWhatsapp,
+                              //   'callLogAccess': accessCallLog,
+                              //   'user_list': checkedItems,
+                              //   'branchId': branch,
+                              //   'salary_account_enabled': salaryAccountEnabled,
+                              //   'petty_cash_enabled': pettyCashAccountEnabled,
+                              //   ...accountData,
+                              //   'document_files_count': _uploadedFiles.length,
+                              //   'document_details': _fileDetails
+                              //       .map((detail) => {
+                              //             'name': detail['name'],
+                              //             'type': detail['type'],
+                              //             'type_id': detail['type_id'],
+                              //           })
+                              //       .toList(),
+                              // };
+                              var formData = FormData.fromMap({
                                 'token': widget.token,
                                 "designation": designationId,
                                 'phoneNumber': phoneNumber.text,
@@ -719,25 +804,60 @@ class _AddUserState extends State<AddUser> {
                                 'email': emailId.text,
                                 'joiningDate': joiningDate.text,
                                 'salary': salary.text,
-                                'opening_balance': openingBalance.text,
-                                "officialWhatsAppAccess": accessWhatsapp,
-                                "callLogAccess": accessCallLog,
-                                "user_list": checkedItems,
-                                "branchId": branch
-                              };
+                                'officialWhatsAppAccess':
+                                    accessWhatsapp.toString(),
+                                'callLogAccess': accessCallLog.toString(),
+                                'user_list': checkedItems
+                                    .join(','), // Convert list to string
+                                'branchId': branch ?? '',
+                                'salary_account_enabled':
+                                    salaryAccountEnabled.toString(),
+                                'petty_cash_enabled':
+                                    pettyCashAccountEnabled.toString(),
+                                ...accountData,
+                                'document_files_count': _uploadedFiles.length,
+                                'document_details': jsonEncode(_fileDetails
+                                    .map((detail) => {
+                                          'name': detail['name'],
+                                          'type': detail['type'],
+                                          'type_id': detail['type_id'],
+                                        })
+                                    .toList()),
+                              });
+                              if (_uploadedFiles.isNotEmpty) {
+                                for (int i = 0;
+                                    i < _uploadedFiles.length;
+                                    i++) {
+                                  formData.files.add(MapEntry(
+                                    'document_$i',
+                                    await MultipartFile.fromFile(
+                                        _uploadedFiles[i].path),
+                                  ));
+                                }
+                              }
+
                               AddUserModel addUser =
-                                  await HttpService.postUserData(body);
+                                  await HttpService.postUserData(formData);
                               if (addUser.status == true) {
                                 var formData = FormData.fromMap({
                                   'token': widget.token,
                                   'user_id': addUser.data,
                                   'image_status': imageSts,
-                                  if (_imageFile == null)
-                                    "staffImage": _imageFile
-                                  else
+                                  if (_imageFile != null)
                                     "staffImage": await MultipartFile.fromFile(
                                         _imageFile!)
                                 });
+                                if (_uploadedFiles.isNotEmpty) {
+                                  for (int i = 0;
+                                      i < _uploadedFiles.length;
+                                      i++) {
+                                    formData.files.add(MapEntry(
+                                      'document_$i',
+                                      await MultipartFile.fromFile(
+                                          _uploadedFiles[i].path),
+                                    ));
+                                  }
+                                }
 
                                 AddUserImageModel upload =
                                     await HttpService.uploadImages(formData);
@@ -772,9 +892,7 @@ class _AddUserState extends State<AddUser> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 20,
-                        )
+                        const SizedBox(height: 20),
                       ],
                     ),
                   )
@@ -839,17 +957,258 @@ class _AddUserState extends State<AddUser> {
             ));
   }
 
+  Widget _buildAccountSectionWithCheckbox({
+    required String title,
+    required bool isEnabled,
+    required TextEditingController openingBalanceController,
+    required TextEditingController dateController,
+    required Function(bool?) onChanged,
+  }) {
+    return Column(
+      children: [
+        CheckboxListTile(
+          title: Text(title),
+          value: isEnabled,
+          onChanged: onChanged,
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        if (isEnabled)
+          AccountSection(
+            title: title,
+            openingBalanceController: openingBalanceController,
+            dateController: dateController,
+            showCheckbox:
+                false, 
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentUploadSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Document Upload',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 5, right: 5),
+            child: SizedBox(
+              height: 50,
+              child: TextFormField(
+                controller:
+                    TextEditingController(text: selectedDocumentTypeName),
+                onTap: () {
+                  if (documentTypes.isEmpty) {
+                    Common.toastMessaage('No documents available', Colors.red);
+                    return;
+                  }
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        scrollable: true,
+                        title: const Text('Select Document Name'),
+                        content: SizedBox(
+                          height: MediaQuery.of(context).size.height * .32,
+                          width: MediaQuery.of(context).size.height * .8,
+                          child: documentTypes.isEmpty
+                              ? const Center(
+                                  child: Text('No documents available'),
+                                )
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: documentTypes.length,
+                                  itemBuilder: (context, index) {
+                                    return InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedDocumentTypeId =
+                                              documentTypes[index].id;
+                                          selectedDocumentTypeName =
+                                              documentTypes[index].documentName;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      child: SizedBox(
+                                        height: 50,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12.0),
+                                          child: Text(
+                                            documentTypes[index].documentName,
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                maxLines: 1,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Document Name',
+                  fillColor: Colors.white,
+                  filled: true,
+                  prefixIcon: Icon(
+                    Icons.arrow_drop_down_circle_outlined,
+                    color: Colors.grey,
+                  ),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  labelStyle: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          GestureDetector(
+            onTap: _selectDocumentFile,
+            child: DottedBorder(
+              borderType: BorderType.RRect,
+              radius: const Radius.circular(10),
+              dashPattern: const [8, 4],
+              strokeCap: StrokeCap.round,
+              color: Colors.black,
+              child: Container(
+                width: double.infinity,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50.withOpacity(.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.attach_file, color: Colors.black, size: 30),
+                    SizedBox(height: 5),
+                    Text(
+                      'Add Document File',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          if (_uploadedFiles.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Uploaded Documents:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ..._uploadedFiles.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  File file = entry.value;
+                  Map<String, dynamic> fileDetail = _fileDetails[index];
+
+                  return Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.description),
+                      title: Text(fileDetail['name'] ?? 'Document'),
+                      subtitle: Text(fileDetail['type'] ?? 'Unknown Type'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          _removeDocument(index);
+                        },
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _removeDocument(int index) {
+    if (index < _fileDetails.length) {
+      Map<String, dynamic> removedDoc = _fileDetails[index];
+
+      setState(() {
+        documentTypes.add(DocumentData(
+          id: removedDoc['type_id'] ?? '',
+          documentName: removedDoc['name'] ?? '',
+        ));
+        _uploadedFiles.removeAt(index);
+        _fileDetails.removeAt(index);
+        if (selectedDocumentTypeName == 'No more documents' &&
+            documentTypes.isNotEmpty) {
+          selectedDocumentTypeId = documentTypes.first.id;
+          selectedDocumentTypeName = documentTypes.first.documentName;
+        }
+      });
+    }
+  }
+
+  void _selectDocumentFile() async {
+    if (selectedDocumentTypeName.isEmpty ||
+        selectedDocumentTypeName == 'Certificate') {
+      Common.toastMessaage('Please select document name first', Colors.red);
+      return;
+    }
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _uploadedFiles.add(File(pickedFile.path));
+        _fileDetails.add({
+          'name': selectedDocumentTypeName,
+          'type': selectedDocumentTypeName,
+          'type_id': selectedDocumentTypeId,
+        });
+        documentTypes.removeWhere((doc) => doc.id == selectedDocumentTypeId);
+        if (documentTypes.isNotEmpty) {
+          selectedDocumentTypeId = documentTypes.first.id;
+          selectedDocumentTypeName = documentTypes.first.documentName;
+        } else {
+          selectedDocumentTypeId = null;
+          selectedDocumentTypeName = 'No more documents';
+        }
+      });
+    }
+  }
+
   void _pickImage() async {
     try {
       Navigator.pop(context);
-
       final pickedFile = await _picker.pickImage(
           source: ImageSource.gallery, imageQuality: 100);
       setState(() {
         _imageFile = pickedFile!.path;
         _cropImage(pickedFile.path);
       });
-      // ignore: empty_catches
     } catch (e) {}
   }
 
@@ -857,13 +1216,11 @@ class _AddUserState extends State<AddUser> {
     try {
       Navigator.pop(context);
       final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-      //await _picker.getImage(source: ImageSource.camera, imageQuality: 100);
       setState(() {
         _imageFile = pickedFile!.path;
         imageSts = true;
         _cropImage(pickedFile.path);
       });
-      // ignore: empty_catches
     } catch (e) {}
   }
 
@@ -879,7 +1236,6 @@ class _AddUserState extends State<AddUser> {
 
   Widget _previewImage() {
     if (_imageFile != null) {
-      // Navigator.pop(context);
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -904,17 +1260,12 @@ class _AddUserState extends State<AddUser> {
                 color: Colors.red,
               ),
             ),
-            const SizedBox(
-              height: 20,
-            )
+            const SizedBox(height: 20),
           ],
         ),
       );
     } else {
-      return const Text(
-        '',
-        textAlign: TextAlign.center,
-      );
+      return const Text('');
     }
   }
 
@@ -922,11 +1273,10 @@ class _AddUserState extends State<AddUser> {
     showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Confirm'),
+        title: const Text('Choose Photo Source'),
         content: SizedBox(
           height: MediaQuery.of(context).size.height * 0.1,
           child: Column(
-            //crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),

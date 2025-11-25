@@ -32,12 +32,16 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
   var fromdate = DateTime.now();
   TextEditingController billingName = TextEditingController();
   TextEditingController billingAddress = TextEditingController();
+  TextEditingController billingAddress2 = TextEditingController();
+  TextEditingController billingAddress3 = TextEditingController();
   TextEditingController billingPhone = TextEditingController();
   TextEditingController billingGstNo = TextEditingController();
   TextEditingController billingPinCode = TextEditingController();
   TextEditingController billingPostOffice = TextEditingController();
   TextEditingController shippingName = TextEditingController();
   TextEditingController shippingAddress = TextEditingController();
+  TextEditingController shippingAddress2 = TextEditingController();
+  TextEditingController shippingAddress3 = TextEditingController();
   TextEditingController shippingPhone = TextEditingController();
   TextEditingController shippingGstNo = TextEditingController();
   TextEditingController shippingPinCode = TextEditingController();
@@ -154,6 +158,10 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
       billingName.text = invDetails!.data.billingAddress.billingName.toString();
       billingAddress.text =
           invDetails!.data.billingAddress.billingAddress.toString();
+      billingAddress2.text =
+          invDetails!.data.billingAddress.billingAddress2.toString();
+      billingAddress3.text =
+          invDetails!.data.billingAddress.billingAddress3.toString();
       billingPhone.text =
           invDetails!.data.billingAddress.billingContactNo.toString();
       billingGstNo.text = invDetails!.data.billingAddress.billingGst.toString();
@@ -592,7 +600,89 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                                         bottom:
                                                                             2),
                                                                 labelText:
-                                                                    'Address',
+                                                                    'Address 1',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress2,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding: EdgeInsets
+                                                                    .only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 2',
+                                                                fillColor:
+                                                                    Colors
+                                                                        .white,
+                                                                filled: true,
+                                                                prefixIcon: Icon(
+                                                                    Icons
+                                                                        .location_on,
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
+                                                                border:
+                                                                    OutlineInputBorder(),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.grey),
+                                                                ),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      TextFormField(
+                                                        controller:
+                                                            billingAddress3,
+                                                        maxLines: 2,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                                contentPadding: EdgeInsets
+                                                                    .only(
+                                                                        left:
+                                                                            10,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                labelText:
+                                                                    'Address 3',
                                                                 fillColor:
                                                                     Colors
                                                                         .white,
@@ -1099,7 +1189,57 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                           decoration:
                                                               const InputDecoration(
                                                                   labelText:
-                                                                      'Address',
+                                                                      'Address 1',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .location_on,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                         const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingAddress2,
+                                                          maxLines: 2,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Address 2',
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .location_on,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.grey),
+                                                                  )),
+                                                        ),
+                                                         const SizedBox(
+                                                            height: 10),
+                                                        TextFormField(
+                                                          controller:
+                                                              shippingAddress3,
+                                                          maxLines: 2,
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  labelText:
+                                                                      'Address 3',
                                                                   prefixIcon: Icon(
                                                                       Icons
                                                                           .location_on,
@@ -1717,7 +1857,6 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                           .toString()) ??
                                                   0.0;
 
-                                              
                                               subTotal -= deletedAmount;
                                               totalTaxAmount -= deletedTax;
                                               allTotal = subTotal +
