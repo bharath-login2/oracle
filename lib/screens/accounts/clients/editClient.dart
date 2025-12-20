@@ -504,33 +504,60 @@ class _EditClientsState extends State<EditClients> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          DropdownButtonFormField<String>(
-                            value: selectedTaxType != null
-                                ? selectedTaxType
-                                : taxType.text.isNotEmpty
-                                    ? taxType.text
-                                    : null,
-                            hint: const Text("Select Tax Type *"),
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Select Tax Type ",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color.fromARGB(255, 0, 0, 0),
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                  value: "Interstate",
-                                  child: Text("Interstate")),
-                              DropdownMenuItem(
-                                  value: "Intrastate",
-                                  child: Text("Intrastate")),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    RadioListTile<String>(
+                                      title: const Text("Intrastate"),
+                                      value: "Intrastate",
+                                      groupValue: selectedTaxType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedTaxType = value!;
+                                          taxType.text =
+                                              value; // sync controller
+                                        });
+                                      },
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    RadioListTile<String>(
+                                      title: const Text("Other State"),
+                                      value: "Interstate",
+                                      groupValue: selectedTaxType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedTaxType = value!;
+                                          taxType.text =
+                                              value; // sync controller
+                                        });
+                                      },
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedTaxType = value!;
-                              });
-                            },
                           ),
                           const SizedBox(height: 15),
                           const SizedBox(

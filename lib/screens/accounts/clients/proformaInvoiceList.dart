@@ -1,13 +1,12 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/models/clients/invoiceListTempModel.dart';
-
-import 'package:login2/models/clients/invoiceListTempModel.dart '
-    hide InvoiceListModelTemp;
+import 'package:login2/models/clients/invoiceListTempModel.dart ' hide InvoiceListModelTemp;
 import 'package:login2/screens/accounts/clients/addInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/editInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/print_invoice_view_temp.dart';
@@ -17,7 +16,6 @@ import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.d
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/deleteInvoiceModel.dart';
-
 import '../../../service/service.dart';
 import 'addInvoice.dart';
 import 'addReceipt.dart';
@@ -59,7 +57,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   List<String> collectedByIds = [];
   List<String> createdByNames = [];
   List<String> createdByIds = [];
-
+  Timer? _debounce;
+  
   List<String> selectedStaffIds = [];
   List<String> selectedStaffNames = [];
   List<String> selectedStatuses = [];
@@ -67,7 +66,9 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   List<String> selectedCustomerNames = [];
   List<String> selectedTypeIds = [];
   List<String> selectedTypeNames = [];
-
+  int page = 1;
+  List<GetInvoiceSearchData> items = [];
+  
   bool _isStatusSelected(String status) {
     return selectedStatuses.contains(status);
   }
@@ -96,115 +97,112 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     getData();
   }
 
-  // getData() async {
-  //   customers.clear();
-  //   filteredCustomers.clear();
-  //   final connectivityResult = await (Connectivity().checkConnectivity());
-  //   if (connectivityResult == ConnectivityResult.mobile ||
-  //       connectivityResult == ConnectivityResult.wifi) {
-  //     setState(() {
-  //       result = true;
-  //     });
-  //   } else {
-  //     setState(() {
-  //       result = false;
-  //     });
-  //   }
-  //   String collectedByStaffIds = collectedByIds.join(',');
-  //   String createdByStaffIds = createdByIds.join(',');
-  //   invoiceList = await HttpService.invoiceListTemp(
-  //       widget.token,
-  //       fDate == "From Date" ? "" : fDate.toString(),
-  //       tDate == "To Date" ? "" : tDate.toString(),
-  //       customerId,
-  //       collectedByStaffIds,
-  //       createdByStaffIds,
-  //       staffId,
-  //       typeId);
-  //   if (invoiceList != null) {
-  //     searchData = await HttpService.getInvoiceSearchTemp(widget.token);
-  //     customers = searchData!.data.customers;
-  //     filteredCustomers.addAll(customers);
-  //     staffs = searchData!.data.staff;
-  //     filteredStaffs.addAll(staffs);
-  //     types = searchData!.data.types;
-  //     filteredTypes.addAll(types);
-  //     if (isSearch == true) {
-  //       isSearch = false;
-  //       if (mounted) {
-  //         Navigator.pop(context);
-  //       }
-  //     }
-  //     setState(() {});
-  //   }
-  // }
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    search.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          page = 1;
+          items.clear();
+          getData();
+        });
+      }
+    });
+  }
 
   getData() async {
-  customers.clear();
-  filteredCustomers.clear();
-  final connectivityResult = await (Connectivity().checkConnectivity());
-  if (connectivityResult == ConnectivityResult.mobile ||
-      connectivityResult == ConnectivityResult.wifi) {
-    setState(() {
-      result = true;
-    });
-  } else {
-    setState(() {
-      result = false;
-    });
-  }
-
-  String collectedByStaffIds = collectedByIds.join(',');
-  String createdByStaffIds = createdByIds.join(',');
-  String statusFilter = selectedStatuses.join(',');
-  String customerFilter = selectedCustomerIds.join(',');
-  String typeFilter = selectedTypeIds.join(',');
-
-  invoiceList = await HttpService.invoiceListTemp(
-      widget.token,
-      fDate == "From Date" ? "" : fDate.toString(),
-      tDate == "To Date" ? "" : tDate.toString(),
-      customerFilter, 
-      collectedByStaffIds,
-      createdByStaffIds,
-      staffId,
-      typeFilter, 
-      statusFilter);
-      
-  if (invoiceList != null) {
-    searchData = await HttpService.getInvoiceSearchTemp(widget.token);
-    customers = searchData!.data.customers;
-    filteredCustomers = List.from(customers);
-    staffs = searchData!.data.staff;
-    filteredStaffs = List.from(staffs);
-    types = searchData!.data.types;
-    filteredTypes = List.from(types);
-    if (isSearch == true) {
-      isSearch = false;
-      if (mounted) {
-        Navigator.pop(context);
-      }
+    customers.clear();
+    filteredCustomers.clear();
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi) {
+      setState(() {
+        result = true;
+      });
+    } else {
+      setState(() {
+        result = false;
+      });
     }
-    setState(() {});
+
+    String collectedByStaffIds = collectedByIds.join(',');
+    String createdByStaffIds = createdByIds.join(',');
+    String statusFilter = selectedStatuses.join(',');
+    String customerFilter = selectedCustomerIds.join(',');
+    String typeFilter = selectedTypeIds.join(',');
+    String searchQuery = search.text.trim();
+
+    invoiceList = await HttpService.invoiceListTemp(
+        widget.token,
+        fDate == "From Date" ? "" : fDate.toString(),
+        tDate == "To Date" ? "" : tDate.toString(),
+        customerFilter,
+        collectedByStaffIds,
+        createdByStaffIds,
+        staffId,
+        typeFilter,
+        statusFilter);
+
+    if (invoiceList != null) {
+      // Apply local search filtering
+      if (searchQuery.isNotEmpty) {
+        invoiceList!.data.lists = invoiceList!.data.lists.where((invoice) {
+          return invoice.customerName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                 invoice.invoiceNumber.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                 (invoice.products.isNotEmpty && 
+                  invoice.products[0].productName.toLowerCase().contains(searchQuery.toLowerCase())) ||
+                 invoice.createdBy.toLowerCase().contains(searchQuery.toLowerCase());
+        }).toList();
+      }
+      
+      searchData = await HttpService.getInvoiceSearchTemp(widget.token);
+      customers = searchData!.data.customers;
+      filteredCustomers = List.from(customers);
+      staffs = searchData!.data.staff;
+      filteredStaffs = List.from(staffs);
+      types = searchData!.data.types;
+      filteredTypes = List.from(types);
+      if (isSearch == true) {
+        isSearch = false;
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+      setState(() {});
+    }
   }
-}
 
   void clearAllFilters() {
-  fDate = "From Date";
-  tDate = "To Date";
-  staffId = "";
-  staffName = "Choose Staff";
-  createdByIds.clear();
-  createdByNames.clear();
-  selectedStatuses.clear();
-  selectedCustomerIds.clear();
-  selectedCustomerNames.clear();
-  selectedTypeIds.clear();
-  selectedTypeNames.clear();
-  filteredCustomers = List.from(customers);
-  filteredStaffs = List.from(staffs);
-  filteredTypes = List.from(types);
-}
+    fDate = DateFormat('dd-MM-yyyy')
+        .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
+    tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    staffId = "";
+    staffName = "Choose Staff";
+    createdByIds.clear();
+    createdByNames.clear();
+    collectedByIds.clear();
+    collectedByNames.clear();
+    selectedStatuses.clear();
+    selectedCustomerIds.clear();
+    selectedCustomerNames.clear();
+    selectedTypeIds.clear();
+    selectedTypeNames.clear();
+    customerId = "";
+    customerName = "Choose Customer";
+    typeId = "";
+    typeName = "Choose Type";
+    filteredCustomers = List.from(customers);
+    filteredStaffs = List.from(staffs);
+    filteredTypes = List.from(types);
+    search.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,14 +261,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                             padding: const EdgeInsets.only(right: 8.0),
                             child: InkWell(
                               onTap: () {
-                                fDate = "From Date";
-                                tDate = "To Date";
-                                typeId = "";
-                                typeName = "Choose Type";
-                                staffId = "";
-                                staffName = "Choose Staff";
-                                customerId = "";
-                                customerName = "Choose Customer";
                                 filtrationSheet(context);
                               },
                               child: Container(
@@ -305,1033 +295,768 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
               ),
             ),
             body: invoiceList != null && searchData != null
-                ? Stack(
-                    alignment: Alignment.bottomCenter,
+                ? Column(
                     children: [
-                      SingleChildScrollView(
-                        child: Column(
+                      // Search Bar
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 12, right: 12, top: 12, bottom: 80),
-                              child: invoiceList!.data.lists.isNotEmpty
-                                  ? ListView.builder(
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      shrinkWrap: true,
-                                      itemCount: invoiceList!.data.lists.length,
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 10),
-                                          child: InkWell(
-                                            // onTap: () {
-                                            //   Navigator.push(
-                                            //     context,
-                                            //     MaterialPageRoute(
-                                            //         builder: (context) =>
-                                            //             ReceiptByInvoice(
-                                            //                 widget.token,
-                                            //                 invoiceList!.data
-                                            //                     .lists[index].id
-                                            //                     .toString())),
-                                            //   ).then((_) {
-                                            //     getData();
-                                            //   });
-                                            // },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.2),
-                                                      spreadRadius: 1,
-                                                      blurRadius: 1,
-                                                      offset:
-                                                          const Offset(1, 1),
-                                                    )
-                                                  ],
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
-                                                  color: invoiceList!
-                                                              .data
-                                                              .lists[index]
-                                                              .invoiceCreated
-                                                              .toString() ==
-                                                          "1"
-                                                      ? const Color.fromARGB(
-                                                          255, 228, 248, 216)
-                                                      : invoiceList!
-                                                                  .data
-                                                                  .lists[index]
-                                                                  .isApproved
-                                                                  .toString() ==
-                                                              "Y"
-                                                          ? const Color.fromARGB(
-                                                              255, 243, 248, 216)
-                                                          : invoiceList!
-                                                                      .data
-                                                                      .lists[
-                                                                          index]
-                                                                      .isRejected
-                                                                      .toString() ==
-                                                                  "Y"
-                                                              ? const Color.fromARGB(255, 248, 216, 216)
-                                                              : Colors.white),
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(14.0),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) => ClientDetails(
-                                                                        widget
-                                                                            .token,
-                                                                        invoiceList!
-                                                                            .data
-                                                                            .lists[index]
-                                                                            .clientId
-                                                                            .toString())),
-                                                              );
-                                                            },
-                                                            child: Text(
-                                                                invoiceList!
-                                                                    .data
-                                                                    .lists[
-                                                                        index]
-                                                                    .customerName
-                                                                    .toString(),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                )),
-                                                          ),
-                                                        ),
-                                                        Container(
-                                                          decoration: BoxDecoration(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          2),
-                                                              color: invoiceList!
-                                                                          .data
-                                                                          .lists[
-                                                                              index]
-                                                                          .invoiceCreated
-                                                                          .toString() ==
-                                                                      '1'
-                                                                  ? const Color
-                                                                      .fromARGB(
-                                                                      255,
-                                                                      52,
-                                                                      185,
-                                                                      90)
-                                                                  : const Color(
-                                                                      0xfffcbcbc)),
-                                                          child: Center(
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 12,
-                                                                      right: 12,
-                                                                      top: 6,
-                                                                      bottom:
-                                                                          6),
-                                                              child: Text(
-                                                                  invoiceList!
-                                                                              .data
-                                                                              .lists[
-                                                                                  index]
-                                                                              .invoiceCreated
-                                                                              .toString() ==
-                                                                          '1'
-                                                                      ? "Created"
-                                                                      : invoiceList!.data.lists[index].isApproved.toString() ==
-                                                                              "Y"
-                                                                          ? "Approved"
-                                                                          : invoiceList!.data.lists[index].isRejected.toString() ==
-                                                                                  "Y"
-                                                                              ? "Rejected"
-                                                                              : "Not Created",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    color: invoiceList!.data.lists[index].invoiceCreated.toString() ==
-                                                                            '1'
-                                                                        ? Colors
-                                                                            .white
-                                                                        : invoiceList!.data.lists[index].isApproved.toString() ==
-                                                                                "Y"
-                                                                            ? const Color.fromARGB(
-                                                                                255,
-                                                                                240,
-                                                                                255,
-                                                                                154)
-                                                                            : invoiceList!.data.lists[index].isRejected.toString() == "Y"
-                                                                                ? const Color.fromARGB(255, 255, 126, 180)
-                                                                                : Colors.red,
-                                                                    fontSize:
-                                                                        14,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  )),
-                                                            ),
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                      child: Text(
-                                                        "Proforma No : ${invoiceList!.data.lists[index].invoiceNumber}",
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.8,
-                                                      child: Text(
-                                                        invoiceList!
-                                                                    .data
-                                                                    .lists[
-                                                                        index]
-                                                                    .products
-                                                                    .length !=
-                                                                1
-                                                            ? "Products : ${invoiceList!.data.lists[index].products[0].productName} + ${invoiceList!.data.lists[index].products.length - 1} more..."
-                                                            : "Products : ${invoiceList!.data.lists[index].products[0].productName}",
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                      child: Text(
-                                                        "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    // const SizedBox(
-                                                    //   height: 5,
-                                                    // ),
-                                                    // SizedBox(
-                                                    //   width:
-                                                    //       MediaQuery.of(context)
-                                                    //               .size
-                                                    //               .width *
-                                                    //           0.6,
-                                                    //   child: Text(
-                                                    //     "Paid Amount : ₹ ${invoiceList!.data.lists[index].totalPaid}",
-                                                    //     overflow: TextOverflow
-                                                    //         .ellipsis,
-                                                    //     style: const TextStyle(
-                                                    //       fontSize: 14,
-                                                    //       fontWeight:
-                                                    //           FontWeight.w400,
-                                                    //     ),
-                                                    //   ),
-                                                    // ),
-                                                    // invoiceList!
-                                                    //             .data
-                                                    //             .lists[index]
-                                                    //             .balance !=
-                                                    //         '0.00'
-                                                    //     ? Padding(
-                                                    //         padding:
-                                                    //             const EdgeInsets
-                                                    //                 .only(
-                                                    //                 top: 5.0),
-                                                    //         child: SizedBox(
-                                                    //           width: MediaQuery.of(
-                                                    //                       context)
-                                                    //                   .size
-                                                    //                   .width *
-                                                    //               0.6,
-                                                    //           child: Text(
-                                                    //             "Balance Amount : ₹ ${invoiceList!.data.lists[index].balance}",
-                                                    //             overflow:
-                                                    //                 TextOverflow
-                                                    //                     .ellipsis,
-                                                    //             style:
-                                                    //                 const TextStyle(
-                                                    //               color: Colors
-                                                    //                   .red,
-                                                    //               fontSize: 14,
-                                                    //               fontWeight:
-                                                    //                   FontWeight
-                                                    //                       .w400,
-                                                    //             ),
-                                                    //           ),
-                                                    //         ),
-                                                    //       )
-                                                    //     : const SizedBox(),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                          child: Text(
-                                                            "Created By : ${invoiceList!.data.lists[index].createdBy}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 14,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                const SizedBox(
-                                                                  height: 5,
-                                                                ),
-                                                                Row(
-                                                                  children: [
-                                                                    const Icon(
-                                                                      Icons
-                                                                          .calendar_month,
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      size: 20,
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      width: 8,
-                                                                    ),
-                                                                    Text(
-                                                                        "${invoiceList!.data.lists[index].invoiceDate} ${invoiceList!.data.lists[index].invoiceAt}",
-                                                                        maxLines:
-                                                                            2,
-                                                                        overflow:
-                                                                            TextOverflow
-                                                                                .ellipsis,
-                                                                        style:
-                                                                            const TextStyle(
-                                                                          fontSize:
-                                                                              12,
-                                                                          fontWeight:
-                                                                              FontWeight.w400,
-                                                                        )),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: _pdfLoadingStates[
-                                                                          index] ==
-                                                                      true
-                                                                  ? null // Disable tap when loading
-                                                                  : () async {
-                                                                      setState(
-                                                                          () {
-                                                                        _pdfLoadingStates[index] =
-                                                                            true;
-                                                                      });
-
-                                                                      final pdfPath =
-                                                                          await HttpService
-                                                                              .printInvoiceTemp(
-                                                                        widget
-                                                                            .token,
-                                                                        invoiceList!
-                                                                            .data
-                                                                            .lists[index]
-                                                                            .id
-                                                                            .toString(),
-                                                                      );
-
-                                                                      setState(
-                                                                          () {
-                                                                        _pdfLoadingStates[index] =
-                                                                            false;
-                                                                      });
-
-                                                                      if (pdfPath !=
-                                                                          null) {
-                                                                        Navigator
-                                                                            .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (_) =>
-                                                                                PrintInvoiceViewTemp(pdfPath: pdfPath),
-                                                                          ),
-                                                                        );
-                                                                      } else {
-                                                                        ScaffoldMessenger.of(context)
-                                                                            .showSnackBar(
-                                                                          const SnackBar(
-                                                                              content: Text("Failed to load invoice")),
-                                                                        );
-                                                                      }
-                                                                    },
-                                                              child: Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: _pdfLoadingStates[
-                                                                              index] ==
-                                                                          true
-                                                                      ? Colors
-                                                                          .green
-                                                                          .shade300
-                                                                      : Colors
-                                                                          .green
-                                                                          .shade100,
-                                                                ),
-                                                                child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          8.0),
-                                                                  child: _pdfLoadingStates[
-                                                                              index] ==
-                                                                          true
-                                                                      ? SizedBox(
-                                                                          height:
-                                                                              20,
-                                                                          width:
-                                                                              20,
-                                                                          child:
-                                                                              CircularProgressIndicator(
-                                                                            strokeWidth:
-                                                                                2,
-                                                                            valueColor:
-                                                                                AlwaysStoppedAnimation<Color>(Colors.green.shade800),
-                                                                          ),
-                                                                        )
-                                                                      : Container(
-                                                                          height:
-                                                                              20,
-                                                                          width:
-                                                                              20,
-                                                                          decoration:
-                                                                              const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
-                                                                        ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            // InkWell(
-                                                            //   onTap: () async {
-                                                            //     final pdfPath =
-                                                            //         await HttpService
-                                                            //             .printInvoiceTemp(
-                                                            //       widget.token,
-                                                            //       invoiceList!
-                                                            //           .data
-                                                            //           .lists[
-                                                            //               index]
-                                                            //           .id
-                                                            //           .toString(),
-                                                            //     );
-
-                                                            //     if (pdfPath !=
-                                                            //         null) {
-                                                            //       Navigator
-                                                            //           .push(
-                                                            //         context,
-                                                            //         MaterialPageRoute(
-                                                            //           builder: (_) =>
-                                                            //               PrintInvoiceViewTemp(
-                                                            //                   pdfPath: pdfPath),
-                                                            //         ),
-                                                            //       );
-                                                            //     } else {
-                                                            //       ScaffoldMessenger.of(
-                                                            //               context)
-                                                            //           .showSnackBar(const SnackBar(
-                                                            //               content:
-                                                            //                   Text("Failed to load invoice")));
-                                                            //     }
-                                                            //   },
-                                                            //   // onTap: () {
-                                                            //   //   Navigator.push(
-                                                            //   //     context,
-                                                            //   //     MaterialPageRoute(
-                                                            //   //         builder: (context) => ViewInvoiceTemp(
-                                                            //   //             widget
-                                                            //   //                 .token,
-                                                            //   //             invoiceList!
-                                                            //   //                 .data
-                                                            //   //                 .lists[
-                                                            //   //                     index]
-                                                            //   //                 .id
-                                                            //   //                 .toString(),
-                                                            //   //             invoiceList!
-                                                            //   //                 .data
-                                                            //   //                 .lists[
-                                                            //   //                     index]
-                                                            //   //                 .clientId
-                                                            //   //                 .toString(),
-                                                            //   //             invoiceList!
-                                                            //   //                 .data
-                                                            //   //                 .lists[index]
-                                                            //   //                 .invoiceNumber
-                                                            //   //                 .toString())),
-                                                            //   //   );
-                                                            //   // },
-                                                            //   child: Container(
-                                                            //     decoration: BoxDecoration(
-                                                            //         borderRadius:
-                                                            //             BorderRadius
-                                                            //                 .circular(
-                                                            //                     2),
-                                                            //         color: Colors
-                                                            //             .green
-                                                            //             .shade100),
-                                                            //     child: Padding(
-                                                            //       padding:
-                                                            //           const EdgeInsets
-                                                            //               .all(
-                                                            //               8.0),
-                                                            //       child:
-                                                            //           Container(
-                                                            //         height: 20,
-                                                            //         width: 20,
-                                                            //         decoration:
-                                                            //             const BoxDecoration(
-                                                            //                 image:
-                                                            //                     DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
-                                                            //       ),
-                                                            //     ),
-                                                            //   ),
-                                                            // ),
-                                                            Visibility(
-                                                              visible: invoiceList!
-                                                                          .data
-                                                                          .lists[
-                                                                              index]
-                                                                          .invType ==
-                                                                      "1" ||
-                                                                  invoiceList!
-                                                                          .data
-                                                                          .lists[
-                                                                              index]
-                                                                          .invType ==
-                                                                      "2",
-                                                              child: Row(
-                                                                children: [
-                                                                  const SizedBox(
-                                                                    width: 10,
-                                                                  ),
-                                                                  // invoiceList!
-                                                                  //             .data
-                                                                  //             .lists[index]
-                                                                  //             .isPaid ==
-                                                                  //         false
-                                                                  //     ? InkWell(
-                                                                  //         onTap:
-                                                                  //             () {
-                                                                  //           Navigator.push(
-                                                                  //             context,
-                                                                  //             MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, invoiceList!.data.lists[index].clientId.toString(), invoiceList!.data.lists[index].id.toString())),
-                                                                  //           ).then((_) {
-                                                                  //             getData();
-                                                                  //           });
-                                                                  //         },
-                                                                  //         child:
-                                                                  //             Container(
-                                                                  //           decoration:
-                                                                  //               BoxDecoration(borderRadius: BorderRadius.circular(2), color: const Color(0xffe9d9fd)),
-                                                                  //           child:
-                                                                  //               const Padding(
-                                                                  //             padding: EdgeInsets.all(8.0),
-                                                                  //             child: Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
-                                                                  //           ),
-                                                                  //         ),
-                                                                  //       )
-                                                                  //     : const SizedBox(),
-                                                                  // const SizedBox(
-                                                                  //   width: 10,
-                                                                  // ),
-                                                                  // invoiceList!
-                                                                  //             .data
-                                                                  //             .lists[index]
-                                                                  //             .invoiceCreated ==
-                                                                  //         "0"
-                                                                  //     ? InkWell(
-                                                                  //         onTap:
-                                                                  //             () {
-                                                                  //           if (invoiceList!.data.lists[index].invType ==
-                                                                  //               "2") {
-                                                                  //             if (invoiceList!.data.lists[index].renewalType == "quick") {
-                                                                  //               Navigator.push(
-                                                                  //                   context,
-                                                                  //                   MaterialPageRoute(
-                                                                  //                       builder: (context) => EditQuickRenewalScreen(
-                                                                  //                             id: invoiceList!.data.lists[index].renewalId,
-                                                                  //                           ))).then((_) {
-                                                                  //                 getData();
-                                                                  //               });
-                                                                  //             } else {
-                                                                  //               Navigator.push(
-                                                                  //                   context,
-                                                                  //                   MaterialPageRoute(
-                                                                  //                       builder: (context) => EditCustomRenewal(
-                                                                  //                             renId: invoiceList!.data.lists[index].renewalId,
-                                                                  //                             renewalType: invoiceList!.data.lists[index].renewalType,
-                                                                  //                           ))).then((_) {
-                                                                  //                 getData();
-                                                                  //               });
-                                                                  //             }
-                                                                  //           } else {
-                                                                  //             Navigator.push(
-                                                                  //               context,
-                                                                  //               MaterialPageRoute(builder: (context) => EditInvoiceTemp(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
-                                                                  //             ).then((_) {
-                                                                  //               getData();
-                                                                  //             });
-                                                                  //           }
-                                                                  //         },
-                                                                  //         child:
-                                                                  //             Container(
-                                                                  //           decoration:
-                                                                  //               BoxDecoration(borderRadius: BorderRadius.circular(2), color: const Color(0xffaedcf4)),
-                                                                  //           child:
-                                                                  //               const Padding(
-                                                                  //             padding: EdgeInsets.all(8.0),
-                                                                  //             child: Icon(Icons.mode_edit_outlined, color: Colors.blue),
-                                                                  //           ),
-                                                                  //         ),
-                                                                  //       )
-                                                                  //     : SizedBox(),
-                                                                  const SizedBox(
-                                                                    width: 10,
-                                                                  ),
-                                                                  invoiceList!
-                                                                              .data
-                                                                              .lists[
-                                                                                  index]
-                                                                              .invoiceCreated ==
-                                                                          "0"
-                                                                      ? PopupMenuButton<
-                                                                          String>(
-                                                                          shape:
-                                                                              RoundedRectangleBorder(
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(12),
-                                                                          ),
-                                                                          color:
-                                                                              Colors.white,
-                                                                          elevation:
-                                                                              4,
-                                                                          onSelected:
-                                                                              (value) async {
-                                                                            if (value ==
-                                                                                'delete') {
-                                                                              // Delete Confirmation Dialog
-                                                                              showDialog(
-                                                                                context: context,
-                                                                                builder: (BuildContext context) {
-                                                                                  return AlertDialog(
-                                                                                    scrollable: true,
-                                                                                    title: const Text('Please Confirm'),
-                                                                                    content: const Text('Are you sure you want to delete this invoice?'),
-                                                                                    actions: [
-                                                                                      TextButton(
-                                                                                        onPressed: () => Navigator.of(context).pop(),
-                                                                                        child: const Text('No'),
-                                                                                      ),
-                                                                                      TextButton(
-                                                                                        onPressed: () async {
-                                                                                          Common.showProgressDialog(context, "Loading...");
-                                                                                          DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoiceTemp(
-                                                                                            widget.token,
-                                                                                            invoiceList!.data.lists[index].id,
-                                                                                          );
-
-                                                                                          if (deleteInvoice.data == true) {
-                                                                                            Common.toastMessaage(deleteInvoice.message, Colors.green);
-                                                                                            if (context.mounted) {
-                                                                                              Navigator.pop(context);
-                                                                                              Navigator.pop(context);
-                                                                                            }
-                                                                                            getData();
-                                                                                          } else {
-                                                                                            Common.toastMessaage(deleteInvoice.message, Colors.red);
-                                                                                            if (context.mounted) {
-                                                                                              Navigator.of(context).pop();
-                                                                                            }
-                                                                                          }
-                                                                                        },
-                                                                                        child: const Text('Yes'),
-                                                                                      ),
-                                                                                    ],
-                                                                                  );
-                                                                                },
-                                                                              );
-                                                                            } else if (value ==
-                                                                                'create') {
-                                                                              Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                  builder: (context) => AddInvoice(
-                                                                                    widget.token,
-                                                                                    invoiceList!.data.lists[index].clientId.toString(),
-                                                                                    invoiceList!.data.lists[index].id,
-                                                                                    products: invoiceList!.data.lists[index].products,
-                                                                                  ),
-                                                                                ),
-                                                                              );
-                                                                            } else if (value ==
-                                                                                'approve') {
-                                                                              Common.showProgressDialog(context, "Approving...");
-                                                                              bool result = await HttpService.approveProforma(
-                                                                                invoiceList!.data.lists[index].id.toString(),
-                                                                              );
-                                                                              Navigator.pop(context);
-                                                                              if (result) {
-                                                                                Common.toastMessaage("Proforma Approved Successfully", Colors.green);
-                                                                                getData();
-                                                                              } else {
-                                                                                Common.toastMessaage("Failed to approve proforma", Colors.red);
-                                                                              }
-                                                                            } else if (value ==
-                                                                                'reject') {
-                                                                              showDialog(
-                                                                                context: context,
-                                                                                builder: (BuildContext context) {
-                                                                                  return AlertDialog(
-                                                                                    title: const Text('Please Confirm'),
-                                                                                    content: const Text('Are you sure you want to reject this proforma?'),
-                                                                                    actions: [
-                                                                                      TextButton(
-                                                                                        onPressed: () => Navigator.of(context).pop(),
-                                                                                        child: const Text('No'),
-                                                                                      ),
-                                                                                      TextButton(
-                                                                                        onPressed: () async {
-                                                                                          Navigator.of(context).pop();
-                                                                                          //  Common.showProgressDialog(context, "Rejecting...");
-
-                                                                                          bool result = await HttpService.rejectProforma(
-                                                                                            invoiceList!.data.lists[index].id.toString(),
-                                                                                          );
-
-                                                                                          if (context.mounted) Navigator.pop(context);
-                                                                                          if (result) {
-                                                                                            Common.toastMessaage("Proforma rejected successfully", Colors.green);
-                                                                                            getData();
-                                                                                          } else {
-                                                                                            Common.toastMessaage("Failed to reject proforma", Colors.red);
-                                                                                          }
-                                                                                        },
-                                                                                        child: const Text('Yes'),
-                                                                                      ),
-                                                                                    ],
-                                                                                  );
-                                                                                },
-                                                                              );
-                                                                            } else if (value ==
-                                                                                'edit') {
-                                                                              Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(builder: (context) => EditInvoiceTemp(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
-                                                                              ).then((_) {
-                                                                                getData();
-                                                                              });
-                                                                            }
-                                                                          },
-                                                                          itemBuilder:
-                                                                              (context) => [
-                                                                            const PopupMenuItem(
-                                                                              value: 'create',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.add_circle_outline, color: Colors.green),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Create Invoice'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                            const PopupMenuItem(
-                                                                              value: 'approve',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.check, color: Colors.green),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Approve'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                            const PopupMenuItem(
-                                                                              value: 'reject',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.close, color: Color.fromARGB(255, 155, 74, 26)),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Reject'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                            const PopupMenuItem(
-                                                                              value: 'edit',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.edit, color: Color.fromARGB(255, 78, 169, 206)),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Edit Proforma'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                            const PopupMenuItem(
-                                                                              value: 'delete',
-                                                                              child: Row(
-                                                                                children: [
-                                                                                  Icon(Icons.delete_outline, color: Colors.red),
-                                                                                  SizedBox(width: 10),
-                                                                                  Text('Delete Proforma'),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                          child:
-                                                                              Container(
-                                                                            decoration:
-                                                                                BoxDecoration(
-                                                                              color: Colors.grey.shade200,
-                                                                              borderRadius: BorderRadius.circular(4),
-                                                                            ),
-                                                                            padding:
-                                                                                const EdgeInsets.all(8),
-                                                                            child:
-                                                                                const Icon(Icons.more_vert, color: Colors.black54),
-                                                                          ),
-                                                                        )
-                                                                      : SizedBox(),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ],
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          SizedBox(
-                                            width: 180,
-                                            height: 180,
-                                            child: Image.asset(
-                                              "assets/icons/nodatafound.png",
-                                            ),
-                                          ),
-                                          const Text(
-                                            'No Data Found',
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                            )
+                            Expanded(
+                              child: TextFormField(
+                                controller: search,
+                                onChanged: (val) {
+                                  _onSearchChanged(val);
+                                },
+                                onFieldSubmitted: (value) {
+                                  page = 1;
+                                  items.clear();
+                                  getData();
+                                },
+                                style: const TextStyle(color: Colors.black),
+                                decoration: InputDecoration(
+                                  hintText: 'Search by Customer Name',
+                                  hintStyle: const TextStyle(color: Colors.grey),
+                                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                                  suffixIcon: search.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear, color: Colors.grey),
+                                          onPressed: () {
+                                            search.clear();
+                                            page = 1;
+                                            items.clear();
+                                            getData();
+                                          },
+                                        )
+                                      : null,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 12),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            // Clear all filters button
+                            if (search.text.isNotEmpty || 
+                                selectedStatuses.isNotEmpty ||
+                                selectedCustomerIds.isNotEmpty ||
+                                selectedTypeIds.isNotEmpty ||
+                                createdByIds.isNotEmpty ||
+                                fDate != DateFormat('dd-MM-yyyy').format(
+                                    DateTime(DateTime.now().year, DateTime.now().month, 1)) ||
+                                tDate != DateFormat('dd-MM-yyyy').format(DateTime.now()))
+                              IconButton(
+                                onPressed: () {
+                                  clearAllFilters();
+                                  getData();
+                                },
+                                icon: const Icon(Icons.refresh, color: Colors.blue),
+                                tooltip: 'Clear all filters',
+                              ),
                           ],
                         ),
                       ),
-                      // invoiceList!.data.lists.isNotEmpty
-                      //     ? Container(
-                      //         height: 80.0,
-                      //         color: Colors.grey.shade200,
-                      //         child: Center(
-                      //             child: Padding(
-                      //           padding: const EdgeInsets.only(left: 40),
-                      //           child: Column(
-                      //             mainAxisAlignment: MainAxisAlignment.center,
-                      //             crossAxisAlignment: CrossAxisAlignment.center,
-                      //             children: [
-                      //               Row(
-                      //                 mainAxisAlignment:
-                      //                     MainAxisAlignment.start,
-                      //                 crossAxisAlignment:
-                      //                     CrossAxisAlignment.center,
-                      //                 children: [
-                      //                   SizedBox(
-                      //                       width: MediaQuery.of(context)
-                      //                               .size
-                      //                               .width *
-                      //                           0.5,
-                      //                       child: const Text(
-                      //                         'Total Invoice Amount ',
-                      //                         style: TextStyle(
-                      //                             color: Colors.black,
-                      //                             fontSize: 15,
-                      //                             fontWeight: FontWeight.bold),
-                      //                       )),
-                      //                   Text(
-                      //                     ': ${invoiceList!.data.totalInvoiceAmount}',
-                      //                     style: const TextStyle(
-                      //                         color: Colors.black,
-                      //                         fontSize: 15,
-                      //                         fontWeight: FontWeight.bold),
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //               Row(
-                      //                 mainAxisAlignment:
-                      //                     MainAxisAlignment.start,
-                      //                 crossAxisAlignment:
-                      //                     CrossAxisAlignment.center,
-                      //                 children: [
-                      //                   SizedBox(
-                      //                       width: MediaQuery.of(context)
-                      //                               .size
-                      //                               .width *
-                      //                           0.5,
-                      //                       child: const Text(
-                      //                         'Total Paid Amount ',
-                      //                         style: TextStyle(
-                      //                             color: Colors.green,
-                      //                             fontSize: 15,
-                      //                             fontWeight: FontWeight.bold),
-                      //                       )),
-                      //                   Text(
-                      //                     ': ${invoiceList!.data.totalInvoicePaid}',
-                      //                     style: const TextStyle(
-                      //                         color: Colors.green,
-                      //                         fontSize: 15,
-                      //                         fontWeight: FontWeight.bold),
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //               Row(
-                      //                 mainAxisAlignment:
-                      //                     MainAxisAlignment.start,
-                      //                 crossAxisAlignment:
-                      //                     CrossAxisAlignment.center,
-                      //                 children: [
-                      //                   SizedBox(
-                      //                       width: MediaQuery.of(context)
-                      //                               .size
-                      //                               .width *
-                      //                           0.5,
-                      //                       child: const Text(
-                      //                         'Total Balance Amount ',
-                      //                         style: TextStyle(
-                      //                             color: Colors.red,
-                      //                             fontSize: 15,
-                      //                             fontWeight: FontWeight.bold),
-                      //                       )),
-                      //                   Text(
-                      //                     ': ${invoiceList!.data.balanceAmount}',
-                      //                     style: const TextStyle(
-                      //                         color: Colors.red,
-                      //                         fontSize: 15,
-                      //                         fontWeight: FontWeight.bold),
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //             ],
-                      //           ),
-                      //         )),
-                      //       )
-                      //     : const SizedBox()
+                      // Invoice List
+                      Expanded(
+                        child: Stack(
+                          alignment: Alignment.topCenter,
+                          children: [
+                            SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 12, right: 12, top: 12, bottom: 80),
+                                    child: invoiceList!.data.lists.isNotEmpty
+                                        ? ListView.builder(
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            shrinkWrap: true,
+                                            itemCount: invoiceList!.data.lists.length,
+                                            itemBuilder: (context, index) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.only(bottom: 10),
+                                                child: InkWell(
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.grey
+                                                                .withOpacity(0.2),
+                                                            spreadRadius: 1,
+                                                            blurRadius: 1,
+                                                            offset:
+                                                                const Offset(1, 1),
+                                                          )
+                                                        ],
+                                                        borderRadius:
+                                                            BorderRadius.circular(5),
+                                                        color: invoiceList!
+                                                                    .data
+                                                                    .lists[index]
+                                                                    .invoiceCreated
+                                                                    .toString() ==
+                                                                "1"
+                                                            ? const Color.fromARGB(
+                                                                255, 228, 248, 216)
+                                                            : invoiceList!
+                                                                        .data
+                                                                        .lists[index]
+                                                                        .isApproved
+                                                                        .toString() ==
+                                                                    "Y"
+                                                                ? const Color.fromARGB(
+                                                                    255, 243, 248, 216)
+                                                                : invoiceList!
+                                                                            .data
+                                                                            .lists[
+                                                                                index]
+                                                                            .isRejected
+                                                                            .toString() ==
+                                                                        "Y"
+                                                                    ? const Color.fromARGB(255, 248, 216, 216)
+                                                                    : Colors.white),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(14.0),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment.start,
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                                child: InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) => ClientDetails(
+                                                                              widget
+                                                                                  .token,
+                                                                              invoiceList!
+                                                                                  .data
+                                                                                  .lists[index]
+                                                                                  .clientId
+                                                                                  .toString())),
+                                                                    );
+                                                                  },
+                                                                  child: Text(
+                                                                      invoiceList!
+                                                                          .data
+                                                                          .lists[
+                                                                              index]
+                                                                          .customerName
+                                                                          .toString(),
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize: 16,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w600,
+                                                                      )),
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                decoration: BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(
+                                                                                2),
+                                                                    color: invoiceList!
+                                                                                .data
+                                                                                .lists[
+                                                                                    index]
+                                                                                .invoiceCreated
+                                                                                .toString() ==
+                                                                            '1'
+                                                                        ? const Color
+                                                                            .fromARGB(
+                                                                            255,
+                                                                            52,
+                                                                            185,
+                                                                            90)
+                                                                        : const Color(
+                                                                            0xfffcbcbc)),
+                                                                child: Center(
+                                                                  child: Padding(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .only(
+                                                                            left: 12,
+                                                                            right: 12,
+                                                                            top: 6,
+                                                                            bottom:
+                                                                                6),
+                                                                    child: Text(
+                                                                        invoiceList!
+                                                                                    .data
+                                                                                    .lists[
+                                                                                        index]
+                                                                                    .invoiceCreated
+                                                                                    .toString() ==
+                                                                                '1'
+                                                                            ? "Created"
+                                                                            : invoiceList!.data.lists[index].isApproved.toString() ==
+                                                                                    "Y"
+                                                                                ? "Approved"
+                                                                                : invoiceList!.data.lists[index].isRejected.toString() ==
+                                                                                        "Y"
+                                                                                    ? "Rejected"
+                                                                                    : "Not Created",
+                                                                        style:
+                                                                            TextStyle(
+                                                                          color: invoiceList!.data.lists[index].invoiceCreated.toString() ==
+                                                                                  '1'
+                                                                              ? Colors
+                                                                                  .white
+                                                                              : invoiceList!.data.lists[index].isApproved.toString() ==
+                                                                                      "Y"
+                                                                                  ? const Color.fromARGB(
+                                                                                      255,
+                                                                                      240,
+                                                                                      255,
+                                                                                      154)
+                                                                                  : invoiceList!.data.lists[index].isRejected.toString() == "Y"
+                                                                                      ? const Color.fromARGB(255, 255, 126, 180)
+                                                                                      : Colors.red,
+                                                                          fontSize:
+                                                                              14,
+                                                                          fontWeight:
+                                                                              FontWeight
+                                                                                  .w600,
+                                                                        )),
+                                                                  ),
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          SizedBox(
+                                                            width:
+                                                                MediaQuery.of(context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                            child: Text(
+                                                              "Proforma No : ${invoiceList!.data.lists[index].invoiceNumber}",
+                                                              overflow: TextOverflow
+                                                                  .ellipsis,
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight.w400,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          SizedBox(
+                                                            width:
+                                                                MediaQuery.of(context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.8,
+                                                            child: Text(
+                                                              invoiceList!
+                                                                          .data
+                                                                          .lists[
+                                                                              index]
+                                                                          .products
+                                                                          .length !=
+                                                                      1
+                                                                  ? "Products : ${invoiceList!.data.lists[index].products[0].productName} + ${invoiceList!.data.lists[index].products.length - 1} more..."
+                                                                  : "Products : ${invoiceList!.data.lists[index].products[0].productName}",
+                                                              overflow: TextOverflow
+                                                                  .ellipsis,
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight.w400,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          SizedBox(
+                                                            width:
+                                                                MediaQuery.of(context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                            child: Text(
+                                                              "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
+                                                              overflow: TextOverflow
+                                                                  .ellipsis,
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight.w400,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                                child: Text(
+                                                                  "Created By : ${invoiceList!.data.lists[index].createdBy}",
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize: 14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Row(
+                                                                children: [
+                                                                  Column(
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .start,
+                                                                    children: [
+                                                                      const SizedBox(
+                                                                        height: 5,
+                                                                      ),
+                                                                      Row(
+                                                                        children: [
+                                                                          const Icon(
+                                                                            Icons
+                                                                                .calendar_month,
+                                                                            color: Colors
+                                                                                .grey,
+                                                                            size: 20,
+                                                                          ),
+                                                                          const SizedBox(
+                                                                            width: 8,
+                                                                          ),
+                                                                          Text(
+                                                                              "${invoiceList!.data.lists[index].invoiceDate} ${invoiceList!.data.lists[index].invoiceAt}",
+                                                                              maxLines:
+                                                                                  2,
+                                                                              overflow:
+                                                                                  TextOverflow.ellipsis,
+                                                                              style:
+                                                                                  const TextStyle(
+                                                                                fontSize:
+                                                                                    12,
+                                                                                fontWeight:
+                                                                                    FontWeight.w400,
+                                                                              )),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                children: [
+                                                                  InkWell(
+                                                                    onTap: _pdfLoadingStates[
+                                                                                index] ==
+                                                                            true
+                                                                        ? null
+                                                                        : () async {
+                                                                            setState(
+                                                                                () {
+                                                                              _pdfLoadingStates[index] =
+                                                                                  true;
+                                                                            });
+
+                                                                            final pdfPath =
+                                                                                await HttpService
+                                                                                    .printInvoiceTemp(
+                                                                              widget
+                                                                                  .token,
+                                                                              invoiceList!
+                                                                                  .data
+                                                                                  .lists[index]
+                                                                                  .id
+                                                                                  .toString(),
+                                                                            );
+
+                                                                            setState(
+                                                                                () {
+                                                                              _pdfLoadingStates[index] =
+                                                                                  false;
+                                                                            });
+
+                                                                            if (pdfPath !=
+                                                                                null) {
+                                                                              Navigator
+                                                                                  .push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (_) =>
+                                                                                      PrintInvoiceViewTemp(pdfPath: pdfPath),
+                                                                                ),
+                                                                              );
+                                                                            } else {
+                                                                              ScaffoldMessenger.of(context)
+                                                                                  .showSnackBar(
+                                                                                const SnackBar(
+                                                                                    content: Text("Failed to load invoice")),
+                                                                              );
+                                                                            }
+                                                                          },
+                                                                    child: Container(
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(2),
+                                                                        color: _pdfLoadingStates[
+                                                                                    index] ==
+                                                                                true
+                                                                            ? Colors
+                                                                                .green
+                                                                                .shade300
+                                                                            : Colors
+                                                                                .green
+                                                                                .shade100,
+                                                                      ),
+                                                                      child: Padding(
+                                                                        padding:
+                                                                            const EdgeInsets.all(
+                                                                                8.0),
+                                                                        child: _pdfLoadingStates[
+                                                                                    index] ==
+                                                                                true
+                                                                            ? SizedBox(
+                                                                                height:
+                                                                                    20,
+                                                                                width:
+                                                                                    20,
+                                                                                child:
+                                                                                    CircularProgressIndicator(
+                                                                                  strokeWidth:
+                                                                                      2,
+                                                                                  valueColor:
+                                                                                      AlwaysStoppedAnimation<Color>(Colors.green.shade800),
+                                                                                ),
+                                                                              )
+                                                                            : Container(
+                                                                                height:
+                                                                                    20,
+                                                                                width:
+                                                                                    20,
+                                                                                decoration:
+                                                                                    const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
+                                                                              ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  Visibility(
+                                                                    visible: invoiceList!
+                                                                                .data
+                                                                                .lists[
+                                                                                    index]
+                                                                                .invType ==
+                                                                            "1" ||
+                                                                        invoiceList!
+                                                                                .data
+                                                                                .lists[
+                                                                                    index]
+                                                                                .invType ==
+                                                                            "2",
+                                                                    child: Row(
+                                                                      children: [
+                                                                        const SizedBox(
+                                                                          width: 10,
+                                                                        ),
+                                                                        invoiceList!
+                                                                                    .data
+                                                                                    .lists[index]
+                                                                                    .invoiceCreated ==
+                                                                                "0"
+                                                                            ? PopupMenuButton<
+                                                                                String>(
+                                                                                shape:
+                                                                                    RoundedRectangleBorder(
+                                                                                  borderRadius:
+                                                                                      BorderRadius.circular(12),
+                                                                                ),
+                                                                                color:
+                                                                                    Colors.white,
+                                                                                elevation:
+                                                                                    4,
+                                                                                onSelected:
+                                                                                    (value) async {
+                                                                                  if (value ==
+                                                                                      'delete') {
+                                                                                    showDialog(
+                                                                                      context: context,
+                                                                                      builder: (BuildContext context) {
+                                                                                        return AlertDialog(
+                                                                                          scrollable: true,
+                                                                                          title: const Text('Please Confirm'),
+                                                                                          content: const Text('Are you sure you want to delete this invoice?'),
+                                                                                          actions: [
+                                                                                            TextButton(
+                                                                                              onPressed: () => Navigator.of(context).pop(),
+                                                                                              child: const Text('No'),
+                                                                                            ),
+                                                                                            TextButton(
+                                                                                              onPressed: () async {
+                                                                                                Common.showProgressDialog(context, "Loading...");
+                                                                                                DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoiceTemp(
+                                                                                                  widget.token,
+                                                                                                  invoiceList!.data.lists[index].id,
+                                                                                                );
+
+                                                                                                if (deleteInvoice.data == true) {
+                                                                                                  Common.toastMessaage(deleteInvoice.message, Colors.green);
+                                                                                                  if (context.mounted) {
+                                                                                                    Navigator.pop(context);
+                                                                                                    Navigator.pop(context);
+                                                                                                  }
+                                                                                                  getData();
+                                                                                                } else {
+                                                                                                  Common.toastMessaage(deleteInvoice.message, Colors.red);
+                                                                                                  if (context.mounted) {
+                                                                                                    Navigator.of(context).pop();
+                                                                                                  }
+                                                                                                }
+                                                                                              },
+                                                                                              child: const Text('Yes'),
+                                                                                            ),
+                                                                                          ],
+                                                                                        );
+                                                                                      },
+                                                                                    );
+                                                                                  } else if (value ==
+                                                                                      'create') {
+                                                                                    Navigator.push(
+                                                                                      context,
+                                                                                      MaterialPageRoute(
+                                                                                        builder: (context) => AddInvoice(
+                                                                                          widget.token,
+                                                                                          invoiceList!.data.lists[index].clientId.toString(),
+                                                                                          invoiceList!.data.lists[index].id,
+                                                                                          products: invoiceList!.data.lists[index].products,
+                                                                                        ),
+                                                                                      ),
+                                                                                    );
+                                                                                  } else if (value ==
+                                                                                      'approve') {
+                                                                                    Common.showProgressDialog(context, "Approving...");
+                                                                                    bool result = await HttpService.approveProforma(
+                                                                                      invoiceList!.data.lists[index].id.toString(),
+                                                                                    );
+                                                                                    Navigator.pop(context);
+                                                                                    if (result) {
+                                                                                      Common.toastMessaage("Proforma Approved Successfully", Colors.green);
+                                                                                      getData();
+                                                                                    } else {
+                                                                                      Common.toastMessaage("Failed to approve proforma", Colors.red);
+                                                                                    }
+                                                                                  } else if (value ==
+                                                                                      'reject') {
+                                                                                    showDialog(
+                                                                                      context: context,
+                                                                                      builder: (BuildContext context) {
+                                                                                        return AlertDialog(
+                                                                                          title: const Text('Please Confirm'),
+                                                                                          content: const Text('Are you sure you want to reject this proforma?'),
+                                                                                          actions: [
+                                                                                            TextButton(
+                                                                                              onPressed: () => Navigator.of(context).pop(),
+                                                                                              child: const Text('No'),
+                                                                                            ),
+                                                                                            TextButton(
+                                                                                              onPressed: () async {
+                                                                                                Navigator.of(context).pop();
+                                                                                                bool result = await HttpService.rejectProforma(
+                                                                                                  invoiceList!.data.lists[index].id.toString(),
+                                                                                                );
+
+                                                                                                if (context.mounted) Navigator.pop(context);
+                                                                                                if (result) {
+                                                                                                  Common.toastMessaage("Proforma rejected successfully", Colors.green);
+                                                                                                  getData();
+                                                                                                } else {
+                                                                                                  Common.toastMessaage("Failed to reject proforma", Colors.red);
+                                                                                                }
+                                                                                              },
+                                                                                              child: const Text('Yes'),
+                                                                                            ),
+                                                                                          ],
+                                                                                        );
+                                                                                      },
+                                                                                    );
+                                                                                  } else if (value ==
+                                                                                      'edit') {
+                                                                                    Navigator.push(
+                                                                                      context,
+                                                                                      MaterialPageRoute(builder: (context) => EditInvoiceTemp(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
+                                                                                    ).then((_) {
+                                                                                      getData();
+                                                                                    });
+                                                                                  }
+                                                                                },
+                                                                                itemBuilder:
+                                                                                    (context) => [
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'create',
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Icon(Icons.add_circle_outline, color: Colors.green),
+                                                                                        SizedBox(width: 10),
+                                                                                        Text('Create Invoice'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'approve',
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Icon(Icons.check, color: Colors.green),
+                                                                                        SizedBox(width: 10),
+                                                                                        Text('Approve'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'reject',
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Icon(Icons.close, color: Color.fromARGB(255, 155, 74, 26)),
+                                                                                        SizedBox(width: 10),
+                                                                                        Text('Reject'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'edit',
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Icon(Icons.edit, color: Color.fromARGB(255, 78, 169, 206)),
+                                                                                        SizedBox(width: 10),
+                                                                                        Text('Edit Proforma'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                  const PopupMenuItem(
+                                                                                    value: 'delete',
+                                                                                    child: Row(
+                                                                                      children: [
+                                                                                        Icon(Icons.delete_outline, color: Colors.red),
+                                                                                        SizedBox(width: 10),
+                                                                                        Text('Delete Proforma'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                                child:
+                                                                                    Container(
+                                                                                  decoration:
+                                                                                      BoxDecoration(
+                                                                                    color: Colors.grey.shade200,
+                                                                                    borderRadius: BorderRadius.circular(4),
+                                                                                  ),
+                                                                                  padding:
+                                                                                      const EdgeInsets.all(8),
+                                                                                  child:
+                                                                                      const Icon(Icons.more_vert, color: Colors.black54),
+                                                                                ),
+                                                                              )
+                                                                            : SizedBox(),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              )
+                                                            ],
+                                                          )
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width: 180,
+                                                  height: 180,
+                                                  child: Image.asset(
+                                                    "assets/icons/nodatafound.png",
+                                                  ),
+                                                ),
+                                                const Text(
+                                                  'No Data Found',
+                                                  style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w500),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   )
                 : Center(
@@ -1426,6 +1151,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                           builder: (context) {
                             return StatefulBuilder(
                                 builder: (context, setState) {
+                              TextEditingController searchDialogController = TextEditingController();
                               return AlertDialog(
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -1433,7 +1159,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: TextField(
-                                        controller: search,
+                                        controller: searchDialogController,
                                         autocorrect: false,
                                         keyboardType:
                                             TextInputType.visiblePassword,
@@ -1467,27 +1193,13 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                         shrinkWrap: true,
                                         itemBuilder: (context, index) {
                                           return ListTile(
-                                              // onTap: () {
-                                              //   customerName =
-                                              //       filteredCustomers[index]
-                                              //           .name;
-                                              //   customerId =
-                                              //       filteredCustomers[index].id;
-                                              //   search.clear();
-                                              //   filteredCustomers
-                                              //       .addAll(customers);
-                                              //   setState(() {});
-                                              //   if (context.mounted) {
-                                              //     Navigator.pop(context);
-                                              //   }
-                                              // },
                                               onTap: () {
                                                 customerName =
                                                     filteredCustomers[index]
                                                         .name;
                                                 customerId =
                                                     filteredCustomers[index].id;
-                                                search.clear();
+                                                searchDialogController.clear();
                                                 filteredCustomers =
                                                     List.from(customers);
                                                 setState(() {});
@@ -1505,15 +1217,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                 ),
                                 actions: [
                                   TextButton(
-                                      // onPressed: () {
-                                      //   search.clear();
-                                      //   filteredCustomers.addAll(customers);
-                                      //   if (context.mounted) {
-                                      //     Navigator.pop(context);
-                                      //   }
-                                      // },
                                       onPressed: () {
-                                        search.clear();
+                                        searchDialogController.clear();
                                         filteredCustomers =
                                             List.from(customers);
                                         if (context.mounted) {
@@ -1561,7 +1266,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                         if (customerId == '') {
                           Common.toastMessaage('Choose Client', Colors.red);
                         } else {
-                          search.clear();
                           Navigator.pop(context);
                           Navigator.push(
                             context,
@@ -1604,356 +1308,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
       },
     );
   }
-
-  // Future<dynamic> filtrationSheet(BuildContext context) {
-  //   return showModalBottomSheet(
-  //       isScrollControlled: true,
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return StatefulBuilder(
-  //           builder: (context, setState) {
-  //             return Container(
-  //               height: MediaQuery.of(context).size.height * 0.6,
-  //               width: double.maxFinite,
-  //               clipBehavior: Clip.antiAlias,
-  //               padding: const EdgeInsets.all(16),
-  //               decoration: const BoxDecoration(
-  //                 color: Colors.white,
-  //                 borderRadius: BorderRadius.only(
-  //                   topLeft: Radius.circular(16),
-  //                   topRight: Radius.circular(16),
-  //                 ),
-  //               ),
-  //               child: Material(
-  //                 color: Colors.white,
-  //                 child: SingleChildScrollView(
-  //                   child: Column(
-  //                     children: [
-  //                       const SizedBox(height: 20),
-  //                       const Text(
-  //                         'Filtration',
-  //                         style: TextStyle(
-  //                           fontSize: 18,
-  //                           fontWeight: FontWeight.w500,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 20),
-  //                       Row(
-  //                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                         children: [
-  //                           Column(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               const Text("From Date"),
-  //                               GestureDetector(
-  //                                 onTap: () async {
-  //                                   final selctedDatetimetemp =
-  //                                       await showDatePicker(
-  //                                     context: context,
-  //                                     initialDate: DateTime(DateTime.now().year,
-  //                                         DateTime.now().month, 1),
-  //                                     firstDate: DateTime(2000),
-  //                                     lastDate: DateTime.now(),
-  //                                   );
-  //                                   fDate = DateFormat('dd-MM-yyyy')
-  //                                       .format(selctedDatetimetemp!);
-  //                                   setState(() {});
-  //                                 },
-  //                                 child: Container(
-  //                                   width: MediaQuery.of(context).size.width *
-  //                                       0.45,
-  //                                   height: 45,
-  //                                   decoration: BoxDecoration(
-  //                                       border: Border.all(),
-  //                                       borderRadius: BorderRadius.circular(5),
-  //                                       color: Colors.white),
-  //                                   child: Row(
-  //                                     mainAxisAlignment:
-  //                                         MainAxisAlignment.spaceBetween,
-  //                                     children: [
-  //                                       Padding(
-  //                                         padding:
-  //                                             const EdgeInsets.only(left: 10),
-  //                                         child: Text(
-  //                                           fDate,
-  //                                           style: const TextStyle(
-  //                                             fontSize: 14,
-  //                                             fontWeight: FontWeight.w400,
-  //                                             color: Colors.black,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       Container(
-  //                                         width: 40,
-  //                                         height: 40,
-  //                                         decoration: BoxDecoration(
-  //                                           borderRadius:
-  //                                               BorderRadius.circular(2),
-  //                                           color: Colors.white,
-  //                                         ),
-  //                                         child: const Icon(
-  //                                           Icons.calendar_month,
-  //                                           color: Colors.grey,
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                           Column(
-  //                             crossAxisAlignment: CrossAxisAlignment.start,
-  //                             children: [
-  //                               const Text("To Date"),
-  //                               GestureDetector(
-  //                                 onTap: () async {
-  //                                   final toDateSelectTemp =
-  //                                       await showDatePicker(
-  //                                     context: context,
-  //                                     initialDate: DateTime.now(),
-  //                                     firstDate: DateTime(2000),
-  //                                     lastDate: DateTime(2100),
-  //                                   );
-  //                                   tDate = DateFormat('dd-MM-yyyy')
-  //                                       .format(toDateSelectTemp!);
-  //                                   setState(() {});
-  //                                 },
-  //                                 child: Container(
-  //                                   width: MediaQuery.of(context).size.width *
-  //                                       0.45,
-  //                                   height: 45,
-  //                                   decoration: BoxDecoration(
-  //                                     border: Border.all(),
-  //                                     borderRadius: BorderRadius.circular(5),
-  //                                     color: Colors.white,
-  //                                   ),
-  //                                   child: Row(
-  //                                     mainAxisAlignment:
-  //                                         MainAxisAlignment.spaceBetween,
-  //                                     children: [
-  //                                       Padding(
-  //                                         padding:
-  //                                             const EdgeInsets.only(left: 10),
-  //                                         child: Text(
-  //                                           tDate,
-  //                                         ),
-  //                                       ),
-  //                                       Container(
-  //                                         width: 40,
-  //                                         height: 40,
-  //                                         decoration: BoxDecoration(
-  //                                           borderRadius:
-  //                                               BorderRadius.circular(5),
-  //                                           color: Colors.white,
-  //                                         ),
-  //                                         child: const Icon(
-  //                                           Icons.calendar_month,
-  //                                           color: Colors.grey,
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       // const SizedBox(
-  //                       //   height: 10,
-  //                       // ),
-  //                       // Column(
-  //                       //   crossAxisAlignment: CrossAxisAlignment.start,
-  //                       //   children: [
-  //                       //     const Text("Collected by"),
-  //                       //     GestureDetector(
-  //                       //       onTap: () async {
-  //                       //         await staffDialog(context, 'collected');
-  //                       //         (context as Element).markNeedsBuild();
-  //                       //       },
-  //                       //       child: Container(
-  //                       //         decoration: BoxDecoration(
-  //                       //           color: Colors.white,
-  //                       //           border: Border.all(color: Colors.black),
-  //                       //           borderRadius: BorderRadius.circular(4),
-  //                       //         ),
-  //                       //         child: Padding(
-  //                       //           padding: const EdgeInsets.symmetric(
-  //                       //               horizontal: 16.0, vertical: 12.0),
-  //                       //           child: Row(
-  //                       //             children: [
-  //                       //               Expanded(
-  //                       //                 child: Text(
-  //                       //                   collectedByNames.isNotEmpty
-  //                       //                       ? collectedByNames.join(', ')
-  //                       //                       : "Select staff",
-  //                       //                   overflow: TextOverflow.ellipsis,
-  //                       //                   maxLines: 2,
-  //                       //                 ),
-  //                       //               ),
-  //                       //               const Icon(Icons.arrow_drop_down),
-  //                       //             ],
-  //                       //           ),
-  //                       //         ),
-  //                       //       ),
-  //                       //     ),
-  //                       //   ],
-  //                       // ),
-  //                       const SizedBox(height: 10),
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           const Text("Created by"),
-  //                           GestureDetector(
-  //                             onTap: () async {
-  //                               await staffDialog(context, 'created');
-  //                               (context as Element).markNeedsBuild();
-  //                             },
-  //                             child: Container(
-  //                               decoration: BoxDecoration(
-  //                                 color: Colors.white,
-  //                                 border: Border.all(color: Colors.black),
-  //                                 borderRadius: BorderRadius.circular(4),
-  //                               ),
-  //                               child: Padding(
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                     horizontal: 16.0, vertical: 12.0),
-  //                                 child: Row(
-  //                                   children: [
-  //                                     Expanded(
-  //                                       child: Text(
-  //                                         createdByNames.isNotEmpty
-  //                                             ? createdByNames.join(', ')
-  //                                             : "Select staff",
-  //                                         overflow: TextOverflow.ellipsis,
-  //                                         maxLines: 2,
-  //                                       ),
-  //                                     ),
-  //                                     const Icon(Icons.arrow_drop_down),
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           const Text("Customer"),
-  //                           GestureDetector(
-  //                             onTap: () {
-  //                               customerDialog(context);
-  //                             },
-  //                             child: Container(
-  //                               decoration: BoxDecoration(
-  //                                 color: Colors.white,
-  //                                 border: Border.all(color: Colors.black),
-  //                                 borderRadius: BorderRadius.circular(4),
-  //                               ),
-  //                               child: Center(
-  //                                   child: Padding(
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                     horizontal: 16.0, vertical: 12.0),
-  //                                 child: Row(
-  //                                   mainAxisAlignment:
-  //                                       MainAxisAlignment.spaceBetween,
-  //                                   children: [
-  //                                     SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.35,
-  //                                         child: Text(
-  //                                           customerName,
-  //                                           overflow: TextOverflow.ellipsis,
-  //                                         )),
-  //                                   ],
-  //                                 ),
-  //                               )),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           const Text("Types"),
-  //                           GestureDetector(
-  //                             onTap: () {
-  //                               typesDialog(context);
-  //                             },
-  //                             child: Container(
-  //                               decoration: BoxDecoration(
-  //                                 color: Colors.white,
-  //                                 border: Border.all(color: Colors.black),
-  //                                 borderRadius: BorderRadius.circular(4),
-  //                               ),
-  //                               child: Center(
-  //                                   child: Padding(
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                     horizontal: 16.0, vertical: 12.0),
-  //                                 child: Row(
-  //                                   mainAxisAlignment:
-  //                                       MainAxisAlignment.spaceBetween,
-  //                                   children: [
-  //                                     SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.35,
-  //                                         child: Text(
-  //                                           typeName,
-  //                                           overflow: TextOverflow.ellipsis,
-  //                                         )),
-  //                                   ],
-  //                                 ),
-  //                               )),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(
-  //                         height: 20,
-  //                       ),
-  //                       InkWell(
-  //                         onTap: () {
-  //                           Navigator.pop(context);
-  //                           isSearch = true;
-  //                           Common.showProgressDialog(context, "Searching..");
-  //                           getData();
-  //                         },
-  //                         child: Container(
-  //                           height: 40,
-  //                           decoration: BoxDecoration(
-  //                               borderRadius: BorderRadius.circular(4),
-  //                               color: const Color(0xff2590cf)),
-  //                           child: const Center(
-  //                             child: Text("Filter",
-  //                                 style: TextStyle(
-  //                                   fontSize: 16,
-  //                                   color: Colors.white,
-  //                                   fontWeight: FontWeight.w600,
-  //                                 )),
-  //                           ),
-  //                         ),
-  //                       )
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             );
-  //           },
-  //         );
-  //       });
-  // }
 
   Future<dynamic> filtrationSheet(BuildContext context) {
     return showModalBottomSheet(
@@ -2101,7 +1455,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     );
   }
 
-  /// 🔹 Build Right Filter Section based on selected tab
   Widget _buildRightFilterSection(
       String selectedTab, StateSetter setState, BuildContext context) {
     switch (selectedTab) {
@@ -2120,7 +1473,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     }
   }
 
-  /// 🔹 Created By Section - Updated with inline checkbox list
   Widget _buildCreatedBySection(StateSetter setState, BuildContext context) {
     return ListView(
       children: [
@@ -2128,7 +1480,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
           "Created By",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-
         const SizedBox(height: 16),
         TextField(
           decoration: const InputDecoration(
@@ -2147,10 +1498,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
             });
           },
         ),
-
         const SizedBox(height: 16),
-
-        // Inline checkbox list for staff selection
         Container(
           height: MediaQuery.of(context).size.height * 0.3,
           decoration: BoxDecoration(
@@ -2196,8 +1544,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   },
                 ),
         ),
-
-        // Selected staff chips
         if (createdByNames.isNotEmpty) ...[
           const SizedBox(height: 16),
           const Text(
@@ -2227,8 +1573,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
               );
             }).toList(),
           ),
-
-          // Clear all button
           const SizedBox(height: 16),
           InkWell(
             onTap: () {
@@ -2431,7 +1775,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   }
 
   Widget _buildCustomerSection(StateSetter setState, BuildContext context) {
-    // Reset filtered list only if needed
     if (filteredCustomers.isEmpty ||
         filteredCustomers.length != customers.length) {
       filteredCustomers = List.from(customers);
@@ -2511,8 +1854,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   },
                 ),
         ),
-
-        // Selected customers chips
         if (selectedCustomerNames.isNotEmpty) ...[
           const SizedBox(height: 16),
           const Text(
@@ -2542,8 +1883,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
               );
             }).toList(),
           ),
-
-          // Clear all button
           const SizedBox(height: 16),
           InkWell(
             onTap: () {
@@ -2656,8 +1995,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   },
                 ),
         ),
-
-        // Selected types chips
         if (selectedTypeNames.isNotEmpty) ...[
           const SizedBox(height: 16),
           const Text(
@@ -2687,8 +2024,6 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
               );
             }).toList(),
           ),
-
-          // Clear all button
           const SizedBox(height: 16),
           InkWell(
             onTap: () {
@@ -2749,27 +2084,22 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
             children: [
               _buildStatusCheckbox(
                 "Pending",
-                "",
+                "Proforma not approved or rejected",
                 setState,
               ),
               _buildStatusCheckbox(
                 "Approved",
-                "",
+                "Proforma approved but not converted to invoice",
                 setState,
               ),
               _buildStatusCheckbox(
                 "Rejected",
-                "",
+                "Proforma rejected",
                 setState,
               ),
               _buildStatusCheckbox(
                 "Created",
-                "",
-                setState,
-              ),
-              _buildStatusCheckbox(
-                "All",
-                "",
+                "Converted to invoice",
                 setState,
               ),
             ],
@@ -2910,7 +2240,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   Future<dynamic> staffDialog(BuildContext context, String type) {
     List<String> tempSelectedIds = [];
     List<String> tempSelectedNames = [];
-    TextEditingController search = TextEditingController();
+    TextEditingController staffSearchController = TextEditingController();
     if (type == 'collected') {
       tempSelectedIds = List.from(collectedByIds);
       tempSelectedNames = List.from(collectedByNames);
@@ -2918,7 +2248,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
       tempSelectedIds = List.from(createdByIds);
       tempSelectedNames = List.from(createdByNames);
     }
-    List<Staff> filteredStaffs = List.from(staffs);
+    List<Staff> tempFilteredStaffs = List.from(staffs);
 
     return showDialog(
       context: context,
@@ -2933,11 +2263,10 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
-                      controller: search,
+                      controller: staffSearchController,
                       onChanged: (value) {
                         setState(() {
-                          // Always filter from original list `staffs`
-                          filteredStaffs = staffs
+                          tempFilteredStaffs = staffs
                               .where((item) => item.accountName
                                   .toLowerCase()
                                   .contains(value.toLowerCase()))
@@ -2954,9 +2283,9 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                     height: MediaQuery.of(context).size.height * .4,
                     width: MediaQuery.of(context).size.width * .8,
                     child: ListView.builder(
-                      itemCount: filteredStaffs.length,
+                      itemCount: tempFilteredStaffs.length,
                       itemBuilder: (context, index) {
-                        final staff = filteredStaffs[index];
+                        final staff = tempFilteredStaffs[index];
                         final selected =
                             tempSelectedIds.contains(staff.accountId);
 
@@ -3009,83 +2338,10 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     );
   }
 
-  // Future<dynamic> staffDialog(BuildContext context) {
-  //   return showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(builder: (context, setState) {
-  //         return AlertDialog(
-  //           content: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               Padding(
-  //                 padding: const EdgeInsets.all(8.0),
-  //                 child: TextField(
-  //                   controller: search,
-  //                   autocorrect: false,
-  //                   keyboardType: TextInputType.visiblePassword,
-  //                   autofocus: true,
-  //                   onChanged: (value) {
-  //                     setState(() {
-  //                       filteredStaffs = staffs
-  //                           .where((item) => item.accountName
-  //                               .toLowerCase()
-  //                               .contains(value.toLowerCase()))
-  //                           .toList();
-  //                     });
-  //                   },
-  //                   decoration: const InputDecoration(
-  //                     contentPadding: EdgeInsets.all(8),
-  //                     hintText: 'Search',
-  //                     prefixIcon: Icon(Icons.search),
-  //                   ),
-  //                 ),
-  //               ),
-  //               SizedBox(
-  //                 height: MediaQuery.of(context).size.height * .3,
-  //                 width: MediaQuery.of(context).size.width * .8,
-  //                 child: ListView.builder(
-  //                   itemCount: filteredStaffs.length,
-  //                   physics: const ScrollPhysics(),
-  //                   shrinkWrap: true,
-  //                   itemBuilder: (context, index) {
-  //                     return ListTile(
-  //                         onTap: () {
-  //                           staffName = filteredStaffs[index].accountName;
-  //                           staffId = filteredStaffs[index].accountId;
-  //                           search.clear();
-  //                           filteredStaffs.clear();
-  //                           filteredStaffs.addAll(staffs);
-  //                           setState(() {});
-  //                           if (context.mounted) {
-  //                             Navigator.pop(context);
-  //                           }
-  //                         },
-  //                         title: Text(filteredStaffs[index].accountName));
-  //                   },
-  //                 ),
-  //               )
-  //             ],
-  //           ),
-  //           actions: [
-  //             TextButton(
-  //                 onPressed: () {
-  //                   search.clear();
-  //                   filteredStaffs.clear();
-  //                   filteredStaffs.addAll(staffs);
-  //                   if (context.mounted) {
-  //                     Navigator.pop(context);
-  //                   }
-  //                 },
-  //                 child: const Text("Close")),
-  //           ],
-  //         );
-  //       });
-  //     },
-  //   );
-  // }
-
   Future<dynamic> typesDialog(BuildContext context) {
+    TextEditingController typeSearchController = TextEditingController();
+    List<Type> tempFilteredTypes = List.from(types);
+
     return showDialog(
       context: context,
       builder: (context) {
@@ -3097,13 +2353,13 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
+                    controller: typeSearchController,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
                     onChanged: (value) {
                       setState(() {
-                        filteredTypes = types
+                        tempFilteredTypes = types
                             .where((item) => item.typeName
                                 .toLowerCase()
                                 .contains(value.toLowerCase()))
@@ -3121,23 +2377,18 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   height: MediaQuery.of(context).size.height * .3,
                   width: MediaQuery.of(context).size.width * .8,
                   child: ListView.builder(
-                    itemCount: filteredTypes.length,
+                    itemCount: tempFilteredTypes.length,
                     physics: const ScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return ListTile(
                           onTap: () {
-                            typeName = filteredTypes[index].typeName;
-                            typeId = filteredTypes[index].id.toString();
-                            search.clear();
-                            filteredTypes.clear();
-                            filteredTypes.addAll(types);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
+                            typeName = tempFilteredTypes[index].typeName;
+                            typeId = tempFilteredTypes[index].id.toString();
+                            typeSearchController.clear();
+                            Navigator.pop(context);
                           },
-                          title: Text(filteredTypes[index].typeName));
+                          title: Text(tempFilteredTypes[index].typeName));
                     },
                   ),
                 )
@@ -3146,12 +2397,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
             actions: [
               TextButton(
                   onPressed: () {
-                    search.clear();
-                    filteredTypes.clear();
-                    filteredTypes.addAll(types);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
+                    typeSearchController.clear();
+                    Navigator.pop(context);
                   },
                   child: const Text("Close")),
             ],
@@ -3162,6 +2409,9 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   }
 
   Future<dynamic> customerDialog(BuildContext context) {
+    TextEditingController customerSearchController = TextEditingController();
+    List<Customer> tempFilteredCustomers = List.from(customers);
+
     return showDialog(
       context: context,
       builder: (context) {
@@ -3173,13 +2423,13 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
+                    controller: customerSearchController,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
                     onChanged: (value) {
                       setState(() {
-                        filteredCustomers = customers
+                        tempFilteredCustomers = customers
                             .where((item) => item.name
                                 .toLowerCase()
                                 .contains(value.toLowerCase()))
@@ -3197,23 +2447,18 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                   height: MediaQuery.of(context).size.height * .3,
                   width: MediaQuery.of(context).size.width * .8,
                   child: ListView.builder(
-                    itemCount: filteredCustomers.length,
+                    itemCount: tempFilteredCustomers.length,
                     physics: const ScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return ListTile(
                           onTap: () {
-                            customerName = filteredCustomers[index].name;
-                            customerId = filteredCustomers[index].id;
-                            search.clear();
-                            filteredCustomers.clear();
-                            filteredCustomers.addAll(customers);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
+                            customerName = tempFilteredCustomers[index].name;
+                            customerId = tempFilteredCustomers[index].id;
+                            customerSearchController.clear();
+                            Navigator.pop(context);
                           },
-                          title: Text(filteredCustomers[index].name));
+                          title: Text(tempFilteredCustomers[index].name));
                     },
                   ),
                 )
@@ -3222,12 +2467,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
             actions: [
               TextButton(
                   onPressed: () {
-                    search.clear();
-                    filteredCustomers.clear();
-                    filteredCustomers.addAll(customers);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
+                    customerSearchController.clear();
+                    Navigator.pop(context);
                   },
                   child: const Text("Close")),
             ],

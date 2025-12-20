@@ -9,6 +9,7 @@ import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart'
     as details;
 import 'package:login2/models/lead_management/quotationTemplateModel.dart';
+import 'package:login2/models/lead_management/requestCreateResponseModel.dart';
 import 'package:login2/models/lead_management/workOrderIdModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
@@ -16,7 +17,8 @@ import 'package:login2/service/service.dart';
 import 'package:login2/widgets/quick_add_customer_dialog.dart';
 
 class AddQuotationPage extends StatefulWidget {
-  const AddQuotationPage({Key? key}) : super(key: key);
+  final String? requestId;
+  const AddQuotationPage({Key? key, this.requestId}) : super(key: key);
   @override
   State<AddQuotationPage> createState() => _AddQuotationPageState();
 }
@@ -26,6 +28,8 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   String? selectedCustomer;
   String? selectedWorkOrder;
   String? selectedTemplate;
+  bool isLoadingRequestData = false;
+  RequestResponseModel? _requestResponse;
   String? token;
   String quotationId = "#QUO122";
   String selectedRateType = "Fixed Rate";
@@ -62,45 +66,309 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   bool isLoadingState = true;
   bool isLoadingDistrict = false;
 
+  // To track if widget is disposed
+  bool _isDisposed = false;
+
   @override
   void initState() {
     super.initState();
-    _loadMaterials();
-    _loadCustomers();
-    _loadTemplates();
-    _loadToken();
-    _getStates();
+    _initializeData();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    // Dispose all controllers
+    customerNameCtrl.dispose();
+    templateCtrl.dispose();
+    materialCtrl.dispose();
+    enquiryDateController.dispose();
+    addressController.dispose();
+    districtController.dispose();
+    stateController.dispose();
+    nationalityController.dispose();
+    
+    // Dispose product row controllers
+    for (var row in productRows) {
+      row.quantityController.dispose();
+      row.rateController.dispose();
+      row.gstController.dispose();
+      row.materialCtrl.dispose();
+    }
+    
+    super.dispose();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      // Load essential data first
+      await _loadToken();
+      await _getStates();
+      
+      // Load customers, materials, and templates
+      await Future.wait([
+        _loadCustomers(),
+        _loadMaterials(),
+        _loadTemplates(),
+      ]);
+      
+      // Now fetch request data if available
+      if (widget.requestId != null && widget.requestId!.isNotEmpty && !_isDisposed) {
+        await _fetchRequestData(widget.requestId!);
+      }
+    } catch (e) {
+      print('🔥 Error initializing data: $e');
+    }
+  }
+
+  Future<void> _fetchRequestData(String requestId) async {
+    if (_isDisposed) return;
+    
+    try {
+      if (!_isDisposed) {
+        setState(() => isLoadingRequestData = true);
+      }
+
+      final result = await HttpService.createRequestDetails(requestId);
+
+      if (result != null && result.data != null) {
+        _requestResponse = result;
+        
+        // Populate data without using context
+        await _populateCustomerDetails(result.data!.customerData);
+        await _populateProductDetails(result.data!.productDetails);
+        
+        if (!_isDisposed) {
+          setState(() {});
+        }
+        print('✅ Request data loaded successfully');
+      } else {
+        print('⚠️ Failed to load request data');
+        // Use a safer way to show message
+        _showSafeToast('Failed to load request details', Colors.orange);
+      }
+    } catch (e) {
+      print('🔥 Error fetching request data: $e');
+      _showSafeToast('Error loading request data', Colors.red);
+    } finally {
+      if (!_isDisposed) {
+        setState(() => isLoadingRequestData = false);
+      }
+    }
+  }
+
+  void _showSafeToast(String message, Color color) {
+    // Use a global key or other method to show toast without context
+    // For now, just print
+    print('Toast: $message');
+  }
+
+  Future<void> _populateProductDetails(List<ProductDetail>? productDetails) async {
+    if (productDetails == null || productDetails.isEmpty) return;
+
+    try {
+      // Clear existing product rows
+      productRows.clear();
+      
+      // Add new product rows based on the response
+      for (var product in productDetails) {
+        MaterialData? matchedMaterial;
+        if (materials.isNotEmpty) {
+          matchedMaterial = materials.firstWhere(
+            (material) => (material.materialName ?? '').toLowerCase() ==
+                (product.productname ?? '').toLowerCase(),
+            orElse: () => MaterialData(),
+          );
+        }
+        
+        final row = ProductRow(
+          materialData: matchedMaterial,
+          quantityController: TextEditingController(
+            text: (product.quantity ?? 0).toString(),
+          ),
+          rateController: TextEditingController(
+            text: (product.unitPrice ?? 0.0).toStringAsFixed(2),
+          ),
+          gstController: TextEditingController(
+            text: (product.gst ?? 0.0).toStringAsFixed(0),
+          ),
+          materialCtrl: TextEditingController(
+            text: product.productname ?? 'Select Item',
+          ),
+          rateType: selectedRateType,
+        );
+
+        productRows.add(row);
+      }
+
+      if (!_isDisposed) {
+        setState(() {});
+      }
+      print('✅ Loaded ${productDetails.length} products');
+    } catch (e) {
+      print('🔥 Error populating product details: $e');
+    }
+  }
+
+  Future<void> _populateCustomerDetails(CustomerData? customerData) async {
+    if (customerData == null || _isDisposed) return;
+
+    try {
+      // Set address immediately
+      if (!_isDisposed) {
+        setState(() {
+          addressController.text = customerData.address ?? '';
+        });
+      }
+      
+      // Try to find customer by ID from the request
+      if (customerData.customerName != null && customerData.customerName!.isNotEmpty) {
+        // First, wait for customers to load
+        if (_customerModel == null || _customerModel!.data.isEmpty) {
+          await _loadCustomers();
+        }
+        
+        // Try to find customer in the loaded list
+        if (_customerModel != null && _customerModel!.data.isNotEmpty) {
+          final matchedCustomer = _customerModel!.data.firstWhere(
+            (customer) => customer.id == customerData.customerName,
+            orElse: () => CustomerDetails(
+              id: '', 
+              name: '', 
+              address: '', 
+              contactNo: '', 
+              emailId: ''
+            ),
+          );
+
+          if (matchedCustomer.id.isNotEmpty) {
+            // Customer found - populate the field
+            if (!_isDisposed) {
+              setState(() {
+                selectedCustomerId = matchedCustomer.id;
+                customerNameCtrl.text = matchedCustomer.name;
+              });
+            }
+            
+            // Load work orders and customer details
+            _loadWorkOrderId(matchedCustomer.id);
+            await _loadCustomerDetails(matchedCustomer.id);
+          } else {
+            // Customer NOT found - leave field as "Select Customer"
+            print('⚠️ Customer ID ${customerData.customerName} not found in customer list');
+            
+            // Clear any previous customer selection
+            if (!_isDisposed) {
+              setState(() {
+                selectedCustomerId = null;
+                customerNameCtrl.text = "";
+                selectedWorkOrder = null;
+                workOrders = ["No Work Order ID"];
+                // Don't clear address, state, district as they come from request
+              });
+            }
+          }
+        }
+      }
+      
+      // Handle state (always set these from request data)
+      if (customerData.state != null && customerData.state!.isNotEmpty) {
+        // Check if states are loaded
+        if (stateList.isEmpty) {
+          await _getStates();
+        }
+        
+        if (stateList.isNotEmpty && !_isDisposed) {
+          final matchedState = stateList.firstWhere(
+            (state) => state.id == customerData.state,
+            orElse: () => StateList(id: '', name: ''),
+          );
+
+          if (matchedState.id.isNotEmpty) {
+            if (!_isDisposed) {
+              setState(() {
+                selectedStateId = matchedState.id;
+                selectedStateName = matchedState.name;
+                stateController.text = matchedState.name;
+              });
+            }
+            
+            // Load districts for this state
+            await _getDistricts(matchedState.id);
+            
+            // Now handle district
+            if (customerData.district != null && 
+                customerData.district!.isNotEmpty && 
+                !_isDisposed) {
+              
+              // Wait for districts to load
+              await Future.delayed(const Duration(milliseconds: 300));
+              
+              if (!_isDisposed && districtList.isNotEmpty) {
+                final matchedDistrict = districtList.firstWhere(
+                  (district) => district.id == customerData.district,
+                  orElse: () => DistrictList(id: '', name: ''),
+                );
+
+                if (matchedDistrict.id.isNotEmpty) {
+                  setState(() {
+                    selectedDistrictId = matchedDistrict.id;
+                    selectedDistrictName = matchedDistrict.name;
+                    districtController.text = matchedDistrict.name;
+                  });
+                } else {
+                  // District not found in list, use the ID as text
+                  setState(() {
+                    districtController.text = customerData.district!;
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('🔥 Error populating customer details: $e');
+    }
   }
 
   Future<void> _loadMaterials() async {
+    if (_isDisposed) return;
+    
     setState(() => isLoadingMaterials = true);
     final httpService = HttpService();
     final materialList = await httpService.getMaterials();
-    if (materialList != null && materialList.data != null) {
-      setState(() {
-        materials = materialList.data!;
-        isLoadingMaterials = false;
-      });
-    } else {
-      setState(() => isLoadingMaterials = false);
-      log("No materials found or API error");
+    if (!_isDisposed) {
+      if (materialList != null && materialList.data != null) {
+        setState(() {
+          materials = materialList.data!;
+          isLoadingMaterials = false;
+        });
+      } else {
+        setState(() => isLoadingMaterials = false);
+        log("No materials found or API error");
+      }
     }
   }
 
   Future<void> _loadCustomers({bool showLoading = true}) async {
+    if (_isDisposed) return;
+    
     if (showLoading) {
       setState(() => isLoadingCustomers = true);
     }
 
     final customerList = await HttpService.getCustomerList();
-    if (customerList != null && customerList.data.isNotEmpty) {
-      setState(() {
-        _customerModel = customerList;
-        isLoadingCustomers = false;
-      });
-    } else {
-      setState(() => isLoadingCustomers = false);
-      log("No customers found or API error");
+    if (!_isDisposed) {
+      if (customerList != null && customerList.data.isNotEmpty) {
+        setState(() {
+          _customerModel = customerList;
+          isLoadingCustomers = false;
+        });
+      } else {
+        setState(() => isLoadingCustomers = false);
+        log("No customers found or API error");
+      }
     }
   }
 
@@ -109,35 +377,39 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   Future<void> _getStates() async {
+    if (_isDisposed) return;
+    
     setState(() => isLoadingState = true);
     final response = await HttpService.getState();
-    if (response != null && response.status == true) {
-      setState(() {
-        stateList = response.data;
-        isLoadingState = false;
-      });
-    } else {
-      setState(() => isLoadingState = false);
+    if (!_isDisposed) {
+      if (response != null && response.status == true) {
+        setState(() {
+          stateList = response.data;
+          isLoadingState = false;
+        });
+      } else {
+        setState(() => isLoadingState = false);
+      }
     }
   }
 
   Future<void> _getDistricts(String stateId) async {
+    if (_isDisposed) return;
+    
     setState(() {
       isLoadingDistrict = true;
-      districtList = [];
-      selectedDistrictId = null;
-      selectedDistrictName = null;
-      districtController.clear();
     });
 
     final response = await HttpService.getDistrict(stateId);
-    if (response != null && response.status == true) {
-      setState(() {
-        districtList = response.data;
-        isLoadingDistrict = false;
-      });
-    } else {
-      setState(() => isLoadingDistrict = false);
+    if (!_isDisposed) {
+      if (response != null && response.status == true) {
+        setState(() {
+          districtList = response.data;
+          isLoadingDistrict = false;
+        });
+      } else {
+        setState(() => isLoadingDistrict = false);
+      }
     }
   }
 
@@ -240,155 +512,145 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   Future<void> _loadTemplates() async {
+    if (_isDisposed) return;
+    
     setState(() => isLoadingTemplates = true);
 
     final httpService = HttpService();
     final templateList = await httpService.getTemplateList();
 
-    if (templateList != null && templateList.data.isNotEmpty) {
-      setState(() {
-        _templateModel = templateList;
-        isLoadingTemplates = false;
-      });
-    } else {
-      setState(() => isLoadingTemplates = false);
-      log("No templates found or API error");
+    if (!_isDisposed) {
+      if (templateList != null && templateList.data.isNotEmpty) {
+        setState(() {
+          _templateModel = templateList;
+          isLoadingTemplates = false;
+        });
+      } else {
+        setState(() => isLoadingTemplates = false);
+        log("No templates found or API error");
+      }
     }
   }
 
   Future<void> _loadTemplateDetails(String templateId) async {
+    if (_isDisposed) return;
+    
     setState(() => isLoadingTemplates = true);
     final httpService = HttpService();
     final templateDetails = await httpService.getTemplateDetails(templateId);
-    if (templateDetails != null &&
-        templateDetails.data != null &&
-        (templateDetails.data!.fields?.isNotEmpty ?? false)) {
-      setState(() {
-        _templateDetailsModel =
-            templateDetails as details.QuotationTemplateDetailsModel;
-        isLoadingTemplates = false;
-      });
-    } else {
-      setState(() => isLoadingTemplates = false);
-      log("No template details found or API error");
+    if (!_isDisposed) {
+      if (templateDetails != null &&
+          templateDetails.data != null &&
+          (templateDetails.data!.fields?.isNotEmpty ?? false)) {
+        setState(() {
+          _templateDetailsModel =
+              templateDetails as details.QuotationTemplateDetailsModel;
+          isLoadingTemplates = false;
+        });
+      } else {
+        setState(() => isLoadingTemplates = false);
+        log("No template details found or API error");
+      }
     }
   }
 
- Future<void> _loadCustomerDetails(String customerId) async {
-  if (customerId.isEmpty) return;
+  Future<void> _loadCustomerDetails(String customerId) async {
+    if (customerId.isEmpty || _isDisposed) return;
 
-  try {
-    final httpService = HttpService();
-    final customerDetails = await httpService.getCustomerDetails(customerId);
+    try {
+      final httpService = HttpService();
+      final customerDetails = await httpService.getCustomerDetails(customerId);
 
-    if (customerDetails != null &&
-        customerDetails.data.isNotEmpty &&
-        customerDetails.status == "success") {
-      final customerData = customerDetails.data.first;
+      if (!_isDisposed) {
+        if (customerDetails != null &&
+            customerDetails.data.isNotEmpty &&
+            customerDetails.status == "success") {
+          final customerData = customerDetails.data.first;
 
-      // The API returns IDs, not names
-      final stateIdFromApi = customerData.state; // This is actually state ID
-      final districtIdFromApi = customerData.district; // This is actually district ID
+          // The API returns IDs, not names
+          final stateIdFromApi = customerData.state;
+          final districtIdFromApi = customerData.district;
 
-      // Find state name from stateList using the ID
-      String? stateName;
-      if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
-        final matchedState = stateList.firstWhere(
-          (state) => state.id == stateIdFromApi,
-          orElse: () => StateList(id: '', name: ''),
-        );
-        stateName = matchedState.name;
-      }
+          // Find state name from stateList using the ID
+          String? stateName;
+          if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
+            final matchedState = stateList.firstWhere(
+              (state) => state.id == stateIdFromApi,
+              orElse: () => StateList(id: '', name: ''),
+            );
+            stateName = matchedState.name;
+          }
 
-      // If state is found, load districts for that state
-      if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
-        await _getDistricts(stateIdFromApi);
-        
-        // Wait a bit for districts to load
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
+          // If state is found, load districts for that state
+          if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
+            await _getDistricts(stateIdFromApi);
+          }
 
-      // Find district name from districtList using the ID
-      String? districtName;
-      if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
-        final matchedDistrict = districtList.firstWhere(
-          (district) => district.id == districtIdFromApi,
-          orElse: () => DistrictList(id: '', name: ''),
-        );
-        districtName = matchedDistrict.name;
-      }
+          // Find district name from districtList using the ID
+          String? districtName;
+          if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
+            final matchedDistrict = districtList.firstWhere(
+              (district) => district.id == districtIdFromApi,
+              orElse: () => DistrictList(id: '', name: ''),
+            );
+            districtName = matchedDistrict.name;
+          }
 
-      setState(() {
-        addressController.text = customerData.address;
-        nationalityController.text = customerData.nationality;
-        
-        // Set state dropdown
-        if (stateIdFromApi.isNotEmpty) {
-          selectedStateId = stateIdFromApi;
-          selectedStateName = stateName ?? stateIdFromApi; // Fallback to ID if name not found
-          stateController.text = stateName ?? stateIdFromApi;
-        } else {
-          selectedStateId = null;
-          selectedStateName = null;
-          stateController.clear();
+          setState(() {
+            // Only update address if it's empty (don't overwrite request data)
+            if (addressController.text.isEmpty) {
+              addressController.text = customerData.address;
+            }
+            
+            // Update other fields
+            nationalityController.text = customerData.nationality;
+
+            // Set state dropdown only if not already set from request
+            if (stateIdFromApi.isNotEmpty && selectedStateId == null) {
+              selectedStateId = stateIdFromApi;
+              selectedStateName = stateName ?? stateIdFromApi;
+              stateController.text = stateName ?? stateIdFromApi;
+            }
+
+            // Set district dropdown only if not already set from request
+            if (districtIdFromApi.isNotEmpty && selectedDistrictId == null) {
+              selectedDistrictId = districtIdFromApi;
+              selectedDistrictName = districtName ?? districtIdFromApi;
+              districtController.text = districtName ?? districtIdFromApi;
+            }
+          });
+
+          log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
+          log("State Name: $stateName, District Name: $districtName");
         }
-        
-        // Set district dropdown
-        if (districtIdFromApi.isNotEmpty) {
-          selectedDistrictId = districtIdFromApi;
-          selectedDistrictName = districtName ?? districtIdFromApi; // Fallback to ID if name not found
-          districtController.text = districtName ?? districtIdFromApi;
-        } else {
-          selectedDistrictId = null;
-          selectedDistrictName = null;
-          districtController.clear();
-        }
-      });
-
-      // Log for debugging
-      log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
-      log("State Name: $stateName, District Name: $districtName");
-      
-    } else {
-      setState(() {
-        addressController.clear();
-        districtController.clear();
-        stateController.clear();
-        nationalityController.clear();
-        selectedStateId = null;
-        selectedDistrictId = null;
-        selectedStateName = null;
-        selectedDistrictName = null;
-        districtList.clear();
-      });
+      }
+    } catch (e, stack) {
+      log("Customer details loading error: $e");
+      log(stack.toString());
     }
-  } catch (e, stack) {
-    log("Customer details loading error: $e");
-    log(stack.toString());
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Failed to load customer details")),
-    );
   }
-}
 
   Future<void> _loadWorkOrderId(String customerId) async {
+    if (_isDisposed) return;
+    
     setState(() => isLoadingTemplates = true);
 
     final httpService = HttpService();
     final workOrderResponse = await httpService.getWorkorderId(customerId);
 
-    if (workOrderResponse != null &&
-        (workOrderResponse.data?.isNotEmpty ?? false)) {
-      setState(() {
-        _workOrderModel = workOrderResponse;
-        workOrders =
-            workOrderResponse.data!.map((e) => e.workOrderId ?? "").toList();
-        isLoadingTemplates = false;
-      });
-    } else {
-      setState(() => isLoadingTemplates = false);
-      log("No work order IDs found or API error");
+    if (!_isDisposed) {
+      if (workOrderResponse != null &&
+          (workOrderResponse.data?.isNotEmpty ?? false)) {
+        setState(() {
+          _workOrderModel = workOrderResponse;
+          workOrders =
+              workOrderResponse.data!.map((e) => e.workOrderId ?? "").toList();
+          isLoadingTemplates = false;
+        });
+      } else {
+        setState(() => isLoadingTemplates = false);
+        log("No work order IDs found or API error");
+      }
     }
   }
 
@@ -434,6 +696,30 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoadingRequestData) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Add Quotation',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: const Color.fromARGB(255, 22, 145, 216),
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading request details...'),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -443,6 +729,14 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 22, 145, 216),
         foregroundColor: Colors.white,
+        actions: [
+          if (widget.requestId != null && !isLoadingRequestData)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => _fetchRequestData(widget.requestId!),
+              tooltip: 'Reload request data',
+            ),
+        ],
       ),
       body: _isRefreshingCustomers
           ? const Center(child: CircularProgressIndicator())
@@ -453,8 +747,43 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Info banner for request-based quotation
+                    if (widget.requestId != null && _requestResponse != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue.shade700),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Quotation based on Request #${widget.requestId}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue.shade800,
+                                ),
+                              ),
+                            ),
+                            if (_requestResponse?.data?.productDetails != null)
+                              Chip(
+                                label: Text(
+                                  '${_requestResponse!.data!.productDetails!.length} items',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                backgroundColor: Colors.blue.shade100,
+                              ),
+                          ],
+                        ),
+                      ),
+                    
                     _sectionTitle("Customer Details"),
-
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -587,9 +916,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                           vertical: 10,
                                         ),
                                       ),
-                                      validator: (_) => selectedStateId == null
-                                          ? "Required"
-                                          : null,
+                                  
                                       items: stateList.map((state) {
                                         return DropdownMenuItem<String>(
                                           value: state.id,
@@ -606,7 +933,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                         setState(() {
                                           selectedStateId = value;
                                           if (value != null) {
-                                            // Find state name
                                             final state = stateList.firstWhere(
                                               (s) => s.id == value,
                                               orElse: () =>
@@ -664,10 +990,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                           vertical: 10,
                                         ),
                                       ),
-                                      validator: (_) =>
-                                          selectedDistrictId == null
-                                              ? "Required"
-                                              : null,
+                                     
                                       items: districtList.map((district) {
                                         return DropdownMenuItem<String>(
                                           value: district.id,
@@ -686,7 +1009,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                         setState(() {
                                           selectedDistrictId = value;
                                           if (value != null) {
-                                            // Find district name
                                             final district =
                                                 districtList.firstWhere(
                                               (d) => d.id == value,
@@ -719,17 +1041,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                           child: _textField(
                             label: "Address",
                             controller: addressController,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _textField(
-                            label: "Nationality",
-                            controller: nationalityController,
                           ),
                         ),
                       ],
@@ -1142,112 +1453,19 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   void _showTemplateSearchDialog(List<TemplateData> templates) {
-    FocusNode searchFocusNode = FocusNode();
-
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController searchCtrl = TextEditingController();
-        List<TemplateData> filteredList = List.from(templates);
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              FocusScope.of(context).requestFocus(searchFocusNode);
+        return _TemplateSearchDialog(
+          templates: templates,
+          selectedTemplateId: selectedTemplateId,
+          onTemplateSelected: (template) async {
+            Navigator.pop(context);
+            setState(() {
+              selectedTemplateId = template.id;
+              templateCtrl.text = template.templateName;
             });
-
-            return AlertDialog(
-              scrollable: true,
-              title: const Text("Select Template"),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.55,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchCtrl,
-                      focusNode: searchFocusNode,
-                      autofocus: true,
-                      onChanged: (value) {
-                        setDialogState(() {
-                          filteredList = templates
-                              .where((t) => t.templateName
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Search template...",
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      textInputAction: TextInputAction.search,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: filteredList.isEmpty
-                          ? const Center(child: Text("No templates found"))
-                          : ListView.builder(
-                              itemCount: filteredList.length,
-                              itemBuilder: (context, index) {
-                                final template = filteredList[index];
-                                return InkWell(
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    setState(() {
-                                      selectedTemplateId = template.id;
-                                      templateCtrl.text = template.templateName;
-                                    });
-                                    await _loadTemplateDetails(template.id);
-                                  },
-                                  child: Container(
-                                    height: 50,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            template.templateName,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                        if (selectedTemplateId == template.id)
-                                          const Icon(
-                                            Icons.check,
-                                            color: Colors.green,
-                                            size: 20,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            await _loadTemplateDetails(template.id);
           },
         );
       },
@@ -1566,116 +1784,22 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   void _showCustomerSearchDialog(List<CustomerDetails> customers) {
-    FocusNode searchFocusNode = FocusNode();
-    bool shouldAutoFocus = true;
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController searchCtrl = TextEditingController();
-        List<CustomerDetails> filteredList = List.from(customers);
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            if (shouldAutoFocus) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  FocusScope.of(context).requestFocus(searchFocusNode);
-                }
-              });
+        return _CustomerSearchDialog(
+          customers: customers,
+          selectedCustomerId: selectedCustomerId,
+          onCustomerSelected: (customer) {
+            _selectCustomer(customer);
+            Navigator.pop(context);
+          },
+          onAddCustomer: () async {
+            final result = await _showQuickAddCustomerDialog(context);
+            if (result != null && result) {
+              Navigator.pop(context);
+              await _refreshAfterCustomerAdded();
             }
-
-            return AlertDialog(
-              scrollable: true,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Select Customer"),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.blue, size: 24),
-                    onPressed: () async {
-                      shouldAutoFocus = false;
-                      // final result = await _showQuickAddCustomerDialog(context);
-                      // if (result != null && result) {
-                      //   await _refreshAfterCustomerAdded();
-                      // }
-                      final result = await _showQuickAddCustomerDialog(context);
-                      if (result != null && result) {
-                        Navigator.pop(context);
-                        await _refreshAfterCustomerAdded();
-                      } else {
-                        shouldAutoFocus = true;
-                        if (mounted) {
-                          _showCustomerSearchDialog(_customerModel?.data ?? []);
-                        }
-                      }
-                    },
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.55,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchCtrl,
-                      focusNode: searchFocusNode,
-                      autofocus: true,
-                      onChanged: (value) {
-                         shouldAutoFocus = false;
-                        setDialogState(() {
-                          filteredList = customers
-                              .where((c) => c.name
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Search customer",
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                      textInputAction: TextInputAction.search,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: filteredList.isEmpty
-                          ? const Center(child: Text("No customers found"))
-                          : ListView.builder(
-                              itemCount: filteredList.length,
-                              itemBuilder: (context, index) {
-                                final cust = filteredList[index];
-                                return InkWell(
-                                  onTap: () {
-                                    _selectCustomer(cust);
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    height: 45,
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10),
-                                    child: Text(
-                                      cust.name,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            );
           },
         );
       },
@@ -1689,15 +1813,18 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
       selectedWorkOrder = null;
       workOrders.clear();
-      addressController.clear();
-      districtController.clear();
-      stateController.clear();
-      nationalityController.clear();
-      selectedStateId = null;
-      selectedDistrictId = null;
-      selectedStateName = null;
-      selectedDistrictName = null;
-      districtList.clear();
+      // Don't clear address, state, district if they were set from request
+      if (_requestResponse == null) {
+        addressController.clear();
+        districtController.clear();
+        stateController.clear();
+        nationalityController.clear();
+        selectedStateId = null;
+        selectedDistrictId = null;
+        selectedStateName = null;
+        selectedDistrictName = null;
+        districtList.clear();
+      }
     });
 
     _loadWorkOrderId(cust.id);
@@ -1711,18 +1838,17 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
     try {
       await _loadCustomers(showLoading: false);
-      if (mounted) {
-        Navigator.pop(context);
-        Common.toastMessaage('Customer added successfully', Colors.green);
+      if (!_isDisposed) {
         _showCustomerSearchDialog(_customerModel?.data ?? []);
       }
     } catch (e) {
       log("Error refreshing customers: $e");
-      Common.toastMessaage('Failed to refresh customers', Colors.red);
     } finally {
-      setState(() {
-        _isRefreshingCustomers = false;
-      });
+      if (!_isDisposed) {
+        setState(() {
+          _isRefreshingCustomers = false;
+        });
+      }
     }
   }
 
@@ -1750,76 +1876,15 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController searchCtrl = TextEditingController();
-        List<MaterialData> filteredList = List.from(materials);
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              scrollable: true,
-              title: const Text("Select Material"),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.55,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchCtrl,
-                      onChanged: (value) {
-                        setDialogState(() {
-                          filteredList = materials
-                              .where((m) => (m.materialName ?? '')
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Search material",
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: filteredList.isEmpty
-                          ? const Center(child: Text("No materials found"))
-                          : ListView.builder(
-                              itemCount: filteredList.length,
-                              itemBuilder: (context, index) {
-                                final material = filteredList[index];
-                                return InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      row.materialData = material;
-                                      row.materialCtrl.text =
-                                          material.materialName ?? '';
-                                      row.rateController.text =
-                                          material.unitPrice ?? '0.00';
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    height: 45,
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10),
-                                    child: Text(
-                                      material.materialName ?? 'Unknown',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+        return _MaterialSearchDialog(
+          materials: materials,
+          onMaterialSelected: (material) {
+            setState(() {
+              row.materialData = material;
+              row.materialCtrl.text = material.materialName ?? '';
+              row.rateController.text = material.unitPrice ?? '0.00';
+            });
+            Navigator.pop(context);
           },
         );
       },
@@ -1906,4 +1971,326 @@ class ProductRow {
     required this.rateType,
     required this.materialCtrl,
   });
+}
+
+// Separate dialog widgets to avoid context issues
+class _TemplateSearchDialog extends StatefulWidget {
+  final List<TemplateData> templates;
+  final String? selectedTemplateId;
+  final Function(TemplateData) onTemplateSelected;
+
+  const _TemplateSearchDialog({
+    required this.templates,
+    required this.selectedTemplateId,
+    required this.onTemplateSelected,
+  });
+
+  @override
+  __TemplateSearchDialogState createState() => __TemplateSearchDialogState();
+}
+
+class __TemplateSearchDialogState extends State<_TemplateSearchDialog> {
+  late TextEditingController searchCtrl;
+  late List<TemplateData> filteredList;
+
+  @override
+  void initState() {
+    super.initState();
+    searchCtrl = TextEditingController();
+    filteredList = List.from(widget.templates);
+  }
+
+  @override
+  void dispose() {
+    searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: const Text("Select Template"),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.55,
+        child: Column(
+          children: [
+            TextField(
+              controller: searchCtrl,
+              autofocus: true,
+              onChanged: (value) {
+                setState(() {
+                  filteredList = widget.templates
+                      .where((t) => t.templateName
+                          .toLowerCase()
+                          .contains(value.toLowerCase()))
+                      .toList();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Search template...",
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              textInputAction: TextInputAction.search,
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: filteredList.isEmpty
+                  ? const Center(child: Text("No templates found"))
+                  : ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final template = filteredList[index];
+                        return InkWell(
+                          onTap: () {
+                            widget.onTemplateSelected(template);
+                          },
+                          child: Container(
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    template.templateName,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                if (widget.selectedTemplateId == template.id)
+                                  const Icon(
+                                    Icons.check,
+                                    color: Colors.green,
+                                    size: 20,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerSearchDialog extends StatefulWidget {
+  final List<CustomerDetails> customers;
+  final String? selectedCustomerId;
+  final Function(CustomerDetails) onCustomerSelected;
+  final Function() onAddCustomer;
+
+  const _CustomerSearchDialog({
+    required this.customers,
+    required this.selectedCustomerId,
+    required this.onCustomerSelected,
+    required this.onAddCustomer,
+  });
+
+  @override
+  __CustomerSearchDialogState createState() => __CustomerSearchDialogState();
+}
+
+class __CustomerSearchDialogState extends State<_CustomerSearchDialog> {
+  late TextEditingController searchCtrl;
+  late List<CustomerDetails> filteredList;
+
+  @override
+  void initState() {
+    super.initState();
+    searchCtrl = TextEditingController();
+    filteredList = List.from(widget.customers);
+  }
+
+  @override
+  void dispose() {
+    searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("Select Customer"),
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.blue, size: 24),
+            onPressed: widget.onAddCustomer,
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.55,
+        child: Column(
+          children: [
+            TextField(
+              controller: searchCtrl,
+              autofocus: true,
+              onChanged: (value) {
+                setState(() {
+                  filteredList = widget.customers
+                      .where((c) => c.name
+                          .toLowerCase()
+                          .contains(value.toLowerCase()))
+                      .toList();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Search customer",
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              textInputAction: TextInputAction.search,
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: filteredList.isEmpty
+                  ? const Center(child: Text("No customers found"))
+                  : ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final cust = filteredList[index];
+                        return InkWell(
+                          onTap: () {
+                            widget.onCustomerSelected(cust);
+                          },
+                          child: Container(
+                            height: 45,
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              cust.name,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MaterialSearchDialog extends StatefulWidget {
+  final List<MaterialData> materials;
+  final Function(MaterialData) onMaterialSelected;
+
+  const _MaterialSearchDialog({
+    required this.materials,
+    required this.onMaterialSelected,
+  });
+
+  @override
+  __MaterialSearchDialogState createState() => __MaterialSearchDialogState();
+}
+
+class __MaterialSearchDialogState extends State<_MaterialSearchDialog> {
+  late TextEditingController searchCtrl;
+  late List<MaterialData> filteredList;
+
+  @override
+  void initState() {
+    super.initState();
+    searchCtrl = TextEditingController();
+    filteredList = List.from(widget.materials);
+  }
+
+  @override
+  void dispose() {
+    searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: const Text("Select Material"),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.55,
+        child: Column(
+          children: [
+            TextField(
+              controller: searchCtrl,
+              onChanged: (value) {
+                setState(() {
+                  filteredList = widget.materials
+                      .where((m) => (m.materialName ?? '')
+                          .toLowerCase()
+                          .contains(value.toLowerCase()))
+                      .toList();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Search material",
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: filteredList.isEmpty
+                  ? const Center(child: Text("No materials found"))
+                  : ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final material = filteredList[index];
+                        return InkWell(
+                          onTap: () {
+                            widget.onMaterialSelected(material);
+                          },
+                          child: Container(
+                            height: 45,
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              material.materialName ?? 'Unknown',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

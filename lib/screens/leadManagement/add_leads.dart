@@ -74,6 +74,8 @@ class _AddLeadsState extends State<AddLeads> {
   String priority = 'Normal';
   String priorityId = '2';
   String? contactPermission = '';
+    String? createLeadCategory = '';
+       String? addLeadSource = '';
   TextEditingController clientName = TextEditingController();
   TextEditingController contactNo = TextEditingController();
   TextEditingController cost = TextEditingController();
@@ -135,6 +137,9 @@ class _AddLeadsState extends State<AddLeads> {
 
   getData() async {
     contactPermission = await Common.getSharedPref("getContactPermission");
+     contactPermission = await Common.getSharedPref("getContactPermission");
+       createLeadCategory = await Common.getSharedPref("createLeadCategory");
+         addLeadSource = await Common.getSharedPref("addLeadSource");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -968,7 +973,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                 Icons
                                                     .arrow_drop_down_circle_outlined,
                                                 color: Colors.grey),
-                                            suffixIcon: IconButton(
+                                               
+                                            suffixIcon: 
+                                             createLeadCategory == 'true'?
+                                            IconButton(
                                               icon: const Icon(Icons.add_circle,
                                                   color: Colors.green),
                                               onPressed: () {
@@ -1043,7 +1051,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                   ),
                                                 );
                                               },
-                                            ),
+                                            ):SizedBox(),
                                             border: const OutlineInputBorder(),
                                             focusedBorder:
                                                 const OutlineInputBorder(
@@ -1402,7 +1410,9 @@ class _AddLeadsState extends State<AddLeads> {
                                       ),
                                       Positioned(
                                         right: 5,
-                                        child: IconButton(
+                                        child: 
+                                        addLeadSource == 'true'?
+                                        IconButton(
                                           icon: const Icon(Icons.add_circle,
                                               color: Colors.green),
                                           onPressed: () {
@@ -1442,7 +1452,7 @@ class _AddLeadsState extends State<AddLeads> {
                                               ),
                                             );
                                           },
-                                        ),
+                                        ):SizedBox(),
                                       ),
                                     ],
                                   ),

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/models/product_mannagement/product_list_model.dart';
@@ -37,7 +40,7 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
   List<Customer> customers = [];
   List<Customer> filteredCustomers = [];
   List<Product> products = [];
-  // List<Product> searchResults = [];
+// List<Product> searchResults = [];
   List<ProductList> allProducts = [];
   List<ProductList> filteredProducts = [];
   List<ProductList> searchResults = [];
@@ -95,7 +98,7 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
       setState(() => loading = true);
       final productList = await HttpService.getProductLists(widget.token);
       setState(() {
-        allProducts = productList.data ?? [];
+        allProducts = productList!.data ?? [];
         filteredProducts = List.from(allProducts);
         loading = false;
       });
@@ -161,6 +164,26 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
     });
   }
 
+// void _addProduct(ProductList product, {int increment = 1}) {
+// final key = product.id;
+// setState(() {
+// activeProductKey = key;
+// if (addedProducts.containsKey(key)) {
+// addedProducts[key]!['qty'] =
+// (addedProducts[key]!['qty'] as int) + increment;
+// } else {
+// //addedProducts[key] = {'product': product, 'qty': 1};
+// addedProducts[key] = {
+// 'product': product,
+// 'qty': 1,
+// 'editableAmount': double.tryParse(product.totalAmount) ?? 0.0
+// };
+// }
+// _calculateTotals();
+// _showProductUpdateMessage();
+// });
+// }
+
   void _addProduct(ProductList product, {int increment = 1}) {
     final key = product.id;
     setState(() {
@@ -169,7 +192,11 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
         addedProducts[key]!['qty'] =
             (addedProducts[key]!['qty'] as int) + increment;
       } else {
-        addedProducts[key] = {'product': product, 'qty': 1};
+        addedProducts[key] = {
+          'product': product,
+          'qty': 1,
+          'editableAmount': double.tryParse(product.totalAmount) ?? 0.0
+        };
       }
       _calculateTotals();
       _showProductUpdateMessage();
@@ -214,22 +241,42 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
       if (addedProducts.containsKey(key)) {
         addedProducts[key]!['qty'] = newQuantity;
       } else {
-        addedProducts[key] = {'product': product, 'qty': newQuantity};
+//addedProducts[key] = {'product': product, 'qty': newQuantity};
+        addedProducts[key] = {
+          'product': product,
+          'qty': 1,
+          'editableAmount':
+              double.tryParse(product.totalAmount) ?? 0.0 // Add editable amount
+        };
       }
       _calculateTotals();
       _showProductUpdateMessage();
     });
   }
 
+// void _calculateTotals() {
+// total = 0;
+// for (final entry in addedProducts.entries) {
+// final prod = entry.value['product'] as ProductList;
+// final qty = entry.value['qty'] as int;
+// final price = double.tryParse(prod.totalAmount) ?? 0;
+// total += price * qty;
+// }
+
+// if (paymentStatus == "Paid") {
+// paidAmount.text = total.toStringAsFixed(2);
+// }
+// setState(() {});
+// }
   void _calculateTotals() {
     total = 0;
     for (final entry in addedProducts.entries) {
-      final prod = entry.value['product'] as ProductList;
-      final qty = entry.value['qty'] as int;
-      final price = double.tryParse(prod.totalAmount) ?? 0;
+      final ProductList prod = entry.value['product'] as ProductList;
+      final int qty = entry.value['qty'] as int;
+      final double price = entry.value['editableAmount'] as double;
       total += price * qty;
     }
-
+    total = total.roundToDouble();
     if (paymentStatus == "Paid") {
       paidAmount.text = total.toStringAsFixed(2);
     }
@@ -262,198 +309,503 @@ class _AddInvoiceUpdatedState extends State<AddInvoiceUpdated> {
   }
 
   Future<void> _saveInvoice({bool download = false}) async {
-  if (selectedCustomer == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select a customer')),
-    );
-    return;
-  }
-
-  if (addedProducts.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please add at least one product')),
-    );
-    return;
-  }
-
-  if (paymentStatus == "Partial" || paymentStatus == "Paid") {
-    if (staffId.isEmpty) {
+    if (selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an account head')),
+        const SnackBar(content: Text('Please select a customer')),
       );
       return;
     }
-  }
 
-  setState(() => saving = true);
-  try {
-    final invoiceItems = addedProducts.entries.map((entry) {
-      final ProductList p = entry.value['product'] as ProductList;
-      final int qty = entry.value['qty'] as int;
-      return {
-        'product_id': p.id,
-        'qty': qty,
-        'rate': p.totalAmount,
-        'total': (double.tryParse(p.totalAmount) ?? 0) * qty,
-      };
-    }).toList();
-
-    String paymentMethodValue;
-    if ((paymentMethod ?? '').toLowerCase() == 'cash') {
-      paymentMethodValue = '1';
-    } else if ((paymentMethod ?? '').toLowerCase() == 'Bank Transfer') {
-      paymentMethodValue = '5';
-    } else {
-      paymentMethodValue = '0';
+    if (addedProducts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one product')),
+      );
+      return;
     }
 
-    final payload = {
-      'client_id': widget.clientId,
-      'customer_id': selectedCustomer,
-      'products': invoiceItems,
-      'total': total.toStringAsFixed(2),
-      'payment_status': paymentStatus ?? 'Paid',
-      'payment_method': paymentMethodValue,
-      'paid_amount':
-          paidAmount.text.trim().isEmpty ? '0' : paidAmount.text.trim(),
-      'paid_date': paidDate,
-      'collected_by': staffId,
-      'account_head_name': staffName,
-      'is_download': download ? '1' : '0', 
-      'token': widget.token,
-    };
+    if (paymentStatus == "Partial" || paymentStatus == "Paid") {
+      if (staffId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an account head')),
+        );
+        return;
+      }
+    }
 
-    final response = await HttpService.addInvoiceUpdated(payload);
-    
-    if (response.status == true) {
-   
-      if (download && response.data is String && (response.data as String).contains('http')) {
-        final pdfUrl = response.data as String;
-        await _handlePdfDownload(pdfUrl);
+    setState(() => saving = true);
+    try {
+      final invoiceItems = addedProducts.entries.map((entry) {
+        final ProductList p = entry.value['product'] as ProductList;
+        final int qty = entry.value['qty'] as int;
+        final double price = entry.value['editableAmount'] as double;
+        return {
+          'product_id': p.id,
+          'qty': qty,
+          'rate': price.toStringAsFixed(2),
+          'total': (price * qty).toStringAsFixed(2),
+        };
+      }).toList();
+      String paymentMethodValue;
+      if ((paymentMethod ?? '').toLowerCase() == 'cash') {
+        paymentMethodValue = '1';
+      } else if ((paymentMethod ?? '').toLowerCase() == 'Bank Transfer') {
+        paymentMethodValue = '5';
       } else {
-        // Regular save success
+        paymentMethodValue = '0';
+      }
+      final payload = {
+        'client_id': widget.clientId,
+        'customer_id': selectedCustomer,
+        'products': invoiceItems,
+        'total': total.toStringAsFixed(2),
+        'payment_status': paymentStatus ?? 'Paid',
+        'payment_method': paymentMethodValue,
+        'paid_amount':
+            paidAmount.text.trim().isEmpty ? '0' : paidAmount.text.trim(),
+        'paid_date': paidDate,
+        'collected_by': staffId,
+        'account_head_name': staffName,
+        'is_download': download ? '1' : '0',
+        'token': widget.token,
+      };
+
+      final response = await HttpService.addInvoiceUpdated(payload);
+      if (response.status == true) {
+        if (download && response.data != null && response.data!.isNotEmpty) {
+          final pdfUrl = response.data!;
+          await _handlePdfDownload(pdfUrl);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response.message ?? 'Invoice saved and downloaded successfully',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response.message ?? 'Invoice saved successfully',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() {
+          addedProducts.clear();
+          total = 0;
+          paidAmount.clear();
+          _clearProductSearch();
+          searchResults.clear();
+          selectedCustomer = null;
+          selectedCustomerName = null;
+          paymentStatus = 'Paid';
+          paymentMethod = 'Cash';
+          staffId = "";
+          staffName = "Select Account Head";
+        });
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              response.message ?? 'Invoice saved successfully',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            duration: const Duration(seconds: 2),
+            content: Text(response.message ?? 'Failed to save invoice'),
+            backgroundColor: Colors.red,
           ),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() => saving = false);
+    }
+  }
 
-      setState(() {
-        addedProducts.clear();
-        total = 0;
-        paidAmount.clear();
-        _clearProductSearch();
-        searchResults.clear();
-      });
+  // Future<void> _saveInvoice({bool download = false}) async {
+  //   if (selectedCustomer == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please select a customer')),
+  //     );
+  //     return;
+  //   }
+
+  //   if (addedProducts.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please add at least one product')),
+  //     );
+  //     return;
+  //   }
+
+  //   if (paymentStatus == "Partial" || paymentStatus == "Paid") {
+  //     if (staffId.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Please select an account head')),
+  //       );
+  //       return;
+  //     }
+  //   }
+
+  //   setState(() => saving = true);
+  //   try {
+  //     final invoiceItems = addedProducts.entries.map((entry) {
+  //       final ProductList p = entry.value['product'] as ProductList;
+  //       final int qty = entry.value['qty'] as int;
+  //       return {
+  //         'product_id': p.id,
+  //         'qty': qty,
+  //         'rate': p.totalAmount,
+  //         'total': (double.tryParse(p.totalAmount) ?? 0) * qty,
+  //       };
+  //     }).toList();
+
+  //     String paymentMethodValue;
+  //     if ((paymentMethod ?? '').toLowerCase() == 'cash') {
+  //       paymentMethodValue = '1';
+  //     } else if ((paymentMethod ?? '').toLowerCase() == 'Bank Transfer') {
+  //       paymentMethodValue = '5';
+  //     } else {
+  //       paymentMethodValue = '0';
+  //     }
+
+  //     final payload = {
+  //       'client_id': widget.clientId,
+  //       'customer_id': selectedCustomer,
+  //       'products': invoiceItems,
+  //       'total': total.toStringAsFixed(2),
+  //       'payment_status': paymentStatus ?? 'Paid',
+  //       'payment_method': paymentMethodValue,
+  //       'paid_amount':
+  //           paidAmount.text.trim().isEmpty ? '0' : paidAmount.text.trim(),
+  //       'paid_date': paidDate,
+  //       'collected_by': staffId,
+  //       'account_head_name': staffName,
+  //       'is_download': download ? '1' : '0',
+  //       'token': widget.token,
+  //     };
+
+  //     final response = await HttpService.addInvoiceUpdated(payload);
+
+  //     if (response.status == true) {
+  //       if (download &&
+  //           response.data is String &&
+  //           (response.data as String).contains('http')) {
+  //         final pdfUrl = response.data as String;
+  //         await _handlePdfDownload(pdfUrl);
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               response.message ?? 'Invoice saved successfully',
+  //               style: const TextStyle(
+  //                 color: Colors.white,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //             backgroundColor: Colors.green,
+  //             behavior: SnackBarBehavior.floating,
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(10),
+  //             ),
+  //             duration: const Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+
+  //       setState(() {
+  //         addedProducts.clear();
+  //         total = 0;
+  //         paidAmount.clear();
+  //         _clearProductSearch();
+  //         searchResults.clear();
+  //       });
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(response.message ?? 'Failed to save invoice'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error: $e')),
+  //     );
+  //   } finally {
+  //     setState(() => saving = false);
+  //   }
+  // }
+
+  // Future<void> _handlePdfDownload(String pdfUrl) async {
+  //   try {
+  //     final action = await showDialog<String>(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return AlertDialog(
+  //           title: const Text('Invoice Generated'),
+  //           content: const Text('What would you like to do with the invoice?'),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context, 'view'),
+  //               child: const Text('View PDF'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context, 'download'),
+  //               child: const Text('Download PDF'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context, 'cancel'),
+  //               child: const Text('Cancel'),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     );
+
+  //     if (action == 'view') {
+  //       await _viewPdf(pdfUrl);
+  //     } else if (action == 'download') {
+  //       await _downloadPdf(pdfUrl);
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error handling PDF: $e')),
+  //     );
+  //   }
+  // }
+  Future<void> _handlePdfDownload(String pdfUrl) async {
+    try {
+      final action = await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Invoice Generated'),
+            content: const Text('What would you like to do with the invoice?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'view'),
+                child: const Text('View PDF'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'download'),
+                child: const Text('Download PDF'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'cancel'),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (action == 'view') {
+        await _viewPdf(pdfUrl);
+      } else if (action == 'download') {
+        await _downloadPdf(pdfUrl);
+      } else if (action == null || action == 'cancel') {
+        // User cancelled, just show a message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invoice saved. PDF download cancelled.'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error handling PDF: $e')),
+      );
+    }
+  }
+
+Future<void> _viewPdf(String url) async {
+  try {
+    print('Opening PDF URL: $url');
+    
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid PDF URL'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    final Uri pdfUri;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      pdfUri = Uri.parse(url);
+    } else {
+      pdfUri = Uri.parse('https://$url');
+    }
+
+    if (await canLaunchUrl(pdfUri)) {
+      await launchUrl(
+        pdfUri,
+        mode: LaunchMode.externalApplication,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Failed to save invoice'),
-          backgroundColor: Colors.red,
+          content: Text('Could not open URL. Please try downloading instead.'),
+          backgroundColor: Colors.orange,
         ),
       );
     }
   } catch (e) {
+    print('Error viewing PDF: $e');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
+      SnackBar(
+        content: Text('Error viewing PDF: $e'),
+        backgroundColor: Colors.red,
+      ),
     );
-  } finally {
-    setState(() => saving = false);
-  }
-}
-
-
-  Future<void> _handlePdfDownload(String pdfUrl) async {
-  try {
-    final action = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Invoice Generated'),
-          content: const Text('What would you like to do with the invoice?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'view'),
-              child: const Text('View PDF'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'download'),
-              child: const Text('Download PDF'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'cancel'),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (action == 'view') {
-      await _viewPdf(pdfUrl);
-    } else if (action == 'download') {
-      await _downloadPdf(pdfUrl);
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error handling PDF: $e')),
-    );
-  }
-}
-
-Future<void> _viewPdf(String url) async {
-  final Uri pdfUri = Uri.parse(url);
-  
-  if (await canLaunchUrl(pdfUri)) {
-    await launchUrl(
-      pdfUri,
-      mode: LaunchMode.externalApplication, 
-    );
-  } else {
-    throw 'Could not launch $url';
   }
 }
 
 Future<void> _downloadPdf(String url) async {
   try {
-  
-    final Directory? downloadsDir = await getExternalStorageDirectory();
-    final String savePath = '${downloadsDir?.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf';
-
-   
-    await FlutterDownloader.enqueue(
-      url: url,
-      savedDir: downloadsDir?.path ?? '',
-      fileName: 'invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
-      showNotification: true,
-      openFileFromNotification: true,
-    );
-
+    print('Downloading PDF from URL: $url');
+    
+    // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('PDF download started'),
-        backgroundColor: Colors.green,
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 10),
+            Text('Downloading PDF...'),
+          ],
+        ),
+        backgroundColor: Colors.blue,
+        duration: Duration(minutes: 5), 
       ),
     );
-  } catch (e) {
+    
+  
+    await _downloadWithHttp(url);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Download failed: $e')),
+      const SnackBar(
+        content: Text('PDF downloaded successfully!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+    
+  } catch (e) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Download failed: $e'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 }
+
+Future<void> _downloadWithHttp(String url) async {
+  final response = await http.get(Uri.parse(url));
+  
+  if (response.statusCode == 200) {
+    Directory? downloadsDir = Directory('/storage/emulated/0/Download');
+    if (!await downloadsDir.exists()) {
+      downloadsDir = await getExternalStorageDirectory();
+    }
+    
+    if (downloadsDir != null) {
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String fileName = 'invoice_$timestamp.pdf';
+      final File file = File('${downloadsDir.path}/$fileName');
+      
+      await file.writeAsBytes(response.bodyBytes);
+      print('File saved at: ${file.path}');
+      _showDownloadSuccessDialog(file.path);
+    }
+  } else {
+    throw Exception('Failed to download PDF: ${response.statusCode}');
+  }
+}
+
+void _showDownloadSuccessDialog(String filePath) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Download Complete'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('PDF downloaded successfully!'),
+          const SizedBox(height: 10),
+          Text(
+            'Saved to: ${filePath.split('/').last}',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+        // TextButton(
+        //   onPressed: () {
+        //     Navigator.pop(context);
+        //     // Open the file
+        //     OpenFile.open(filePath);
+        //   },
+        //   child: const Text('Open File'),
+        // ),
+      ],
+    ),
+  );
+}
+
+  // Future<void> _downloadPdf(String url) async {
+  //   try {
+  //     final Directory? downloadsDir = await getExternalStorageDirectory();
+  //     final String savePath =
+  //         '${downloadsDir?.path}/invoice_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+  //     await FlutterDownloader.enqueue(
+  //       url: url,
+  //       savedDir: downloadsDir?.path ?? '',
+  //       fileName: 'invoice_${DateTime.now().millisecondsSinceEpoch}.pdf',
+  //       showNotification: true,
+  //       openFileFromNotification: true,
+  //     );
+
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('PDF download started'),
+  //         backgroundColor: Colors.green,
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Download failed: $e')),
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -569,8 +921,9 @@ Future<void> _downloadPdf(String url) async {
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>
-                                        AddClients(widget.token, createOrder: false)),
+                                    builder: (context) => AddClients(
+                                        widget.token,
+                                        createOrder: false)),
                               );
 
                               if (result == true) {
@@ -829,7 +1182,6 @@ Future<void> _downloadPdf(String url) async {
             : Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16)),
       );
-
   Widget _iconButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -865,7 +1217,15 @@ Future<void> _downloadPdf(String url) async {
           ...addedProducts.entries.map((entry) {
             final ProductList p = entry.value['product'] as ProductList;
             final int qty = entry.value['qty'] as int;
-            final double price = double.tryParse(p.totalAmount) ?? 0.0;
+            final double currentAmount =
+                entry.value['editableAmount'] as double;
+            double taxPercent = double.tryParse(p.taxPercentage) ?? 0.0;
+            double sellingPricePerUnit =
+                currentAmount / (1 + (taxPercent / 100));
+            double taxAmountPerUnit = sellingPricePerUnit * (taxPercent / 100);
+            double totalPerUnit = sellingPricePerUnit + taxAmountPerUnit;
+            double itemTotal = currentAmount * qty;
+
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(10),
@@ -873,106 +1233,555 @@ Future<void> _downloadPdf(String url) async {
                 color: const Color(0xFFF2FFF2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: p.productImage.isNotEmpty
-                        ? Image.network(
-                            p.productImage,
-                            height: 60,
-                            width: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Image.asset(
-                              'assets/icons/comingsoon.jpg',
-                              height: 60,
-                              width: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Image.asset(
-                            'assets/icons/comingsoon.jpg',
-                            height: 60,
-                            width: 60,
-                            fit: BoxFit.cover,
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(p.productName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15)),
-                            ),
-                            Text('₹${price.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6B48FF))),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline),
-                              color: const Color(0xFF6B48FF),
-                              onPressed: () => _decreaseProduct(p),
-                            ),
-                            Container(
-                              width: 50,
-                              child: TextFormField(
-                                controller: TextEditingController(text: '$qty'),
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(4),
-                                  border: OutlineInputBorder(),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: p.productImage.isNotEmpty
+                            ? Image.network(
+                                p.productImage,
+                                height: 60,
+                                width: 60,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Image.asset(
+                                  'assets/icons/comingsoon.jpg',
+                                  height: 60,
+                                  width: 60,
+                                  fit: BoxFit.cover,
                                 ),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                                onChanged: (value) {
-                                  if (value.isNotEmpty) {
-                                    int newQty = int.tryParse(value) ?? 1;
-                                    _updateProductQuantity(p, newQty);
-                                  }
-                                },
+                              )
+                            : Image.asset(
+                                'assets/icons/comingsoon.jpg',
+                                height: 60,
+                                width: 60,
+                                fit: BoxFit.cover,
                               ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(p.productName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15)),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    _showAmountEditDialog(p, currentAmount);
+                                  },
+                                  child: Text(
+                                    '₹${itemTotal.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                )
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline),
-                              color: const Color(0xFF6B48FF),
-                              onPressed: () => _addProduct(p),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _removeProduct(p),
-                            ),
+                            const SizedBox(height: 4),
+                            // Row(
+                            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            //   children: [
+                            //     Text(
+                            //       'Price: ₹${sellingPricePerUnit.toStringAsFixed(2)}',
+                            //       style: const TextStyle(
+                            //         fontSize: 12,
+                            //         color: Colors.grey,
+                            //       ),
+                            //     ),
+                            //     Text(
+                            //       'Tax (${taxPercent.toStringAsFixed(2)}%): ₹${taxAmountPerUnit.toStringAsFixed(2)}',
+                            //       style: const TextStyle(
+                            //         fontSize: 12,
+                            //         color: Colors.grey,
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        color: const Color(0xFF6B48FF),
+                        onPressed: () => _decreaseProduct(p),
+                      ),
+                      Container(
+                        width: 50,
+                        child: TextFormField(
+                          controller: TextEditingController(text: '$qty'),
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(4),
+                            border: OutlineInputBorder(),
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              int newQty = int.tryParse(value) ?? 1;
+                              _updateProductQuantity(p, newQty);
+                            }
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        color: const Color(0xFF6B48FF),
+                        onPressed: () => _addProduct(p),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _removeProduct(p),
+                      ),
+                    ],
                   ),
                 ],
               ),
             );
           }),
           const Divider(),
-          // Only show total, remove subtotal and tax
+          //  ..._buildTaxBreakdown(),
           _rowTotal('Total', total, bold: true),
         ],
       ),
     );
+  }
+
+  // List<Widget> _buildTaxBreakdown() {
+  //   Map<double, double> taxSummary = {};
+
+  //   for (final entry in addedProducts.entries) {
+  //     final ProductList p = entry.value['product'] as ProductList;
+  //     final int qty = entry.value['qty'] as int;
+  //     final double currentAmount = entry.value['editableAmount'] as double;
+
+  //     double taxPercent = double.tryParse(p.taxPercentage) ?? 0.0;
+  //     double sellingPricePerUnit = currentAmount / (1 + (taxPercent / 100));
+  //     double taxAmountPerUnit = sellingPricePerUnit * (taxPercent / 100);
+
+  //     taxSummary[taxPercent] =
+  //         (taxSummary[taxPercent] ?? 0) + (taxAmountPerUnit * qty);
+  //   }
+
+  //   List<Widget> widgets = [];
+
+  //   taxSummary.forEach((taxPercent, taxAmount) {
+  //     widgets.add(
+  //       Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 2),
+  //         child: Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Text(
+  //               'Tax (${taxPercent.toStringAsFixed(2)}%):',
+  //               style: const TextStyle(fontSize: 14, color: Colors.grey),
+  //             ),
+  //             Text(
+  //               '₹${taxAmount.toStringAsFixed(2)}',
+  //               style: const TextStyle(fontSize: 14),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+  //   });
+
+  //   return widgets;
+  // }
+
+//   Widget _orderSummarySection() {
+//     return Container(
+//       width: double.infinity,
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: const Color(0xFFEFFFEF),
+//         borderRadius: BorderRadius.circular(12),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           const Text('Order Summary',
+//               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+//           const SizedBox(height: 12),
+//           ...addedProducts.entries.map((entry) {
+//             final ProductList p = entry.value['product'] as ProductList;
+//             final int qty = entry.value['qty'] as int;
+//             final double currentAmount =
+//                 entry.value['editableAmount'] as double;
+//             final double itemTotal = currentAmount * qty;
+
+//             return Container(
+//               margin: const EdgeInsets.only(bottom: 10),
+//               padding: const EdgeInsets.all(10),
+//               decoration: BoxDecoration(
+//                 color: const Color(0xFFF2FFF2),
+//                 borderRadius: BorderRadius.circular(16),
+//               ),
+//               child: Row(
+//                 children: [
+//                   ClipRRect(
+//                     borderRadius: BorderRadius.circular(10),
+//                     child: p.productImage.isNotEmpty
+//                         ? Image.network(
+//                             p.productImage,
+//                             height: 60,
+//                             width: 60,
+//                             fit: BoxFit.cover,
+//                             errorBuilder: (context, error, stackTrace) =>
+//                                 Image.asset(
+//                               'assets/icons/comingsoon.jpg',
+//                               height: 60,
+//                               width: 60,
+//                               fit: BoxFit.cover,
+//                             ),
+//                           )
+//                         : Image.asset(
+//                             'assets/icons/comingsoon.jpg',
+//                             height: 60,
+//                             width: 60,
+//                             fit: BoxFit.cover,
+//                           ),
+//                   ),
+//                   const SizedBox(width: 12),
+//                   Expanded(
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: [
+//                             Expanded(
+//                               child: Text(p.productName,
+//                                   style: const TextStyle(
+//                                       fontWeight: FontWeight.w600,
+//                                       fontSize: 15)),
+//                             ),
+// // Make the green amount directly editable
+//                             GestureDetector(
+//                               onTap: () {
+//                                 _showAmountEditDialog(p, currentAmount);
+//                               },
+//                               child: Text(
+//                                 '₹${itemTotal.toStringAsFixed(2)}',
+//                                 style: const TextStyle(
+//                                   fontWeight: FontWeight.bold,
+//                                   fontSize: 16,
+//                                   color: Colors.green,
+// //decoration: TextDecoration.underline,
+//                                 ),
+//                               ),
+//                             )
+//                           ],
+//                         ),
+//                         const SizedBox(height: 6),
+//                         Row(
+//                           children: [
+// // Quantity controls
+//                             IconButton(
+//                               icon: const Icon(Icons.remove_circle_outline),
+//                               color: const Color(0xFF6B48FF),
+//                               onPressed: () => _decreaseProduct(p),
+//                             ),
+//                             Container(
+//                               width: 50,
+//                               child: TextFormField(
+//                                 controller: TextEditingController(text: '$qty'),
+//                                 textAlign: TextAlign.center,
+//                                 keyboardType: TextInputType.number,
+//                                 decoration: const InputDecoration(
+//                                   contentPadding: EdgeInsets.all(4),
+//                                   border: OutlineInputBorder(),
+//                                 ),
+//                                 style: const TextStyle(
+//                                   fontWeight: FontWeight.bold,
+//                                   fontSize: 14,
+//                                 ),
+//                                 onChanged: (value) {
+//                                   if (value.isNotEmpty) {
+//                                     int newQty = int.tryParse(value) ?? 1;
+//                                     _updateProductQuantity(p, newQty);
+//                                   }
+//                                 },
+//                               ),
+//                             ),
+//                             IconButton(
+//                               icon: const Icon(Icons.add_circle_outline),
+//                               color: const Color(0xFF6B48FF),
+//                               onPressed: () => _addProduct(p),
+//                             ),
+//                             const Spacer(),
+// // Unit price display (non-editable, just for info)
+// // Text(
+// // '₹${currentAmount.toStringAsFixed(2)}/unit',
+// // style: const TextStyle(
+// // fontSize: 12,
+// // color: Colors.grey,
+// // ),
+// // ),
+// // const SizedBox(width: 8),
+//                             IconButton(
+//                               icon: const Icon(Icons.delete, color: Colors.red),
+//                               onPressed: () => _removeProduct(p),
+//                             ),
+//                           ],
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             );
+//           }),
+//           const Divider(),
+//           _rowTotal('Total', total, bold: true),
+//         ],
+//       ),
+//     );
+//   }
+
+  // void _showAmountEditDialog(ProductList product, double currentAmount) {
+  //   TextEditingController amountController = TextEditingController(
+  //     text: currentAmount.toStringAsFixed(2),
+  //   );
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: const Text('Edit Amount'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Text(
+  //               product.productName,
+  //               style: const TextStyle(
+  //                 fontWeight: FontWeight.bold,
+  //                 fontSize: 16,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             TextFormField(
+  //               controller: amountController,
+  //               keyboardType: TextInputType.numberWithOptions(decimal: true),
+  //               decoration: const InputDecoration(
+  //                 labelText: 'Amount per unit',
+  //                 prefixText: '₹ ',
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //               autofocus: true,
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text('Cancel'),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //               if (amountController.text.isNotEmpty) {
+  //                 double newAmount =
+  //                     double.tryParse(amountController.text) ?? currentAmount;
+  //                 if (newAmount > 0) {
+  //                   _updateProductAmount(product, newAmount);
+  //                   Navigator.pop(context);
+  //                 } else {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     const SnackBar(
+  //                       content: Text('Amount must be greater than 0'),
+  //                       backgroundColor: Colors.red,
+  //                     ),
+  //                   );
+  //                 }
+  //               }
+  //             },
+  //             child: const Text('Update'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  String formatPercentage(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString(); // 12.0 → 12
+    }
+    return value.toString();
+  }
+
+  void _showAmountEditDialog(ProductList product, double currentAmount) {
+    double taxPercent = double.tryParse(product.taxPercentage) ?? 0.0;
+    double sellingPrice = currentAmount / (1 + (taxPercent / 100));
+
+    TextEditingController sellingPriceController = TextEditingController(
+      text: sellingPrice.toStringAsFixed(2),
+    );
+
+    TextEditingController taxPercentController = TextEditingController(
+      text: formatPercentage(taxPercent),
+    );
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void calculatePreview() {
+              double sp = double.tryParse(sellingPriceController.text) ?? 0;
+              double tp = double.tryParse(taxPercentController.text) ?? 0;
+              double taxAmt = sp * (tp / 100);
+              //double total = sp + taxAmt;
+              double total = (sp + taxAmt).roundToDouble();
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: const Text('Edit Amount'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    product.productName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Selling Price
+                  TextFormField(
+                    controller: sellingPriceController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Selling Price',
+                      prefixText: '₹ ',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (_) => calculatePreview(),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Tax Percentage
+                  TextFormField(
+                    controller: taxPercentController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Tax Percentage',
+                      suffixText: '%',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (_) => calculatePreview(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Quick calculation preview
+                  Builder(
+                    builder: (context) {
+                      double sp =
+                          double.tryParse(sellingPriceController.text) ?? 0;
+                      double tp =
+                          double.tryParse(taxPercentController.text) ?? 0;
+                      double taxAmt = sp * (tp / 100);
+                      //double total = sp + taxAmt;
+                      double total = (sp + taxAmt).roundToDouble();
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Tax Amount:',
+                                  style: TextStyle(fontSize: 14)),
+                              Text('₹${taxAmt.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total:',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold)),
+                              Text('₹${total.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green)),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (sellingPriceController.text.isNotEmpty &&
+                        taxPercentController.text.isNotEmpty) {
+                      double newSellingPrice =
+                          double.tryParse(sellingPriceController.text) ?? 0;
+                      double newTaxPercent =
+                          double.tryParse(taxPercentController.text) ?? 0;
+                      if (newSellingPrice > 0 && newTaxPercent >= 0) {
+                        double newTotal = newSellingPrice +
+                            (newSellingPrice * (newTaxPercent / 100));
+                        _updateProductAmount(product, newTotal);
+                        product.taxPercentage = formatPercentage(newTaxPercent);
+
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                  child: const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _updateProductAmount(ProductList product, double newAmount) {
+    final key = product.id;
+    if (!addedProducts.containsKey(key)) return;
+    setState(() {
+      addedProducts[key]!['editableAmount'] = newAmount;
+      _calculateTotals();
+    });
   }
 
   Widget _buildPaymentSection() {
@@ -980,21 +1789,17 @@ Future<void> _downloadPdf(String url) async {
     final paymentMethods = ['Cash', 'Bank Transfer'];
     paymentStatus ??= 'Paid';
     paymentMethod ??= 'Cash';
-
     if (paidAmount.text.isEmpty && total > 0 && paymentStatus == "Paid") {
       paidAmount.text = total.toStringAsFixed(2);
     }
-
     void updatePaidAmount(String val) {
       if (val.isEmpty) {
-        // If field is cleared, set to 0 and reset color
         paidColor = Colors.black;
         setState(() {});
         return;
       }
 
       double entered = double.tryParse(val) ?? 0;
-
       if (paymentStatus == "Partial") {
         if (entered >= total) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1004,8 +1809,6 @@ Future<void> _downloadPdf(String url) async {
               backgroundColor: Colors.redAccent,
             ),
           );
-
-          // Set to total - 1
           double partialAmount = total > 1 ? total - 1 : 0;
           paidAmount.text = partialAmount.toStringAsFixed(2);
           paidAmount.selection = TextSelection.fromPosition(
@@ -1013,7 +1816,6 @@ Future<void> _downloadPdf(String url) async {
           );
           paidColor = Colors.red;
         } else if (entered < 0) {
-          // Handle negative amounts
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Amount cannot be negative"),
@@ -1035,7 +1837,6 @@ Future<void> _downloadPdf(String url) async {
           paidColor = Colors.black;
         }
       } else {
-        // For Unpaid status
         paidColor = Colors.black;
       }
       setState(() {});
@@ -1079,7 +1880,6 @@ Future<void> _downloadPdf(String url) async {
                         paidAmount.clear();
                         paidColor = Colors.black;
                       } else if (paymentStatus == 'Partial') {
-                        // Set to total - 1 when switching to Partial
                         double partialAmount = total > 1 ? total - 1 : 0;
                         paidAmount.text = partialAmount.toStringAsFixed(2);
                         paidColor = Colors.black;
@@ -1097,15 +1897,16 @@ Future<void> _downloadPdf(String url) async {
                       controller: paidAmount,
                       readOnly: paymentStatus == "Paid",
                       style: TextStyle(
-                          color: paidColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                        color: paidColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: _inputDecoration().copyWith(
                         hintText: paymentStatus == "Partial"
                             ? "${(total > 1 ? total - 1 : 0).toStringAsFixed(2)}"
-                            : "${total.toStringAsFixed(2)}",
+                            : total.toStringAsFixed(2),
                         prefixText: "₹ ",
                         errorStyle: const TextStyle(color: Colors.red),
                       ),
@@ -1123,6 +1924,18 @@ Future<void> _downloadPdf(String url) async {
                 ),
             ],
           ),
+          if (paymentStatus == "Partial" && paymentStatus != "Unpaid")
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 12),
+              child: Text(
+                "Paid amount should be less than total payable amount",
+                style: TextStyle(
+                  color: Colors.orange.shade700,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -1163,6 +1976,236 @@ Future<void> _downloadPdf(String url) async {
       ),
     );
   }
+
+//   Widget _buildPaymentSection() {
+//     final paymentStatusList = ['Paid', 'Partial', 'Unpaid'];
+//     final paymentMethods = ['Cash', 'Bank Transfer'];
+//     paymentStatus ??= 'Paid';
+//     paymentMethod ??= 'Cash';
+
+//     if (paidAmount.text.isEmpty && total > 0 && paymentStatus == "Paid") {
+//       paidAmount.text = total.toStringAsFixed(2);
+//     }
+
+//     void updatePaidAmount(String val) {
+//       if (val.isEmpty) {
+// // If field is cleared, set to 0 and reset color
+//         paidColor = Colors.black;
+//         setState(() {});
+//         return;
+//       }
+
+//       double entered = double.tryParse(val) ?? 0;
+
+//       if (paymentStatus == "Partial") {
+//         if (entered >= total) {
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             const SnackBar(
+//               content:
+//                   Text("Partial amount cannot be equal to or more than Total"),
+//               backgroundColor: Colors.redAccent,
+//             ),
+//           );
+
+// // Set to total - 1
+//           double partialAmount = total > 1 ? total - 1 : 0;
+//           paidAmount.text = partialAmount.toStringAsFixed(2);
+//           paidAmount.selection = TextSelection.fromPosition(
+//             TextPosition(offset: paidAmount.text.length),
+//           );
+//           paidColor = Colors.red;
+//         } else if (entered < 0) {
+// // Handle negative amounts
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             const SnackBar(
+//               content: Text("Amount cannot be negative"),
+//               backgroundColor: Colors.redAccent,
+//             ),
+//           );
+//           paidAmount.text = "0";
+//           paidAmount.selection = TextSelection.fromPosition(
+//             TextPosition(offset: paidAmount.text.length),
+//           );
+//           paidColor = Colors.red;
+//         } else {
+//           paidColor = Colors.black;
+//         }
+//       } else if (paymentStatus == "Paid") {
+//         if (entered > total) {
+//           paidColor = Colors.red;
+//         } else {
+//           paidColor = Colors.black;
+//         }
+//       } else {
+// // For Unpaid status
+//         paidColor = Colors.black;
+//       }
+//       setState(() {});
+//     }
+
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: Colors.grey.shade100,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.grey.shade300,
+//             blurRadius: 5,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           const Text(
+//             "Payment Details",
+//             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+//           ),
+//           const Divider(height: 25),
+//           Row(
+//             children: [
+//               Expanded(
+//                 child: _buildFormRow(
+//                   "Pay Status * :",
+//                   _dropdown(paymentStatusList, paymentStatus, "Select Status",
+//                       (newVal) {
+//                     setState(() {
+//                       paymentStatus = newVal ?? 'Paid';
+//                       if (paymentStatus == 'Paid') {
+//                         paidAmount.text = total.toStringAsFixed(2);
+//                         paidColor = Colors.black;
+//                       } else if (paymentStatus == 'Unpaid') {
+//                         paidAmount.clear();
+//                         paidColor = Colors.black;
+//                       } else if (paymentStatus == 'Partial') {
+// // Set to total - 1 when switching to Partial
+//                         double partialAmount = total > 1 ? total - 1 : 0;
+//                         paidAmount.text = partialAmount.toStringAsFixed(2);
+//                         paidColor = Colors.black;
+//                       }
+//                     });
+//                   }),
+//                 ),
+//               ),
+//               const SizedBox(width: 12),
+//               // if (paymentStatus != "Unpaid")
+//               //   Expanded(
+//               //     child: _buildFormRow(
+//               //       "Paid Amount * :",
+//               //       TextFormField(
+//               //         controller: paidAmount,
+//               //         readOnly: paymentStatus == "Paid",
+//               //         style: TextStyle(
+//               //             color: paidColor,
+//               //             fontWeight: FontWeight.bold,
+//               //             fontSize: 16),
+//               //         keyboardType:
+//               //             TextInputType.numberWithOptions(decimal: true),
+//               //         decoration: _inputDecoration().copyWith(
+//               //           hintText: paymentStatus == "Partial"
+//               //               ? "${(total > 1 ? total - 1 : 0).toStringAsFixed(2)}"
+//               //               : "${total.toStringAsFixed(2)}",
+//               //           prefixText: "₹ ",
+//               //           errorStyle: const TextStyle(color: Colors.red),
+//               //         ),
+//               //         onChanged: updatePaidAmount,
+//               //         onTap: () {
+//               //           if (paymentStatus == "Partial" &&
+//               //               paidAmount.text ==
+//               //                   (total > 1 ? total - 1 : 0)
+//               //                       .toStringAsFixed(2)) {
+//               //             paidAmount.clear();
+//               //           }
+//               //         },
+//               //       ),
+//               //     ),
+//               //   ),
+//               if (paymentStatus != "Unpaid")
+//                 Expanded(
+//                   child: _buildFormRow(
+//                     "Paid Amount * :",
+//                     TextFormField(
+//                       controller: paidAmount,
+//                       readOnly: paymentStatus == "Paid",
+//                       style: TextStyle(
+//                         color: paidColor,
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 16,
+//                       ),
+//                       keyboardType:
+//                           const TextInputType.numberWithOptions(decimal: true),
+//                       decoration: _inputDecoration().copyWith(
+//                         hintText: paymentStatus == "Partial"
+//                             ? "${(total > 1 ? total - 1 : 0).toStringAsFixed(2)}"
+//                             : total.toStringAsFixed(2),
+//                         prefixText: "₹ ",
+//                         helperText: paymentStatus == "Partial"
+//                             ? "Paid amount should be less than total payable amount"
+//                             : null,
+//                         helperStyle: const TextStyle(
+//                           color: Colors.orange,
+//                           fontSize: 12,
+//                         ),
+
+//                         errorStyle: const TextStyle(color: Colors.red),
+//                       ),
+//                       onChanged: updatePaidAmount,
+//                       onTap: () {
+//                         if (paymentStatus == "Partial" &&
+//                             paidAmount.text ==
+//                                 (total > 1 ? total - 1 : 0)
+//                                     .toStringAsFixed(2)) {
+//                           paidAmount.clear();
+//                         }
+//                       },
+//                     ),
+//                   ),
+//                 ),
+//             ],
+//           ),
+//           const SizedBox(height: 12),
+//           Row(
+//             children: [
+//               Expanded(
+//                 child: _buildFormRow(
+//                   "Paid Date :",
+//                   DateTimePicker(
+//                     type: DateTimePickerType.date,
+//                     dateMask: 'dd-MM-yyyy',
+//                     initialValue: paidDate,
+//                     firstDate: DateTime(2000),
+//                     lastDate: DateTime(2100),
+//                     decoration: _inputDecoration(),
+//                     onChanged: (val) => setState(() => paidDate = val),
+//                   ),
+//                 ),
+//               ),
+//               const SizedBox(width: 12),
+//               if (paymentStatus == "Paid" || paymentStatus == "Partial")
+//                 Expanded(
+//                   child: _buildFormRow(
+//                     "Payment Method * :",
+//                     _dropdown(
+//                         paymentMethods,
+//                         paymentMethod,
+//                         "Select Method",
+//                         (newVal) =>
+//                             setState(() => paymentMethod = newVal ?? 'Cash')),
+//                   ),
+//                 ),
+//             ],
+//           ),
+//           if (paymentStatus == "Paid" || paymentStatus == "Partial") ...[
+//             const SizedBox(height: 12),
+//             _buildFormRow("Account Head * :", _accountHeadSelector()),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
 
   Widget _dropdown(List<String> items, String? value, String hint,
       Function(String?) onChanged) {
@@ -1215,66 +2258,66 @@ Future<void> _downloadPdf(String url) async {
         ),
       );
 
-  // Widget _accountHeadSelector() {
-  //   return Row(
-  //     children: [
-  //       Expanded(
-  //         child: GestureDetector(
-  //           onTap: () => _showAccountHeadDialog(context),
-  //           child: Container(
-  //             decoration: BoxDecoration(
-  //               color: Colors.grey.shade300,
-  //               borderRadius: BorderRadius.circular(5),
-  //             ),
-  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                 Expanded(
-  //                   child: Text(
-  //                     staffName,
-  //                     overflow: TextOverflow.ellipsis,
-  //                     style: TextStyle(
-  //                       fontWeight: FontWeight.bold,
-  //                       color: staffName != "Select Account Head"
-  //                           ? Colors.black
-  //                           : Colors.grey,
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(width: 8),
-  //       InkWell(
-  //         onTap: () {
-  //           showDialog(
-  //             context: context,
-  //             builder: (context) => const AddAccountHeadDialog(),
-  //           ).then((_) {
-  //             _getAccountHeads();
-  //           });
-  //         },
-  //         borderRadius: BorderRadius.circular(30),
-  //         child: Container(
-  //           decoration: const BoxDecoration(
-  //             color: Colors.blue,
-  //             shape: BoxShape.circle,
-  //           ),
-  //           padding: const EdgeInsets.all(8),
-  //           child: const Icon(
-  //             Icons.add,
-  //             color: Colors.white,
-  //             size: 20,
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
+// Widget _accountHeadSelector() {
+// return Row(
+// children: [
+// Expanded(
+// child: GestureDetector(
+// onTap: () => _showAccountHeadDialog(context),
+// child: Container(
+// decoration: BoxDecoration(
+// color: Colors.grey.shade300,
+// borderRadius: BorderRadius.circular(5),
+// ),
+// padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+// child: Row(
+// mainAxisAlignment: MainAxisAlignment.spaceBetween,
+// children: [
+// Expanded(
+// child: Text(
+// staffName,
+// overflow: TextOverflow.ellipsis,
+// style: TextStyle(
+// fontWeight: FontWeight.bold,
+// color: staffName != "Select Account Head"
+// ? Colors.black
+// : Colors.grey,
+// ),
+// ),
+// ),
+// Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+// ],
+// ),
+// ),
+// ),
+// ),
+// const SizedBox(width: 8),
+// InkWell(
+// onTap: () {
+// showDialog(
+// context: context,
+// builder: (context) => const AddAccountHeadDialog(),
+// ).then((_) {
+// _getAccountHeads();
+// });
+// },
+// borderRadius: BorderRadius.circular(30),
+// child: Container(
+// decoration: const BoxDecoration(
+// color: Colors.blue,
+// shape: BoxShape.circle,
+// ),
+// padding: const EdgeInsets.all(8),
+// child: const Icon(
+// Icons.add,
+// color: Colors.white,
+// size: 20,
+// ),
+// ),
+// ),
+// ],
+// );
+// }
 
   Widget _accountHeadSelector() {
     return GestureDetector(
@@ -1321,36 +2364,36 @@ Future<void> _downloadPdf(String url) async {
                 ),
               ],
             ),
-            // Row(
-            //   mainAxisSize: MainAxisSize.min,
-            //   children: [
-            //     Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
-            //     const SizedBox(width: 8),
-            //     InkWell(
-            //       onTap: () {
-            //         showDialog(
-            //           context: context,
-            //           builder: (context) => const AddAccountHeadDialog(),
-            //         ).then((_) {
-            //           _getAccountHeads();
-            //         });
-            //       },
-            //       borderRadius: BorderRadius.circular(20),
-            //       child: Container(
-            //         decoration: const BoxDecoration(
-            //           color: Color.fromARGB(255, 255, 255, 255),
-            //           shape: BoxShape.circle,
-            //         ),
-            //         padding: const EdgeInsets.all(6),
-            //         child: const Icon(
-            //           Icons.add,
-            //           color: Colors.blue,
-            //           size: 16,
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
+// Row(
+// mainAxisSize: MainAxisSize.min,
+// children: [
+// Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+// const SizedBox(width: 8),
+// InkWell(
+// onTap: () {
+// showDialog(
+// context: context,
+// builder: (context) => const AddAccountHeadDialog(),
+// ).then((_) {
+// _getAccountHeads();
+// });
+// },
+// borderRadius: BorderRadius.circular(20),
+// child: Container(
+// decoration: const BoxDecoration(
+// color: Color.fromARGB(255, 255, 255, 255),
+// shape: BoxShape.circle,
+// ),
+// padding: const EdgeInsets.all(6),
+// child: const Icon(
+// Icons.add,
+// color: Colors.blue,
+// size: 16,
+// ),
+// ),
+// ),
+// ],
+// ),
           ],
         ),
       ),
@@ -1420,39 +2463,39 @@ Future<void> _downloadPdf(String url) async {
                     ),
                   )
 
-                  // IconButton(
-                  //   icon: const Icon(Icons.add_circle_outline,
-                  //       color: Colors.blue, size: 24),
-                  //   tooltip: 'Add New Customer',
-                  //   onPressed: () async {
-                  //     Navigator.pop(context);
-                  //     final result = await Navigator.push(
-                  //       context,
-                  //       MaterialPageRoute(
-                  //           builder: (context) => AddClients(widget.token)),
-                  //     );
+// IconButton(
+// icon: const Icon(Icons.add_circle_outline,
+// color: Colors.blue, size: 24),
+// tooltip: 'Add New Customer',
+// onPressed: () async {
+// Navigator.pop(context);
+// final result = await Navigator.push(
+// context,
+// MaterialPageRoute(
+// builder: (context) => AddClients(widget.token)),
+// );
 
-                  //     if (result == true) {
-                  //       await _loadCustomerList();
-                  //       if (customers.isNotEmpty) {
-                  //         final latestCustomer = customers.first;
-                  //         this.setState(() {
-                  //           selectedCustomer = latestCustomer.id.toString();
-                  //           selectedCustomerName = latestCustomer.name;
-                  //         });
-                  //         _loadInvoiceDetails(latestCustomer.id.toString());
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           SnackBar(
-                  //             content: Text(
-                  //                 'Customer "${latestCustomer.name}" added and selected'),
-                  //             backgroundColor: Colors.green,
-                  //             duration: const Duration(seconds: 3),
-                  //           ),
-                  //         );
-                  //       }
-                  //     }
-                  //   },
-                  // )
+// if (result == true) {
+// await _loadCustomerList();
+// if (customers.isNotEmpty) {
+// final latestCustomer = customers.first;
+// this.setState(() {
+// selectedCustomer = latestCustomer.id.toString();
+// selectedCustomerName = latestCustomer.name;
+// });
+// _loadInvoiceDetails(latestCustomer.id.toString());
+// ScaffoldMessenger.of(context).showSnackBar(
+// SnackBar(
+// content: Text(
+// 'Customer "${latestCustomer.name}" added and selected'),
+// backgroundColor: Colors.green,
+// duration: const Duration(seconds: 3),
+// ),
+// );
+// }
+// }
+// },
+// )
                 ],
               ),
               content: SingleChildScrollView(
@@ -1534,146 +2577,146 @@ Future<void> _downloadPdf(String url) async {
     );
   }
 
-  // Future<dynamic> _showCustomerDialog(BuildContext context) {
-  //   _loadCustomerList().then((_) {
-  //     setState(() {
-  //       customerSearchController.clear();
-  //       filteredCustomers = List.from(customers);
-  //     });
-  //   });
+// Future<dynamic> _showCustomerDialog(BuildContext context) {
+// _loadCustomerList().then((_) {
+// setState(() {
+// customerSearchController.clear();
+// filteredCustomers = List.from(customers);
+// });
+// });
 
-  //   return showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return AlertDialog(
-  //             titlePadding: const EdgeInsets.only(
-  //                 left: 20, right: 10, top: 16, bottom: 0),
-  //             title: Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                 const Text(
-  //                   "Select Customer",
-  //                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-  //                 ),
-  //                 // In _showCustomerDialog method - update the IconButton
-  //                 IconButton(
-  //                   icon: const Icon(Icons.add_circle_outline,
-  //                       color: Colors.blue, size: 24),
-  //                   tooltip: 'Add New Customer',
-  //                   onPressed: () async {
-  //                     Navigator.pop(context); // Close customer dialog first
+// return showDialog(
+// context: context,
+// builder: (context) {
+// return StatefulBuilder(
+// builder: (context, setState) {
+// return AlertDialog(
+// titlePadding: const EdgeInsets.only(
+// left: 20, right: 10, top: 16, bottom: 0),
+// title: Row(
+// mainAxisAlignment: MainAxisAlignment.spaceBetween,
+// children: [
+// const Text(
+// "Select Customer",
+// style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+// ),
+// // In _showCustomerDialog method - update the IconButton
+// IconButton(
+// icon: const Icon(Icons.add_circle_outline,
+// color: Colors.blue, size: 24),
+// tooltip: 'Add New Customer',
+// onPressed: () async {
+// Navigator.pop(context); // Close customer dialog first
 
-  //                     final result = await Navigator.push(
-  //                       context,
-  //                       MaterialPageRoute(
-  //                           builder: (context) => AddClients(widget.token)),
-  //                     );
+// final result = await Navigator.push(
+// context,
+// MaterialPageRoute(
+// builder: (context) => AddClients(widget.token)),
+// );
 
-  //                     if (result == true) {
-  //                       await _loadCustomerList();
-  //                       if (customers.isNotEmpty) {
-  //                         final latestCustomer = customers.first;
-  //                         setState(() {
-  //                           selectedCustomer = latestCustomer.id.toString();
-  //                           selectedCustomerName = latestCustomer.name;
-  //                         });
-  //                         _loadInvoiceDetails(latestCustomer.id.toString());
-  //                         ScaffoldMessenger.of(context).showSnackBar(
-  //                           SnackBar(
-  //                             content: Text(
-  //                                 'Customer "${latestCustomer.name}" added and selected'),
-  //                             backgroundColor: Colors.green,
-  //                             duration: const Duration(seconds: 3),
-  //                           ),
-  //                         );
-  //                       }
-  //                     }
-  //                   },
-  //                 ),
-  //               ],
-  //             ),
-  //             content: SingleChildScrollView(
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   Padding(
-  //                     padding: const EdgeInsets.all(8.0),
-  //                     child: TextField(
-  //                       controller: customerSearchController,
-  //                       autocorrect: false,
-  //                       autofocus: true,
-  //                       decoration: const InputDecoration(
-  //                         hintText: 'Search customer name...',
-  //                         prefixIcon: Icon(Icons.search),
-  //                         contentPadding: EdgeInsets.all(8),
-  //                         border: OutlineInputBorder(),
-  //                       ),
-  //                       onChanged: (value) {
-  //                         setState(() {
-  //                           filteredCustomers = customers
-  //                               .where((item) => (item.name ?? '')
-  //                                   .toLowerCase()
-  //                                   .contains(value.toLowerCase()))
-  //                               .toList();
-  //                         });
-  //                       },
-  //                     ),
-  //                   ),
-  //                   SizedBox(
-  //                     height: MediaQuery.of(context).size.height * 0.4,
-  //                     width: MediaQuery.of(context).size.width * 0.8,
-  //                     child: filteredCustomers.isEmpty
-  //                         ? const Center(
-  //                             child: Text(
-  //                               "No matching customers found",
-  //                               style: TextStyle(color: Colors.grey),
-  //                             ),
-  //                           )
-  //                         : ListView.builder(
-  //                             itemCount: filteredCustomers.length,
-  //                             itemBuilder: (context, index) {
-  //                               final customer = filteredCustomers[index];
-  //                               final isSelected =
-  //                                   selectedCustomer == customer.id.toString();
-  //                               return ListTile(
-  //                                 title:
-  //                                     Text(customer.name ?? 'Unknown Customer'),
-  //                                 trailing: isSelected
-  //                                     ? const Icon(Icons.check,
-  //                                         color: Colors.green)
-  //                                     : null,
-  //                                 tileColor: isSelected
-  //                                     ? Colors.green.withOpacity(0.1)
-  //                                     : null,
-  //                                 onTap: () {
-  //                                   Navigator.pop(context);
-  //                                   setState(() {
-  //                                     selectedCustomer = customer.id.toString();
-  //                                     selectedCustomerName = customer.name;
-  //                                   });
-  //                                   _loadInvoiceDetails(customer.id.toString());
-  //                                 },
-  //                               );
-  //                             },
-  //                           ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () => Navigator.pop(context),
-  //                 child: const Text("Close"),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
+// if (result == true) {
+// await _loadCustomerList();
+// if (customers.isNotEmpty) {
+// final latestCustomer = customers.first;
+// setState(() {
+// selectedCustomer = latestCustomer.id.toString();
+// selectedCustomerName = latestCustomer.name;
+// });
+// _loadInvoiceDetails(latestCustomer.id.toString());
+// ScaffoldMessenger.of(context).showSnackBar(
+// SnackBar(
+// content: Text(
+// 'Customer "${latestCustomer.name}" added and selected'),
+// backgroundColor: Colors.green,
+// duration: const Duration(seconds: 3),
+// ),
+// );
+// }
+// }
+// },
+// ),
+// ],
+// ),
+// content: SingleChildScrollView(
+// child: Column(
+// mainAxisSize: MainAxisSize.min,
+// children: [
+// Padding(
+// padding: const EdgeInsets.all(8.0),
+// child: TextField(
+// controller: customerSearchController,
+// autocorrect: false,
+// autofocus: true,
+// decoration: const InputDecoration(
+// hintText: 'Search customer name...',
+// prefixIcon: Icon(Icons.search),
+// contentPadding: EdgeInsets.all(8),
+// border: OutlineInputBorder(),
+// ),
+// onChanged: (value) {
+// setState(() {
+// filteredCustomers = customers
+// .where((item) => (item.name ?? '')
+// .toLowerCase()
+// .contains(value.toLowerCase()))
+// .toList();
+// });
+// },
+// ),
+// ),
+// SizedBox(
+// height: MediaQuery.of(context).size.height * 0.4,
+// width: MediaQuery.of(context).size.width * 0.8,
+// child: filteredCustomers.isEmpty
+// ? const Center(
+// child: Text(
+// "No matching customers found",
+// style: TextStyle(color: Colors.grey),
+// ),
+// )
+// : ListView.builder(
+// itemCount: filteredCustomers.length,
+// itemBuilder: (context, index) {
+// final customer = filteredCustomers[index];
+// final isSelected =
+// selectedCustomer == customer.id.toString();
+// return ListTile(
+// title:
+// Text(customer.name ?? 'Unknown Customer'),
+// trailing: isSelected
+// ? const Icon(Icons.check,
+// color: Colors.green)
+// : null,
+// tileColor: isSelected
+// ? Colors.green.withOpacity(0.1)
+// : null,
+// onTap: () {
+// Navigator.pop(context);
+// setState(() {
+// selectedCustomer = customer.id.toString();
+// selectedCustomerName = customer.name;
+// });
+// _loadInvoiceDetails(customer.id.toString());
+// },
+// );
+// },
+// ),
+// ),
+// ],
+// ),
+// ),
+// actions: [
+// TextButton(
+// onPressed: () => Navigator.pop(context),
+// child: const Text("Close"),
+// ),
+// ],
+// );
+// },
+// );
+// },
+// );
+// }
 
   Future<dynamic> _showAccountHeadDialog(BuildContext context) {
     return showDialog(
@@ -1767,88 +2810,88 @@ Future<void> _downloadPdf(String url) async {
     );
   }
 
-  // Future<dynamic> _showAccountHeadDialog(BuildContext context) {
-  //   filteredStaff = List.from(invDetails?.data.staff ?? []);
+// Future<dynamic> _showAccountHeadDialog(BuildContext context) {
+// filteredStaff = List.from(invDetails?.data.staff ?? []);
 
-  //   return showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(builder: (context, setState) {
-  //         return AlertDialog(
-  //           title: const Text("Select Account Head"),
-  //           content: SingleChildScrollView(
-  //             child: Column(
-  //               mainAxisSize: MainAxisSize.min,
-  //               children: [
-  //                 Padding(
-  //                   padding: const EdgeInsets.all(8.0),
-  //                   child: TextField(
-  //                     autocorrect: false,
-  //                     autofocus: true,
-  //                     decoration: const InputDecoration(
-  //                       hintText: 'Search staff name...',
-  //                       prefixIcon: Icon(Icons.search),
-  //                       contentPadding: EdgeInsets.all(8),
-  //                       border: OutlineInputBorder(),
-  //                     ),
-  //                     onChanged: (value) {
-  //                       setState(() {
-  //                         filteredStaff = invDetails!.data.staff
-  //                             .where((item) => item.accountName
-  //                                 .toLowerCase()
-  //                                 .contains(value.toLowerCase()))
-  //                             .toList();
-  //                       });
-  //                     },
-  //                   ),
-  //                 ),
-  //                 SizedBox(
-  //                   height: MediaQuery.of(context).size.height * 0.4,
-  //                   width: MediaQuery.of(context).size.width * 0.8,
-  //                   child: filteredStaff.isEmpty
-  //                       ? const Center(
-  //                           child: Text("No matching staff found",
-  //                               style: TextStyle(color: Colors.grey)),
-  //                         )
-  //                       : ListView.builder(
-  //                           itemCount: filteredStaff.length,
-  //                           itemBuilder: (context, index) {
-  //                             final staff = filteredStaff[index];
-  //                             final isSelected = staffId == staff.accountId;
-  //                             return ListTile(
-  //                               title: Text(staff.accountName),
-  //                               trailing: isSelected
-  //                                   ? const Icon(Icons.check,
-  //                                       color: Colors.green)
-  //                                   : null,
-  //                               tileColor: isSelected
-  //                                   ? Colors.green.withOpacity(0.1)
-  //                                   : null,
-  //                               onTap: () {
-  //                                 Navigator.pop(context);
-  //                                 this.setState(() {
-  //                                   staffName = staff.accountName;
-  //                                   staffId = staff.accountId;
-  //                                 });
-  //                               },
-  //                             );
-  //                           },
-  //                         ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () => Navigator.pop(context),
-  //               child: const Text("Close"),
-  //             ),
-  //           ],
-  //         );
-  //       });
-  //     },
-  //   );
-  // }
+// return showDialog(
+// context: context,
+// builder: (context) {
+// return StatefulBuilder(builder: (context, setState) {
+// return AlertDialog(
+// title: const Text("Select Account Head"),
+// content: SingleChildScrollView(
+// child: Column(
+// mainAxisSize: MainAxisSize.min,
+// children: [
+// Padding(
+// padding: const EdgeInsets.all(8.0),
+// child: TextField(
+// autocorrect: false,
+// autofocus: true,
+// decoration: const InputDecoration(
+// hintText: 'Search staff name...',
+// prefixIcon: Icon(Icons.search),
+// contentPadding: EdgeInsets.all(8),
+// border: OutlineInputBorder(),
+// ),
+// onChanged: (value) {
+// setState(() {
+// filteredStaff = invDetails!.data.staff
+// .where((item) => item.accountName
+// .toLowerCase()
+// .contains(value.toLowerCase()))
+// .toList();
+// });
+// },
+// ),
+// ),
+// SizedBox(
+// height: MediaQuery.of(context).size.height * 0.4,
+// width: MediaQuery.of(context).size.width * 0.8,
+// child: filteredStaff.isEmpty
+// ? const Center(
+// child: Text("No matching staff found",
+// style: TextStyle(color: Colors.grey)),
+// )
+// : ListView.builder(
+// itemCount: filteredStaff.length,
+// itemBuilder: (context, index) {
+// final staff = filteredStaff[index];
+// final isSelected = staffId == staff.accountId;
+// return ListTile(
+// title: Text(staff.accountName),
+// trailing: isSelected
+// ? const Icon(Icons.check,
+// color: Colors.green)
+// : null,
+// tileColor: isSelected
+// ? Colors.green.withOpacity(0.1)
+// : null,
+// onTap: () {
+// Navigator.pop(context);
+// this.setState(() {
+// staffName = staff.accountName;
+// staffId = staff.accountId;
+// });
+// },
+// );
+// },
+// ),
+// ),
+// ],
+// ),
+// ),
+// actions: [
+// TextButton(
+// onPressed: () => Navigator.pop(context),
+// child: const Text("Close"),
+// ),
+// ],
+// );
+// });
+// },
+// );
+// }
 
   Widget _rowTotal(String label, double value, {bool bold = false}) {
     return Padding(

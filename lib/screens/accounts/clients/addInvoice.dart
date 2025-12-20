@@ -128,10 +128,10 @@ class _AddInvoiceState extends State<AddInvoice> {
           'description': '',
           'product_rate': product.amount,
           'quantity': product.qty,
-          'tax_percent': '0',
+          'tax_percent': product.taxPercentage ?? '0',
           'discount_amount': product.discountAmount ?? '0.00',
           'shipping_charge': product.shippingAmount ?? '0.00',
-          'total_tax_amount': '0.00',
+          'total_tax_amount': product.taxAmount ?? '0.00',
           'total_amount': product.amount,
           'type': 'pre_added',
         });
@@ -290,11 +290,11 @@ class _AddInvoiceState extends State<AddInvoice> {
           invDetails!.data.shippingAddress.shippingName.toString();
       shippingAddress.text =
           invDetails!.data.shippingAddress.shippingAddress.toString();
-           shippingAddress2.text =
+      shippingAddress2.text =
           invDetails!.data.shippingAddress.shippingAddress2.toString();
-           shippingAddress3.text =
+      shippingAddress3.text =
           invDetails!.data.shippingAddress.shippingAddress3.toString();
-          
+
       shippingPhone.text =
           invDetails!.data.shippingAddress.shippingContactNo.toString();
       shippingGstNo.text =
@@ -4248,6 +4248,76 @@ class _AddInvoiceState extends State<AddInvoice> {
         .toList();
   }
 
+  // Future<dynamic> collectedStaffDialog(BuildContext context) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return StatefulBuilder(builder: (context, setState) {
+  //         return AlertDialog(
+  //           content: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Padding(
+  //                 padding: const EdgeInsets.all(8.0),
+  //                 child: TextField(
+  //                   autocorrect: false,
+  //                   keyboardType: TextInputType.visiblePassword,
+  //                   autofocus: true,
+  //                   onChanged: (value) {
+  //                     setState(() {
+  //                       filteredStaff = invDetails!.data.staff
+  //                           .where((item) => item.accountName
+  //                               .toLowerCase()
+  //                               .contains(value.toLowerCase()))
+  //                           .toList();
+  //                     });
+  //                   },
+  //                   decoration: const InputDecoration(
+  //                     contentPadding: EdgeInsets.all(8),
+  //                     hintText: 'Search',
+  //                     prefixIcon: Icon(Icons.search),
+  //                   ),
+  //                 ),
+  //               ),
+  //               SizedBox(
+  //                 height: MediaQuery.of(context).size.height * .3,
+  //                 width: MediaQuery.of(context).size.width * .8,
+  //                 child: ListView.builder(
+  //                   itemCount: filteredStaff.length,
+  //                   physics: const ScrollPhysics(),
+  //                   shrinkWrap: true,
+  //                   itemBuilder: (context, index) {
+  //                     return ListTile(
+  //                         onTap: () {
+  //                           staffName = filteredStaff[index].accountName;
+  //                           staffId = filteredStaff[index].accountId;
+  //                           filteredStaff.addAll(invDetails!.data.staff);
+  //                           setState(() {});
+  //                           if (context.mounted) {
+  //                             Navigator.pop(context);
+  //                           }
+  //                         },
+  //                         title: Text(filteredStaff[index].accountName));
+  //                   },
+  //                 ),
+  //               )
+  //             ],
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () {
+  //                   filteredStaff.addAll(invDetails!.data.staff);
+  //                   if (context.mounted) {
+  //                     Navigator.pop(context);
+  //                   }
+  //                 },
+  //                 child: const Text("Close")),
+  //           ],
+  //         );
+  //       });
+  //     },
+  //   );
+  // }
   Future<dynamic> collectedStaffDialog(BuildContext context) {
     return showDialog(
       context: context,
@@ -4265,11 +4335,15 @@ class _AddInvoiceState extends State<AddInvoice> {
                     autofocus: true,
                     onChanged: (value) {
                       setState(() {
-                        filteredStaff = invDetails!.data.staff
-                            .where((item) => item.accountName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
+                        if (value.isEmpty) {
+                          filteredStaff = List.from(invDetails!.data.staff);
+                        } else {
+                          filteredStaff = invDetails!.data.staff
+                              .where((item) => item.accountName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        }
                       });
                     },
                     decoration: const InputDecoration(
@@ -4288,16 +4362,16 @@ class _AddInvoiceState extends State<AddInvoice> {
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return ListTile(
-                          onTap: () {
-                            staffName = filteredStaff[index].accountName;
-                            staffId = filteredStaff[index].accountId;
-                            filteredStaff.addAll(invDetails!.data.staff);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          title: Text(filteredStaff[index].accountName));
+                        onTap: () {
+                          staffName = filteredStaff[index].accountName;
+                          staffId = filteredStaff[index].accountId;
+                          setState(() {});
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        title: Text(filteredStaff[index].accountName),
+                      );
                     },
                   ),
                 )
@@ -4305,13 +4379,13 @@ class _AddInvoiceState extends State<AddInvoice> {
             ),
             actions: [
               TextButton(
-                  onPressed: () {
-                    filteredStaff.addAll(invDetails!.data.staff);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
+                onPressed: () {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Close"),
+              ),
             ],
           );
         });

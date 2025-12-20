@@ -101,7 +101,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         name.text = staffDetails!.data!.staffName!;
         phoneNumber.text = staffDetails!.data!.phoneNo.toString();
         emailId.text = staffDetails!.data!.email.toString();
-        
+
         if (staffDetails!.data!.staffIds!.isNotEmpty) {
           for (int a = 0; a < staffDetails!.data!.staffIds!.length; a++) {
             checkedItems.add(staffDetails!.data!.staffIds![a]);
@@ -503,25 +503,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           : const SizedBox(),
                                       buildTextField(
                                           "Full Name",
-                                          staffDetails!.data!.staffName
-                                              .toString(),
+                                         "Full Name",
                                           name,
                                           Icons.person),
                                       buildTextField(
-                                          "Phone Number",
-                                          staffDetails!.data!.phoneNo
-                                              .toString(),
-                                          phoneNumber,
-                                          Icons.phone_android_rounded),
+                                        "Phone Number",
+                                        "Phone Number",
+                                        phoneNumber,
+                                        Icons.phone_android_rounded,
+                                        keyboardType: TextInputType.number,
+                                      ),
                                       buildTextField(
                                           "E-mail",
-                                          staffDetails!.data!.email.toString(),
+                                          "E-mail",
                                           emailId,
                                           Icons.email),
                                       buildTextField(
                                         "Designation",
-                                        staffDetails!.data!.designationsingle
-                                            .toString(),
+                                        "Add Designation",
                                         designationSingle,
                                         Icons.description,
                                         onTap: () {
@@ -543,13 +542,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             context: context,
                                             builder: (BuildContext context) {
                                               return AlertDialog(
-                                                title:
-                                                    const Text("Change Designation"),
+                                                title: const Text(
+                                                    "Change Designation"),
                                                 content: SizedBox(
                                                   width: double.maxFinite,
                                                   child: ListView.builder(
                                                     shrinkWrap:
-                                                        true, // Makes the dialog only as tall as needed
+                                                        true, 
                                                     itemCount: staffDetails!
                                                         .data!
                                                         .designationList!
@@ -562,9 +561,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                   .designationList![
                                                               index];
 
-                                                      return ListTile( 
-                                                        leading:
-                                                            const Icon(Icons.work),
+                                                      return ListTile(
+                                                        leading: const Icon(
+                                                            Icons.work),
                                                         title: Text(designation
                                                                 .designation ??
                                                             "Unknown"),
@@ -575,11 +574,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                     .designation ??
                                                                 "";
 
-                                                                 designationId
-                                                                 = designation
-                                                                    .designationId ??
-                                                                "";
-                                                                
+                                                            designationId =
+                                                                designation
+                                                                        .designationId ??
+                                                                    "";
                                                           });
                                                           Navigator.pop(
                                                               context); // Close the dialog
@@ -897,7 +895,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             EditUserBasicDetailsModel
                                                 editUserBasicDetails =
                                                 await HttpService
-
                                                     .editUserBasicData(body);
                                             if (editUserBasicDetails.data ==
                                                 true) {
@@ -1473,13 +1470,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget buildTextField(
-      String labelText, String placeholder, controller, IconData icon,
-      {VoidCallback? onTap}) {
+    String labelText,
+    String placeholder,
+    controller,
+    IconData icon, {
+    VoidCallback? onTap,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: controller,
         readOnly: onTap != null,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
             contentPadding: const EdgeInsets.only(left: 10, top: 2, bottom: 2),
             labelText: labelText,

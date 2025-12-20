@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/quotationRequestListModel.dart';
+import 'package:login2/models/lead_management/requestDetailsModel.dart';
+import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/add_quotation_request_sheet.dart';
 import 'package:login2/screens/leadManagement/editQuotationSheetRequest.dart';
 import 'package:login2/service/service.dart';
@@ -22,7 +24,7 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
   List<QuotationRequestData> _filteredRequests = [];
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'All';
- 
+
   String userId = "";
 
   @override
@@ -100,8 +102,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
           return false;
         }).toList();
       }
-
-      // Apply search filter on top of status filter if search is active
       if (_searchController.text.isNotEmpty) {
         _filterRequests(_searchController.text);
       }
@@ -223,8 +223,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                 ),
 
                 const SizedBox(height: 16),
-
-                // Status and Date Row
                 Row(
                   children: [
                     Container(
@@ -244,7 +242,17 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            request.status.toString(),
+                            request.status == "1"
+                                ? "Requested"
+                                : request.status == "2"
+                                    ? "In Progress"
+                                    : request.status == "3"
+                                        ? "On Hold"
+                                        : request.status == "4"
+                                            ? "Completed"
+                                            : request.status == "5"
+                                                ? "Completed and Send"
+                                                : "Send",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -254,32 +262,19 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                         ],
                       ),
                     ),
-                    // const Spacer(),
-                    // Column(
-                    //   crossAxisAlignment: CrossAxisAlignment.end,
-                    //   children: [
-                    //     Text(
-                    //       'Due Date',
-                    //       style: TextStyle(
-                    //         fontSize: 12,
-                    //         color: Colors.grey[600],
-                    //       ),
-                    //     ),
-                    //     const SizedBox(height: 2),
-                    //     Text(
-                    //       _formatDate(request.dueDate),
-                    //       style: TextStyle(
-                    //         fontSize: 14,
-                    //         fontWeight: FontWeight.w600,
-                    //         color: isOverdue
-                    //             ? Colors.red
-                    //             : isUrgent
-                    //                 ? Colors.orange
-                    //                 : const Color(0xFF1F2937),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
+                    const Spacer(),
+                    _buildActionButton(
+                      icon: Icons.add,
+                      color: const Color.fromARGB(255, 166, 124, 221),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              AddQuotationPage(requestId: request.Id),
+                        ),
+                      ),
+                      tooltip: 'Upload',
+                    ),
                   ],
                 ),
 
@@ -485,112 +480,110 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
     }
   }
 
+  // ============================ UPDATED SHOW REQUEST DETAILS ============================
   void _showRequestDetails(QuotationRequestData data) {
+    // Create a future for the API call
+    Future<RequestDetailsResponseModel?> requestDetailsFuture =
+        HttpService.requestDetails(data.Id);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      backgroundColor: Colors.transparent,
+      builder: (context) => FutureBuilder<RequestDetailsResponseModel?>(
+        future: requestDetailsFuture,
+        builder: (context, snapshot) {
+          // Handle different states of the Future
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildLoadingDetailSheet();
+          } else if (snapshot.hasError) {
+            return _buildErrorDetailSheet(snapshot.error.toString(), data);
+          } else if (!snapshot.hasData ||
+              snapshot.data?.data?.request == null) {
+            return _buildNoDataDetailSheet(data);
+          }
+
+          // We have data - build the detailed sheet
+          return _buildDetailedSheetWithData(
+              snapshot.data!.data!.request!, data);
+        },
       ),
-      builder: (context) => _buildDetailSheet(data),
     );
   }
 
-  Widget _buildDetailSheet(QuotationRequestData data) {
+  Widget _buildLoadingDetailSheet() {
     return Container(
       padding: const EdgeInsets.all(24),
-      child: Column(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: const Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+          SizedBox(height: 12),
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text(
+            'Loading request details...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF1F2937),
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: _statusColor(data.status.toString()).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    _statusIcon(data.status.toString()),
-                    size: 28,
-                    color: _statusColor(data.status.toString()),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data.customerName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Created ${_formatDate(data.createdDate)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorDetailSheet(String error, QuotationRequestData data) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 32,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Failed to load details',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Error: $error',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          _buildDetailItem('Status', data.status,
-              color: _statusColor(data.status.toString())),
-          _buildDetailItem('Priority', data.priority),
-          _buildDetailItem('Assigned To', data.assignedTo),
-          _buildDetailItem('Created By', data.createdBy),
-          _buildDetailItem('Due Date', _formatDate(data.dueDate),
-              isUrgent: _calculateDaysLeft(data.dueDate) <= 2),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              userId == data.assignedToId.toString()
-                  ? Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showUpdateStatusSheet(data),
-                        icon: const Icon(Icons.update, size: 18),
-                        label: const Text('Update Status'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    )
-                  : const SizedBox(),
-            ],
-          ),
-          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.check, size: 18),
+              icon: const Icon(Icons.close, size: 18),
               label: const Text('Close'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
@@ -604,6 +597,699 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNoDataDetailSheet(QuotationRequestData data) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.warning_amber,
+              size: 32,
+              color: Colors.orange,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No detailed information available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Showing basic information only',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Show basic info from the list data
+          _buildBasicInfoSection(data),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.close, size: 18),
+              label: const Text('Close'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoSection(QuotationRequestData data) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          data.customerName,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildBasicInfoRow('Status', data.status,
+            color: _statusColor(data.status.toString())),
+        _buildBasicInfoRow('Priority', data.priority),
+        _buildBasicInfoRow('Assigned To', data.assignedTo),
+        _buildBasicInfoRow('Due Date', _formatDate(data.dueDate)),
+      ],
+    );
+  }
+
+  Widget _buildBasicInfoRow(String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: color ?? const Color(0xFF1F2937),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedSheetWithData(
+      RequestDetails requestDetails, QuotationRequestData listData) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  // Header Section
+                  _buildHeaderSection(requestDetails),
+
+                  const SizedBox(height: 24),
+
+                  // Status & Priority Cards
+                  _buildStatusPriorityCards(requestDetails),
+
+                  const SizedBox(height: 24),
+
+                  // Request Info Section
+                  _buildRequestInfoSection(requestDetails),
+
+                  const SizedBox(height: 24),
+
+                  // Products Section
+                  _buildProductsSection(requestDetails),
+
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  _buildActionButtons(requestDetails, listData),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderSection(RequestDetails requestDetails) {
+    return Row(
+      children: [
+        Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            color: _statusColor(requestDetails.status ?? 'Pending')
+                .withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              requestDetails.customerName?.substring(0, 1).toUpperCase() ?? 'C',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: _statusColor(requestDetails.status ?? 'Pending'),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                requestDetails.customerName ?? 'Unknown Customer',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Request ID: #${requestDetails.id}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Created: ${_formatDate(requestDetails.createdAt)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusPriorityCards(RequestDetails requestDetails) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _statusColor(requestDetails.status ?? 'Pending')
+                  .withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _statusColor(requestDetails.status ?? 'Pending')
+                    .withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      _statusIcon(requestDetails.status ?? 'Pending'),
+                      size: 20,
+                      color: _statusColor(requestDetails.status ?? 'Pending'),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Status',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  requestDetails.status ?? 'Unknown',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _statusColor(requestDetails.status ?? 'Pending'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _getPriorityColor(requestDetails.priority ?? 'Medium')
+                  .withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _getPriorityColor(requestDetails.priority ?? 'Medium')
+                    .withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flag,
+                      size: 20,
+                      color: _getPriorityColor(
+                          requestDetails.priority ?? 'Medium'),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Priority',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  requestDetails.priority ?? 'Medium',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        _getPriorityColor(requestDetails.priority ?? 'Medium'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return Colors.red;
+      case 'critical':
+        return Colors.purple;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildRequestInfoSection(RequestDetails requestDetails) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Request Information',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(
+              Icons.person, 'Assigned To', requestDetails.assignedTo ?? 'N/A'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.person_add, 'Created By',
+              requestDetails.createdBy ?? 'N/A'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.calendar_today, 'Due Date',
+              _formatDate(requestDetails.dueDate)),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.calendar_month, 'Created Date',
+              _formatDate(requestDetails.createdAt)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: Colors.blue,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductsSection(RequestDetails requestDetails) {
+    final products = requestDetails.products ?? [];
+
+    if (products.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Products',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No products listed',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.inventory,
+                  size: 24,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Products',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${products.length} items',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...products.asMap().entries.map((entry) {
+            final index = entry.key;
+            final product = entry.value;
+
+            return Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey[200]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.productName ?? 'Unnamed Product',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF1F2937),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Quantity: ${product.quantity ?? 0}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Qty: ${product.quantity ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(
+      RequestDetails requestDetails, QuotationRequestData listData) {
+    return Column(
+      children: [
+        // Update Status Button (if assigned to current user)
+        if (userId == listData.assignedToId.toString())
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _showUpdateStatusSheet(listData);
+              },
+              icon: const Icon(Icons.update, size: 18),
+              label: const Text('Update Status'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+        if (userId == listData.assignedToId.toString())
+          const SizedBox(height: 12),
+
+        // Create Quotation Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AddQuotationPage(requestId: listData.Id),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add_chart, size: 18),
+            label: const Text('Create Quotation'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 166, 124, 221),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Close Button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close, size: 18),
+            label: const Text('Close'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: BorderSide(
+                color: Colors.grey[300]!,
+                width: 1,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

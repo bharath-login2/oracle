@@ -869,6 +869,7 @@ class _EditLeadState extends State<EditLead> {
                         height: 50,
                         child: TextFormField(
                           controller: contactNo,
+                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                               labelText: 'Contact Number',
                               fillColor: Colors.white,

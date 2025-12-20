@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/services.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/screens/userManagement/accountSection.dart';
 import 'package:lottie/lottie.dart';
@@ -239,6 +240,11 @@ class _AddUserState extends State<AddUser> {
                           hintTextColor: Colors.white,
                           backgroundColor: Colors.white,
                           controller: phoneNumber,
+                          keyboardType: TextInputType.text, // Use text keyboard
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Only allow digits
+                          ],
                           width: 0.9,
                           iconData: Icons.call,
                         ),
@@ -978,8 +984,7 @@ class _AddUserState extends State<AddUser> {
             title: title,
             openingBalanceController: openingBalanceController,
             dateController: dateController,
-            showCheckbox:
-                false, 
+            showCheckbox: false,
           ),
       ],
     );

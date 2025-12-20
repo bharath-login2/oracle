@@ -13,7 +13,9 @@ import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/push_notification_channel.dart';
+import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/service/loggerservice.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
@@ -62,6 +64,109 @@ class _SplashScreenState extends State<SplashScreen> {
     });
     handleAsync();
     getData();
+    _updateSelectedDashboard();
+  }
+
+
+   Future<void> _updateSelectedDashboard() async {
+      try {
+        final token = await Common.getSharedPref("token");
+        if (token != null) {
+          final object1 = await HttpService.userPermissionCheck(token);
+          if (object1.status == true) {
+            Common.saveSharedPref("ProjectDashboardPermission",
+                object1.data!.ProjectDashboard.toString());
+            Common.saveSharedPref(
+                "LeadDashboard", object1.data!.LeadDashboard.toString());
+            Common.saveSharedPref("AccountsDashboardPermission",
+                object1.data!.AccountsDashboard.toString());
+            Common.saveSharedPref(
+                "MenuDashboard", object1.data!.MenuDashboard.toString());
+            Common.saveSharedPref("RenewalDashboardPermission",
+                object1.data!.RenewalDashboard.toString());
+            Common.saveSharedPref("NewleadDashboardPermission",
+                object1.data!.NewleadDashboard.toString());
+            Common.saveSharedPref("QuotationDashboardPermission",
+                object1.data!.QuotationDashboard.toString());
+                 Common.saveSharedPref("RoomDashboard",
+                object1.data!.RoomDashboard.toString());
+            if (object1.data!.ProjectDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const ProjectDashboard()),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.LeadDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+                MaterialPageRoute(builder: (_) => Dashboard(token)),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.AccountsDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => AccountsDashboard(token: token)),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.RenewalDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const RenewalDashboard()),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.QuotationDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const QuotationDashboard()),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.MenuDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => HomePage(token)),
+                (route) => false,
+              );
+              return;
+            }
+            if (object1.data!.NewleadDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => MinimalDashboard(token)),
+                (route) => false,
+              );
+              return;
+            }   if (object1.data!.RoomDashboard == "true") {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => RoomDashboard()),
+                (route) => false,
+              );
+              return;
+            }  else {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => Dashboard(token)),
+                (route) => false,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print("Error refreshing permissions after dashboard update: $e");
+      }
+   
   }
   //!   deeplink init function
 
@@ -85,6 +190,10 @@ class _SplashScreenState extends State<SplashScreen> {
           await Common.getSharedPref("RenewalDashboardPermission");
            String? NewleadDashboardPermission =
           await Common.getSharedPref("NewleadDashboardPermission");
+             String? QuotationDashboardPermission =
+          await Common.getSharedPref("QuotationDashboardPermission");
+           String? RoomDashboardPer =
+          await Common.getSharedPref("RoomDashboard");
        String? savedUrl = await Common.getSharedPref("url");
       Widget dashboardToOpen;
       if (ProjectDashboardPermission == "true") {
@@ -103,6 +212,10 @@ class _SplashScreenState extends State<SplashScreen> {
         dashboardToOpen = RenewalDashboard();
       }else if (NewleadDashboardPermission == "true") {
         dashboardToOpen = MinimalDashboard(token);
+      } else if (QuotationDashboardPermission == "true") {
+        dashboardToOpen = QuotationDashboard();
+      } else if (RoomDashboardPer == "true") {
+        dashboardToOpen = RoomDashboard();
       } else {
         dashboardToOpen = Dashboard(token); 
       }

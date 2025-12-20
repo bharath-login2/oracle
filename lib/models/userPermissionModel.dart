@@ -29,6 +29,8 @@ class Data {
   String? MenuDashboard;
   String? RenewalDashboard;
   String? NewleadDashboard;
+  String? QuotationDashboard;
+  String? RoomDashboard;
   String? adminCheck;
   String? createStaff;
   String? viewStaff;
@@ -88,13 +90,26 @@ class Data {
   String? viewPendingWorks;
   String? updateDashboard;
   String? approvePayroll;
+  String? proformaInvoiceMenu;
+  String? gstInvoiceMenu;
+  String? receiptMenu;
+  String? pendingInvoiceMenu;
+  String? addLeadSource;
+  String? leadModule;
+  String? accountsModule;
+  String? renewalModule;
+  String? workModule;
+  String? quotationModule;
+  String? roomModule;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
     this.AccountsDashboard,
     this.MenuDashboard,
     this.RenewalDashboard,
-     this.NewleadDashboard,
+    this.NewleadDashboard,
+    this.QuotationDashboard,
+    this.RoomDashboard,
     this.adminCheck,
     this.createStaff,
     this.viewStaff,
@@ -154,6 +169,17 @@ class Data {
     this.viewPendingWorks,
     this.updateDashboard,
     this.approvePayroll,
+    this.proformaInvoiceMenu,
+    this.gstInvoiceMenu,
+    this.receiptMenu,
+    this.pendingInvoiceMenu,
+    this.addLeadSource,
+    this.leadModule,
+    this.accountsModule,
+    this.renewalModule,
+    this.workModule,
+    this.quotationModule,
+    this.roomModule,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -163,6 +189,8 @@ class Data {
     MenuDashboard = json['dashboard_menu'];
     RenewalDashboard = json['dashboard_renewal'];
     NewleadDashboard = json['dashboard_new_lead'];
+    QuotationDashboard = json['dashboard_quotation'];
+    RoomDashboard = json['dashboard_room_booking'];
     adminCheck = json['admins_check'];
     createStaff = json['create_staff'];
     viewStaff = json['view_staff'];
@@ -222,6 +250,18 @@ class Data {
     viewPendingWorks = json['view_pending_works'];
     updateDashboard = json['update_dashboard'];
     approvePayroll = json['approve_payroll'];
+    proformaInvoiceMenu = json['proforma_invoices_menu'];
+    gstInvoiceMenu = json['gst_invoices_menu'];
+    receiptMenu = json['receipts_menu'];
+    pendingInvoiceMenu = json['pending_invoices_menu'];
+     addLeadSource = json['add_lead_source'];
+     leadModule = json['lead_management_module'];
+     accountsModule = json['accounts_module'];
+      renewalModule = json['renewal_management_module'];
+       workModule = json['work_management_module'];
+        quotationModule = json['quotations_module'];
+         roomModule = json['room_management_module'];
+         
   }
 
   Map<String, dynamic> toJson() {
@@ -231,7 +271,9 @@ class Data {
     data['dashboard_accounts'] = AccountsDashboard;
     data['dashboard_menu'] = MenuDashboard;
     data['dashboard_renewal'] = RenewalDashboard;
-     data['dashboard_new_lead'] = NewleadDashboard;
+    data['dashboard_new_lead'] = NewleadDashboard;
+    data['dashboard_quotation'] = QuotationDashboard;
+    data['dashboard_room_booking'] = RoomDashboard;
     data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
@@ -286,6 +328,17 @@ class Data {
     data['view_pending_works'] = viewPendingWorks;
     data['update_dashboard'] = updateDashboard;
     data['approve_payroll'] = approvePayroll;
+    data['proforma_invoices_menu'] = proformaInvoiceMenu;
+    data['gst_invoices_menu'] = gstInvoiceMenu;
+    data['receipts_menu'] = receiptMenu;
+    data['pending_invoices_menu'] = pendingInvoiceMenu;
+    data['add_lead_source'] = addLeadSource;
+    data['lead_management_module'] = leadModule;
+    data['accounts_module'] = accountsModule;
+    data['renewal_management_module'] = renewalModule;
+    data['work_management_module'] = workModule;
+    data['quotations_module'] = quotationModule;
+    data['room_management_module'] = roomModule;
     return data;
   }
 }

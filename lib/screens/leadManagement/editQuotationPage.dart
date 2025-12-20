@@ -1050,10 +1050,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                               vertical: 10,
                                             ),
                                           ),
-                                          validator: (_) =>
-                                              selectedStateId == null
-                                                  ? "Required"
-                                                  : null,
+                                         
                                           items: stateList.map((state) {
                                             return DropdownMenuItem<String>(
                                               value: state.id,
@@ -1070,7 +1067,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                             setState(() {
                                               selectedStateId = value;
                                               if (value != null) {
-                                                // Find state name
                                                 final state = stateList.firstWhere(
                                                   (s) => s.id == value,
                                                   orElse: () =>
@@ -1084,7 +1080,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                                 selectedStateName = null;
                                                 stateController.clear();
                                               }
-                                              // Clear district when state changes
                                               selectedDistrictId = null;
                                               selectedDistrictName = null;
                                               districtController.clear();
@@ -1097,7 +1092,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            // District Dropdown
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1128,10 +1122,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                               vertical: 10,
                                             ),
                                           ),
-                                          validator: (_) =>
-                                              selectedDistrictId == null
-                                                  ? "Required"
-                                                  : null,
+                                         
                                           items: districtList.map((district) {
                                             return DropdownMenuItem<String>(
                                               value: district.id,
@@ -1150,7 +1141,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                             setState(() {
                                               selectedDistrictId = value;
                                               if (value != null) {
-                                                // Find district name
                                                 final district =
                                                     districtList.firstWhere(
                                                   (d) => d.id == value,
@@ -1187,23 +1177,21 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _textField(
-                                label: "Nationality",
-                                controller: nationalityController,
-                              ),
-                            ),
-                          ],
-                        ),
+                        // const SizedBox(height: 10),
+                        // Row(
+                        //   children: [
+                        //     Expanded(
+                        //       child: _textField(
+                        //         label: "Nationality",
+                        //         controller: nationalityController,
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                         const SizedBox(height: 25),
                         _sectionTitle("Choose Template",
                             color: Colors.deepOrange),
                         const SizedBox(height: 10),
-                        
-                        // Searchable Template Dropdown
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

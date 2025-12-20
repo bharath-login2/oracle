@@ -7,6 +7,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
+import 'package:login2/models/lead_management/bulkDeleteLeadModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/leadSubTypeModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
@@ -81,7 +82,11 @@ class _AllReportState extends State<AllReport> {
   bool isCreatedDateChecked = true;
   bool isUpdatedDateChecked = false;
   bool isFilterApplied = false;
-
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
+  List<dynamic> _filteredItems = [];
+  bool _isSelectAll = false;
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -146,9 +151,10 @@ class _AllReportState extends State<AllReport> {
   StateModel? stateDetails;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
+    _searchController = TextEditingController();
+    _searchController.addListener(_onSearchChanged);
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
@@ -196,6 +202,231 @@ class _AllReportState extends State<AllReport> {
     });
   }
 
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim().toLowerCase();
+      _filterItems();
+    });
+  }
+
+  void _filterItems() {
+    if (_searchQuery.isEmpty) {
+      _filteredItems = List.from(items);
+    } else {
+      _filteredItems = items.where((item) {
+        final name = item.clientName?.toLowerCase() ?? '';
+        final phone = item.contactNumber1?.toLowerCase() ?? '';
+        final staffName = item.staffName?.toLowerCase() ?? '';
+
+        return name.contains(_searchQuery) ||
+            phone.contains(_searchQuery) ||
+            staffName.contains(_searchQuery);
+      }).toList();
+    }
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      _isSelectAll = !_isSelectAll;
+
+      if (_isSelectAll) {
+        // Select all visible items (considering search filter)
+        final itemsToSelect = _searchQuery.isEmpty ? items : _filteredItems;
+        for (var item in itemsToSelect) {
+          if (!item.isSelected) {
+            item.isSelected = true;
+            if (!selectedIUsers.contains(item.callMasterId)) {
+              selectedIUsers.add(item.callMasterId);
+              selectedUserNumbers.add(item.contactNumber1);
+            }
+          }
+        }
+      } else {
+        // Deselect all
+        for (var item in items) {
+          item.isSelected = false;
+        }
+        selectedIUsers.clear();
+        selectedUserNumbers.clear();
+      }
+    });
+  }
+
+  void _handleLongPress(int index) {
+    if (index >= items.length) return;
+
+    setState(() {
+      items[index].isSelected = !items[index].isSelected;
+      if (items[index].isSelected) {
+        if (!selectedIUsers.contains(items[index].callMasterId)) {
+          selectedIUsers.add(items[index].callMasterId);
+          selectedUserNumbers.add(items[index].contactNumber1);
+        }
+      } else {
+        selectedIUsers.remove(items[index].callMasterId);
+        selectedUserNumbers.remove(items[index].contactNumber1);
+      }
+      _updateSelectAllState();
+    });
+  }
+
+  void _updateSelectAllState() {
+    final visibleItems = _searchQuery.isEmpty ? items : _filteredItems;
+    if (visibleItems.isEmpty) {
+      _isSelectAll = false;
+      return;
+    }
+    final allSelected = visibleItems.every((item) => item.isSelected);
+    setState(() {
+      _isSelectAll = allSelected;
+    });
+  }
+
+  List<Widget> _buildSelectionActions() {
+    return [
+      InkWell(
+        onTap: _toggleSelectAll,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _isSelectAll ? Icons.check_box : Icons.check_box_outline_blank,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'All',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      // Selected count
+      CircleAvatar(
+        radius: 13,
+        backgroundColor: Colors.white,
+        child: Text(
+          selectedIUsers.length.toString(),
+          style: const TextStyle(color: Colors.blue, fontSize: 17),
+        ),
+      ),
+      const SizedBox(width: 15),
+
+      // Delete icon
+      InkWell(
+        onTap: () {
+          if (selectedIUsers.isNotEmpty) {
+            _showDeleteConfirmationDialog();
+          }
+        },
+        child: const Icon(Icons.delete, color: Colors.red),
+      ),
+    ];
+  }
+
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Please Confirm'),
+          content: Text(
+              'Are you sure you want to delete ${selectedIUsers.length} selected leads?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _performBulkDelete();
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// Add bulk delete method
+  Future<void> _performBulkDelete() async {
+    Common.showProgressDialog(context, "Deleting leads...");
+
+    try {
+      Map<String, dynamic> body = {
+        "token": widget.token,
+        'leadMasterIds': selectedIUsers,
+      };
+
+      BulkDeleteLeadModel deleteBulk = await HttpService.bulkDeleteLead(body);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      if (deleteBulk.data == true) {
+        Common.toastMessaage(
+            '${selectedIUsers.length} lead(s) deleted successfully',
+            Colors.green);
+        _refreshListAfterDelete();
+      } else {
+        Common.toastMessaage(deleteBulk.message, Colors.red);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+      Common.toastMessaage("Delete failed: ${e.toString()}", Colors.red);
+    }
+  }
+
+  void _refreshListAfterDelete() {
+    final deletedCount = selectedIUsers.length;
+
+    setState(() {
+      selectedIUsers.clear();
+      selectedUserNumbers.clear();
+      _isSelectAll = false;
+      for (var item in items) {
+        item.isSelected = false;
+      }
+    });
+
+    if (viewLeads != null) {
+      viewLeads!.data.totalLeads = (viewLeads!.data.totalLeads - deletedCount)
+          .clamp(0, double.maxFinite.toInt());
+    }
+
+    _reloadCurrentData();
+  }
+
+  void _reloadCurrentData() {
+    setState(() {
+      items.clear();
+      page = 1;
+      _filteredItems.clear();
+      _searchController.clear();
+      _searchQuery = '';
+    });
+
+    getData();
+  }
+
   void _showFilters() {
     showModalBottomSheet(
       context: context,
@@ -233,63 +464,63 @@ class _AllReportState extends State<AllReport> {
     );
   }
 
-
   void getData() async {
-  if (!isLoading) {
-    setState(() {
-      isLoading = true;
-    });
+    if (!isLoading) {
+      setState(() {
+        isLoading = true;
+      });
 
-    final connectivityResult = await Connectivity().checkConnectivity();
-    result = connectivityResult == ConnectivityResult.mobile ||
-             connectivityResult == ConnectivityResult.wifi;
+      final connectivityResult = await Connectivity().checkConnectivity();
+      result = connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi;
 
-    roleId = await Common.getSharedPref("roleId");
-    multiBranch = await Common.getSharedPref("multiBranch");
-    int createdFlag = 0;
-    int updatedFlag = 0;
-    if (isFilterApplied) {
-      createdFlag = isCreatedDateChecked ? 1 : 0;
-      updatedFlag = isUpdatedDateChecked ? 1 : 0;
+      roleId = await Common.getSharedPref("roleId");
+      multiBranch = await Common.getSharedPref("multiBranch");
+      int createdFlag = 0;
+      int updatedFlag = 0;
+      if (isFilterApplied) {
+        createdFlag = isCreatedDateChecked ? 1 : 0;
+        updatedFlag = isUpdatedDateChecked ? 1 : 0;
+      }
+
+      Map<String, dynamic> body = {
+        "token": widget.token,
+        "fromDate":
+            fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
+        "toDate":
+            todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
+        "createdDate": createdFlag,
+        "updatedDate": updatedFlag,
+        "page": page,
+        "pageSize": pageSize,
+        "callResultId": checkedCallResultItems,
+        "leadCategoryId": checkedCategoryItems,
+        "priority": checkedPriorityItems,
+        "staffId": checkedAssignedStaffItems,
+        "createdBy": checkedCreatedStaffItems,
+        "branchId": branch,
+        "lead_source_id": checkedLeadSource,
+        "state": StateId ?? "",
+        "district": DistrictId ?? "",
+      };
+
+      viewLeads = await HttpService.allViewLeads(body);
+      if (viewLeads != null) setState(() {});
+
+      commonDetails = await HttpService.addLeadCommonData(widget.token);
+      if (commonDetails != null) setState(() {});
+
+      configure = await HttpService.configure(widget.token);
+
+      setState(() {
+        items.addAll(viewLeads!.data.details as Iterable);
+        page++;
+        isLoading = false;
+      });
     }
 
-    Map<String, dynamic> body = {
-      "token": widget.token,
-      "fromDate": fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
-      "toDate": todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
-      "createdDate": createdFlag,
-      "updatedDate": updatedFlag,
-      "page": page,
-      "pageSize": pageSize,
-      "callResultId": checkedCallResultItems,
-      "leadCategoryId": checkedCategoryItems,
-      "priority": checkedPriorityItems,
-      "staffId": checkedAssignedStaffItems,
-      "createdBy": checkedCreatedStaffItems,
-      "branchId": branch,
-      "lead_source_id": checkedLeadSource,
-      "state": StateId ?? "",
-      "district": DistrictId ?? "",
-    };
-
-    viewLeads = await HttpService.allViewLeads(body);
-    if (viewLeads != null) setState(() {});
-
-    commonDetails = await HttpService.addLeadCommonData(widget.token);
-    if (commonDetails != null) setState(() {});
-
-    configure = await HttpService.configure(widget.token);
-
-    setState(() {
-      items.addAll(viewLeads!.data.details as Iterable);
-      page++;
-      isLoading = false;
-    });
+    loadStates();
   }
-
-  loadStates();
-}
-
 
   // void getData() async {
   //   //print('scrollIndex1:${widget.scrollToIndex}');
@@ -409,1026 +640,1541 @@ class _AllReportState extends State<AllReport> {
                     const SizedBox(
                       width: 25,
                     ),
-                    const Text(
-                      'All Report',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    Text(
+                      selectedIUsers.isNotEmpty
+                          ? '${selectedIUsers.length} selected'
+                          : 'All Report',
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ],
                 ),
-                //  IconButton(
-                //             icon: Icon(
-                //               Icons.filter_alt,
-                //               color: Colors.white,
-                //             ),
-                //             onPressed: _showFilters,
-                //           ),
-                InkWell(
-                  onTap: () {
-                    fromdate = "";
-                    todate = "";
-                    filtrationSheet(context);
-                  },
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        color: const Color(0xFFd5f5f4),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child:
-                            Image.asset("assets/icons/filter.png", width: 20)),
-                  ),
+                Row(
+                  children: [
+                    if (selectedIUsers.isEmpty)
+                      InkWell(
+                        onTap: () {
+                          fromdate = "";
+                          todate = "";
+                          filtrationSheet(context);
+                        },
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              color: const Color(0xFFd5f5f4),
+                              borderRadius: BorderRadius.circular(5)),
+                          child: Center(
+                              child: Image.asset("assets/icons/filter.png",
+                                  width: 20)),
+                        ),
+                      ),
+                    if (selectedIUsers.isNotEmpty) ..._buildSelectionActions(),
+                  ],
                 )
               ],
             ),
           ),
         ),
       ),
+      // appBar: PreferredSize(
+      //   preferredSize:
+      //       Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+      //   child: Container(
+      //     padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      //     decoration: const BoxDecoration(
+      //       gradient:
+      //           LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+      //     ),
+      //     child: Padding(
+      //       padding: const EdgeInsets.only(
+      //           left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+      //       child: Row(
+      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //         children: [
+      //           Row(
+      //             mainAxisAlignment: MainAxisAlignment.center,
+      //             crossAxisAlignment: CrossAxisAlignment.center,
+      //             children: [
+      //               InkWell(
+      //                 onTap: () {
+      //                   Navigator.pop(context);
+      //                 },
+      //                 child: Container(
+      //                   height: 25,
+      //                   width: 25,
+      //                   decoration: BoxDecoration(
+      //                       border: Border.all(color: Colors.white),
+      //                       shape: BoxShape.circle),
+      //                   child: const Icon(
+      //                     Icons.arrow_back_ios_outlined,
+      //                     color: Colors.white,
+      //                     size: 16,
+      //                   ),
+      //                 ),
+      //               ),
+      //               const SizedBox(
+      //                 width: 25,
+      //               ),
+      //               const Text(
+      //                 'All Report',
+      //                 style: TextStyle(color: Colors.white, fontSize: 18),
+      //               ),
+      //             ],
+      //           ),
+      //           //  IconButton(
+      //           //             icon: Icon(
+      //           //               Icons.filter_alt,
+      //           //               color: Colors.white,
+      //           //             ),
+      //           //             onPressed: _showFilters,
+      //           //           ),
+      //           InkWell(
+      //             onTap: () {
+      //               fromdate = "";
+      //               todate = "";
+      //               filtrationSheet(context);
+      //             },
+      //             child: Container(
+      //               width: 30,
+      //               height: 30,
+      //               decoration: BoxDecoration(
+      //                   border: Border.all(color: Colors.grey),
+      //                   color: const Color(0xFFd5f5f4),
+      //                   borderRadius: BorderRadius.circular(5)),
+      //               child: Center(
+      //                   child:
+      //                       Image.asset("assets/icons/filter.png", width: 20)),
+      //             ),
+      //           )
+      //         ],
+      //       ),
+      //     ),
+      //   ),
+      // ),
       body: viewLeads != null && configure != null
-          ? Column(
-              children: [
-                if (fromdate != "" && todate != "")
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 50, right: 50, top: 15),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Date from ',
-                            style: TextStyle(fontSize: 14)),
-                        Text(outputFormat.format(DateTime.parse(fromdate)),
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                        const Text(' to ', style: TextStyle(fontSize: 14)),
-                        Text(outputFormat.format(DateTime.parse(todate)),
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+    ? Column(
+        children: [
+          // Header section
+          if (fromdate != "" && todate != "")
+            Padding(
+              padding:
+                  const EdgeInsets.only(left: 50, right: 50, top: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Date from ',
+                      style: TextStyle(fontSize: 14)),
+                  Text(outputFormat.format(DateTime.parse(fromdate)),
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold)),
+                  const Text(' to ', style: TextStyle(fontSize: 14)),
+                  Text(outputFormat.format(DateTime.parse(todate)),
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          Text('Total Leads : ${viewLeads!.data.totalLeads}',
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(
+            height: 10,
+          ),
+          
+          // Search field
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
+            child: FractionallySizedBox(
+              widthFactor: 0.97,
+              child: TextFormField(
+                controller: _searchController,
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val.toLowerCase();
+                    _filterItems();
+                  });
+                },
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  hintText: 'Search by Customer Name, Phone, or Staff',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
-                Text('Total Leads : ${viewLeads!.data.totalLeads}',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(
-                  height: 10,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
-                viewLeads!.data.details.isNotEmpty
-                    ? Expanded(
-                        child: ScrollablePositionedList.builder(
-                          //reverse: true,
-                          initialScrollIndex: 0,
-                          //you can pass the desired index here//
-                          itemCount: items.length + (isLoading ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == items.length) {
-                              // When reaching the end of the list, show a loader
-                              return _buildLoaderListItem();
+              ),
+            ),
+          ),
+          
+          viewLeads!.data.details.isNotEmpty
+              ? Expanded(
+                  child: ScrollablePositionedList.builder(
+                    //reverse: true,
+                    initialScrollIndex: 0,
+                    //you can pass the desired index here//
+                    itemCount: (_searchQuery.isEmpty
+                            ? items.length
+                            : _filteredItems.length) +
+                        (isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index ==
+                          (_searchQuery.isEmpty
+                              ? items.length
+                              : _filteredItems.length)) {
+                        // When reaching the end of the list, show a loader
+                        return _buildLoaderListItem();
+                      }
+                      
+                      // Use filtered items when searching
+                      final itemIndex = _searchQuery.isEmpty ? index : index;
+                      final displayItems = _searchQuery.isEmpty
+                          ? items
+                          : _filteredItems;
+                      
+                      if (itemIndex >= displayItems.length) {
+                        return Container();
+                      }
+                      
+                      return Dismissible(
+                        key: Key('${displayItems[itemIndex].callMasterId}_${index}_${displayItems[itemIndex].hashCode}'),
+                        background: Container(
+                          color: Colors.green,
+                          child: const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                Icon(
+                                  Icons.call,
+                                  color: Colors.white,
+                                ),
+                                Text(
+                                  " Call",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.blue,
+                          child: const Align(
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                ),
+                                Text(
+                                  "Add Followup",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                                SizedBox(
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        confirmDismiss: (direction) async {
+                          if (direction == DismissDirection.endToStart) {
+                            if (displayItems[itemIndex].callResult != "Confirmed") {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddFollowup(
+                                          widget.token,
+                                          widget.editLead,
+                                          widget.deleteLead,
+                                          widget.cloudCall,
+                                          displayItems[itemIndex].callMasterId,
+                                          pageName: widget.pageName,
+                                          leadType:
+                                              displayItems[itemIndex].leadCategory,
+                                          leadTypeId:
+                                              displayItems[itemIndex].leadCategoryId,
+                                          leadSubType: displayItems[itemIndex]
+                                              .leadSubCategory,
+                                          leadSubTypeId: displayItems[itemIndex]
+                                              .leadSubCategoryId,
+                                          priorityId:
+                                              displayItems[itemIndex].priority,
+                                          priority:
+                                              displayItems[itemIndex].priorityName,
+                                          cost: displayItems[itemIndex].cost,
+                                          address: displayItems[itemIndex].address,
+                                        )),
+                              ).then((value) {
+                                items.clear();
+                                page = 1;
+                                getData();
+                              });
+                            } else {
+                              Common.toastMessaage(
+                                  "You can't follow up on confirmed leads",
+                                  Colors.red);
                             }
-                            return Dismissible(
-                              key: const Key('0'),
-                              background: Container(
-                                color: Colors.green,
-                                child: const Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      SizedBox(
-                                        width: 20,
-                                      ),
-                                      Icon(
-                                        Icons.call,
-                                        color: Colors.white,
-                                      ),
-                                      Text(
-                                        " Call",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ],
-                                  ),
+                          } else {
+                            if (widget.cloudCall == false) {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return AlertDialog(
+                                      title: const Text('Alert !!!'),
+                                      content: const Text(""),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('Close')),
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) => LeadDetails(
+                                                          widget.token!,
+                                                          widget.editLead,
+                                                          widget
+                                                              .deleteLead,
+                                                          widget
+                                                              .cloudCall,
+                                                          displayItems[itemIndex]
+                                                              .callMasterId
+                                                              .toString(),
+                                                          pageName: widget
+                                                              .pageName
+                                                              .toString(),
+                                                          page: page,
+                                                          pageSize: page *
+                                                              pageSize,
+                                                          fromDate: fromdate
+                                                              .toString(),
+                                                          toDate: todate
+                                                              .toString(),
+                                                        )),
+                                              ).then((r) {
+                                                items.clear();
+                                                page = 1;
+                                                getData();
+                                              });
+                                            },
+                                            child:
+                                                const Text('followup')),
+                                      ],
+                                    );
+                                  });
+                            } else {
+                              if (widget.cloudCall == true) {
+                                chooseCallDialog(context, itemIndex);
+                              } else {
+                                Common.dialPad(
+                                    displayItems[itemIndex].contactNumber1);
+                              }
+                            }
+                          }
+                          return null;
+                        },
+                        child: InkWell(
+                            onLongPress: () => _handleLongPress(itemIndex),
+                            onTap: () {
+                              if (selectedIUsers.isNotEmpty) {
+                                _handleLongPress(itemIndex);
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => LeadDetails(
+                                            widget.token!,
+                                            widget.editLead,
+                                            widget.deleteLead,
+                                            widget.cloudCall,
+                                            displayItems[itemIndex]
+                                                .callMasterId
+                                                .toString(),
+                                            pageName:
+                                                widget.pageName.toString(),
+                                            page: page,
+                                            pageSize: page * pageSize,
+                                            fromDate: fromdate.toString(),
+                                            toDate: todate.toString(),
+                                          )),
+                                ).then((r) {
+                                  items.clear();
+                                  page = 1;
+                                  getData();
+                                });
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10, right: 10, bottom: 10),
+                              child: Container(
+                                width:
+                                    MediaQuery.of(context).size.width * 1,
+                                decoration: BoxDecoration(
+                                  color: displayItems[itemIndex].isSelected == false
+                                      ? Colors.white
+                                      : Colors.blue.shade100,
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.grey,
+                                      offset: Offset(2.0, 2.0),
+                                    )
+                                  ],
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                              ),
-                              secondaryBackground: Container(
-                                color: Colors.blue,
-                                child: const Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: <Widget>[
-                                      Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                      ),
-                                      Text(
-                                        "Add Followup",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        textAlign: TextAlign.right,
-                                      ),
-                                      SizedBox(
-                                        width: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              confirmDismiss: (direction) async {
-                                if (direction == DismissDirection.endToStart) {
-                                  if (items[index].callResult != "Confirmed") {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AddFollowup(
-                                                widget.token,
-                                                widget.editLead,
-                                                widget.deleteLead,
-                                                widget.cloudCall,
-                                                items[index].callMasterId,
-                                                pageName: widget.pageName,
-                                                leadType:
-                                                    items[index].leadCategory,
-                                                leadTypeId:
-                                                    items[index].leadCategoryId,
-                                                leadSubType: items[index]
-                                                    .leadSubCategory,
-                                                leadSubTypeId: items[index]
-                                                    .leadSubCategoryId,
-                                                priorityId:
-                                                    items[index].priority,
-                                                priority:
-                                                    items[index].priorityName,
-                                                cost: items[index].cost,
-                                                address: items[index].address,
-                                              )),
-                                    ).then((value) {
-                                      items.clear();
-                                      page = 1;
-                                      getData();
-                                    });
-                                  } else {
-                                    Common.toastMessaage(
-                                        "You can't follow up on confirmed leads",
-                                        Colors.red);
-                                  }
-                                } else {
-                                  if (widget.cloudCall == false) {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext ctx) {
-                                          return AlertDialog(
-                                            title: const Text('Alert !!!'),
-                                            content: const Text(""),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text('Close')),
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              LeadDetails(
-                                                                widget.token!,
-                                                                widget.editLead,
-                                                                widget
-                                                                    .deleteLead,
-                                                                widget
-                                                                    .cloudCall,
-                                                                viewLeads!
-                                                                    .data
-                                                                    .details[
-                                                                        index]
-                                                                    .callMasterId
-                                                                    .toString(),
-                                                                pageName: widget
-                                                                    .pageName
-                                                                    .toString(),
-                                                                page: page,
-                                                                pageSize: page *
-                                                                    pageSize,
-                                                                fromDate: fromdate
-                                                                    .toString(),
-                                                                toDate: todate
-                                                                    .toString(),
-                                                              )),
-                                                    ).then((r) {
-                                                      items.clear();
-                                                      page = 1;
-                                                      getData();
-                                                    });
-                                                  },
-                                                  child:
-                                                      const Text('followup')),
-                                            ],
-                                          );
-                                        });
-                                  } else {
-                                    if (widget.cloudCall == true) {
-                                      chooseCallDialog(context, index);
-                                    } else {
-                                      Common.dialPad(
-                                          items[index].contactNumber1);
-                                    }
-                                  }
-                                }
-                                return null;
-                              },
-                              child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => LeadDetails(
-                                                widget.token!,
-                                                widget.editLead,
-                                                widget.deleteLead,
-                                                widget.cloudCall,
-                                                items[index]
-                                                    .callMasterId
-                                                    .toString(),
-                                                pageName:
-                                                    widget.pageName.toString(),
-                                                page: page,
-                                                pageSize: page * pageSize,
-                                                fromDate: fromdate.toString(),
-                                                toDate: todate.toString(),
-                                              )),
-                                    ).then((r) {
-                                      items.clear();
-                                      page = 1;
-                                      getData();
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 10, bottom: 10),
-                                    child: Container(
-                                      width:
-                                          MediaQuery.of(context).size.width * 1,
-                                      decoration: BoxDecoration(
-                                        color: items[index].isSelected == false
-                                            ? Colors.white
-                                            : Colors.blue.shade100,
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.grey,
-                                            offset: Offset(2.0, 2.0),
-                                          )
-                                        ],
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 10, right: 10, left: 10),
                                       child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                top: 10, right: 10, left: 10),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                          if (selectedIUsers.isNotEmpty)
+                                            Row(
                                               children: [
-                                                SingleChildScrollView(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  child: SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            .88,
-                                                    child: Stack(
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            if (items[index]
-                                                                    .priority ==
-                                                                '1')
-                                                              Container(
-                                                                width: 10.0,
-                                                                height: 10.0,
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                              ),
-                                                            if (items[index]
-                                                                    .priority ==
-                                                                '2')
-                                                              Container(
-                                                                width: 10.0,
-                                                                height: 10.0,
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  color: Colors
-                                                                      .green,
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                              ),
-                                                            if (items[index]
-                                                                    .priority ==
-                                                                '3')
-                                                              Container(
-                                                                width: 10.0,
-                                                                height: 10.0,
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  color: Colors
-                                                                      .red,
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                              ),
-                                                            if (items[index]
-                                                                    .priority ==
-                                                                '4')
-                                                              Container(
-                                                                width: 10.0,
-                                                                height: 10.0,
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                              ),
-                                                            const SizedBox(
-                                                              width: 5,
-                                                            ),
-                                                            SizedBox(
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  .46,
-                                                              child: Text(
-                                                                items[index]
-                                                                    .clientName
-                                                                    .toString(),
-                                                                // items.length.toString(),
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    decoration: items[index].priority ==
-                                                                            "4"
-                                                                        ? TextDecoration
-                                                                            .lineThrough
-                                                                        : null,
-                                                                    decorationThickness:
-                                                                        1.5,
-                                                                    decorationColor:
-                                                                        Colors
-                                                                            .red,
-                                                                    color: items[index]
-                                                                            .isCustomer
-                                                                        ? Colors
-                                                                            .green
-                                                                        : Colors
-                                                                            .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                            Align(
-                                                              alignment:
-                                                                  Alignment
-                                                                      .topRight,
-                                                              child: Container(
-                                                                decoration: BoxDecoration(
-                                                                    color: Colors
-                                                                        .pink
-                                                                        .shade100,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            5)),
-                                                                child: Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .only(
-                                                                      left: 5,
-                                                                      right: 5,
-                                                                      top: 2,
-                                                                      bottom:
-                                                                          2),
-                                                                  child: Text(
-                                                                    items[index]
-                                                                        .leadCategory
-                                                                        .toString(),
-                                                                    style:
-                                                                        const TextStyle(
-                                                                      fontSize:
-                                                                          13,
-                                                                      color: Colors
-                                                                          .red,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                    maxLines: 1,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    softWrap:
-                                                                        false,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          children: [
-                                                            Visibility(
-                                                              visible: items[index]
-                                                                          .categoryCount
-                                                                          .toString() !=
-                                                                      "1" &&
-                                                                  items[index]
-                                                                          .categoryCount
-                                                                          .toString() !=
-                                                                      "",
-                                                              child: Container(
-                                                                height: 20,
-                                                                width: 20,
-                                                                decoration: const BoxDecoration(
-                                                                    color: Colors
-                                                                        .red,
-                                                                    shape: BoxShape
-                                                                        .circle),
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    items[index]
-                                                                        .categoryCount
-                                                                        .toString(),
-                                                                    // items.length.toString(),
-                                                                    style: const TextStyle(
-                                                                        fontSize:
-                                                                            12,
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                    maxLines: 1,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 3,
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.68,
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10),
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .start,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Text(
-                                                                  items[index]
-                                                                      .contactNumber1
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          13,
-                                                                      color: Colors
-                                                                          .black54,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500),
-                                                                ),
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    SizedBox(
-                                                                      width:
-                                                                          150,
-                                                                      child:
-                                                                          Text(
-                                                                        'Assigned to : ${items[index].staffName}',
-                                                                        style: const TextStyle(
-                                                                            fontSize:
-                                                                                13,
-                                                                            color:
-                                                                                Colors.black54,
-                                                                            fontWeight: FontWeight.w500),
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                      ),
-                                                                    ),
-                                                                    Container(
-                                                                      decoration: BoxDecoration(
-                                                                          // color: _colors[items[index]
-                                                                          //     .callResultId!],
-                                                                          color: items[index].callResultId >= 0 && items[index].callResultId < _colors.length ? _colors[items[index].callResultId] : const Color.fromARGB(255, 245, 160, 34),
-                                                                          borderRadius: BorderRadius.circular(5)),
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            left:
-                                                                                5,
-                                                                            right:
-                                                                                5,
-                                                                            top:
-                                                                                2,
-                                                                            bottom:
-                                                                                2),
-                                                                        child:
-                                                                            Text(
-                                                                          items[index]
-                                                                              .callResult
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 13,
-                                                                              color: Colors.white,
-                                                                              fontWeight: FontWeight.w500),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 2,
-                                                                ),
-                                                                items[index].callResultId ==
-                                                                        1
-                                                                    ? Container(
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                const Color(0xFFd5f5f4),
-                                                                            borderRadius: BorderRadius.circular(5)),
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              left: 5,
-                                                                              right: 5,
-                                                                              top: 5,
-                                                                              bottom: 5),
-                                                                          child:
-                                                                              Row(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.start,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.center,
-                                                                            children: [
-                                                                              Image.asset("assets/icons/calendar.png", width: 20),
-                                                                              const SizedBox(
-                                                                                width: 15,
-                                                                              ),
-                                                                              Column(
-                                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                children: [
-                                                                                  const Text(
-                                                                                    'Created Time',
-                                                                                    style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                  const SizedBox(
-                                                                                    height: 3,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    items[index].createdDate.toString(),
-                                                                                    style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      )
-                                                                    : Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Container(
-                                                                            decoration:
-                                                                                BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                                                                              child: Row(
-                                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                children: [
-                                                                                  Image.asset("assets/icons/calendar.png", width: 20),
-                                                                                  const SizedBox(
-                                                                                    width: 5,
-                                                                                  ),
-                                                                                  Column(
-                                                                                    children: [
-                                                                                      const Text(
-                                                                                        'Called Date',
-                                                                                        style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                      ),
-                                                                                      const SizedBox(
-                                                                                        height: 3,
-                                                                                      ),
-                                                                                      Text(
-                                                                                        items[index].isCalled == false ? '--' : items[index].calledDate.toString(),
-                                                                                        style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          Container(
-                                                                            decoration:
-                                                                                BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                                                                              child: Row(
-                                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                children: [
-                                                                                  Image.asset("assets/icons/calendar.png", width: 20),
-                                                                                  const SizedBox(
-                                                                                    width: 5,
-                                                                                  ),
-                                                                                  Column(
-                                                                                    children: [
-                                                                                      const Text(
-                                                                                        'Followup Date',
-                                                                                        style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                      ),
-                                                                                      const SizedBox(
-                                                                                        height: 3,
-                                                                                      ),
-                                                                                      Text(
-                                                                                        items[index].scheduledDate.toString(),
-                                                                                        style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    Column(
-                                                      children: [
-                                                        Container(
-                                                          constraints:
-                                                              const BoxConstraints(
-                                                            maxHeight: 60,
-                                                          ),
-                                                          child: Container(
-                                                            constraints:
-                                                                const BoxConstraints(
-                                                              minHeight: 20,
-                                                              minWidth: 20,
-                                                              maxHeight: 50,
-                                                              maxWidth: 50,
-                                                            ),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              border: Border.all(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  width: 0),
-                                                              boxShadow: const [
-                                                                BoxShadow(
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    blurRadius:
-                                                                        5,
-                                                                    offset:
-                                                                        Offset(
-                                                                            1,
-                                                                            1)),
-                                                              ],
-                                                              color:
-                                                                  Colors.white,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              image: DecorationImage(
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                  image: NetworkImage(items[
-                                                                          index]
-                                                                      .profilePic
-                                                                      .toString())),
-                                                              // image: AssetImage(
-                                                              //     'assets/images/img.jpeg')),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 10,
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () async {
-                                                            if (widget
-                                                                    .cloudCall ==
-                                                                false) {
-                                                              showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (BuildContext
-                                                                          ctx) {
-                                                                    return AlertDialog(
-                                                                      title: const Text(
-                                                                          'Alert !!!'),
-                                                                      content:
-                                                                          const Text(
-                                                                              ""),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.of(context).pop();
-                                                                            },
-                                                                            child:
-                                                                                const Text('Close')),
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => LeadDetails(
-                                                                                          widget.token!,
-                                                                                          widget.editLead,
-                                                                                          widget.deleteLead,
-                                                                                          widget.cloudCall,
-                                                                                          viewLeads!.data.details[index].callMasterId.toString(),
-                                                                                          pageName: widget.pageName.toString(),
-                                                                                          page: page,
-                                                                                          pageSize: page * pageSize,
-                                                                                          fromDate: fromdate.toString(),
-                                                                                          toDate: todate.toString(),
-                                                                                        )),
-                                                                              ).then((r) {
-                                                                                items.clear();
-                                                                                page = 1;
-                                                                                getData();
-                                                                                itemPositionsListener.itemPositions.addListener(() {
-                                                                                  if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
-                                                                                    if (items.length < viewLeads!.data.totalLeads) {
-                                                                                      getData();
-                                                                                    }
-                                                                                  }
-                                                                                });
-                                                                              });
-                                                                            },
-                                                                            child:
-                                                                                const Text('followup')),
-                                                                      ],
-                                                                    );
-                                                                  });
-                                                            } else {
-                                                              if (widget
-                                                                      .cloudCall ==
-                                                                  true) {
-                                                                chooseCallDialog(
-                                                                    context,
-                                                                    index);
-                                                              } else {
-                                                                Common.dialPad(
-                                                                    items[index]
-                                                                        .contactNumber1);
-                                                                Common.dialPad(
-                                                                    items[index]
-                                                                        .contactNumber1);
-                                                              }
-                                                            }
-                                                          },
-                                                          child: Container(
-                                                            width: 65,
-                                                            height: 30,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  Colors.green,
-                                                              border: Border.all(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade300),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8),
-                                                            ),
-                                                            child: const Center(
-                                                              child: Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  Icon(
-                                                                    Icons.call,
-                                                                    color: Colors
-                                                                        .white,
-                                                                    size: 15,
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width: 5,
-                                                                  ),
-                                                                  Text('Call',
-                                                                      style: TextStyle(
-                                                                          fontFamily:
-                                                                              "MontserratMedium",
-                                                                          fontSize:
-                                                                              14,
-                                                                          color: Colors
-                                                                              .white,
-                                                                          fontWeight:
-                                                                              FontWeight.bold)),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(
-                                                  height: 8,
+                                                // Checkbox(
+                                                //   value: displayItems[itemIndex].isSelected,
+                                                //   onChanged: (bool? value) {
+                                                //     _handleLongPress(itemIndex);
+                                                //   },
+                                                // ),
+                                                Expanded(
+                                                  child: _buildLeadContent(displayItems[itemIndex], context, itemIndex),
                                                 ),
                                               ],
-                                            ),
-                                          ),
+                                            )
+                                          else
+                                            _buildLeadContent(displayItems[itemIndex], context, itemIndex),
                                         ],
                                       ),
                                     ),
-                                  )),
-                            );
-                          },
-                          itemScrollController: itemScrollController,
-                          itemPositionsListener: itemPositionsListener,
-                        ),
-                      )
-                    : SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.6,
-                        width: MediaQuery.of(context).size.width,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 200,
-                              height: 200,
-                              child: Image.asset(
-                                "assets/icons/nodatafound.png",
-                              ),
-                            ),
-                            const Text(
-                              'Result Not Found',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(
-                              height: 10,
-                            ),
-                            const Text(
-                              'Whoops... this information is \n not available for a moment',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            const SizedBox(
-                              height: 25,
-                            ),
-                            InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          Dashboard(widget.token)),
-                                );
-                              },
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.4,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Center(
-                                  child: Text('Go Back',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500)),
+                                  ],
                                 ),
                               ),
-                            )
-                          ],
+                            )),
+                      );
+                    },
+                    itemScrollController: itemScrollController,
+                    itemPositionsListener: itemPositionsListener,
+                  ),
+                )
+              : SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  width: MediaQuery.of(context).size.width,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Image.asset(
+                          "assets/icons/nodatafound.png",
                         ),
                       ),
-              ],
-            )
-          : Center(
-              child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
-            ),
+                      const Text(
+                        'Result Not Found',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      const Text(
+                        'Whoops... this information is \n not available for a moment',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      const SizedBox(
+                        height: 25,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    Dashboard(widget.token)),
+                          );
+                        },
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * 0.4,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text('Go Back',
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500)),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+        ],
+      )
+    : Center(
+        child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
+      ),
+      // body: viewLeads != null && configure != null
+      //     ? Column(
+      //         children: [
+      //           if (fromdate != "" && todate != "")
+      //             Padding(
+      //               padding:
+      //                   const EdgeInsets.only(left: 50, right: 50, top: 15),
+      //               child: Row(
+      //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                 children: [
+      //                   const Text('Date from ',
+      //                       style: TextStyle(fontSize: 14)),
+      //                   Text(outputFormat.format(DateTime.parse(fromdate)),
+      //                       style: const TextStyle(
+      //                           fontSize: 14, fontWeight: FontWeight.bold)),
+      //                   const Text(' to ', style: TextStyle(fontSize: 14)),
+      //                   Text(outputFormat.format(DateTime.parse(todate)),
+      //                       style: const TextStyle(
+      //                           fontSize: 14, fontWeight: FontWeight.bold)),
+      //                 ],
+      //               ),
+      //             ),
+      //           Text('Total Leads : ${viewLeads!.data.totalLeads}',
+      //               style: const TextStyle(
+      //                   fontSize: 16, fontWeight: FontWeight.bold)),
+      //           const SizedBox(
+      //             height: 10,
+      //           ),
+      //           viewLeads!.data.details.isNotEmpty
+      //               ? Expanded(
+      //                   child: ScrollablePositionedList.builder(
+      //                     //reverse: true,
+      //                     initialScrollIndex: 0,
+      //                     //you can pass the desired index here//
+      //                     itemCount: items.length + (isLoading ? 1 : 0),
+      //                     itemBuilder: (context, index) {
+      //                       if (index == items.length) {
+      //                         // When reaching the end of the list, show a loader
+      //                         return _buildLoaderListItem();
+      //                       }
+      //                       return Dismissible(
+      //                         key: const Key('0'),
+      //                         background: Container(
+      //                           color: Colors.green,
+      //                           child: const Align(
+      //                             alignment: Alignment.centerLeft,
+      //                             child: Row(
+      //                               mainAxisAlignment: MainAxisAlignment.start,
+      //                               children: <Widget>[
+      //                                 SizedBox(
+      //                                   width: 20,
+      //                                 ),
+      //                                 Icon(
+      //                                   Icons.call,
+      //                                   color: Colors.white,
+      //                                 ),
+      //                                 Text(
+      //                                   " Call",
+      //                                   style: TextStyle(
+      //                                     color: Colors.white,
+      //                                     fontWeight: FontWeight.w700,
+      //                                   ),
+      //                                   textAlign: TextAlign.left,
+      //                                 ),
+      //                               ],
+      //                             ),
+      //                           ),
+      //                         ),
+      //                         secondaryBackground: Container(
+      //                           color: Colors.blue,
+      //                           child: const Align(
+      //                             alignment: Alignment.centerRight,
+      //                             child: Row(
+      //                               mainAxisAlignment: MainAxisAlignment.end,
+      //                               children: <Widget>[
+      //                                 Icon(
+      //                                   Icons.add,
+      //                                   color: Colors.white,
+      //                                 ),
+      //                                 Text(
+      //                                   "Add Followup",
+      //                                   style: TextStyle(
+      //                                     color: Colors.white,
+      //                                     fontWeight: FontWeight.w700,
+      //                                   ),
+      //                                   textAlign: TextAlign.right,
+      //                                 ),
+      //                                 SizedBox(
+      //                                   width: 20,
+      //                                 ),
+      //                               ],
+      //                             ),
+      //                           ),
+      //                         ),
+      //                         confirmDismiss: (direction) async {
+      //                           if (direction == DismissDirection.endToStart) {
+      //                             if (items[index].callResult != "Confirmed") {
+      //                               Navigator.push(
+      //                                 context,
+      //                                 MaterialPageRoute(
+      //                                     builder: (context) => AddFollowup(
+      //                                           widget.token,
+      //                                           widget.editLead,
+      //                                           widget.deleteLead,
+      //                                           widget.cloudCall,
+      //                                           items[index].callMasterId,
+      //                                           pageName: widget.pageName,
+      //                                           leadType:
+      //                                               items[index].leadCategory,
+      //                                           leadTypeId:
+      //                                               items[index].leadCategoryId,
+      //                                           leadSubType: items[index]
+      //                                               .leadSubCategory,
+      //                                           leadSubTypeId: items[index]
+      //                                               .leadSubCategoryId,
+      //                                           priorityId:
+      //                                               items[index].priority,
+      //                                           priority:
+      //                                               items[index].priorityName,
+      //                                           cost: items[index].cost,
+      //                                           address: items[index].address,
+      //                                         )),
+      //                               ).then((value) {
+      //                                 items.clear();
+      //                                 page = 1;
+      //                                 getData();
+      //                               });
+      //                             } else {
+      //                               Common.toastMessaage(
+      //                                   "You can't follow up on confirmed leads",
+      //                                   Colors.red);
+      //                             }
+      //                           } else {
+      //                             if (widget.cloudCall == false) {
+      //                               showDialog(
+      //                                   context: context,
+      //                                   builder: (BuildContext ctx) {
+      //                                     return AlertDialog(
+      //                                       title: const Text('Alert !!!'),
+      //                                       content: const Text(""),
+      //                                       actions: [
+      //                                         TextButton(
+      //                                             onPressed: () {
+      //                                               Navigator.of(context).pop();
+      //                                             },
+      //                                             child: const Text('Close')),
+      //                                         TextButton(
+      //                                             onPressed: () {
+      //                                               Navigator.push(
+      //                                                 context,
+      //                                                 MaterialPageRoute(
+      //                                                     builder: (context) =>
+      //                                                         LeadDetails(
+      //                                                           widget.token!,
+      //                                                           widget.editLead,
+      //                                                           widget
+      //                                                               .deleteLead,
+      //                                                           widget
+      //                                                               .cloudCall,
+      //                                                           viewLeads!
+      //                                                               .data
+      //                                                               .details[
+      //                                                                   index]
+      //                                                               .callMasterId
+      //                                                               .toString(),
+      //                                                           pageName: widget
+      //                                                               .pageName
+      //                                                               .toString(),
+      //                                                           page: page,
+      //                                                           pageSize: page *
+      //                                                               pageSize,
+      //                                                           fromDate: fromdate
+      //                                                               .toString(),
+      //                                                           toDate: todate
+      //                                                               .toString(),
+      //                                                         )),
+      //                                               ).then((r) {
+      //                                                 items.clear();
+      //                                                 page = 1;
+      //                                                 getData();
+      //                                               });
+      //                                             },
+      //                                             child:
+      //                                                 const Text('followup')),
+      //                                       ],
+      //                                     );
+      //                                   });
+      //                             } else {
+      //                               if (widget.cloudCall == true) {
+      //                                 chooseCallDialog(context, index);
+      //                               } else {
+      //                                 Common.dialPad(
+      //                                     items[index].contactNumber1);
+      //                               }
+      //                             }
+      //                           }
+      //                           return null;
+      //                         },
+      //                         child: InkWell(
+      //                             onTap: () {
+      //                               Navigator.push(
+      //                                 context,
+      //                                 MaterialPageRoute(
+      //                                     builder: (context) => LeadDetails(
+      //                                           widget.token!,
+      //                                           widget.editLead,
+      //                                           widget.deleteLead,
+      //                                           widget.cloudCall,
+      //                                           items[index]
+      //                                               .callMasterId
+      //                                               .toString(),
+      //                                           pageName:
+      //                                               widget.pageName.toString(),
+      //                                           page: page,
+      //                                           pageSize: page * pageSize,
+      //                                           fromDate: fromdate.toString(),
+      //                                           toDate: todate.toString(),
+      //                                         )),
+      //                               ).then((r) {
+      //                                 items.clear();
+      //                                 page = 1;
+      //                                 getData();
+      //                               });
+      //                             },
+      //                             child: Padding(
+      //                               padding: const EdgeInsets.only(
+      //                                   left: 10, right: 10, bottom: 10),
+      //                               child: Container(
+      //                                 width:
+      //                                     MediaQuery.of(context).size.width * 1,
+      //                                 decoration: BoxDecoration(
+      //                                   color: items[index].isSelected == false
+      //                                       ? Colors.white
+      //                                       : Colors.blue.shade100,
+      //                                   boxShadow: const [
+      //                                     BoxShadow(
+      //                                       color: Colors.grey,
+      //                                       offset: Offset(2.0, 2.0),
+      //                                     )
+      //                                   ],
+      //                                   borderRadius: BorderRadius.circular(10),
+      //                                 ),
+      //                                 child: Column(
+      //                                   children: [
+      //                                     Padding(
+      //                                       padding: const EdgeInsets.only(
+      //                                           top: 10, right: 10, left: 10),
+      //                                       child: Column(
+      //                                         mainAxisAlignment:
+      //                                             MainAxisAlignment.start,
+      //                                         crossAxisAlignment:
+      //                                             CrossAxisAlignment.start,
+      //                                         children: [
+      //                                           SingleChildScrollView(
+      //                                             scrollDirection:
+      //                                                 Axis.horizontal,
+      //                                             child: SizedBox(
+      //                                               width:
+      //                                                   MediaQuery.of(context)
+      //                                                           .size
+      //                                                           .width *
+      //                                                       .88,
+      //                                               child: Stack(
+      //                                                 children: [
+      //                                                   Row(
+      //                                                     children: [
+      //                                                       if (items[index]
+      //                                                               .priority ==
+      //                                                           '1')
+      //                                                         Container(
+      //                                                           width: 10.0,
+      //                                                           height: 10.0,
+      //                                                           decoration:
+      //                                                               const BoxDecoration(
+      //                                                             color: Colors
+      //                                                                 .grey,
+      //                                                             shape: BoxShape
+      //                                                                 .circle,
+      //                                                           ),
+      //                                                         ),
+      //                                                       if (items[index]
+      //                                                               .priority ==
+      //                                                           '2')
+      //                                                         Container(
+      //                                                           width: 10.0,
+      //                                                           height: 10.0,
+      //                                                           decoration:
+      //                                                               const BoxDecoration(
+      //                                                             color: Colors
+      //                                                                 .green,
+      //                                                             shape: BoxShape
+      //                                                                 .circle,
+      //                                                           ),
+      //                                                         ),
+      //                                                       if (items[index]
+      //                                                               .priority ==
+      //                                                           '3')
+      //                                                         Container(
+      //                                                           width: 10.0,
+      //                                                           height: 10.0,
+      //                                                           decoration:
+      //                                                               const BoxDecoration(
+      //                                                             color: Colors
+      //                                                                 .red,
+      //                                                             shape: BoxShape
+      //                                                                 .circle,
+      //                                                           ),
+      //                                                         ),
+      //                                                       if (items[index]
+      //                                                               .priority ==
+      //                                                           '4')
+      //                                                         Container(
+      //                                                           width: 10.0,
+      //                                                           height: 10.0,
+      //                                                           decoration:
+      //                                                               const BoxDecoration(
+      //                                                             color: Colors
+      //                                                                 .black,
+      //                                                             shape: BoxShape
+      //                                                                 .circle,
+      //                                                           ),
+      //                                                         ),
+      //                                                       const SizedBox(
+      //                                                         width: 5,
+      //                                                       ),
+      //                                                       SizedBox(
+      //                                                         width: MediaQuery.of(
+      //                                                                     context)
+      //                                                                 .size
+      //                                                                 .width *
+      //                                                             .46,
+      //                                                         child: Text(
+      //                                                           items[index]
+      //                                                               .clientName
+      //                                                               .toString(),
+      //                                                           // items.length.toString(),
+      //                                                           style: TextStyle(
+      //                                                               fontSize:
+      //                                                                   16,
+      //                                                               decoration: items[index].priority ==
+      //                                                                       "4"
+      //                                                                   ? TextDecoration
+      //                                                                       .lineThrough
+      //                                                                   : null,
+      //                                                               decorationThickness:
+      //                                                                   1.5,
+      //                                                               decorationColor:
+      //                                                                   Colors
+      //                                                                       .red,
+      //                                                               color: items[index]
+      //                                                                       .isCustomer
+      //                                                                   ? Colors
+      //                                                                       .green
+      //                                                                   : Colors
+      //                                                                       .black,
+      //                                                               fontWeight:
+      //                                                                   FontWeight
+      //                                                                       .bold),
+      //                                                           maxLines: 1,
+      //                                                           overflow:
+      //                                                               TextOverflow
+      //                                                                   .ellipsis,
+      //                                                         ),
+      //                                                       ),
+      //                                                       Align(
+      //                                                         alignment:
+      //                                                             Alignment
+      //                                                                 .topRight,
+      //                                                         child: Container(
+      //                                                           decoration: BoxDecoration(
+      //                                                               color: Colors
+      //                                                                   .pink
+      //                                                                   .shade100,
+      //                                                               borderRadius:
+      //                                                                   BorderRadius.circular(
+      //                                                                       5)),
+      //                                                           child: Padding(
+      //                                                             padding: const EdgeInsets
+      //                                                                 .only(
+      //                                                                 left: 5,
+      //                                                                 right: 5,
+      //                                                                 top: 2,
+      //                                                                 bottom:
+      //                                                                     2),
+      //                                                             child: Text(
+      //                                                               items[index]
+      //                                                                   .leadCategory
+      //                                                                   .toString(),
+      //                                                               style:
+      //                                                                   const TextStyle(
+      //                                                                 fontSize:
+      //                                                                     13,
+      //                                                                 color: Colors
+      //                                                                     .red,
+      //                                                                 fontWeight:
+      //                                                                     FontWeight
+      //                                                                         .w500,
+      //                                                               ),
+      //                                                               maxLines: 1,
+      //                                                               overflow:
+      //                                                                   TextOverflow
+      //                                                                       .ellipsis,
+      //                                                               softWrap:
+      //                                                                   false,
+      //                                                             ),
+      //                                                           ),
+      //                                                         ),
+      //                                                       ),
+      //                                                     ],
+      //                                                   ),
+      //                                                   Row(
+      //                                                     mainAxisAlignment:
+      //                                                         MainAxisAlignment
+      //                                                             .end,
+      //                                                     children: [
+      //                                                       Visibility(
+      //                                                         visible: items[index]
+      //                                                                     .categoryCount
+      //                                                                     .toString() !=
+      //                                                                 "1" &&
+      //                                                             items[index]
+      //                                                                     .categoryCount
+      //                                                                     .toString() !=
+      //                                                                 "",
+      //                                                         child: Container(
+      //                                                           height: 20,
+      //                                                           width: 20,
+      //                                                           decoration: const BoxDecoration(
+      //                                                               color: Colors
+      //                                                                   .red,
+      //                                                               shape: BoxShape
+      //                                                                   .circle),
+      //                                                           child: Center(
+      //                                                             child: Text(
+      //                                                               items[index]
+      //                                                                   .categoryCount
+      //                                                                   .toString(),
+      //                                                               // items.length.toString(),
+      //                                                               style: const TextStyle(
+      //                                                                   fontSize:
+      //                                                                       12,
+      //                                                                   color: Colors
+      //                                                                       .white,
+      //                                                                   fontWeight:
+      //                                                                       FontWeight.bold),
+      //                                                               maxLines: 1,
+      //                                                               overflow:
+      //                                                                   TextOverflow
+      //                                                                       .ellipsis,
+      //                                                             ),
+      //                                                           ),
+      //                                                         ),
+      //                                                       ),
+      //                                                     ],
+      //                                                   ),
+      //                                                 ],
+      //                                               ),
+      //                                             ),
+      //                                           ),
+      //                                           const SizedBox(
+      //                                             height: 3,
+      //                                           ),
+      //                                           Row(
+      //                                             mainAxisAlignment:
+      //                                                 MainAxisAlignment
+      //                                                     .spaceBetween,
+      //                                             crossAxisAlignment:
+      //                                                 CrossAxisAlignment.start,
+      //                                             children: [
+      //                                               Column(
+      //                                                 mainAxisAlignment:
+      //                                                     MainAxisAlignment
+      //                                                         .start,
+      //                                                 crossAxisAlignment:
+      //                                                     CrossAxisAlignment
+      //                                                         .start,
+      //                                                 children: [
+      //                                                   SizedBox(
+      //                                                     width: MediaQuery.of(
+      //                                                                 context)
+      //                                                             .size
+      //                                                             .width *
+      //                                                         0.68,
+      //                                                     child: Padding(
+      //                                                       padding:
+      //                                                           const EdgeInsets
+      //                                                               .only(
+      //                                                               left: 10),
+      //                                                       child: Column(
+      //                                                         mainAxisAlignment:
+      //                                                             MainAxisAlignment
+      //                                                                 .start,
+      //                                                         crossAxisAlignment:
+      //                                                             CrossAxisAlignment
+      //                                                                 .start,
+      //                                                         children: [
+      //                                                           Text(
+      //                                                             items[index]
+      //                                                                 .contactNumber1
+      //                                                                 .toString(),
+      //                                                             style: const TextStyle(
+      //                                                                 fontSize:
+      //                                                                     13,
+      //                                                                 color: Colors
+      //                                                                     .black54,
+      //                                                                 fontWeight:
+      //                                                                     FontWeight
+      //                                                                         .w500),
+      //                                                           ),
+      //                                                           Row(
+      //                                                             mainAxisAlignment:
+      //                                                                 MainAxisAlignment
+      //                                                                     .spaceBetween,
+      //                                                             children: [
+      //                                                               SizedBox(
+      //                                                                 width:
+      //                                                                     150,
+      //                                                                 child:
+      //                                                                     Text(
+      //                                                                   'Assigned to : ${items[index].staffName}',
+      //                                                                   style: const TextStyle(
+      //                                                                       fontSize:
+      //                                                                           13,
+      //                                                                       color:
+      //                                                                           Colors.black54,
+      //                                                                       fontWeight: FontWeight.w500),
+      //                                                                   overflow:
+      //                                                                       TextOverflow.ellipsis,
+      //                                                                 ),
+      //                                                               ),
+      //                                                               Container(
+      //                                                                 decoration: BoxDecoration(
+      //                                                                     // color: _colors[items[index]
+      //                                                                     //     .callResultId!],
+      //                                                                     color: items[index].callResultId >= 0 && items[index].callResultId < _colors.length ? _colors[items[index].callResultId] : const Color.fromARGB(255, 245, 160, 34),
+      //                                                                     borderRadius: BorderRadius.circular(5)),
+      //                                                                 child:
+      //                                                                     Padding(
+      //                                                                   padding: const EdgeInsets
+      //                                                                       .only(
+      //                                                                       left:
+      //                                                                           5,
+      //                                                                       right:
+      //                                                                           5,
+      //                                                                       top:
+      //                                                                           2,
+      //                                                                       bottom:
+      //                                                                           2),
+      //                                                                   child:
+      //                                                                       Text(
+      //                                                                     items[index]
+      //                                                                         .callResult
+      //                                                                         .toString(),
+      //                                                                     style: const TextStyle(
+      //                                                                         fontSize: 13,
+      //                                                                         color: Colors.white,
+      //                                                                         fontWeight: FontWeight.w500),
+      //                                                                   ),
+      //                                                                 ),
+      //                                                               ),
+      //                                                             ],
+      //                                                           ),
+      //                                                           const SizedBox(
+      //                                                             height: 2,
+      //                                                           ),
+      //                                                           items[index].callResultId ==
+      //                                                                   1
+      //                                                               ? Container(
+      //                                                                   decoration: BoxDecoration(
+      //                                                                       color:
+      //                                                                           const Color(0xFFd5f5f4),
+      //                                                                       borderRadius: BorderRadius.circular(5)),
+      //                                                                   child:
+      //                                                                       Padding(
+      //                                                                     padding: const EdgeInsets
+      //                                                                         .only(
+      //                                                                         left: 5,
+      //                                                                         right: 5,
+      //                                                                         top: 5,
+      //                                                                         bottom: 5),
+      //                                                                     child:
+      //                                                                         Row(
+      //                                                                       mainAxisAlignment:
+      //                                                                           MainAxisAlignment.start,
+      //                                                                       crossAxisAlignment:
+      //                                                                           CrossAxisAlignment.center,
+      //                                                                       children: [
+      //                                                                         Image.asset("assets/icons/calendar.png", width: 20),
+      //                                                                         const SizedBox(
+      //                                                                           width: 15,
+      //                                                                         ),
+      //                                                                         Column(
+      //                                                                           mainAxisAlignment: MainAxisAlignment.start,
+      //                                                                           crossAxisAlignment: CrossAxisAlignment.start,
+      //                                                                           children: [
+      //                                                                             const Text(
+      //                                                                               'Created Time',
+      //                                                                               style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+      //                                                                             ),
+      //                                                                             const SizedBox(
+      //                                                                               height: 3,
+      //                                                                             ),
+      //                                                                             Text(
+      //                                                                               items[index].createdDate.toString(),
+      //                                                                               style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+      //                                                                             ),
+      //                                                                           ],
+      //                                                                         ),
+      //                                                                       ],
+      //                                                                     ),
+      //                                                                   ),
+      //                                                                 )
+      //                                                               : Row(
+      //                                                                   mainAxisAlignment:
+      //                                                                       MainAxisAlignment.spaceBetween,
+      //                                                                   children: [
+      //                                                                     Container(
+      //                                                                       decoration:
+      //                                                                           BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
+      //                                                                       child:
+      //                                                                           Padding(
+      //                                                                         padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
+      //                                                                         child: Row(
+      //                                                                           mainAxisAlignment: MainAxisAlignment.start,
+      //                                                                           crossAxisAlignment: CrossAxisAlignment.center,
+      //                                                                           children: [
+      //                                                                             Image.asset("assets/icons/calendar.png", width: 20),
+      //                                                                             const SizedBox(
+      //                                                                               width: 5,
+      //                                                                             ),
+      //                                                                             Column(
+      //                                                                               children: [
+      //                                                                                 const Text(
+      //                                                                                   'Called Date',
+      //                                                                                   style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+      //                                                                                 ),
+      //                                                                                 const SizedBox(
+      //                                                                                   height: 3,
+      //                                                                                 ),
+      //                                                                                 Text(
+      //                                                                                   items[index].isCalled == false ? '--' : items[index].calledDate.toString(),
+      //                                                                                   style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+      //                                                                                 ),
+      //                                                                               ],
+      //                                                                             ),
+      //                                                                           ],
+      //                                                                         ),
+      //                                                                       ),
+      //                                                                     ),
+      //                                                                     Container(
+      //                                                                       decoration:
+      //                                                                           BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
+      //                                                                       child:
+      //                                                                           Padding(
+      //                                                                         padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
+      //                                                                         child: Row(
+      //                                                                           mainAxisAlignment: MainAxisAlignment.start,
+      //                                                                           crossAxisAlignment: CrossAxisAlignment.center,
+      //                                                                           children: [
+      //                                                                             Image.asset("assets/icons/calendar.png", width: 20),
+      //                                                                             const SizedBox(
+      //                                                                               width: 5,
+      //                                                                             ),
+      //                                                                             Column(
+      //                                                                               children: [
+      //                                                                                 const Text(
+      //                                                                                   'Followup Date',
+      //                                                                                   style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+      //                                                                                 ),
+      //                                                                                 const SizedBox(
+      //                                                                                   height: 3,
+      //                                                                                 ),
+      //                                                                                 Text(
+      //                                                                                   items[index].scheduledDate.toString(),
+      //                                                                                   style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+      //                                                                                 ),
+      //                                                                               ],
+      //                                                                             ),
+      //                                                                           ],
+      //                                                                         ),
+      //                                                                       ),
+      //                                                                     ),
+      //                                                                   ],
+      //                                                                 ),
+      //                                                         ],
+      //                                                       ),
+      //                                                     ),
+      //                                                   ),
+      //                                                 ],
+      //                                               ),
+      //                                               Column(
+      //                                                 children: [
+      //                                                   Container(
+      //                                                     constraints:
+      //                                                         const BoxConstraints(
+      //                                                       maxHeight: 60,
+      //                                                     ),
+      //                                                     child: Container(
+      //                                                       constraints:
+      //                                                           const BoxConstraints(
+      //                                                         minHeight: 20,
+      //                                                         minWidth: 20,
+      //                                                         maxHeight: 50,
+      //                                                         maxWidth: 50,
+      //                                                       ),
+      //                                                       decoration:
+      //                                                           BoxDecoration(
+      //                                                         border: Border.all(
+      //                                                             color: Colors
+      //                                                                 .white,
+      //                                                             width: 0),
+      //                                                         boxShadow: const [
+      //                                                           BoxShadow(
+      //                                                               color: Colors
+      //                                                                   .grey,
+      //                                                               blurRadius:
+      //                                                                   5,
+      //                                                               offset:
+      //                                                                   Offset(
+      //                                                                       1,
+      //                                                                       1)),
+      //                                                         ],
+      //                                                         color:
+      //                                                             Colors.white,
+      //                                                         shape: BoxShape
+      //                                                             .circle,
+      //                                                         image: DecorationImage(
+      //                                                             fit: BoxFit
+      //                                                                 .cover,
+      //                                                             image: NetworkImage(items[
+      //                                                                     index]
+      //                                                                 .profilePic
+      //                                                                 .toString())),
+      //                                                         // image: AssetImage(
+      //                                                         //     'assets/images/img.jpeg')),
+      //                                                       ),
+      //                                                     ),
+      //                                                   ),
+      //                                                   const SizedBox(
+      //                                                     height: 10,
+      //                                                   ),
+      //                                                   InkWell(
+      //                                                     onTap: () async {
+      //                                                       if (widget
+      //                                                               .cloudCall ==
+      //                                                           false) {
+      //                                                         showDialog(
+      //                                                             context:
+      //                                                                 context,
+      //                                                             builder:
+      //                                                                 (BuildContext
+      //                                                                     ctx) {
+      //                                                               return AlertDialog(
+      //                                                                 title: const Text(
+      //                                                                     'Alert !!!'),
+      //                                                                 content:
+      //                                                                     const Text(
+      //                                                                         ""),
+      //                                                                 actions: [
+      //                                                                   TextButton(
+      //                                                                       onPressed:
+      //                                                                           () {
+      //                                                                         Navigator.of(context).pop();
+      //                                                                       },
+      //                                                                       child:
+      //                                                                           const Text('Close')),
+      //                                                                   TextButton(
+      //                                                                       onPressed:
+      //                                                                           () {
+      //                                                                         Navigator.push(
+      //                                                                           context,
+      //                                                                           MaterialPageRoute(
+      //                                                                               builder: (context) => LeadDetails(
+      //                                                                                     widget.token!,
+      //                                                                                     widget.editLead,
+      //                                                                                     widget.deleteLead,
+      //                                                                                     widget.cloudCall,
+      //                                                                                     viewLeads!.data.details[index].callMasterId.toString(),
+      //                                                                                     pageName: widget.pageName.toString(),
+      //                                                                                     page: page,
+      //                                                                                     pageSize: page * pageSize,
+      //                                                                                     fromDate: fromdate.toString(),
+      //                                                                                     toDate: todate.toString(),
+      //                                                                                   )),
+      //                                                                         ).then((r) {
+      //                                                                           items.clear();
+      //                                                                           page = 1;
+      //                                                                           getData();
+      //                                                                           itemPositionsListener.itemPositions.addListener(() {
+      //                                                                             if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
+      //                                                                               if (items.length < viewLeads!.data.totalLeads) {
+      //                                                                                 getData();
+      //                                                                               }
+      //                                                                             }
+      //                                                                           });
+      //                                                                         });
+      //                                                                       },
+      //                                                                       child:
+      //                                                                           const Text('followup')),
+      //                                                                 ],
+      //                                                               );
+      //                                                             });
+      //                                                       } else {
+      //                                                         if (widget
+      //                                                                 .cloudCall ==
+      //                                                             true) {
+      //                                                           chooseCallDialog(
+      //                                                               context,
+      //                                                               index);
+      //                                                         } else {
+      //                                                           Common.dialPad(
+      //                                                               items[index]
+      //                                                                   .contactNumber1);
+      //                                                           Common.dialPad(
+      //                                                               items[index]
+      //                                                                   .contactNumber1);
+      //                                                         }
+      //                                                       }
+      //                                                     },
+      //                                                     child: Container(
+      //                                                       width: 65,
+      //                                                       height: 30,
+      //                                                       decoration:
+      //                                                           BoxDecoration(
+      //                                                         color:
+      //                                                             Colors.green,
+      //                                                         border: Border.all(
+      //                                                             color: Colors
+      //                                                                 .grey
+      //                                                                 .shade300),
+      //                                                         borderRadius:
+      //                                                             BorderRadius
+      //                                                                 .circular(
+      //                                                                     8),
+      //                                                       ),
+      //                                                       child: const Center(
+      //                                                         child: Row(
+      //                                                           mainAxisAlignment:
+      //                                                               MainAxisAlignment
+      //                                                                   .center,
+      //                                                           crossAxisAlignment:
+      //                                                               CrossAxisAlignment
+      //                                                                   .center,
+      //                                                           children: [
+      //                                                             Icon(
+      //                                                               Icons.call,
+      //                                                               color: Colors
+      //                                                                   .white,
+      //                                                               size: 15,
+      //                                                             ),
+      //                                                             SizedBox(
+      //                                                               width: 5,
+      //                                                             ),
+      //                                                             Text('Call',
+      //                                                                 style: TextStyle(
+      //                                                                     fontFamily:
+      //                                                                         "MontserratMedium",
+      //                                                                     fontSize:
+      //                                                                         14,
+      //                                                                     color: Colors
+      //                                                                         .white,
+      //                                                                     fontWeight:
+      //                                                                         FontWeight.bold)),
+      //                                                           ],
+      //                                                         ),
+      //                                                       ),
+      //                                                     ),
+      //                                                   ),
+      //                                                 ],
+      //                                               ),
+      //                                             ],
+      //                                           ),
+      //                                           const SizedBox(
+      //                                             height: 8,
+      //                                           ),
+      //                                         ],
+      //                                       ),
+      //                                     ),
+      //                                   ],
+      //                                 ),
+      //                               ),
+      //                             )),
+      //                       );
+      //                     },
+      //                     itemScrollController: itemScrollController,
+      //                     itemPositionsListener: itemPositionsListener,
+      //                   ),
+      //                 )
+      //               : SizedBox(
+      //                   height: MediaQuery.of(context).size.height * 0.6,
+      //                   width: MediaQuery.of(context).size.width,
+      //                   child: Column(
+      //                     mainAxisAlignment: MainAxisAlignment.center,
+      //                     crossAxisAlignment: CrossAxisAlignment.center,
+      //                     children: [
+      //                       SizedBox(
+      //                         width: 200,
+      //                         height: 200,
+      //                         child: Image.asset(
+      //                           "assets/icons/nodatafound.png",
+      //                         ),
+      //                       ),
+      //                       const Text(
+      //                         'Result Not Found',
+      //                         style: TextStyle(
+      //                             fontSize: 20, fontWeight: FontWeight.bold),
+      //                       ),
+      //                       const SizedBox(
+      //                         height: 10,
+      //                       ),
+      //                       const Text(
+      //                         'Whoops... this information is \n not available for a moment',
+      //                         style: TextStyle(fontSize: 15),
+      //                       ),
+      //                       const SizedBox(
+      //                         height: 25,
+      //                       ),
+      //                       InkWell(
+      //                         onTap: () {
+      //                           Navigator.of(context).push(
+      //                             MaterialPageRoute(
+      //                                 builder: (context) =>
+      //                                     Dashboard(widget.token)),
+      //                           );
+      //                         },
+      //                         child: Container(
+      //                           width: MediaQuery.of(context).size.width * 0.4,
+      //                           height: 40,
+      //                           decoration: BoxDecoration(
+      //                             color: Colors.black,
+      //                             borderRadius: BorderRadius.circular(10),
+      //                           ),
+      //                           child: const Center(
+      //                             child: Text('Go Back',
+      //                                 style: TextStyle(
+      //                                     fontSize: 15,
+      //                                     color: Colors.white,
+      //                                     fontWeight: FontWeight.w500)),
+      //                           ),
+      //                         ),
+      //                       )
+      //                     ],
+      //                   ),
+      //                 ),
+      //         ],
+      //       )
+      //     : Center(
+      //         child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
+      //       ),
     );
   }
 
   Future<dynamic> chooseCallDialog(BuildContext context, int index) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Choose Call Type'),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () async {
-                    Common.showProgressDialog(context, "Loading..");
-                    CloudCallModel object1 = await HttpService.addCloudCall(
-                        widget.token,
-                        items[index].callMasterId,
-                        items[index].contactNumber1);
-                    if (object1.data == true) {
-                      if (context.mounted) {
-                        Common.toastMessaage(object1.message, Colors.green);
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      }
-                    } else {
-                      Common.toastMessaage(object1.message, Colors.red);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
+  // Get the correct item based on search
+  final item = _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+  
+  return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          scrollable: true,
+          title: const Text('Choose Call Type'),
+          content: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: () async {
+                  Common.showProgressDialog(context, "Loading..");
+                  CloudCallModel object1 = await HttpService.addCloudCall(
+                      widget.token,
+                      item.callMasterId,
+                      item.contactNumber1);
+                  if (object1.data == true) {
+                    if (context.mounted) {
+                      Common.toastMessaage(object1.message, Colors.green);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
                     }
-                  },
-                  child: SizedBox(
+                  } else {
+                    Common.toastMessaage(object1.message, Colors.red);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                child: SizedBox(
+                  height: 50,
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 30,
+                        width: 30,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(5)),
+                        child: const Icon(
+                          Icons.cloud_circle_rounded,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                      ),
+                      const Text(
+                        'Cloud Call',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              InkWell(
+                onTap: () async {
+                  // String url =
+                  //     'tel:${'+${items[index].contactNumber1}'}';
+                  // await launchUrl(Uri.parse(url));
+                  Navigator.pop(context);
+                  Common.dialPad(item.contactNumber1);
+                },
+                child: SizedBox(
                     height: 50,
                     child: Row(
                       children: [
@@ -1439,7 +2185,7 @@ class _AllReportState extends State<AllReport> {
                               color: Colors.grey.shade300,
                               borderRadius: BorderRadius.circular(5)),
                           child: const Icon(
-                            Icons.cloud_circle_rounded,
+                            Icons.call,
                             color: Colors.black,
                           ),
                         ),
@@ -1447,54 +2193,116 @@ class _AllReportState extends State<AllReport> {
                           width: 20,
                         ),
                         const Text(
-                          'Cloud Call',
+                          'Phone Call',
                           style: TextStyle(fontSize: 18),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                InkWell(
-                  onTap: () async {
-                    // String url =
-                    //     'tel:${'+${items[index].contactNumber1}'}';
-                    // await launchUrl(Uri.parse(url));
-                    Navigator.pop(context);
-                    Common.dialPad(items[index].contactNumber1);
-                  },
-                  child: SizedBox(
-                      height: 50,
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 30,
-                            width: 30,
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(5)),
-                            child: const Icon(
-                              Icons.call,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 20,
-                          ),
-                          const Text(
-                            'Phone Call',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ],
-                      )),
-                ),
-              ],
-            ),
-          );
-        });
-  }
+                    )),
+              ),
+            ],
+          ),
+        );
+      });
+}
+
+  // Future<dynamic> chooseCallDialog(BuildContext context, int index) {
+  //   return showDialog(
+  //       context: context,
+  //       builder: (BuildContext context) {
+  //         return AlertDialog(
+  //           scrollable: true,
+  //           title: const Text('Choose Call Type'),
+  //           content: Column(
+  //             mainAxisAlignment: MainAxisAlignment.start,
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               InkWell(
+  //                 onTap: () async {
+  //                   Common.showProgressDialog(context, "Loading..");
+  //                   CloudCallModel object1 = await HttpService.addCloudCall(
+  //                       widget.token,
+  //                       items[index].callMasterId,
+  //                       items[index].contactNumber1);
+  //                   if (object1.data == true) {
+  //                     if (context.mounted) {
+  //                       Common.toastMessaage(object1.message, Colors.green);
+  //                       Navigator.pop(context);
+  //                       Navigator.pop(context);
+  //                     }
+  //                   } else {
+  //                     Common.toastMessaage(object1.message, Colors.red);
+  //                     if (context.mounted) {
+  //                       Navigator.pop(context);
+  //                     }
+  //                   }
+  //                 },
+  //                 child: SizedBox(
+  //                   height: 50,
+  //                   child: Row(
+  //                     children: [
+  //                       Container(
+  //                         height: 30,
+  //                         width: 30,
+  //                         decoration: BoxDecoration(
+  //                             color: Colors.grey.shade300,
+  //                             borderRadius: BorderRadius.circular(5)),
+  //                         child: const Icon(
+  //                           Icons.cloud_circle_rounded,
+  //                           color: Colors.black,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(
+  //                         width: 20,
+  //                       ),
+  //                       const Text(
+  //                         'Cloud Call',
+  //                         style: TextStyle(fontSize: 18),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(
+  //                 height: 10,
+  //               ),
+  //               InkWell(
+  //                 onTap: () async {
+  //                   // String url =
+  //                   //     'tel:${'+${items[index].contactNumber1}'}';
+  //                   // await launchUrl(Uri.parse(url));
+  //                   Navigator.pop(context);
+  //                   Common.dialPad(items[index].contactNumber1);
+  //                 },
+  //                 child: SizedBox(
+  //                     height: 50,
+  //                     child: Row(
+  //                       children: [
+  //                         Container(
+  //                           height: 30,
+  //                           width: 30,
+  //                           decoration: BoxDecoration(
+  //                               color: Colors.grey.shade300,
+  //                               borderRadius: BorderRadius.circular(5)),
+  //                           child: const Icon(
+  //                             Icons.call,
+  //                             color: Colors.black,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(
+  //                           width: 20,
+  //                         ),
+  //                         const Text(
+  //                           'Phone Call',
+  //                           style: TextStyle(fontSize: 18),
+  //                         ),
+  //                       ],
+  //                     )),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       });
+  // }
 
   Future<dynamic> filtrationSheet(BuildContext context) {
     int selectedDateType = 1;
@@ -3710,7 +4518,7 @@ class _AllReportState extends State<AllReport> {
                           child: RawMaterialButton(
                             onPressed: () {
                               setState(() {
-                                 isFilterApplied = true;
+                                isFilterApplied = true;
                                 items.clear();
                                 page = 1;
                                 getData();
@@ -3740,6 +4548,469 @@ class _AllReportState extends State<AllReport> {
           );
         });
   }
+
+  Widget _buildLeadContent(dynamic item, BuildContext context, int index) {
+  return Column(
+    children: [
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * .88,
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  if (item.priority == '1')
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      decoration: const BoxDecoration(
+                        color: Colors.grey,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  if (item.priority == '2')
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  if (item.priority == '3')
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  if (item.priority == '4')
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * .46,
+                    child: Text(
+                      item.clientName.toString(),
+                      // items.length.toString(),
+                      style: TextStyle(
+                          fontSize: 16,
+                          decoration: item.priority == "4"
+                              ? TextDecoration.lineThrough
+                              : null,
+                          decorationThickness: 1.5,
+                          decorationColor: Colors.red,
+                          color: item.isCustomer
+                              ? Colors.green
+                              : Colors.black,
+                          fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.pink.shade100,
+                          borderRadius: BorderRadius.circular(5)),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 5, right: 5, top: 2, bottom: 2),
+                        child: Text(
+                          item.leadCategory.toString(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.red,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Visibility(
+                    visible: item.categoryCount.toString() != "1" &&
+                        item.categoryCount.toString() != "",
+                    child: Container(
+                      height: 20,
+                      width: 20,
+                      decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle),
+                      child: Center(
+                        child: Text(
+                          item.categoryCount.toString(),
+                          // items.length.toString(),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(
+        height: 3,
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.68,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.contactNumber1.toString(),
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w500),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: Text(
+                              'Assigned to : ${item.staffName}',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.w500),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                                // color: _colors[items[index]
+                                //     .callResultId!],
+                                color: item.callResultId >= 0 && item.callResultId < _colors.length ? _colors[item.callResultId] : const Color.fromARGB(255, 245, 160, 34),
+                                borderRadius: BorderRadius.circular(5)),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 5, right: 5, top: 2, bottom: 2),
+                              child: Text(
+                                item.callResult.toString(),
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 2,
+                      ),
+                      item.callResultId == 1
+                          ? Container(
+                              decoration: BoxDecoration(
+                                  color: const Color(0xFFd5f5f4),
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 5, right: 5, top: 5, bottom: 5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Image.asset("assets/icons/calendar.png", width: 20),
+                                    const SizedBox(
+                                      width: 15,
+                                    ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Created Time',
+                                          style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(
+                                          height: 3,
+                                        ),
+                                        Text(
+                                          item.createdDate.toString(),
+                                          style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFFd5f5f4),
+                                      borderRadius: BorderRadius.circular(5)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 5, right: 5, top: 5, bottom: 5),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                            "assets/icons/calendar.png",
+                                            width: 20),
+                                        const SizedBox(
+                                          width: 5,
+                                        ),
+                                        Column(
+                                          children: [
+                                            const Text(
+                                              'Called Date',
+                                              style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            const SizedBox(
+                                              height: 3,
+                                            ),
+                                            Text(
+                                              item.isCalled == false ? '--' : item.calledDate.toString(),
+                                              style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFFd5f5f4),
+                                      borderRadius: BorderRadius.circular(5)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 5, right: 5, top: 5, bottom: 5),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                            "assets/icons/calendar.png",
+                                            width: 20),
+                                        const SizedBox(
+                                          width: 5,
+                                        ),
+                                        Column(
+                                          children: [
+                                            const Text(
+                                              'Followup Date',
+                                              style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            const SizedBox(
+                                              height: 3,
+                                            ),
+                                            Text(
+                                              item.scheduledDate.toString(),
+                                              style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Container(
+                constraints: const BoxConstraints(
+                  maxHeight: 60,
+                ),
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minHeight: 20,
+                    minWidth: 20,
+                    maxHeight: 50,
+                    maxWidth: 50,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 0),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.grey,
+                          blurRadius: 5,
+                          offset: Offset(1, 1)),
+                    ],
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: NetworkImage(item.profilePic.toString())),
+                    // image: AssetImage(
+                    //     'assets/images/img.jpeg')),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              InkWell(
+                onTap: () async {
+                  if (widget.cloudCall == false) {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext ctx) {
+                          return AlertDialog(
+                            title: const Text('Alert !!!'),
+                            content: const Text(""),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Close')),
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => LeadDetails(
+                                                widget.token!,
+                                                widget.editLead,
+                                                widget.deleteLead,
+                                                widget.cloudCall,
+                                                item.callMasterId
+                                                    .toString(),
+                                                pageName: widget.pageName
+                                                    .toString(),
+                                                page: page,
+                                                pageSize: page * pageSize,
+                                                fromDate: fromdate.toString(),
+                                                toDate: todate.toString(),
+                                              )),
+                                    ).then((r) {
+                                      items.clear();
+                                      page = 1;
+                                      getData();
+                                      itemPositionsListener.itemPositions
+                                          .addListener(() {
+                                        if (itemPositionsListener
+                                                .itemPositions.value.last.index ==
+                                            items.length - 1) {
+                                          if (items.length <
+                                              viewLeads!.data.totalLeads) {
+                                            getData();
+                                          }
+                                        }
+                                      });
+                                    });
+                                  },
+                                  child: const Text('followup')),
+                            ],
+                          );
+                        });
+                  } else {
+                    if (widget.cloudCall == true) {
+                      chooseCallDialog(context, index);
+                    } else {
+                      Common.dialPad(item.contactNumber1);
+                      Common.dialPad(item.contactNumber1);
+                    }
+                  }
+                },
+                child: Container(
+                  width: 65,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.call,
+                          color: Colors.white,
+                          size: 15,
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        Text('Call',
+                            style: TextStyle(
+                                fontFamily: "MontserratMedium",
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      const SizedBox(
+        height: 8,
+      ),
+    ],
+  );
+}
 
   Widget _buildLoaderListItem() {
     return Shimmer.fromColors(

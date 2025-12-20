@@ -16,6 +16,7 @@ import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/forgot_password.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:workmanager/workmanager.dart';
@@ -384,6 +385,26 @@ class _LoginState extends State<Login> {
                 "LeadDashboard", object1.data!.LeadDashboard.toString());
             Common.saveSharedPref("AccountsDashboardPermission",
                 object1.data!.AccountsDashboard.toString());
+                  Common.saveSharedPref("QuotationDashboardPermission",
+                object1.data!.QuotationDashboard.toString());
+                     Common.saveSharedPref("RoomDashboard",
+                object1.data!.RoomDashboard.toString());
+                //////////////Modules permissions /////////////////////////////////////////
+               Common.saveSharedPref("RoomModule",
+                object1.data!.roomModule.toString());
+
+                Common.saveSharedPref("quotationModule",
+                object1.data!.quotationModule.toString());
+                  Common.saveSharedPref("workModule",
+                object1.data!.workModule.toString());
+                    Common.saveSharedPref("renewalModule",
+                object1.data!.renewalModule.toString());
+                     Common.saveSharedPref("accountsModule",
+                object1.data!.accountsModule.toString());
+                      Common.saveSharedPref("leadModule",
+                object1.data!.leadModule.toString());
+
+                ///      Modulessss eNDSSSS ///////////////////////////////////////
             Common.saveSharedPref(
                 "MenuDashboard", object1.data!.MenuDashboard.toString());
             Common.saveSharedPref("RenewalDashboardPermission",
@@ -397,6 +418,18 @@ class _LoginState extends State<Login> {
                     Common.saveSharedPref(
                   "approvePayroll", object1.data!.approvePayroll.toString());
                     Common.saveSharedPref(
+                  "proformaInvoiceMenu", object1.data!.proformaInvoiceMenu.toString());
+                    Common.saveSharedPref(
+                  "gstInvoiceMenu", object1.data!.gstInvoiceMenu.toString());
+                    Common.saveSharedPref(
+                  "receiptMenu", object1.data!.receiptMenu.toString());
+                    Common.saveSharedPref(
+                  "pendingInvoiceMenu", object1.data!.pendingInvoiceMenu.toString());
+                   Common.saveSharedPref(
+                  "createLeadCategory", object1.data!.createLeadCategory.toString());
+                   Common.saveSharedPref(
+                  "addLeadSource", object1.data!.addLeadSource.toString());
+                    Common.saveSharedPref(
                   "updateDashboard", object1.data!.updateDashboard.toString());
                     Common.saveSharedPref(
                   "viewPendingWorks", object1.data!.viewPendingWorks.toString());
@@ -408,6 +441,7 @@ class _LoginState extends State<Login> {
             String? accountsDash = object1.data!.AccountsDashboard.toString();
             String? menuDash = object1.data!.MenuDashboard.toString();
             String? renewalDash = object1.data!.RenewalDashboard.toString();
+              String? quotationDash = object1.data!.QuotationDashboard.toString();
             Widget dashboardToOpen;
             if (projectDash == "true") {
               dashboardToOpen = ProjectDashboard();
@@ -420,6 +454,8 @@ class _LoginState extends State<Login> {
               dashboardToOpen = HomePage(object.data!.token.toString());
             } else if (renewalDash == "true") {
               dashboardToOpen = RenewalDashboard();
+            } else if (quotationDash == "true") {
+              dashboardToOpen = QuotationDashboard();
             } else {
               dashboardToOpen =
                   Dashboard(object.data!.token.toString()); // fallback

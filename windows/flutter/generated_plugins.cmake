@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_core
   geolocator_windows
   iris_method_channel
+  pdfx
   permission_handler_windows
   printing
   record_windows

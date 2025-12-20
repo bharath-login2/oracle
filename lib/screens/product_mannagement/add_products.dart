@@ -96,7 +96,7 @@ class _AddProductsState extends State<AddProducts> {
         productImage.toString());
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
-       Navigator.pop(context, true); 
+      Navigator.pop(context, true);
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
       Navigator.pop(context);
@@ -261,7 +261,7 @@ class _AddProductsState extends State<AddProducts> {
                     //   return null;
                     // },
                     decoration: const InputDecoration(
-                        labelText: 'Category *',
+                        labelText: 'Category',
                         prefixIcon: Icon(Icons.category, color: Colors.grey),
                         border: OutlineInputBorder(),
                         focusedBorder: OutlineInputBorder(
@@ -301,22 +301,64 @@ class _AddProductsState extends State<AddProducts> {
                   const SizedBox(
                     height: 14,
                   ),
+                  // TextFormField(
+                  //   onChanged: ((value) {
+                  //     // if (tax.text != "") {
+                  //     setState(() {
+                  //       if (value == "") {
+                  //         totalAmount.text = "";
+                  //       }
+                  //       if (tax.text == "") {
+                  //         totalAmount.text = sellingPrice.text;
+                  //       }
+                  //       double taxVal = double.parse(tax.text);
+                  //       double val = double.parse(value);
+                  //       totalAmount.text =
+                  //           (val + val * (taxVal / 100)).toString();
+                  //     });
+                  //     // }
+                  //   }),
+                  //   keyboardType: TextInputType.number,
+                  //   validator: (value) {
+                  //     if (value!.isEmpty) {
+                  //       return "Please Enter Selling Price";
+                  //     }
+                  //     return null;
+                  //   },
+                  //   controller: sellingPrice,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'Selling Price *',
+                  //     prefixIcon:
+                  //         Icon(Icons.currency_rupee, color: Colors.grey),
+                  //     border: OutlineInputBorder(),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.grey),
+                  //     ),
+                  //     labelStyle: TextStyle(color: Colors.grey),
+                  //   ),
+                  // ),
                   TextFormField(
                     onChanged: ((value) {
-                      // if (tax.text != "") {
                       setState(() {
                         if (value == "") {
                           totalAmount.text = "";
                         }
                         if (tax.text == "") {
-                          totalAmount.text = sellingPrice.text;
+                          // Round the selling price when there's no tax
+                          totalAmount.text = value == ""
+                              ? ""
+                              : (double.tryParse(value) ?? 0)
+                                  .roundToDouble()
+                                  .toString();
+                        } else {
+                          double taxVal = double.parse(tax.text);
+                          double val = double.parse(value);
+                          // Calculate and round the total amount
+                          totalAmount.text = (val + val * (taxVal / 100))
+                              .roundToDouble()
+                              .toString();
                         }
-                        double taxVal = double.parse(tax.text);
-                        double val = double.parse(value);
-                        totalAmount.text =
-                            (val + val * (taxVal / 100)).toString();
                       });
-                      // }
                     }),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -340,15 +382,47 @@ class _AddProductsState extends State<AddProducts> {
                   const SizedBox(
                     height: 14,
                   ),
+                  // TextFormField(
+                  //   onChanged: ((value) {
+                  //     setState(() {
+                  //       if (value == "") {
+                  //         totalAmount.text = sellingPrice.text;
+                  //       }
+                  //       double amt = double.parse(sellingPrice.text);
+                  //       double val = double.parse(value);
+                  //       totalAmount.text = (amt + amt * (val / 100)).toString();
+                  //     });
+                  //   }),
+                  //   keyboardType: TextInputType.number,
+                  //   controller: tax,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'Tax in (%)',
+                  //     prefixIcon: Icon(Icons.terminal, color: Colors.grey),
+                  //     border: OutlineInputBorder(),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.grey),
+                  //     ),
+                  //     labelStyle: TextStyle(color: Colors.grey),
+                  //   ),
+                  // ),
                   TextFormField(
                     onChanged: ((value) {
                       setState(() {
                         if (value == "") {
-                          totalAmount.text = sellingPrice.text;
+                          // Round the selling price when tax is empty
+                          totalAmount.text = sellingPrice.text == ""
+                              ? ""
+                              : (double.tryParse(sellingPrice.text) ?? 0)
+                                  .roundToDouble()
+                                  .toString();
+                        } else {
+                          double amt = double.parse(sellingPrice.text);
+                          double val = double.parse(value);
+                          // Calculate and round the total amount
+                          totalAmount.text = (amt + amt * (val / 100))
+                              .roundToDouble()
+                              .toString();
                         }
-                        double amt = double.parse(sellingPrice.text);
-                        double val = double.parse(value);
-                        totalAmount.text = (amt + amt * (val / 100)).toString();
                       });
                     }),
                     keyboardType: TextInputType.number,
@@ -384,14 +458,41 @@ class _AddProductsState extends State<AddProducts> {
                   const SizedBox(
                     height: 14,
                   ),
+                  // TextFormField(
+                  //   keyboardType: TextInputType.number,
+                  //   onChanged: (value) {
+                  //     if (double.parse(value) <
+                  //         double.parse(totalAmount.text)) {
+                  //       Common.toastMessaage(
+                  //           "MRP should not be lower than the selling price",
+                  //           Colors.red);
+                  //     }
+                  //   },
+                  //   controller: mrp,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'MRP *',
+                  //     prefixIcon:
+                  //         Icon(Icons.currency_rupee, color: Colors.grey),
+                  //     border: OutlineInputBorder(),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.grey),
+                  //     ),
+                  //     labelStyle: TextStyle(color: Colors.grey),
+                  //   ),
+                  // ),
                   TextFormField(
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
-                      if (double.parse(value) <
-                          double.parse(totalAmount.text)) {
-                        Common.toastMessaage(
-                            "MRP should not be lower than the selling price",
-                            Colors.red);
+                      if (value.isNotEmpty && totalAmount.text.isNotEmpty) {
+                        double mrpValue = double.tryParse(value) ?? 0;
+                        double totalValue =
+                            double.tryParse(totalAmount.text) ?? 0;
+
+                        if (mrpValue < totalValue) {
+                          Common.toastMessaage(
+                              "MRP should not be lower than the selling price",
+                              Colors.red);
+                        }
                       }
                     },
                     controller: mrp,
@@ -513,7 +614,19 @@ class _AddProductsState extends State<AddProducts> {
       ),
     );
   }
-
+String _calculateRoundedTotal(String sellingPriceStr, String taxStr) {
+  if (sellingPriceStr.isEmpty) return "";
+  
+  double sellingPrice = double.tryParse(sellingPriceStr) ?? 0;
+  
+  if (taxStr.isEmpty) {
+    return sellingPrice.roundToDouble().toString();
+  } else {
+    double taxPercent = double.tryParse(taxStr) ?? 0;
+    double total = sellingPrice + (sellingPrice * taxPercent / 100);
+    return total.roundToDouble().toString();
+  }
+}
   Future<dynamic> dropDialog(BuildContext context, String title) {
     return showDialog(
       context: context,

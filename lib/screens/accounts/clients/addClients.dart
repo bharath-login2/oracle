@@ -86,6 +86,7 @@ class _AddClientsState extends State<AddClients> {
   String staffName = "Staff";
   List<Product> items = [];
   List<Product> filteredItems = [];
+  String selectedTaxType = "Intrastate";
   String productId = "";
   String renProductId = "";
   String productName = "Choose Product";
@@ -111,7 +112,7 @@ class _AddClientsState extends State<AddClients> {
   bool isLoadingState = true;
   bool isLoadingDistrict = false;
   //String? selectedTaxType;
-  String selectedTaxType = "Intrastate";
+
   @override
   void initState() {
     super.initState();
@@ -537,35 +538,88 @@ class _AddClientsState extends State<AddClients> {
                           SizedBox(
                             height: 15,
                           ),
-                          const SizedBox(height: 10),
-                          DropdownButtonFormField<String>(
-                            value: selectedTaxType,
-                            hint: const Text("Select Tax Type"),
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: "Interstate",
-                                child: Text("Other State"),
-                              ),
-                              DropdownMenuItem(
-                                value: "Intrastate",
-                                child: Text("State"),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedTaxType = value!;
-                              });
-                            },
-                          ),
+                          // const SizedBox(height: 10),
+                          // DropdownButtonFormField<String>(
+                          //   value: selectedTaxType,
+                          //   hint: const Text("Select Tax Type"),
+                          //   decoration: InputDecoration(
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(10),
+                          //     ),
+                          //     contentPadding: const EdgeInsets.symmetric(
+                          //       horizontal: 12,
+                          //       vertical: 8,
+                          //     ),
+                          //   ),
+                          //   items: const [
+                          //     DropdownMenuItem(
+                          //       value: "Interstate",
+                          //       child: Text("Other State"),
+                          //     ),
+                          //     DropdownMenuItem(
+                          //       value: "Intrastate",
+                          //       child: Text("State"),
+                          //     ),
+                          //   ],
+                          //   onChanged: (value) {
+                          //     setState(() {
+                          //       selectedTaxType = value!;
+                          //     });
+                          //   },
+                          // ),
+                        
+
+                         Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text(
+      "Select Tax Type",
+      style: TextStyle(
+        fontSize: 13,
+        color: Color.fromARGB(255, 5, 5, 5),
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+    const SizedBox(height: 6),
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          RadioListTile<String>(
+            title: const Text("Intrastate"),
+            value: "Intrastate",
+            groupValue: selectedTaxType,
+            onChanged: (value) {
+              setState(() {
+                selectedTaxType = value!;
+              });
+            },
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+          RadioListTile<String>(
+            title: const Text("Other State"),
+            value: "Interstate",
+            groupValue: selectedTaxType,
+            onChanged: (value) {
+              setState(() {
+                selectedTaxType = value!;
+              });
+            },
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+    ),
+  ],
+),
+
+
                           SizedBox(
                             height: 10,
                           ),

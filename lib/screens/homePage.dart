@@ -19,11 +19,14 @@ import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/staffReport.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
+import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -972,6 +975,27 @@ class _HomePageState extends State<HomePage> {
                                                           .toString(),
                                                     ),
                                                   ));
+                                            }
+
+                                            // else if (userDashboard!
+                                            //         .data.modules[i].menuName ==
+                                            //     'quotation') {
+                                            //   Navigator.push(
+                                            //       context,
+                                            //       MaterialPageRoute(
+                                            //         builder: (context) =>
+                                            //             QuotationPage(),
+                                            //       ));
+                                            //}
+                                            else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'quotation') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        QuotationDashboard(),
+                                                  ));
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff Report') {
@@ -980,9 +1004,9 @@ class _HomePageState extends State<HomePage> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         StaffReport(
-                                                      // token: widget.token
-                                                      //     .toString(),
-                                                    ),
+                                                            // token: widget.token
+                                                            //     .toString(),
+                                                            ),
                                                   ));
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
@@ -1187,8 +1211,177 @@ class _HomePageState extends State<HomePage> {
                                                                             ),
                                                                           ),
                                                                         ),
+                                                                        
+                                                                        // InkWell(
+                                                                        //   onTap:
+                                                                        //       () {
+                                                                        //     Navigator.push(
+                                                                        //       context,
+                                                                        //       MaterialPageRoute(
+                                                                        //           builder: (context) => TransferLeadReport(
+                                                                        //                 widget.token!,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 pageName: 'transferLeads',
+                                                                        //               )),
+                                                                        //     );
+                                                                        //   },
+                                                                        //   child:
+                                                                        //       Container(
+                                                                        //     width:
+                                                                        //         MediaQuery.of(context).size.width * 0.38,
+                                                                        //     decoration:
+                                                                        //         BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                        //     child:
+                                                                        //         const Padding(
+                                                                        //       padding: EdgeInsets.all(5),
+                                                                        //       child: Column(
+                                                                        //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                        //         children: [
+                                                                        //           Icon(
+                                                                        //             Icons.list_alt,
+                                                                        //             size: 15,
+                                                                        //           ),
+                                                                        //           SizedBox(
+                                                                        //             height: 5,
+                                                                        //           ),
+                                                                        //           Text('Lead Category Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                        //         ],
+                                                                        //       ),
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
+                                                                        // InkWell(
+                                                                        //   onTap:
+                                                                        //       () {
+                                                                        //     Navigator.push(
+                                                                        //       context,
+                                                                        //       MaterialPageRoute(
+                                                                        //           builder: (context) => TransferLeadReport(
+                                                                        //                 widget.token!,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 pageName: 'transferLeads',
+                                                                        //               )),
+                                                                        //     );
+                                                                        //   },
+                                                                        //   child:
+                                                                        //       Container(
+                                                                        //     width:
+                                                                        //         MediaQuery.of(context).size.width * 0.38,
+                                                                        //     decoration:
+                                                                        //         BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                        //     child:
+                                                                        //         const Padding(
+                                                                        //       padding: EdgeInsets.all(5),
+                                                                        //       child: Column(
+                                                                        //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                        //         children: [
+                                                                        //           Icon(
+                                                                        //             Icons.list_alt,
+                                                                        //             size: 15,
+                                                                        //           ),
+                                                                        //           SizedBox(
+                                                                        //             height: 5,
+                                                                        //           ),
+                                                                        //           Text('Lead Status Staffwise', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                        //         ],
+                                                                        //       ),
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
+                                                                        // InkWell(
+                                                                        //   onTap:
+                                                                        //       () {
+                                                                        //     Navigator.push(
+                                                                        //       context,
+                                                                        //       MaterialPageRoute(
+                                                                        //           builder: (context) => TransferLeadReport(
+                                                                        //                 widget.token!,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 true,
+                                                                        //                 pageName: 'transferLeads',
+                                                                        //               )),
+                                                                        //     );
+                                                                        //   },
+                                                                        //   child:
+                                                                        //       Container(
+                                                                        //     width:
+                                                                        //         MediaQuery.of(context).size.width * 0.38,
+                                                                        //     decoration:
+                                                                        //         BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                        //     child:
+                                                                        //         const Padding(
+                                                                        //       padding: EdgeInsets.all(5),
+                                                                        //       child: Column(
+                                                                        //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                        //         children: [
+                                                                        //           Icon(
+                                                                        //             Icons.list_alt,
+                                                                        //             size: 15,
+                                                                        //           ),
+                                                                        //           SizedBox(
+                                                                        //             height: 5,
+                                                                        //           ),
+                                                                        //           Text('Rejected Reason Staffwise', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                        //         ],
+                                                                        //       ),
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
                                                                       ],
                                                                     ),
+                                                                    SizedBox(
+                                                                      height:
+                                                                          8,
+                                                                    ),
+                                                                    Row(
+                                                                         mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
+                                                                      InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => StaffReport(
+                                                                                      // token: widget.token
+                                                                                      //     .toString(),
+                                                                                      ),
+                                                                                ));
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            width:
+                                                                                MediaQuery.of(context).size.width * 0.38,
+                                                                            decoration:
+                                                                                BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                            child:
+                                                                                const Padding(
+                                                                              padding: EdgeInsets.all(5),
+                                                                              child: Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                children: [
+                                                                                  Icon(
+                                                                                    Icons.list_alt,
+                                                                                    size: 15,
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    height: 5,
+                                                                                  ),
+                                                                                  Text('Staff Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ]
+                                                                      ),
                                                                     const SizedBox(
                                                                       height: 8,
                                                                     ),
@@ -1226,6 +1419,14 @@ class _HomePageState extends State<HomePage> {
                                                       builder: (context) =>
                                                           const RenewalDashboard()));
                                             } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'room_management') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const RoomDashboard()));
+                                            }else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'products') {
                                               Navigator.push(

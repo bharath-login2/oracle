@@ -1507,6 +1507,7 @@ class _QuotationPageState extends State<QuotationPage> {
                                                   onTap: () => _deleteQuotation(
                                                       item.workorderId!, index),
                                                 ),
+
                                         ],
                                       ),
                                     ],

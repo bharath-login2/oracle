@@ -41,12 +41,15 @@ import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
+import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/widgets/customerListDropdown.dart';
@@ -210,6 +213,10 @@ class _DashboardState extends State<Dashboard> {
   String viewPendingWorks = "";
   String approvePayroll = "";
   String? _faceBase64;
+  String? proformaInvoiceMenu;
+  String? gstInvoiceMenu;
+  String? pendingInvoiceMenu;
+  String? receiptMenu;
   LeadProgressbarModel? object1;
   bool isLoading = true;
   AccountDashboardModel? accountDashboard;
@@ -218,31 +225,35 @@ class _DashboardState extends State<Dashboard> {
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
+
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month + 1, 0));
   bool toggle = false;
-  List list = [
-    "Invoices",
-    "Pending Invoices",
-    "Receipts",
-    "Expense",
-    "Customers",
-    "Account Head",
-    "Proforma Invoices",
-    "GST Invoices",
-  ];
-  List tabColors = [
-    Colors.green,
-    Colors.orange,
-    Colors.blue,
-    Colors.red,
-    Colors.teal,
-    Colors.purple,
-    const Color.fromARGB(255, 111, 27, 207),
-    const Color.fromARGB(255, 228, 43, 235),
-  ];
+  List<dynamic> get list => [
+        "Invoices",
+        "Pending Invoices",
+        "Receipts",
+        "Expense",
+        "Customers",
+        "Account Head",
+        if (proformaInvoiceMenu == "true") "Proforma Invoices",
+        if (gstInvoiceMenu == "true") "GST Invoices",
+        //  "Updated Invoice",
+      ];
+  List<dynamic> get tabColors => [
+        Colors.green,
+        Colors.orange,
+        Colors.blue,
+        Colors.red,
+        Colors.teal,
+        Colors.purple,
+        if (proformaInvoiceMenu == "true")
+          const Color.fromARGB(255, 111, 27, 207),
+        if (gstInvoiceMenu == "true") const Color.fromARGB(255, 228, 43, 235),
+        // const Color.fromARGB(255, 95, 133, 26),
+      ];
   List colorList = [
     const Color(0xFFddd8f5),
     const Color(0xFFf0ebef),
@@ -254,6 +265,7 @@ class _DashboardState extends State<Dashboard> {
     const Color(0xFFf3e8d3),
     const Color(0xFFf3e8d3),
     const Color.fromARGB(255, 211, 243, 216),
+    // const Color.fromARGB(255, 180, 248, 211),
   ];
 
   final List<Color> _colors = [
@@ -396,10 +408,15 @@ class _DashboardState extends State<Dashboard> {
 
     getData(widget.token, fromdate, todate);
     _loadWorkStatus();
-    _checkDashboardPermission();
+    // _checkDashboardPermission();
   }
 
   void _checkDashboardPermission() async {
+    proformaInvoiceMenu =
+        await Common.getSharedPref("proformaInvoiceMenu") ?? "";
+    gstInvoiceMenu = await Common.getSharedPref("gstInvoiceMenu") ?? "";
+    pendingInvoiceMenu = await Common.getSharedPref("pendingInvoiceMenu") ?? "";
+    receiptMenu = await Common.getSharedPref("receiptMenu") ?? "";
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     AccountsDashboardPermission =
@@ -737,6 +754,11 @@ class _DashboardState extends State<Dashboard> {
     renewalPermission = await Common.getSharedPref("renewalPermission");
     accPermission = await Common.getSharedPref("accPermission");
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
+     proformaInvoiceMenu =
+        await Common.getSharedPref("proformaInvoiceMenu") ?? "";
+    gstInvoiceMenu = await Common.getSharedPref("gstInvoiceMenu") ?? "";
+    pendingInvoiceMenu = await Common.getSharedPref("pendingInvoiceMenu") ?? "";
+    receiptMenu = await Common.getSharedPref("receiptMenu") ?? "";
     toggle = tog == "true" ? true : false;
     setState(() {
       timeOut = false;
@@ -916,6 +938,35 @@ class _DashboardState extends State<Dashboard> {
     } else {
       setState(() {});
     }
+  }
+
+  double _calculateGridViewHeight(int itemCount) {
+    // Constants for calculation
+    const double padding = 16.0; // Top and bottom padding
+    const double itemHeight =
+        50.0; // Approximate height of each item (adjust as needed)
+    const double spacing = 15.0; // Main axis spacing between rows
+
+    // Calculate number of rows (2 items per row)
+    int rows = (itemCount / 2).ceil();
+
+    // Calculate total height
+    double totalHeight = (padding * 2) + // Top and bottom padding
+        (itemHeight * rows) + // Height of all rows
+        (spacing * (rows - 1)); // Spacing between rows
+
+    // Add some extra buffer
+    totalHeight += 20;
+
+    // Ensure minimum height
+    if (totalHeight < 100) totalHeight = 100;
+
+    // Ensure maximum height (you can adjust this)
+    if (totalHeight > MediaQuery.of(context).size.height * 0.6) {
+      totalHeight = MediaQuery.of(context).size.height * 0.6;
+    }
+
+    return totalHeight;
   }
 
   getCustomerList() async {
@@ -2486,8 +2537,7 @@ class _DashboardState extends State<Dashboard> {
                                       width: MediaQuery.of(context).size.width *
                                           .95,
                                       height:
-                                          MediaQuery.of(context).size.height *
-                                              .37,
+                                          _calculateGridViewHeight(list.length),
                                       child: Padding(
                                         padding: const EdgeInsets.all(16.0),
                                         child: GridView.builder(
@@ -2521,7 +2571,9 @@ class _DashboardState extends State<Dashboard> {
                                                                 .toString())),
                                                   );
                                                 } else if (list[i] ==
-                                                    "Proforma Invoices") {
+                                                        "Proforma Invoices" &&
+                                                    proformaInvoiceMenu ==
+                                                        "true") {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -2531,7 +2583,8 @@ class _DashboardState extends State<Dashboard> {
                                                                     .toString())),
                                                   );
                                                 } else if (list[i] ==
-                                                    "GST Invoices") {
+                                                        "GST Invoices" &&
+                                                    gstInvoiceMenu == "true") {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -3580,6 +3633,16 @@ class _DashboardState extends State<Dashboard> {
                                               builder: (context) =>
                                                   const ChatHomeScreen()),
                                         );
+                                      }
+                                      else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'room_management') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const RoomDashboard()),
+                                        );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
                                           'Settings') {
@@ -3618,6 +3681,21 @@ class _DashboardState extends State<Dashboard> {
                                                   AccountsDashboard(
                                                 token: widget.token.toString(),
                                               ),
+                                            )).then((_) {
+                                          getData(
+                                              widget.token, fromdate, todate);
+                                          if (loadmore == true) {
+                                            getStaffwise();
+                                          }
+                                        });
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'quotation') {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  QuotationDashboard(),
                                             )).then((_) {
                                           getData(
                                               widget.token, fromdate, todate);
@@ -4988,6 +5066,7 @@ class _DashboardState extends State<Dashboard> {
                                                           child:
                                                               SizedBox.shrink(),
                                                         ),
+                                                  
                                                   //        PopupMenuItem<int>(
                                                   //   onTap: () async {
                                                   //     Navigator.push(

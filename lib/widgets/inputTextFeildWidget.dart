@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class InputTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -14,22 +15,25 @@ class InputTextField extends StatelessWidget {
   final double? width;
   final double? height;
   final int? maxLine;
+  final List<TextInputFormatter>? inputFormatters;
 
-  const InputTextField(
-      {super.key,
-      required this.controller,
-      required this.hintText,
-      this.keyboardType,
-      this.readOnly = false,
-       this.onTap,
-      required this.backgroundColor,
-      required this.hintTextColor,
-      this.iconData,
-      this.suffixIcon,
-      this.obscureText = false,
-      this.width,
-      this.height = 50,
-      this.maxLine = 1});
+  const InputTextField({
+    super.key,
+    required this.controller,
+    required this.hintText,
+    this.keyboardType,
+    this.readOnly = false,
+    this.onTap,
+    required this.backgroundColor,
+    required this.hintTextColor,
+    this.iconData,
+    this.suffixIcon,
+    this.obscureText = false,
+    this.width,
+    this.height = 50,
+    this.maxLine = 1,
+    this.inputFormatters,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +43,9 @@ class InputTextField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         maxLines: maxLine,
-       
         onTap: onTap,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
             labelText: hintText,
             fillColor: Colors.white,

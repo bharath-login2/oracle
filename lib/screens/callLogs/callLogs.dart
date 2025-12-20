@@ -872,9 +872,7 @@ class _CallLogsState extends State<CallLogs> {
                 callLog.callType.toString().contains('missed')) {
               isAllowed = true;
             }
-
             log('isAllowed : $isAllowed');
-
             HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
                 id: callLog.timestamp.toString(),
                 name: callLog.name.toString(),

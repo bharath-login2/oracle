@@ -11,6 +11,7 @@ import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/widgets/receiptListFilterWidget.dart';
 import 'package:lottie/lottie.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/receiptDeleteModel.dart';
@@ -173,13 +174,47 @@ class _ReceiptListState extends State<ReceiptList> {
 
     // Helper function to validate and parse dates
     DateTime? parseAndValidateDate(String? dateString) {
-      if (dateString == null) return null;
+      if (dateString == null || dateString.isEmpty) return null;
+
       try {
-        final date = DateTime.parse(dateString);
+        DateTime date;
+
+        // First try to parse as ISO format (from DateTime objects)
+        if (dateString.contains('T') && dateString.contains(':')) {
+          date = DateTime.parse(dateString);
+        }
+        // Try to parse as dd-MM-yyyy format
+        else if (dateString.contains('-') &&
+            dateString.split('-').length == 3) {
+          final parts = dateString.split('-');
+          if (parts[0].length == 2 &&
+              parts[1].length == 2 &&
+              parts[2].length == 4) {
+            date = DateFormat('dd-MM-yyyy').parse(dateString);
+          } else {
+            return null;
+          }
+        }
+        // Try to parse as yyyy-MM-dd format
+        else if (dateString.contains('-') &&
+            dateString.split('-').length == 3) {
+          final parts = dateString.split('-');
+          if (parts[0].length == 4 &&
+              parts[1].length == 2 &&
+              parts[2].length == 2) {
+            date = DateTime.parse(dateString);
+          } else {
+            return null;
+          }
+        } else {
+          return null;
+        }
+
         // Check if year is reasonable (between 2000 and 2100)
         if (date.year < 2000 || date.year > 2100) return null;
         return date;
       } catch (e) {
+        print("Error parsing date $dateString: $e");
         return null;
       }
     }
@@ -190,24 +225,38 @@ class _ReceiptListState extends State<ReceiptList> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final createdFrom =
+            // Parse dates from current filters
+            DateTime? parsedFromDate =
                 parseAndValidateDate(currentFilters['created_from']);
-            final createdTo =
+            DateTime? parsedToDate =
                 parseAndValidateDate(currentFilters['created_to']);
-            final fromDate = !_ignoreWidgetDates && createdFrom == null
-                ? widget.fdate
-                : createdFrom?.toIso8601String();
-            final toDate = !_ignoreWidgetDates && createdTo == null
-                ? widget.tdate
-                : createdTo?.toIso8601String();
 
-            final initialFilters = {
-              if (fromDate != null) 'created_from': fromDate,
-              if (toDate != null) 'created_to': toDate,
-              ...currentFilters
-                ..remove('created_from')
-                ..remove('created_to'),
-            };
+            // Prepare initial filters for the filter widget
+            final Map<String, dynamic> initialFilters = {};
+
+            // Add dates in dd-MM-yyyy format if available
+            if (parsedFromDate != null) {
+              initialFilters['created_from'] =
+                  DateFormat('dd-MM-yyyy').format(parsedFromDate);
+            } else if (!_ignoreWidgetDates &&
+                widget.fdate != null &&
+                widget.fdate!.isNotEmpty) {
+              initialFilters['created_from'] = widget.fdate;
+            }
+
+            if (parsedToDate != null) {
+              initialFilters['created_to'] =
+                  DateFormat('dd-MM-yyyy').format(parsedToDate);
+            } else if (!_ignoreWidgetDates &&
+                widget.tdate != null &&
+                widget.tdate!.isNotEmpty) {
+              initialFilters['created_to'] = widget.tdate;
+            }
+
+            // Add other filters
+            initialFilters.addAll(currentFilters);
+            initialFilters.remove('created_from');
+            initialFilters.remove('created_to');
 
             return SingleChildScrollView(
               child: Padding(
@@ -220,17 +269,16 @@ class _ReceiptListState extends State<ReceiptList> {
                   onApplyFilters: (filters) {
                     setState(() {
                       currentFilters = Map.from(filters);
-                      final from =
-                          parseAndValidateDate(filters['created_from']);
-                      final to = parseAndValidateDate(filters['created_to']);
-
-                      fDate = from != null
-                          ? DateFormat('dd-MM-yyyy').format(from)
-                          : "From Date";
-                      tDate = to != null
-                          ? DateFormat('dd-MM-yyyy').format(to)
-                          : "To Date";
-
+                      if (filters['created_from'] != null) {
+                        fDate = filters['created_from'];
+                      } else {
+                        fDate = "From Date";
+                      }
+                      if (filters['created_to'] != null) {
+                        tDate = filters['created_to'];
+                      } else {
+                        tDate = "To Date";
+                      }
                       page = 1;
                       items.clear();
                     });
@@ -244,6 +292,85 @@ class _ReceiptListState extends State<ReceiptList> {
       },
     );
   }
+
+  // void _showFilters() {
+  //   setState(() {
+  //     _ignoreWidgetDates = false;
+  //   });
+
+  //   // Helper function to validate and parse dates
+  //   DateTime? parseAndValidateDate(String? dateString) {
+  //     if (dateString == null) return null;
+  //     try {
+  //       final date = DateTime.parse(dateString);
+  //       // Check if year is reasonable (between 2000 and 2100)
+  //       if (date.year < 2000 || date.year > 2100) return null;
+  //       return date;
+  //     } catch (e) {
+  //       return null;
+  //     }
+  //   }
+
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setModalState) {
+  //           final createdFrom =
+  //               parseAndValidateDate(currentFilters['created_from']);
+  //           final createdTo =
+  //               parseAndValidateDate(currentFilters['created_to']);
+  //           final fromDate = !_ignoreWidgetDates && createdFrom == null
+  //               ? widget.fdate
+  //               : createdFrom?.toIso8601String();
+  //           final toDate = !_ignoreWidgetDates && createdTo == null
+  //               ? widget.tdate
+  //               : createdTo?.toIso8601String();
+
+  //           final initialFilters = {
+  //             if (fromDate != null) 'created_from': fromDate,
+  //             if (toDate != null) 'created_to': toDate,
+  //             ...currentFilters
+  //               ..remove('created_from')
+  //               ..remove('created_to'),
+  //           };
+
+  //           return SingleChildScrollView(
+  //             child: Padding(
+  //               padding: EdgeInsets.only(
+  //                 bottom: MediaQuery.of(context).viewInsets.bottom,
+  //               ),
+  //               child: ReceiptListFilterWidget(
+  //                 pageId: 2,
+  //                 initialFilters: initialFilters,
+  //                 onApplyFilters: (filters) {
+  //                   setState(() {
+  //                     currentFilters = Map.from(filters);
+  //                     final from =
+  //                         parseAndValidateDate(filters['created_from']);
+  //                     final to = parseAndValidateDate(filters['created_to']);
+
+  //                     fDate = from != null
+  //                         ? DateFormat('dd-MM-yyyy').format(from)
+  //                         : "From Date";
+  //                     tDate = to != null
+  //                         ? DateFormat('dd-MM-yyyy').format(to)
+  //                         : "To Date";
+
+  //                     page = 1;
+  //                     items.clear();
+  //                   });
+  //                   getList();
+  //                 },
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   getDetails() async {
     expenseMasterData = await HttpService.expenseMasterData();
@@ -729,18 +856,29 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                             padding:
                                                                                 EdgeInsets.zero,
                                                                             onSelected:
-                                                                                (value) {
+                                                                                (value) async {
+                                                                              // if (value == 'print') {
+                                                                              //   // Navigator.push(
+                                                                              //   //   context,
+                                                                              //   //   MaterialPageRoute(
+                                                                              //   //       builder: (context) => ViewReceipt(
+                                                                              //   //             widget.token,
+                                                                              //   //             items[index].id.toString(),
+                                                                              //   //             items[index].clientId.toString(),
+                                                                              //   //             items[index].receiptNumber.toString(),
+                                                                              //   //           )),
+                                                                              //   // );
+                                                                              // }
                                                                               if (value == 'print') {
-                                                                                Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                      builder: (context) => ViewReceipt(
-                                                                                            widget.token,
-                                                                                            items[index].id.toString(),
-                                                                                            items[index].clientId.toString(),
-                                                                                            items[index].receiptNumber.toString(),
-                                                                                          )),
-                                                                                );
+                                                                                final filePath = await HttpService.printReceipt(items[index].id, items[index].invoiceId);
+
+                                                                                if (filePath != null) {
+                                                                                  OpenFilex.open(filePath);
+                                                                                } else {
+                                                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                                                    SnackBar(content: Text("Failed to generate PDF")),
+                                                                                  );
+                                                                                }
                                                                               } else if (value == 'edit') {
                                                                                 if (items[index].isVerified == "N") {
                                                                                   Navigator.push(
@@ -1180,12 +1318,24 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                     children: [
                                                                       InkWell(
                                                                         onTap:
-                                                                            () {
-                                                                          Navigator
-                                                                              .push(
-                                                                            context,
-                                                                            MaterialPageRoute(builder: (context) => ViewReceipt(widget.token, items[index].id.toString(), items[index].clientId.toString(), items[index].receiptNumber.toString())),
-                                                                          );
+                                                                            () async {
+                                                                          final filePath = await HttpService.printReceipt(
+                                                                              items[index].id,
+                                                                              items[index].invoiceId);
+
+                                                                          if (filePath !=
+                                                                              null) {
+                                                                            OpenFilex.open(filePath);
+                                                                          } else {
+                                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                                              SnackBar(content: Text("Failed to generate PDF")),
+                                                                            );
+                                                                          }
+                                                                          // Navigator
+                                                                          //     .push(
+                                                                          //   context,
+                                                                          //   MaterialPageRoute(builder: (context) => ViewReceipt(widget.token, items[index].id.toString(), items[index].clientId.toString(), items[index].receiptNumber.toString())),
+                                                                          // );
                                                                         },
                                                                         child:
                                                                             Container(
@@ -1413,62 +1563,61 @@ class _ReceiptListState extends State<ReceiptList> {
                             //         )),
                             //       )
                             //     : const SizedBox(),
-                            items.isNotEmpty
-                                ? Container(
-                                    height: 56.0,
-                                    color: Colors.grey.shade200,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Total : ${receiptList!.data.receiptSum}',
-                                              style: const TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                            // Only show total section when there's no search text
+                            if (search.text.isEmpty && items.isNotEmpty)
+                              Container(
+                                height: 56.0,
+                                color: Colors.grey.shade200,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          'Total : ${receiptList!.data.receiptSum}',
+                                          style: const TextStyle(
+                                            color: Colors.green,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (accountTotals.isNotEmpty)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 16.0),
+                                        child: InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _showAccountTotals =
+                                                  !_showAccountTotals;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              border: Border.all(
+                                                  color: Colors.grey.shade400),
+                                            ),
+                                            child: Icon(
+                                              _showAccountTotals
+                                                  ? Icons.keyboard_arrow_up
+                                                  : Icons.keyboard_arrow_up,
+                                              color: Colors.grey.shade600,
+                                              size: 20,
                                             ),
                                           ),
                                         ),
-                                        if (accountTotals.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 16.0),
-                                            child: InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  _showAccountTotals =
-                                                      !_showAccountTotals;
-                                                });
-                                              },
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                  border: Border.all(
-                                                      color:
-                                                          Colors.grey.shade400),
-                                                ),
-                                                child: Icon(
-                                                  _showAccountTotals
-                                                      ? Icons.keyboard_arrow_up
-                                                      : Icons.keyboard_arrow_up,
-                                                  color: Colors.grey.shade600,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  )
-                                : const SizedBox(),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            //: const SizedBox(),
 
                             if (_showAccountTotals && accountTotals.isNotEmpty)
                               Container(
@@ -1476,149 +1625,171 @@ class _ReceiptListState extends State<ReceiptList> {
                                     MediaQuery.of(context).size.height * 0.6,
                                 margin: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white,
+                                      Colors.grey.shade50,
+                                    ],
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.blue.shade100,
+                                    width: 1.5,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
+                                      color: Colors.blue.withOpacity(0.1),
+                                      blurRadius: 22,
+                                      spreadRadius: 6,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            'Account Wise Receipts',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                _showAccountTotals = false;
-                                              });
-                                            },
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    Colors.red.withOpacity(0.1),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.close,
-                                                color: Colors.red,
-                                                size: 18,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text(
+                                              'Account Wise Receipts',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black87,
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Expanded(
-                                        child: _loadingAccountTotals
-                                            ? const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                        strokeWidth: 2),
-                                              )
-                                            : ListView.separated(
-                                                physics:
-                                                    const BouncingScrollPhysics(),
-                                                itemCount: accountTotals.length,
-                                                separatorBuilder: (context,
-                                                        index) =>
-                                                    const Divider(height: 8),
-                                                itemBuilder: (context, index) {
-                                                  final account =
-                                                      accountTotals[index];
-                                                  return Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          account.accountName ??
-                                                              'Unknown Account',
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  _showAccountTotals = false;
+                                                });
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red
+                                                      .withOpacity(0.1),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.close,
+                                                  color: Colors.red,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Expanded(
+                                          child: _loadingAccountTotals
+                                              ? const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
+                                                )
+                                              : ListView.separated(
+                                                  physics:
+                                                      const BouncingScrollPhysics(),
+                                                  itemCount:
+                                                      accountTotals.length,
+                                                  separatorBuilder: (context,
+                                                          index) =>
+                                                      const SizedBox(height: 8),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final account =
+                                                        accountTotals[index];
+                                                    return Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            account.accountName ??
+                                                                'Unknown Account',
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 15,
+                                                              color: Colors
+                                                                  .black87,
+                                                            ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 10),
+                                                        Text(
+                                                          "₹ ${account.totalReceipt ?? '0'}",
                                                           style:
                                                               const TextStyle(
                                                             fontSize: 15,
-                                                            color:
-                                                                Colors.black87,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors.green,
                                                           ),
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      Text(
-                                                        "₹ ${account.totalReceipt ?? '0'}",
-                                                        style: const TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: Colors.green,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      const Divider(thickness: 1),
-                                      Builder(
-                                        builder: (context) {
-                                          final double total =
-                                              accountTotals.fold(
-                                            0.0,
-                                            (sum, item) =>
-                                                sum +
-                                                (double.tryParse(
-                                                        item.totalReceipt ??
-                                                            '0') ??
-                                                    0),
-                                          );
-                                          return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text(
-                                                'Total Receipt:',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                  color: Colors.black,
+                                                      ],
+                                                    );
+                                                  },
                                                 ),
-                                              ),
-                                              Text(
-                                                "₹ ${total.toStringAsFixed(2)}",
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blueAccent,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        const Divider(thickness: 1),
+                                        Builder(
+                                          builder: (context) {
+                                            final double total =
+                                                accountTotals.fold(
+                                              0.0,
+                                              (sum, item) =>
+                                                  sum +
+                                                  (double.tryParse(
+                                                          item.totalReceipt ??
+                                                              '0') ??
+                                                      0),
+                                            );
+                                            return Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  'Total Receipt:',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                    ],
+                                                Text(
+                                                  "₹ ${total.toStringAsFixed(2)}",
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blueAccent,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

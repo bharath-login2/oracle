@@ -58,13 +58,21 @@ class _AddExpenseState extends State<AddExpense> {
   getDetails() async {
     expenseMasterData = await HttpService.expenseMasterData();
     if (expenseMasterData != null && expenseMasterData!.status == true) {
-      categories = expenseMasterData!.data.expenseType;
-      filteredCategories.addAll(categories);
-      accountHeads = expenseMasterData!.data.accountHead;
-      filteredAccounts.addAll(accountHeads);
-      fromAcId = await Common.getSharedPref("accountId");
-      fromAcName = await Common.getSharedPref("accountName");
-      setState(() {});
+      setState(() {
+        categories = expenseMasterData!.data.expenseType;
+        filteredCategories = List.from(categories);
+        accountHeads = expenseMasterData!.data.accountHead;
+        filteredAccounts = List.from(accountHeads);
+      });
+      
+      // Get shared preferences and update state
+      final sharedAccountId = await Common.getSharedPref("accountId");
+      final sharedAccountName = await Common.getSharedPref("accountName");
+      
+      setState(() {
+        fromAcId = sharedAccountId;
+        fromAcName = sharedAccountName;
+      });
     } else {
       setState(() {});
     }
@@ -89,6 +97,50 @@ class _AddExpenseState extends State<AddExpense> {
       if (mounted) {
         Navigator.pop(context);
       }
+    }
+  }
+
+  // FIXED: Updated methods to properly update state
+  void updateFromAccount(String id, String name) {
+    setState(() {
+      fromAcId = id;
+      fromAcName = name;
+    });
+  }
+
+  void updateToAccount(String id, String name) {
+    setState(() {
+      toAcId = id;
+      toAcName = name;
+    });
+  }
+
+  void updateCategory(String id, String name) {
+    setState(() {
+      categoryId = id;
+      categoryName = name;
+    });
+  }
+
+  // FIXED: Refresh account heads after adding new one
+  void refreshAccountHeads() async {
+    expenseMasterData = await HttpService.expenseMasterData();
+    if (expenseMasterData != null && expenseMasterData!.status == true) {
+      setState(() {
+        accountHeads = expenseMasterData!.data.accountHead;
+        filteredAccounts = List.from(accountHeads);
+      });
+    }
+  }
+
+  // FIXED: Refresh categories after adding new one
+  void refreshCategories() async {
+    expenseMasterData = await HttpService.expenseMasterData();
+    if (expenseMasterData != null && expenseMasterData!.status == true) {
+      setState(() {
+        categories = expenseMasterData!.data.expenseType;
+        filteredCategories = List.from(categories);
+      });
     }
   }
 
@@ -170,7 +222,6 @@ class _AddExpenseState extends State<AddExpense> {
                         type: DateTimePickerType.date,
                         firstDate: DateTime(1995),
                         lastDate: DateTime.now().add(const Duration(days: 365)),
-                        // This will add one year from current date
                         validator: (value) {
                           return null;
                         },
@@ -181,7 +232,6 @@ class _AddExpenseState extends State<AddExpense> {
                             });
                           }
                         },
-                        // We can also use onSaved
                         onSaved: (value) {
                           if (value!.isNotEmpty) {
                             date = value as DateTime;
@@ -201,7 +251,7 @@ class _AddExpenseState extends State<AddExpense> {
                   const Text("From"),
                   GestureDetector(
                     onTap: () {
-                      accountsDialog(context, "from");
+                      _showAccountsDialog(context, "from");
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -224,6 +274,10 @@ class _AddExpenseState extends State<AddExpense> {
                                     fromAcName,
                                     overflow: TextOverflow.ellipsis,
                                   )),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey,
+                              ),
                             ],
                           ),
                         )),
@@ -235,54 +289,6 @@ class _AddExpenseState extends State<AddExpense> {
               const SizedBox(
                 height: 10,
               ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     const Text("Category"),
-              //     GestureDetector(
-              //       onTap: () {
-              //         categoryDialog(context);
-              //       },
-              //       child: Padding(
-              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
-              //         child: Container(
-              //           decoration: BoxDecoration(
-              //             color: Colors.grey.shade300,
-              //             borderRadius: BorderRadius.circular(8),
-              //           ),
-              //           child: Center(
-              //               child: Padding(
-              //             padding: const EdgeInsets.symmetric(
-              //                 horizontal: 16.0, vertical: 14.0),
-              //             child: Row(
-              //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //               children: [
-              //                 SizedBox(
-              //                     width:
-              //                         MediaQuery.of(context).size.width * 0.35,
-              //                     child: Text(
-              //                       categoryName,
-              //                       overflow: TextOverflow.ellipsis,
-              //                     )),
-              //                 GestureDetector(
-              //                   onTap: () {
-
-              //                     categoryDialog(context);
-              //                   },
-              //                   child: const Icon(
-              //                     Icons.add_circle,
-              //                     color: Colors.green,
-              //                   ),
-              //                 ),
-              //               ],
-              //             ),
-              //           )),
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -302,44 +308,59 @@ class _AddExpenseState extends State<AddExpense> {
                           children: [
                             GestureDetector(
                               onTap: () {
-                                categoryDialog(context);
+                                _showCategoryDialog(context);
                               },
                               child: SizedBox(
                                 width: MediaQuery.of(context).size.width * 0.35,
                                 child: Text(
                                   categoryName,
                                   overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: categoryName == "Tap to select"
+                                        ? Colors.grey
+                                        : Colors.black,
+                                  ),
                                 ),
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle,
-                                  color: Colors.green),
-                              onPressed: () async {
-                                final newCategory = await showDialog<String>(
-                                  context: context,
-                                  builder: (context) =>
-                                      const AddCategoryDialog(),
-                                );
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_drop_down,
+                                      color: Colors.grey),
+                                  onPressed: () {
+                                    _showCategoryDialog(context);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle,
+                                      color: Colors.green),
+                                  onPressed: () async {
+                                    final newCategory =
+                                        await showDialog<String>(
+                                      context: context,
+                                      builder: (context) =>
+                                          const AddCategoryDialog(),
+                                    );
 
-                                if (newCategory != null &&
-                                    newCategory.isNotEmpty) {
-                                  final response =
-                                      await HttpService.addCategoryExpense(
-                                    newCategory: newCategory,
-                                  );
+                                    if (newCategory != null &&
+                                        newCategory.isNotEmpty) {
+                                      final response =
+                                          await HttpService.addCategoryExpense(
+                                        newCategory: newCategory,
+                                      );
 
-                                  if (response != null &&
-                                      response.status == true) {
-                                    categories.add(ExpenseType(
-                                      expCatName: newCategory,
-                                      expCatId: '',
-                                    ));
-                                    filteredCategories = List.from(categories);
-                                    setState(() {});
-                                  }
-                                }
-                              },
+                                      if (response != null &&
+                                          response.status == true) {
+                                        refreshCategories();
+                                        Common.toastMessaage(
+                                            "Category added successfully",
+                                            Colors.green);
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -348,7 +369,6 @@ class _AddExpenseState extends State<AddExpense> {
                   ),
                 ],
               ),
-
               const SizedBox(
                 height: 10,
               ),
@@ -368,7 +388,6 @@ class _AddExpenseState extends State<AddExpense> {
                           hintText: "Amount",
                           fillColor: Colors.grey[300],
                           filled: true,
-                          //prefixIcon: Icon(myIcon, color: prefixIconColor),
                           border: const OutlineInputBorder(
                             borderSide: BorderSide.none,
                             borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -381,51 +400,13 @@ class _AddExpenseState extends State<AddExpense> {
               const SizedBox(
                 height: 10,
               ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     const Text("Person/Company"),
-              //     GestureDetector(
-              //       onTap: () {
-              //         accountsDialog(context, "to");
-              //       },
-              //       child: Padding(
-              //         padding: const EdgeInsets.symmetric(vertical: 8.0),
-              //         child: Container(
-              //           decoration: BoxDecoration(
-              //             color: Colors.grey.shade300,
-              //             borderRadius: BorderRadius.circular(8),
-              //           ),
-              //           child: Center(
-              //               child: Padding(
-              //             padding: const EdgeInsets.symmetric(
-              //                 horizontal: 16.0, vertical: 14.0),
-              //             child: Row(
-              //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //               children: [
-              //                 SizedBox(
-              //                     width:
-              //                         MediaQuery.of(context).size.width * 0.35,
-              //                     child: Text(
-              //                       toAcName,
-              //                       overflow: TextOverflow.ellipsis,
-              //                     )),
-              //               ],
-              //             ),
-              //           )),
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Account Head"),
                   GestureDetector(
                     onTap: () {
-                      accountsDialog(context, "to");
+                      _showAccountsDialog(context, "to");
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -440,44 +421,52 @@ class _AddExpenseState extends State<AddExpense> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.35,
-                                child: Text(
-                                  toAcName,
-                                  overflow: TextOverflow.ellipsis,
+                              GestureDetector(
+                                onTap: () {
+                                  _showAccountsDialog(context, "to");
+                                },
+                                child: SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
+                                  child: Text(
+                                    toAcName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: toAcName == "Tap to select"
+                                          ? Colors.grey
+                                          : Colors.black,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              // IconButton(
-                              //   icon: const Icon(Icons.add_circle,
-                              //       color: Colors.green),
-                              //   onPressed: () async {
-                              //     await showDialog(
-                              //       context: context,
-                              //       builder: (context) =>
-                              //           const AddAccountHeadDialog(),
-                              //     );
-                              //   },
-                              // )
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_drop_down,
+                                        color: Colors.grey),
+                                    onPressed: () {
+                                      _showAccountsDialog(context, "to");
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle,
+                                        color: Colors.green),
+                                    onPressed: () async {
+                                      final result = await showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            const AddAccountHeadDialog(),
+                                      );
 
-                              IconButton(
-                                icon: const Icon(Icons.add_circle,
-                                    color: Colors.green),
-                                onPressed: () async {
-                                  final result = await showDialog(
-                                    context: context,
-                                    builder: (context) =>
-                                        const AddAccountHeadDialog(),
-                                  );
-
-                                  if (result == true) {
-                                    expenseMasterData =
-                                        await HttpService.expenseMasterData();
-                                    accountHeads = expenseMasterData!.data.accountHead;
-                                     filteredAccounts = List.from(accountHeads);
-
-                                    setState(() {}); 
-                                  }
-                                },
+                                      if (result == true) {
+                                        refreshAccountHeads();
+                                        Common.toastMessaage(
+                                            "Account head added successfully",
+                                            Colors.green);
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -487,7 +476,6 @@ class _AddExpenseState extends State<AddExpense> {
                   ),
                 ],
               ),
-
               const SizedBox(
                 height: 10,
               ),
@@ -504,7 +492,6 @@ class _AddExpenseState extends State<AddExpense> {
                           hintText: "Remarks",
                           fillColor: Colors.grey[300],
                           filled: true,
-                          //prefixIcon: Icon(myIcon, color: prefixIconColor),
                           border: const OutlineInputBorder(
                             borderSide: BorderSide.none,
                             borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -517,16 +504,16 @@ class _AddExpenseState extends State<AddExpense> {
                       padding: const EdgeInsets.only(top: 20.0, bottom: 40.0),
                       child: GestureDetector(
                         onTap: () {
-                          if (fromAcId == "") {
+                          if (fromAcId.isEmpty || fromAcId == "") {
                             Common.toastMessaage(
                                 'Please select from account', Colors.red);
-                          } else if (categoryId == "") {
+                          } else if (categoryId.isEmpty || categoryId == "") {
                             Common.toastMessaage(
-                                ' Please select category', Colors.red);
-                          } else if (amountController.text == "") {
+                                'Please select category', Colors.red);
+                          } else if (amountController.text.isEmpty) {
                             Common.toastMessaage(
-                                ' Please enter valid amount', Colors.red);
-                          } else if (toAcId == "") {
+                                'Please enter valid amount', Colors.red);
+                          } else if (toAcId.isEmpty || toAcId == "") {
                             Common.toastMessaage(
                                 'Please select to account', Colors.red);
                           } else {
@@ -563,206 +550,246 @@ class _AddExpenseState extends State<AddExpense> {
     );
   }
 
-  Future<dynamic> accountsDialog(BuildContext context, String type) {
-    return showDialog(
+  // FIXED: Dialog methods that properly update parent state
+  void _showAccountsDialog(BuildContext context, String type) async {
+    final selectedAccount = await showDialog<AccountHead>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: TextField(
-                    controller: searchController,
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredAccounts = accountHeads
-                            .where((item) => item.accountName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .3,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
+        return _AccountsDialog(
+          accounts: accountHeads,
+          searchController: TextEditingController(),
+        );
+      },
+    );
+
+    if (selectedAccount != null && mounted) {
+      if (type == "from") {
+        updateFromAccount(
+            selectedAccount.accountId, selectedAccount.accountName);
+      } else {
+        updateToAccount(selectedAccount.accountId, selectedAccount.accountName);
+      }
+    }
+  }
+
+  void _showCategoryDialog(BuildContext context) async {
+    final selectedCategory = await showDialog<ExpenseType>(
+      context: context,
+      builder: (context) {
+        return _CategoryDialog(
+          categories: categories,
+          searchController: TextEditingController(),
+        );
+      },
+    );
+
+    if (selectedCategory != null && mounted) {
+      updateCategory(selectedCategory.expCatId, selectedCategory.expCatName);
+    }
+  }
+}
+
+
+class _AccountsDialog extends StatefulWidget {
+  final List<AccountHead> accounts;
+  final TextEditingController searchController;
+
+  const _AccountsDialog({
+    required this.accounts,
+    required this.searchController,
+  });
+
+  @override
+  __AccountsDialogState createState() => __AccountsDialogState();
+}
+
+class __AccountsDialogState extends State<_AccountsDialog> {
+  List<AccountHead> filteredAccounts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredAccounts = List.from(widget.accounts);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+       title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "Select Account",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.close,
+              color: Colors.grey,
+              size: 22,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            iconSize: 22,
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: widget.searchController,
+            autocorrect: false,
+            keyboardType: TextInputType.visiblePassword,
+            autofocus: true,
+            onChanged: (value) {
+              setState(() {
+                filteredAccounts = widget.accounts
+                    .where((item) => item.accountName
+                        .toLowerCase()
+                        .contains(value.toLowerCase()))
+                    .toList();
+              });
+            },
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.all(8),
+              hintText: 'Search',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * .3,
+            width: MediaQuery.of(context).size.width * .8,
+            child: filteredAccounts.isEmpty
+                ? const Center(
+                    child: Text("No accounts found"),
+                  )
+                : ListView.builder(
                     itemCount: filteredAccounts.length,
                     physics: const ScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return ListTile(
-                          onTap: () {
-                            if (type == "from") {
-                              fromAcName = filteredAccounts[index].accountName;
-                              fromAcId = filteredAccounts[index].accountId;
-                            } else {
-                              toAcName = filteredAccounts[index].accountName;
-                              toAcId = filteredAccounts[index].accountId;
-                            }
-                            searchController.clear();
-                            filteredAccounts.clear();
-                            filteredAccounts.addAll(accountHeads);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          title: Text(filteredAccounts[index].accountName));
+                        onTap: () {
+                          Navigator.pop(context, filteredAccounts[index]);
+                        },
+                        title: Text(filteredAccounts[index].accountName),
+                      );
                     },
                   ),
-                )
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    searchController.clear();
-                    filteredAccounts.clear();
-                    filteredAccounts.addAll(accountHeads);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
-            ],
-          );
-        });
-      },
+          )
+        ],
+      ),
+     
     );
   }
+}
 
-  Future<dynamic> categoryDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: TextField(
-                    controller: searchController,
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredCategories = categories
-                            .where((item) => item.expCatName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                  ),
+class _CategoryDialog extends StatefulWidget {
+  final List<ExpenseType> categories;
+  final TextEditingController searchController;
 
-                  //     TextField(
-                  //   controller: searchController,
-                  //   autocorrect: false,
-                  //   keyboardType: TextInputType.visiblePassword,
-                  //   autofocus: true,
-                  //   onChanged: (value) {
-                  //     setState(() {
-                  //       filteredCategories = categories
-                  //           .where((item) => item.expCatName
-                  //               .toLowerCase()
-                  //               .contains(value.toLowerCase()))
-                  //           .toList();
-                  //     });
-                  //   },
-                  //   decoration: InputDecoration(
-                  //     contentPadding: const EdgeInsets.all(8),
-                  //     hintText: 'Search',
-                  //     prefixIcon: const Icon(Icons.search),
-                  //     suffixIcon: IconButton(
-                  //       icon:
-                  //           const Icon(Icons.add_circle, color: Colors.blue),
-                  //       onPressed: () async {
-                  //         final newCategory = await showDialog<String>(
-                  //           context: context,
-                  //           builder: (context) => const AddCategoryDialog(),
-                  //         );
+  const _CategoryDialog({
+    required this.categories,
+    required this.searchController,
+  });
 
-                  //         if (newCategory != null && newCategory.isNotEmpty) {
-                  //           final response =
-                  //               await HttpService.addCategoryExpense(
-                  //                   newCategory: newCategory);
-                  //           if (response != null && response.status == true) {
-                  //             categories.add(ExpenseType(
-                  //               expCatName: newCategory,
-                  //               expCatId: '',
-                  //             ));
+  @override
+  __CategoryDialogState createState() => __CategoryDialogState();
+}
 
-                  //             filteredCategories = List.from(categories);
-                  //             setState(() {});
-                  //           }
-                  //         }
-                  //       },
-                  //     ),
-                  //   ),
-                  // )
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .3,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
+class __CategoryDialogState extends State<_CategoryDialog> {
+  List<ExpenseType> filteredCategories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredCategories = List.from(widget.categories);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+     title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "Select Category",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.close,
+              color: Colors.grey,
+              size: 22,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            iconSize: 22,
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: widget.searchController,
+            autocorrect: false,
+            keyboardType: TextInputType.visiblePassword,
+            autofocus: true,
+            onChanged: (value) {
+              setState(() {
+                filteredCategories = widget.categories
+                    .where((item) => item.expCatName
+                        .toLowerCase()
+                        .contains(value.toLowerCase()))
+                    .toList();
+              });
+            },
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.all(8),
+              hintText: 'Search',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * .3,
+            width: MediaQuery.of(context).size.width * .8,
+            child: filteredCategories.isEmpty
+                ? const Center(
+                    child: Text("No categories found"),
+                  )
+                : ListView.builder(
                     itemCount: filteredCategories.length,
                     physics: const ScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       return ListTile(
-                          onTap: () {
-                            categoryName = filteredCategories[index].expCatName;
-                            categoryId = filteredCategories[index].expCatId;
-                            searchController.clear();
-                            filteredCategories.clear();
-                            filteredCategories.addAll(categories);
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          title: Text(filteredCategories[index].expCatName));
+                        onTap: () {
+                          Navigator.pop(context, filteredCategories[index]);
+                        },
+                        title: Text(filteredCategories[index].expCatName),
+                      );
                     },
                   ),
-                )
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    searchController.clear();
-                    filteredCategories.clear();
-                    filteredCategories.addAll(categories);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
-            ],
-          );
-        });
-      },
+          )
+        ],
+      ),
+     
     );
   }
 }

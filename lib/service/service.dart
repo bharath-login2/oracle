@@ -46,18 +46,31 @@ import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/callDataModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
+import 'package:login2/models/lead_management/customerDetailsModel.dart';
+import 'package:login2/models/lead_management/customerModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
+import 'package:login2/models/lead_management/deleteQuotationModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart';
+import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/lead_management/pendingExpenseModel.dart';
 import 'package:login2/models/lead_management/pendingListModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
+import 'package:login2/models/lead_management/quotationDetailsModel.dart';
+import 'package:login2/models/lead_management/quotationEditModel.dart';
+import 'package:login2/models/lead_management/quotationListModel.dart';
+import 'package:login2/models/lead_management/quotationRequestDetailsModel.dart';
+import 'package:login2/models/lead_management/quotationRequestListModel.dart';
+import 'package:login2/models/lead_management/quotationTemplateModel.dart';
+import 'package:login2/models/lead_management/quotation_dashboard_model.dart';
+import 'package:login2/models/lead_management/requestCreateResponseModel.dart';
+import 'package:login2/models/lead_management/requestDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryListModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
@@ -68,7 +81,9 @@ import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/updatePendingList.dart';
+import 'package:login2/models/lead_management/uploadedQuotationModel.dart';
 import 'package:login2/models/lead_management/workMessageModel.dart';
+import 'package:login2/models/lead_management/workOrderIdModel.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/models/officialWhatsapp/campaign_sample_model.dart';
 import 'package:login2/models/officialWhatsapp/message_view_status.dart';
@@ -1677,6 +1692,32 @@ class HttpService {
     }
   }
 
+  Future<String?> apiViewPdf(String id, String type) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final formData =
+          FormData.fromMap({"token": token, "id": id, "type": type});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}api_view_pdf",
+        data: formData,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final dir = await getTemporaryDirectory();
+        final filePath = '${dir.path}/quotation_$id.pdf';
+        final file = File(filePath);
+        await file.writeAsBytes(response.data);
+        return filePath;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log("apiViewPdf error: $e");
+      return null;
+    }
+  }
+
   static Future changeUserPassword(token, password) async {
     var formData = FormData.fromMap({
       "token": token,
@@ -2618,7 +2659,7 @@ class HttpService {
       'to_date': toDate,
       'client_id': clientId,
       'collected_by': collectedByStaffIds,
-     // 'created_by_staff_ids': createdByStaffIds,
+      // 'created_by_staff_ids': createdByStaffIds,
       'created_by': staffId,
       'status_name': statusName,
       'invoice_type': type
@@ -5394,21 +5435,43 @@ class HttpService {
     }
   }
 
-  static Future getProductLists(String subId) async {
+  // static Future getProductLists(String subId) async {
+  //   var formData = FormData.fromMap({
+  //     "token": await Common.getSharedPref('token'),
+  //     // "sub_category_id": subId
+  //   });
+  //   try {
+  //     var result = await _dio.post("${await Config.getUrl()}getProductLists",
+  //         data: formData);
+  //     if (result.statusCode == 200) {
+  //       ProductListModel response = ProductListModel.fromJson(result.data);
+  //       return response;
+  //     }
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  // }
+  static Future<ProductListModel?> getProductLists(String subId) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       // "sub_category_id": subId
     });
+
     try {
-      var result = await _dio.post("${await Config.getUrl()}getProductLists",
-          data: formData);
-      if (result.statusCode == 200) {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getProductLists",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data['status'] == true) {
         ProductListModel response = ProductListModel.fromJson(result.data);
         return response;
       }
     } catch (e) {
-      log("error: $e");
+      log("getProductLists error: $e");
     }
+
+    return null;
   }
 
   static Future postProducts(
@@ -8106,4 +8169,901 @@ class HttpService {
       return false;
     }
   }
+
+  static Future<QuotationListModel?> getQuotationList(
+    dynamic status,
+    String? fromDate,
+    String? toDate,
+    List<String>? staffIds,
+    List<String>? statuses,
+  ) async {
+    final token = await Common.getSharedPref('token');
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}quotation_list_api",
+        data: FormData.fromMap({
+          'token': token,
+          'status': status.toString(),
+          if (fromDate != null) "from_date": fromDate,
+          if (toDate != null) "to_date": toDate,
+          if (staffIds != null && staffIds.isNotEmpty)
+            "created_by": staffIds.join(","),
+          if (statuses != null && statuses.isNotEmpty)
+            "status": statuses.join(","),
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Quotation list response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        if (response.data is Map<String, dynamic>) {
+          return QuotationListModel.fromJson(response.data);
+        } else {
+          print(
+            "⚠️ Invalid data format in getQuotationList response: Expected Map, got ${response.data.runtimeType}",
+          );
+        }
+      } else {
+        print(
+          "⚠️ Unexpected status code in getQuotationList: ${response.statusCode}",
+        );
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getQuotationList: $e");
+      print("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<String> deleteQuotation(String id) async {
+    final token = await Common.getSharedPref('token');
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}deleteQuotation_api",
+        data: FormData.fromMap({
+          'token': token,
+          'quote_id': id,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Delete quotation response: ${response.data}");
+
+      if (response.statusCode == 200) {
+        if (response.data is Map && response.data['status'] == 'success') {
+          return 'success';
+        } else {
+          return 'failed';
+        }
+      } else {
+        return 'failed';
+      }
+    } catch (e) {
+      print("🔥 Exception while deleting quotation: $e");
+      return 'failed';
+    }
+  }
+
+  Future<MaterialListModel?> getMaterials() async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_materials",
+        data: FormData.fromMap({"token": token}),
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Materials Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return MaterialListModel.fromJson(response.data);
+      }
+    } catch (e, stackTrace) {
+      log("🔥 getMaterials error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<CustomerModel?> getCustomerList() async {
+    final token = await Common.getSharedPref('token');
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCustomerName",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Customer List Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return CustomerModel.fromJson(response.data);
+      } else {
+        print("⚠️ Unexpected status: ${response.statusCode}");
+      }
+    } catch (e) {
+      if (e is DioException) {
+        print("🔥 DioException in getCustomerList:");
+        print("➡ Message: ${e.message}");
+        print("➡ Type: ${e.type}");
+        print("➡ Response: ${e.response?.data}");
+        print("➡ Status Code: ${e.response?.statusCode}");
+      } else {
+        print("🔥 Unknown Exception in getCustomerList: $e");
+      }
+    }
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> submitQuotation(FormData formData) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      formData.fields.add(MapEntry("token", token ?? ""));
+      final response = await _dio.post(
+        "${await Config.getUrl()}addQuotation",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+      print("🟢 Submit Quotation Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      } else {
+        log("❌ Quotation submission failed: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 Error in submitQuotation: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<QuotationTemplateModel?> getTemplateList() async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getTemplateName_api",
+        data: FormData.fromMap({"token": token}),
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Template Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data['status'] == 'success') {
+          return QuotationTemplateModel.fromJson(data);
+        } else {
+          log("⚠️ API returned failure: ${data['message']}");
+        }
+      } else {
+        log("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stack) {
+      log("🔥 getTemplateList error: $e");
+      log("Stack trace: $stack");
+    }
+
+    return null;
+  }
+
+  Future<QuotationTemplateDetailsModel?> getTemplateDetails(String id) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}fetchTemplatesByID",
+        data: FormData.fromMap({"token": token, "id": id}),
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Template Details Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic>) {
+          return QuotationTemplateDetailsModel.fromJson(data);
+        } else {
+          log("Invalid format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 getTemplateDetails error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<CustomerDetailsModel?> getCustomerDetails(String customerId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "customer_id": customerId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCustomerDetails",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        // Debug log to see what the API returns
+        log("getCustomerDetails API Response: ${jsonEncode(data)}");
+
+        if (data is Map<String, dynamic>) {
+          return CustomerDetailsModel.fromJson(data);
+        } else {
+          log("Invalid response format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("getCustomerDetails error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<CustomerWorkDetailsModel?> getWorkorderId(String id) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final formData = FormData.fromMap({"token": token, "customer_id": id});
+
+      final response = await _dio.post(
+        "getCustomerWorkDetails",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic>) {
+          return CustomerWorkDetailsModel.fromJson(data);
+        } else {
+          log(
+            "Invalid data format in workOrder response: Expected Map, got ${data.runtimeType}",
+          );
+        }
+      } else {
+        log("Unexpected status code in workOrder: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("workOrder error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<QuotationDetailsModel?> getQuotationEdit(String id) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"id": id});
+      formData.fields.removeWhere((field) => field.key == "token");
+      formData.fields.add(MapEntry("token", token ?? ""));
+      final response = await _dio.post(
+        "${await Config.getUrl()}api_edit_quotation",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+      print("🟢 Quotation Edit Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic>) {
+          if (data["status"] == "success") {
+            return QuotationDetailsModel.fromJson(data);
+          } else {
+            log("API returned status: ${data['status']}");
+          }
+        } else {
+          log("Invalid response format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code in getQuotationEdit: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 getQuotationEdit error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> updateQuotation(FormData formData) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      formData.fields.removeWhere((field) => field.key == "token");
+      formData.fields.add(MapEntry("token", token ?? ""));
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}updateQuotation_api",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Update Quotation Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic>) {
+          return data;
+        } else {
+          log("Invalid format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 updateQuotation error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<QuotationDashboardResponse?> getQuotationDashboard() async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}quote_dashboard_api",
+        data: FormData.fromMap({
+          "token": token,
+        }),
+      );
+
+      log("🟢 Quotation Dashboard Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final json = response.data;
+
+        if (json is Map<String, dynamic>) {
+          final dashboardResponse = QuotationDashboardResponse.fromJson(json);
+
+          if (dashboardResponse.status == "success") {
+            return dashboardResponse;
+          } else {
+            log("❌ API Error: ${dashboardResponse.message}");
+          }
+        } else {
+          log("❌ Invalid response format: ${json.runtimeType}");
+        }
+      } else {
+        log("❌ HTTP Error: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 getQuotationDashboard error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<QuotationRequestList?> getQuotationRequestList(
+      String requestType) async {
+    try {
+      final token = await Common.getSharedPref("token") ?? '';
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}dashboard_list_api",
+        data: FormData.fromMap({
+          'token': token,
+          'status': requestType,
+        }),
+      );
+
+      log("🟢 Quotation Dashboard Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final json = response.data;
+
+        if (json is Map<String, dynamic>) {
+          final dashboardResponse = QuotationRequestList.fromJson(json);
+
+          if (dashboardResponse.status == "success") {
+            if (requestType == "all" || requestType == "rate") {
+              return dashboardResponse;
+            }
+            final filtered = dashboardResponse.data.where((item) {
+              if (requestType == "1") {
+                return item.status.toLowerCase().contains("requested") ||
+                    item.status.toLowerCase().contains("pending");
+              } else if (requestType == "2") {
+                return item.status.toLowerCase().contains("completed");
+              }
+              return true;
+            }).toList();
+            return QuotationRequestList(
+              status: dashboardResponse.status,
+              message: dashboardResponse.message,
+              data: filtered,
+            );
+          } else {
+            log("❌ API Error: ${dashboardResponse.message}");
+          }
+        } else {
+          log("❌ Invalid response format: ${json.runtimeType}");
+        }
+      } else {
+        log("❌ HTTP Error: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 getQuotationDashboard error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> createQuotationRequest(
+      FormData formData) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      formData.fields.add(MapEntry("token", token ?? ""));
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}postquote_request_api",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Create Quotation Request Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      } else {
+        log("❌ Quotation request creation failed: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 Error in createQuotationRequest: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<DeleteQuotationRequestModel> deleteRequestQuotation(
+      String requestId) async {
+    try {
+      final token = await Common.getSharedPref('token');
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_quotation_request",
+        data: FormData.fromMap({
+          'token': token,
+          'request_id': requestId,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Delete Quotation Request Response: ${response.data}");
+
+      if (response.statusCode == 200) {
+        return DeleteQuotationRequestModel.fromJson(response.data);
+      } else {
+        return DeleteQuotationRequestModel(
+          status: false,
+          message: 'Server error: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in deleteRequestQuotation: $e");
+      print("StackTrace: $stackTrace");
+
+      return DeleteQuotationRequestModel(
+        status: false,
+        message: 'Error: ${e.toString()}',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>?> importQuotation(FormData formData) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      formData.fields.add(MapEntry("token", token ?? ""));
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}importQuotation_post",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Import Quotation Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      } else {
+        log("❌ Import quotation failed: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("🔥 Error in importQuotation: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<UploadedQuotationModel?> getUploadedQuotationDetails(
+      String id) async {
+    try {
+      final token = await Common.getSharedPref('token');
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}api_edit_uploaded_quotation",
+        data: FormData.fromMap({
+          'token': token,
+          'id': id,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Get Uploaded Quotation Details Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return UploadedQuotationModel.fromJson(response.data);
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getUploadedQuotationDetails: $e");
+      print("StackTrace: $stackTrace");
+
+      // Return null on error
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateUploadedQuotation(
+      FormData formData) async {
+    try {
+      final token = await Common.getSharedPref('token');
+      formData.fields.add(MapEntry("token", token ?? ""));
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}api_update_uploaded_quotation",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+
+      print("🟢 Update Uploaded Quotation Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      } else {
+        print("⚠️ Update uploaded quotation failed: ${response.statusCode}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in updateUploadedQuotation: $e");
+      print("StackTrace: $stackTrace");
+      return null;
+    }
+  }
+
+  static Future<QuoRequestDetailsResponse?> getRequestQuotationDetails(
+      String id) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}api_edit_request",
+        data: FormData.fromMap({
+          'token': token,
+          'request_id': id,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Get Request Quotation Details Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final result = QuoRequestDetailsResponse.fromJson(response.data);
+
+        if (result.status.toLowerCase() == 'success') {
+          return result;
+        } else {
+          print("⚠️ API Failed: ${result.message}");
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRequestQuotationDetails: $e");
+      print("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> updateQuotationRequest(
+      FormData formData) async {
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}editquote_request_api",
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Update Request Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in updateQuotationRequest: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> updateRequestStatus({
+    required String requestId,
+    required String status,
+  }) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      final formData = FormData.fromMap({
+        'token': token,
+        'request_id': requestId,
+        'status': status,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_request_api",
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Update Status Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in updateRequestStatus: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> changeQuotationStatus({
+    required String quotationId,
+    required String status,
+  }) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      final formData = FormData.fromMap({
+        'token': token,
+        'quotation_id': quotationId,
+        'status': status,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_quotationStatus",
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      print("🟢 Update Status Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in updateRequestStatus: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<RequestResponseModel?> createRequestDetails(String id) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      if (token.isEmpty) {
+        print("⚠️ Token is empty");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_requestdata_for_quotation_api",
+        data: FormData.fromMap({
+          'token': token,
+          'request_id': id,
+        }),
+        options: Options(
+          contentType: 'multipart/form-data',
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      print("🟢 Get Request Quotation Details Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        try {
+          final result = RequestResponseModel.fromJson(response.data);
+
+          if (result.status?.toLowerCase() == 'success') {
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+          }
+        } catch (e) {
+          print("🔥 Error parsing response: $e");
+          print("Response data: ${response.data}");
+          return null;
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+        print("Response: ${response.data}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getRequestQuotationDetails: $e");
+      if (e.response != null) {
+        print("Response data: ${e.response?.data}");
+        print("Response status: ${e.response?.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRequestQuotationDetails: $e");
+      print("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+   static Future<RequestDetailsResponseModel?> requestDetails(String id) async {
+  try {
+    final token = await Common.getSharedPref('token') ?? '';
+
+    if (token.isEmpty) {
+      print("⚠️ Token is empty");
+      return null;
+    }
+
+    if (id.isEmpty) {
+      print("⚠️ Request ID is empty");
+      return null;
+    }
+
+    print("🔍 Fetching request details for ID: $id");
+
+    final response = await _dio.post(
+      "${await Config.getUrl()}view_request_api",
+      data: FormData.fromMap({
+        'token': token,
+        'request_id': id,
+      }),
+      options: Options(
+        contentType: 'multipart/form-data',
+        headers: {
+          'Accept': 'application/json',
+        },
+        sendTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    );
+
+    print("🟢 Get Request Details Response Status: ${response.statusCode}");
+    if (response.data == null) {
+      print("⚠️ Null response data received");
+      return null;
+    }
+
+    if (response.statusCode == 200) {
+      try {
+        final result = RequestDetailsResponseModel.fromJson(response.data);
+
+        if (result.status?.toLowerCase() == 'success') {
+          print("✅ Request details fetched successfully");
+          print("📊 Customer: ${result.data?.request?.customerName}");
+          print("📊 Products count: ${result.data?.request?.products?.length ?? 0}");
+          return result;
+        } else {
+          print("⚠️ API Failed: ${result.message}");
+          // You might want to show this to the user
+          // Common.showToast(result.message ?? 'Request failed');
+        }
+      } catch (e, stack) {
+        print("🔥 Error parsing response: $e");
+        print("Stack: $stack");
+        print("Response data: ${response.data}");
+        return null;
+      }
+    } else {
+      print("⚠️ Unexpected status code: ${response.statusCode}");
+      print("Response: ${response.data}");
+    }
+  } on DioException catch (e) {
+    print("🔥 DioException in requestDetails: $e");
+    
+    // More specific error handling
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        print("⏰ Timeout error: ${e.message}");
+        break;
+      case DioExceptionType.badResponse:
+        print("🚫 Bad response: ${e.response?.statusCode}");
+        print("Response data: ${e.response?.data}");
+        break;
+      case DioExceptionType.cancel:
+        print("❌ Request cancelled");
+        break;
+      case DioExceptionType.unknown:
+        print("❓ Unknown error: ${e.message}");
+        break;
+      default:
+        print("⚠️ Other Dio error: ${e.type}");
+    }
+    
+    if (e.response != null) {
+      print("Response data: ${e.response?.data}");
+      print("Response status: ${e.response?.statusCode}");
+    }
+  } catch (e, stackTrace) {
+    print("🔥 Exception in requestDetails: $e");
+    print("StackTrace: $stackTrace");
+  }
+
+  return null;
+}
+
+ static Future<String?> printReceipt(String receiptId, String invId) async {
+  final token = await Common.getSharedPref('token') ?? '';
+
+  try {
+    final formData = FormData.fromMap({
+      "token": token,
+      "receipt_id": receiptId,
+      "invoice_id": invId,
+    });
+
+    final response = await _dio.post(
+      "${await Config.getUrl()}printReceipt",
+      data: formData,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    final dir = await getTemporaryDirectory();
+    final file = File("${dir.path}/receipt_$receiptId.pdf");
+
+    await file.writeAsBytes(response.data, flush: true);
+
+    return file.path;
+  } catch (e) {
+    log("❌ Error in printReceipt: $e");
+    return null;
+  }
+}
+
 }

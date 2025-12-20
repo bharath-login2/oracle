@@ -1,6 +1,9 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:developer';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +13,7 @@ import 'package:login2/models/commonConfigureModel.dart';
 import 'package:login2/models/dashboardModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/lead_management/leadDashboardModel.dart';
+import 'package:login2/models/loginCheckModel.dart';
 import 'package:login2/screens/accounts/clients/addInvoice.dart';
 import 'package:login2/screens/accounts/clients/addInvoiceUpdated.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
@@ -24,6 +28,7 @@ import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
@@ -67,12 +72,17 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   String phoneCallLogPermission = '';
   String? ProjectDashboardPermission;
   String? AccountsDashboardPermission;
+  String? proformaInvoiceMenu;
+  String? gstInvoiceMenu;
+  String? pendingInvoiceMenu;
+  String? receiptMenu;
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   LeadDashboardModel? leadDashboard;
   DashboardModel? userDashboard;
   CommonConfigureModel? configure;
   AccountDashboardModel? dashboard;
+   String? firebaseToken;
   bool createLeadCategory1 = false;
   bool updateLeadCategory1 = false;
   bool deleteLeadCategory1 = false;
@@ -85,28 +95,30 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       .format(DateTime(DateTime.now().year, DateTime.now().month + 1, 0));
   bool toggle = false;
   int notificationCount = 0;
-  List list = [
-    "Invoices",
-    "Pending Invoices",
-    "Receipts",
-    "Expense",
-    "Customers",
-    "Account Head",
-    "Proforma Invoices",
-    "GST Invoices",
-    //  "Updated Invoice",
-  ];
-  List tabColors = [
-    Colors.green,
-    Colors.orange,
-    Colors.blue,
-    Colors.red,
-    Colors.teal,
-    Colors.purple,
+  List<dynamic> get list => [
+        "Invoices",
+        "Pending Invoices",
+        "Receipts",
+        "Expense",
+        "Customers",
+        "Account Head",
+        if (proformaInvoiceMenu == "true") "Proforma Invoices",
+        if (gstInvoiceMenu == "true") "GST Invoices",
+        //  "Updated Invoice",
+      ];
+ List<dynamic> get tabColors => [
+  Colors.green,
+  Colors.orange,
+  Colors.blue,
+  Colors.red,
+  Colors.teal,
+  Colors.purple,
+  if (proformaInvoiceMenu == "true")
     const Color.fromARGB(255, 111, 27, 207),
+  if (gstInvoiceMenu == "true") 
     const Color.fromARGB(255, 228, 43, 235),
-    // const Color.fromARGB(255, 95, 133, 26),
-  ];
+  // const Color.fromARGB(255, 95, 133, 26),
+];
   List colorList = [
     const Color(0xFFddd8f5),
     const Color(0xFFf0ebef),
@@ -133,10 +145,27 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
         result = false;
       });
     }
+    proformaInvoiceMenu =
+        await Common.getSharedPref("proformaInvoiceMenu") ?? "";
+    gstInvoiceMenu = await Common.getSharedPref("gstInvoiceMenu") ?? "";
+    pendingInvoiceMenu = await Common.getSharedPref("pendingInvoiceMenu") ?? "";
+    receiptMenu = await Common.getSharedPref("receiptMenu") ?? "";
     AccountsDashboardPermission =
         await Common.getSharedPref("AccountsDashboardPermission") ?? "";
     getList();
     getCustomerList();
+    firebaseToken = await FirebaseMessaging.instance.getToken();
+      LoginCheckModel? loginCheck =
+          await HttpService.loginCheck(token, firebaseToken!);
+      log(firebaseToken.toString());
+      if (loginCheck!.data == false) {
+        Common.toastMessaage('Token Expired', Colors.red);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Login()),
+              (Route<dynamic> route) => false);
+        }
+      } 
     configure = await HttpService.configure(token);
 
     startAndStopWorkPermission =
@@ -183,7 +212,35 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     }
   }
 
-    getCustomerList() async {
+  double _calculateGridViewHeight(int itemCount) {
+  // Constants for calculation
+  const double padding = 16.0; // Top and bottom padding
+  const double itemHeight = 50.0; // Approximate height of each item (adjust as needed)
+  const double spacing = 15.0; // Main axis spacing between rows
+  
+  // Calculate number of rows (2 items per row)
+  int rows = (itemCount / 2).ceil();
+  
+  // Calculate total height
+  double totalHeight = (padding * 2) + // Top and bottom padding
+                      (itemHeight * rows) + // Height of all rows
+                      (spacing * (rows - 1)); // Spacing between rows
+  
+  // Add some extra buffer
+  totalHeight += 20;
+  
+  // Ensure minimum height
+  if (totalHeight < 100) totalHeight = 100;
+  
+  // Ensure maximum height (you can adjust this)
+  if (totalHeight > MediaQuery.of(context).size.height * 0.6) {
+    totalHeight = MediaQuery.of(context).size.height * 0.6;
+  }
+  
+  return totalHeight;
+}
+
+  getCustomerList() async {
     try {
       CustomerListModel? customerData =
           await HttpService.customerList(widget.token);
@@ -197,8 +254,6 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       print("Error loading customers: $e");
     }
   }
-
-  
 
   @override
   void initState() {
@@ -216,7 +271,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     });
   }
 
-    Future<Object?> addInvoiceDialog(BuildContext context) {
+  Future<Object?> addInvoiceDialog(BuildContext context) {
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
       barrierDismissible: true,
@@ -584,7 +639,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                     fontSize: 25,
                                                     shadows: [
                                                       Shadow(
-                                                        offset: Offset(2.0, 2.0),
+                                                        offset:
+                                                            Offset(2.0, 2.0),
                                                         blurRadius: 5.0,
                                                         color: Colors.grey,
                                                       ),
@@ -604,13 +660,13 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                           .size
                                                           .width *
                                                       .95,
-                                                  height: MediaQuery.of(context)
-                                                          .size
-                                                          .height *
-                                                      .37,
+                                                  height:
+                                                      _calculateGridViewHeight(
+                                                          list.length),
                                                   child: Padding(
                                                     padding:
-                                                        const EdgeInsets.all(16.0),
+                                                        const EdgeInsets.all(
+                                                            16.0),
                                                     child: GridView.builder(
                                                       physics:
                                                           const NeverScrollableScrollPhysics(),
@@ -618,10 +674,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                       gridDelegate:
                                                           const SliverGridDelegateWithFixedCrossAxisCount(
                                                               crossAxisCount: 2,
-                                                              mainAxisSpacing: 15,
-                                                              crossAxisSpacing: 15,
-                                                              childAspectRatio: 3),
-                                                      itemBuilder: (context, i) {
+                                                              mainAxisSpacing:
+                                                                  15,
+                                                              crossAxisSpacing:
+                                                                  15,
+                                                              childAspectRatio:
+                                                                  3),
+                                                      itemBuilder:
+                                                          (context, i) {
                                                         return InkWell(
                                                           onTap: () {
                                                             if (list[i] ==
@@ -633,7 +693,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                         (context) =>
                                                                             ExpenseList(),
                                                                   ));
-                                                            } else if (list[i] ==
+                                                            } else if (list[
+                                                                    i] ==
                                                                 "Invoices") {
                                                               Navigator.push(
                                                                 context,
@@ -643,8 +704,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                             .token
                                                                             .toString())),
                                                               );
-                                                            } else if (list[i] ==
-                                                                "Proforma Invoices") {
+                                                            } else if (list[
+                                                                        i] ==
+                                                                    "Proforma Invoices" &&
+                                                                proformaInvoiceMenu ==
+                                                                    "true") {
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
@@ -653,8 +717,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                             .token
                                                                             .toString())),
                                                               );
-                                                            } else if (list[i] ==
-                                                                "GST Invoices") {
+                                                            } else if (list[
+                                                                        i] ==
+                                                                    "GST Invoices" &&
+                                                                gstInvoiceMenu ==
+                                                                    "true") {
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
@@ -685,7 +752,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                             .token
                                                                             .toString())),
                                                               );
-                                                            } else if (list[i] ==
+                                                            } else if (list[
+                                                                    i] ==
                                                                 "Receipts") {
                                                               Navigator.push(
                                                                 context,
@@ -695,9 +763,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                             .token
                                                                             .toString())),
                                                               );
-                                                            } else if (list[i] ==
+                                                            } else if (list[
+                                                                    i] ==
                                                                 "Account Head") {
-                                                              if (dashboard!.data
+                                                              if (dashboard!
+                                                                      .data
                                                                       .isViewAccHead ==
                                                                   true) {
                                                                 Navigator.push(
@@ -718,8 +788,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                 MaterialPageRoute(
                                                                     builder: (context) =>
                                                                         ClientList(
-                                                                            widget
-                                                                                .token)),
+                                                                            widget.token)),
                                                               );
                                                             }
                                                           },
@@ -730,7 +799,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                   0xFFf0ebef),
                                                               borderRadius:
                                                                   BorderRadius
-                                                                      .circular(12),
+                                                                      .circular(
+                                                                          12),
                                                             ),
                                                             child: Center(
                                                               child: Text(
@@ -742,7 +812,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     fontWeight:
                                                                         FontWeight
                                                                             .bold,
-                                                                    fontSize: 15),
+                                                                    fontSize:
+                                                                        15),
                                                               ),
                                                             ),
                                                           ),
@@ -761,9 +832,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                 ),
                                 SizedBox(
                                   width: MediaQuery.of(context).size.width * .9,
-                                  height: MediaQuery.of(context).size.height * .63,
+                                  height:
+                                      MediaQuery.of(context).size.height * .63,
                                   child: GridView(
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 2,
@@ -773,7 +846,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                     children: [
                                       InkWell(
                                         onTap: () {
-                                          if (dashboard!.data.bankAccCount == "1") {
+                                          if (dashboard!.data.bankAccCount ==
+                                              "1") {
                                             if (dashboard!.data.isViewBankAcc) {
                                               Navigator.push(
                                                   context,
@@ -790,7 +864,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                               Common.toastMessaage(
                                                   "No permission", Colors.red);
                                             }
-                                          } else if (dashboard!.data.bankAccCount ==
+                                          } else if (dashboard!
+                                                  .data.bankAccCount ==
                                               "0") {
                                             Common.toastMessaage(
                                                 "Please add a 'BANK ACCOUNT'",
@@ -843,11 +918,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => ReceiptList(
+                                                builder: (context) =>
+                                                    ReceiptList(
                                                   widget.token,
-                                                  fdate: DateFormat('dd-MM-yyyy')
+                                                  fdate: DateFormat(
+                                                          'dd-MM-yyyy')
                                                       .format(DateTime.now()),
-                                                  tdate: DateFormat('dd-MM-yyyy')
+                                                  tdate: DateFormat(
+                                                          'dd-MM-yyyy')
                                                       .format(DateTime.now()),
                                                 ),
                                               ));
@@ -863,15 +941,18 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => ExpenseList(
+                                                builder: (context) =>
+                                                    ExpenseList(
                                                   // fdate: DateFormat('dd-MM-yyyy')
                                                   //     .format(DateTime.now()),
                                                   // tdate: DateFormat('dd-MM-yyyy')
                                                   //     .format(DateTime.now()),
-                                                  fdate: DateFormat('yyyy-MM-dd')
+                                                  fdate: DateFormat(
+                                                          'yyyy-MM-dd')
                                                       .format(DateTime.now()),
                                                   // tdate: DateFormat('dd-MM-yyyy')
-                                                  tdate: DateFormat('yyyy-MM-dd')
+                                                  tdate: DateFormat(
+                                                          'yyyy-MM-dd')
                                                       .format(DateTime.now()),
                                                 ),
                                               ));
@@ -887,14 +968,17 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => ReceiptList(
+                                                builder: (context) =>
+                                                    ReceiptList(
                                                   widget.token,
-                                                  fdate: DateFormat('dd-MM-yyyy')
+                                                  fdate: DateFormat(
+                                                          'dd-MM-yyyy')
                                                       .format(DateTime(
                                                           DateTime.now().year,
                                                           DateTime.now().month,
                                                           1)),
-                                                  tdate: DateFormat('dd-MM-yyyy')
+                                                  tdate: DateFormat(
+                                                          'dd-MM-yyyy')
                                                       .format(DateTime.now()),
                                                 ),
                                               ));
@@ -910,7 +994,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                           Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => ExpenseList(
+                                                builder: (context) =>
+                                                    ExpenseList(
                                                   // fdate: DateFormat('dd-MM-yyyy')
                                                   //     .format(DateTime(
                                                   //         DateTime.now().year,
@@ -918,13 +1003,15 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                   //         1)),
                                                   // tdate: DateFormat('dd-MM-yyyy')
                                                   //     .format(DateTime.now()),
-                                                  fdate: DateFormat('yyyy-MM-dd')
+                                                  fdate: DateFormat(
+                                                          'yyyy-MM-dd')
                                                       .format(DateTime(
                                                           DateTime.now().year,
                                                           DateTime.now().month,
                                                           1)),
                                                   // tdate: DateFormat('dd-MM-yyyy')
-                                                  tdate: DateFormat('yyyy-MM-dd')
+                                                  tdate: DateFormat(
+                                                          'yyyy-MM-dd')
                                                       .format(DateTime.now()),
                                                 ),
                                               ));
@@ -941,7 +1028,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    PendingInvoice(widget.token),
+                                                    PendingInvoice(
+                                                        widget.token),
                                               ));
                                         },
                                         child: gridItem(
@@ -970,7 +1058,6 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                     ],
                                   ),
                                 ),
-                               
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     left: 12.0,
@@ -983,7 +1070,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Padding(
                                           padding: const EdgeInsets.only(
@@ -1007,8 +1095,10 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                     firstDate: DateTime(2000),
                                                     lastDate: DateTime.now(),
                                                   );
-                                                  fDate = DateFormat('dd-MM-yyyy')
-                                                      .format(selctedDatetimetemp!);
+                                                  fDate = DateFormat(
+                                                          'dd-MM-yyyy')
+                                                      .format(
+                                                          selctedDatetimetemp!);
                                                   getList();
                                                   setState(() {});
                                                 },
@@ -1020,14 +1110,16 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                   height: 45,
                                                   decoration: BoxDecoration(
                                                       borderRadius:
-                                                          BorderRadius.circular(5),
+                                                          BorderRadius.circular(
+                                                              5),
                                                       boxShadow: [
                                                         BoxShadow(
                                                             blurRadius: 0.5,
                                                             color: Colors
                                                                 .grey.shade300,
-                                                            offset: const Offset(
-                                                                2.5, 2.5))
+                                                            offset:
+                                                                const Offset(
+                                                                    2.5, 2.5))
                                                       ],
                                                       color: Colors.white),
                                                   child: Row(
@@ -1037,11 +1129,12 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                     children: [
                                                       Padding(
                                                         padding:
-                                                            const EdgeInsets.only(
-                                                                left: 10),
+                                                            const EdgeInsets
+                                                                .only(left: 10),
                                                         child: Text(
                                                           fDate,
-                                                          style: const TextStyle(
+                                                          style:
+                                                              const TextStyle(
                                                             fontSize: 14,
                                                             fontWeight:
                                                                 FontWeight.w400,
@@ -1052,10 +1145,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                       Container(
                                                         width: 40,
                                                         height: 40,
-                                                        decoration: BoxDecoration(
+                                                        decoration:
+                                                            BoxDecoration(
                                                           borderRadius:
-                                                              BorderRadius.circular(
-                                                                  2),
+                                                              BorderRadius
+                                                                  .circular(2),
                                                           color: Colors.white,
                                                         ),
                                                         child: const Icon(
@@ -1080,8 +1174,10 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                     firstDate: DateTime(2000),
                                                     lastDate: DateTime(2100),
                                                   );
-                                                  tDate = DateFormat('dd-MM-yyyy')
-                                                      .format(toDateSelectTemp!);
+                                                  tDate = DateFormat(
+                                                          'dd-MM-yyyy')
+                                                      .format(
+                                                          toDateSelectTemp!);
                                                   getList();
                                                   setState(() {});
                                                 },
@@ -1093,15 +1189,17 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                   height: 45,
                                                   decoration: BoxDecoration(
                                                       borderRadius:
-                                                          BorderRadius.circular(5),
+                                                          BorderRadius.circular(
+                                                              5),
                                                       color: Colors.white,
                                                       boxShadow: [
                                                         BoxShadow(
                                                             blurRadius: 0.5,
                                                             color: Colors
                                                                 .grey.shade300,
-                                                            offset: const Offset(
-                                                                2.5, 2.5))
+                                                            offset:
+                                                                const Offset(
+                                                                    2.5, 2.5))
                                                       ]),
                                                   child: Row(
                                                     mainAxisAlignment:
@@ -1110,8 +1208,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                     children: [
                                                       Padding(
                                                         padding:
-                                                            const EdgeInsets.only(
-                                                                left: 10),
+                                                            const EdgeInsets
+                                                                .only(left: 10),
                                                         child: Text(
                                                           tDate,
                                                         ),
@@ -1119,10 +1217,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                       Container(
                                                         width: 40,
                                                         height: 40,
-                                                        decoration: BoxDecoration(
+                                                        decoration:
+                                                            BoxDecoration(
                                                           borderRadius:
-                                                              BorderRadius.circular(
-                                                                  5),
+                                                              BorderRadius
+                                                                  .circular(5),
                                                           color: Colors.white,
                                                         ),
                                                         child: const Icon(
@@ -1168,18 +1267,21 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                         Navigator.push(
                                                           context,
                                                           MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  ReceiptList(
-                                                                    widget.token
-                                                                        .toString(),
-                                                                    type: dashboard!
-                                                                        .data
-                                                                        .incomeGraph[
-                                                                            i]
-                                                                        .type,
-                                                                    fdate: fDate,
-                                                                    tdate: tDate,
-                                                                  )),
+                                                              builder:
+                                                                  (context) =>
+                                                                      ReceiptList(
+                                                                        widget
+                                                                            .token
+                                                                            .toString(),
+                                                                        type: dashboard!
+                                                                            .data
+                                                                            .incomeGraph[i]
+                                                                            .type,
+                                                                        fdate:
+                                                                            fDate,
+                                                                        tdate:
+                                                                            tDate,
+                                                                      )),
                                                         );
                                                       },
                                                       child: progressItem(
@@ -1191,25 +1293,28 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                               .data
                                                               .incomeGraph[i]
                                                               .totalExpense,
-                                                          double.parse(dashboard!
-                                                              .data
-                                                              .incomeGraph[i]
-                                                              .perc)),
+                                                          double.parse(
+                                                              dashboard!
+                                                                  .data
+                                                                  .incomeGraph[
+                                                                      i]
+                                                                  .perc)),
                                                     );
                                                   })
                                             else
                                               const Padding(
-                                                padding:
-                                                    EdgeInsets.only(bottom: 26.0),
+                                                padding: EdgeInsets.only(
+                                                    bottom: 26.0),
                                                 child: Text(
                                                   "Empty",
-                                                  style:
-                                                      TextStyle(color: Colors.red),
+                                                  style: TextStyle(
+                                                      color: Colors.red),
                                                 ),
                                               ),
                                           ],
                                         ),
-                                        if (dashboard!.data.expenseGraph.isNotEmpty)
+                                        if (dashboard!
+                                            .data.expenseGraph.isNotEmpty)
                                           Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
@@ -1222,7 +1327,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                   "Expense",
                                                   style: TextStyle(
                                                       color: Colors.black,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       fontSize: 25),
                                                 ),
                                               ),
@@ -1238,15 +1344,18 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                         Navigator.push(
                                                             context,
                                                             MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  ExpenseList(
+                                                              builder:
+                                                                  (context) =>
+                                                                      ExpenseList(
                                                                 catId: dashboard!
                                                                     .data
-                                                                    .expenseGraph[i]
+                                                                    .expenseGraph[
+                                                                        i]
                                                                     .expCatid,
                                                                 catName: dashboard!
                                                                     .data
-                                                                    .expenseGraph[i]
+                                                                    .expenseGraph[
+                                                                        i]
                                                                     .expCatName,
                                                                 fdate: fDate,
                                                                 tdate: tDate,
@@ -1262,10 +1371,12 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                               .data
                                                               .expenseGraph[i]
                                                               .totalExpense,
-                                                          double.parse(dashboard!
-                                                              .data
-                                                              .expenseGraph[i]
-                                                              .perc)),
+                                                          double.parse(
+                                                              dashboard!
+                                                                  .data
+                                                                  .expenseGraph[
+                                                                      i]
+                                                                  .perc)),
                                                     );
                                                   }),
                                             ],
@@ -1274,155 +1385,143 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                     ),
                                   ),
                                 ),
-                                 
                               ],
                             ),
                           ),
                         ),
                         Positioned(
-                                  right:
-                                      _floatingButtonPosition.dx == 0 ? 30 : null,
-                                  bottom:
-                                      _floatingButtonPosition.dy == 0 ? 100 : null,
-                                  left: _floatingButtonPosition.dx != 0
-                                      ? _floatingButtonPosition.dx
-                                      : null,
-                                  top: _floatingButtonPosition.dy != 0
-                                      ? _floatingButtonPosition.dy
-                                      : null,
-                                  child: GestureDetector(
-                                    onPanUpdate: (details) {
-                                      final newPosition = Offset(
-                                        _floatingButtonPosition.dx +
-                                            details.delta.dx,
-                                        _floatingButtonPosition.dy +
-                                            details.delta.dy,
-                                      );
-                                      _updateFloatingButtonPosition(newPosition);
-                                    },
-                                    child: Column(
-                                      children: [
-                                        if (_showFloatingOptions) ...[
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    margin: const EdgeInsets.only(
-                                                        bottom: 10),
-                                                    child: SizedBox(
-                                                      width: 130,
-                                                      child: FloatingActionButton
-                                                          .extended(
-                                                        heroTag: "simple_invoice",
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            _showFloatingOptions =
-                                                                false;
-                                                          });
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  AddInvoiceUpdated(
-                                                                widget.token,
-                                                                "",
-                                                                "",
-                                                              ),
-                                                            ),
-                                                          );
-                                                        },
-                                                        label: const Text(
-                                                          'Sale',
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                        icon: const Icon(
-                                                          Icons.receipt,
-                                                          color: Colors.white,
-                                                          size: 24,
-                                                        ),
-                                                        backgroundColor:
-                                                            Colors.green,
+                          right: _floatingButtonPosition.dx == 0 ? 30 : null,
+                          bottom: _floatingButtonPosition.dy == 0 ? 100 : null,
+                          left: _floatingButtonPosition.dx != 0
+                              ? _floatingButtonPosition.dx
+                              : null,
+                          top: _floatingButtonPosition.dy != 0
+                              ? _floatingButtonPosition.dy
+                              : null,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              final newPosition = Offset(
+                                _floatingButtonPosition.dx + details.delta.dx,
+                                _floatingButtonPosition.dy + details.delta.dy,
+                              );
+                              _updateFloatingButtonPosition(newPosition);
+                            },
+                            child: Column(
+                              children: [
+                                if (_showFloatingOptions) ...[
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10),
+                                            child: SizedBox(
+                                              width: 130,
+                                              child:
+                                                  FloatingActionButton.extended(
+                                                heroTag: "simple_invoice",
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _showFloatingOptions =
+                                                        false;
+                                                  });
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AddInvoiceUpdated(
+                                                        widget.token,
+                                                        "",
+                                                        "",
                                                       ),
                                                     ),
+                                                  );
+                                                },
+                                                label: const Text(
+                                                  'Sale',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
                                                   ),
-                                                  Container(
-                                                    margin: const EdgeInsets.only(
-                                                        bottom: 10),
-                                                    child: SizedBox(
-                                                      width: 130,
-                                                      child: FloatingActionButton
-                                                          .extended(
-                                                        heroTag: "complex_invoice",
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            _showFloatingOptions =
-                                                                false;
-                                                          });
-                                                          addInvoiceDialog(context);
-                                                        },
-                                                        label: const Text(
-                                                          'Invoice',
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                        icon: const Icon(
-                                                          Icons.description,
-                                                          color: Colors.white,
-                                                          size: 24,
-                                                        ),
-                                                        backgroundColor:
-                                                            Colors.blue,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.receipt,
+                                                  color: Colors.white,
+                                                  size: 24,
+                                                ),
+                                                backgroundColor: Colors.green,
                                               ),
-                                            ],
-                                          )
-                                        ],
-                                        FloatingActionButton(
-                                          heroTag: "main_floating_button",
-                                          onPressed: () {
-                                            setState(() {
-                                              _showFloatingOptions =
-                                                  !_showFloatingOptions;
-                                            });
-                                          },
-                                          child: AnimatedSwitcher(
-                                            duration: Duration(milliseconds: 300),
-                                            child: _showFloatingOptions
-                                                ? Icon(Icons.close,
-                                                    color: Colors.white)
-                                                : Icon(Icons.add,
-                                                    color: Colors.white),
+                                            ),
                                           ),
-                                          backgroundColor: _showFloatingOptions
-                                              ? Colors.red
-                                              : Color(0xFF2a86c9),
-                                        ),
-                                      ],
-                                    ),
+                                          Container(
+                                            margin: const EdgeInsets.only(
+                                                bottom: 10),
+                                            child: SizedBox(
+                                              width: 130,
+                                              child:
+                                                  FloatingActionButton.extended(
+                                                heroTag: "complex_invoice",
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _showFloatingOptions =
+                                                        false;
+                                                  });
+                                                  addInvoiceDialog(context);
+                                                },
+                                                label: const Text(
+                                                  'Invoice',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.description,
+                                                  color: Colors.white,
+                                                  size: 24,
+                                                ),
+                                                backgroundColor: Colors.blue,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                ],
+                                FloatingActionButton(
+                                  heroTag: "main_floating_button",
+                                  onPressed: () {
+                                    setState(() {
+                                      _showFloatingOptions =
+                                          !_showFloatingOptions;
+                                    });
+                                  },
+                                  child: AnimatedSwitcher(
+                                    duration: Duration(milliseconds: 300),
+                                    child: _showFloatingOptions
+                                        ? Icon(Icons.close, color: Colors.white)
+                                        : Icon(Icons.add, color: Colors.white),
                                   ),
+                                  backgroundColor: _showFloatingOptions
+                                      ? Colors.red
+                                      : Color(0xFF2a86c9),
                                 ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                   
+
             endDrawer: DraweScreen(token),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
@@ -1532,7 +1631,6 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                 ],
               ),
             ));
-            
   }
 
   Container progressItem(String name, String amount, double value) {
@@ -1788,9 +1886,6 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       ),
     );
   }
-
-
-  
 
   Widget buildLoaderListItem() {
     return Shimmer.fromColors(

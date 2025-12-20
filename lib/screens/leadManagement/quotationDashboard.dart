@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/dashboardModel.dart';
 import 'package:login2/models/lead_management/quotation_dashboard_model.dart';
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/authentication/login.dart';
+import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/add_quotation_request_sheet.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/quotationRequestPage.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/togglebutton_start.dart'; // Add this import
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
+import 'package:firebase_messaging/firebase_messaging.dart'; // Add this import
 
 class QuotationDashboard extends StatefulWidget {
   const QuotationDashboard({super.key});
@@ -26,7 +38,21 @@ class _QuotationDashboardState extends State<QuotationDashboard>
   late Animation<double> _blinkAnimation;
   late AnimationController _fabController;
   late Animation<double> _fabAnimation;
-
+  String? userId;
+  String? token;
+  String? name;
+  String? role;
+  bool isWorkStarted = false;
+  String? startAndStopWorkPermission;
+  int notificationCount = 0; // Add notification count
+  String? phoneCallLogPermission; // Add phone call log permission
+  DashboardModel? userDashboard; // Add user dashboard data
+  String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
+  String? NewleadDashboardPermission;
+    String? adminCheckPermission;
   @override
   void initState() {
     super.initState();
@@ -49,11 +75,68 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     );
     _loadData();
     _loadDashboard();
+    _loadUserData(); // Load user data for bottom navigation
+    loadPrefs();
   }
 
+ Future<void> loadPrefs() async {
+    final value = await Common.getSharedPref("multipleWorks");
+    userId = await Common.getSharedPref("userId");
+    token = await Common.getSharedPref("token");
+    ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
+    adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
+
+  }
   Future<void> _loadDashboard() async {
     quotationPermission =
         await Common.getSharedPref("QuotationDashboardPermission");
+  }
+
+  Future<void> _loadUserData() async {
+    token = await Common.getSharedPref("token");
+    userId = await Common.getSharedPref("userId");
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    startAndStopWorkPermission =
+        await Common.getSharedPref("startAndStopWorkPermission");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+    
+    // Load notification count and user dashboard data
+    if (token != null) {
+      await _loadNotificationCount();
+      await _loadUserDashboard();
+    }
+  }
+
+  Future<void> _loadNotificationCount() async {
+    // You might need to fetch this from your API
+    // For now, setting to 0
+    setState(() {
+      notificationCount = 0;
+    });
+  }
+
+  Future<void> _loadUserDashboard() async {
+    // Load user dashboard data similar to ProjectDashboard
+    // You might need to call an API endpoint
+    try {
+      if (token != null) {
+        // Uncomment and adjust this if you have a similar API
+        // userDashboard = await HttpService.mainDashboard(token!);
+        // setState(() {});
+      }
+    } catch (e) {
+      print("Error loading user dashboard: $e");
+    }
   }
 
   @override
@@ -112,66 +195,101 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     }
   }
 
- Future<bool> _showExitConfirmation() async {
-  return (await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => AlertDialog(
-      title: const Text('Exit App'),
-      content: const Text('Do you want to exit the application?'),
+  Future<bool> _showExitConfirmation() async {
+    return (await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Exit App'),
+        content: const Text('Do you want to exit the application?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    )) ?? false;
+  }
+
+  void logout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const Login()),
+        (Route<dynamic> route) => false,
+      );
+    }
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: const Color.fromARGB(255, 22, 145, 216),
+      foregroundColor: Colors.white,
+      title: const Text('Quotation Dashboard',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          )),
+      automaticallyImplyLeading: quotationPermission != "true",
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false), 
-          child: const Text('Cancel'),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadData,
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true), 
-          child: const Text('Exit'),
-        ),
+        quotationPermission == "true"
+            ? IconButton(
+                icon: const Icon(Icons.logout_outlined),
+                onPressed: () => logout(context),
+              )
+            : const SizedBox(),
       ],
-    ),
-  )) ?? false;
-}
+    );
+  }
+
 
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-          onWillPop: () async {
-      if (quotationPermission == "true") {
-        final shouldExit = await _showExitConfirmation();
-        if (!shouldExit) {
-          return false; 
+      onWillPop: () async {
+        if (quotationPermission == "true") {
+          final shouldExit = await _showExitConfirmation();
+          if (!shouldExit) {
+            return false;
+          }
+          SystemNavigator.pop();
+          return false;
         }
-        SystemNavigator.pop();
-        return false; 
-      }
-      return true;
-    },
+        return true;
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F6FA),
-        appBar: AppBar(
-          backgroundColor: const Color.fromARGB(255, 22, 145, 216),
-          foregroundColor: Colors.white,
-          title: const Text('Quotation Dashboard',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              )),
-          automaticallyImplyLeading: quotationPermission != "true",
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadData,
-            ),
-            quotationPermission == "true"
-                ? IconButton(
-                    icon: const Icon(Icons.logout_outlined),
-                    onPressed: () => logout(context),
-                  )
-                : SizedBox(),
-          ],
-        ),
+        appBar: _buildAppBar(context),
         body: Stack(
           children: [
             RefreshIndicator(
@@ -187,6 +305,9 @@ class _QuotationDashboardState extends State<QuotationDashboard>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Add user profile section
+                            //  _buildUserProfileSection(),
+                              const SizedBox(height: 10),
                               _summaryHeader(),
                               const SizedBox(height: 20),
                               _sectionTitle('Quotations'),
@@ -213,7 +334,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
 
             // Fixed position FAB at bottom-right
             Positioned(
-              bottom: 20,
+              bottom: 80, // Adjusted to accommodate bottom navigation
               right: 20,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -311,6 +432,65 @@ class _QuotationDashboardState extends State<QuotationDashboard>
             ),
           ],
         ),
+     endDrawer: DraweScreen(token!),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.black,
+            onPressed: () {
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
+              // );
+              ProjectDashboardPermission == "true"
+                  ? Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProjectDashboard()),
+                    )
+                  : AccountsDashboardPermission == "true"
+                      ? Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  AccountsDashboard(token: token!)),
+                        )
+                      : MenuDashboard == "true"
+                          ? Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => HomePage(token)),
+                            )
+                          : RenewalDashboardPermission == "true"
+                              ? Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RenewalDashboard()),
+                                )
+                              : NewleadDashboardPermission == "true"
+                                  ? Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              MinimalDashboard(token)),
+                                    )
+                                  : Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              Dashboard(token)),
+                                    );
+            },
+            child: Image.asset("assets/icons/menu.png", width: 25),
+          ),
+        bottomNavigationBar: token != null && name != null && userId != null
+            ? BottomNavigation(
+                token!,
+                phoneCallLogPermission: phoneCallLogPermission ?? "",
+                name: name!,
+                userId: userId!,
+              )
+            : null,
       ),
     );
   }
@@ -651,7 +831,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
           'Send',
           dashboardData!.totalSent.toString(),
           const Color.fromARGB(255, 48, 106, 153),
-          onTap: () => _navigateToRequests(2),
+          onTap: () => _navigateToRequests("2"),
         ),
       ],
     );

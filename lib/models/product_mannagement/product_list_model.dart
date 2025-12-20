@@ -4,56 +4,63 @@
 
 import 'dart:convert';
 
-ProductListModel productListModelFromJson(String str) => ProductListModel.fromJson(json.decode(str));
+ProductListModel productListModelFromJson(String str) =>
+    ProductListModel.fromJson(json.decode(str));
 
-String productListModelToJson(ProductListModel data) => json.encode(data.toJson());
+String productListModelToJson(ProductListModel data) =>
+    json.encode(data.toJson());
 
 class ProductListModel {
-    List<ProductList> data;
-    bool status;
-    String message;
+  List<ProductList> data;
+  bool status;
+  String message;
 
-    ProductListModel({
-        required this.data,
-        required this.status,
-        required this.message,
-    });
+  ProductListModel({
+    required this.data,
+    required this.status,
+    required this.message,
+  });
 
-    factory ProductListModel.fromJson(Map<String, dynamic> json) => ProductListModel(
-        data: List<ProductList>.from(json["data"].map((x) => ProductList.fromJson(x))),
+  factory ProductListModel.fromJson(Map<String, dynamic> json) =>
+      ProductListModel(
+        data: List<ProductList>.from(
+            json["data"].map((x) => ProductList.fromJson(x))),
         status: json["status"],
         message: json["message"],
-    );
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "data": List<dynamic>.from(data.map((x) => x.toJson())),
         "status": status,
         "message": message,
-    };
+      };
 }
 
 class ProductList {
-    String id;
-    String productName;
-    String totalAmount;
-    String productImage;
-    String categoryName;
-    String subCategory;
-    String productMrp;
-    String contentId;
+  String id;
+  String productName;
+  String totalAmount;
+  String productImage;
+  String categoryName;
+  String subCategory;
+  String productMrp;
+  String contentId;
+  String taxPercentage;
+  String sellingPrice;
+  ProductList({
+    required this.id,
+    required this.productName,
+    required this.totalAmount,
+    required this.productImage,
+    required this.categoryName,
+    required this.subCategory,
+    required this.productMrp,
+    required this.contentId,
+    required this.taxPercentage,
+    required this.sellingPrice,
+  });
 
-    ProductList({
-        required this.id,
-        required this.productName,
-        required this.totalAmount,
-        required this.productImage,
-        required this.categoryName,
-        required this.subCategory,
-        required this.productMrp,
-        required this.contentId,
-    });
-
-    factory ProductList.fromJson(Map<String, dynamic> json) => ProductList(
+  factory ProductList.fromJson(Map<String, dynamic> json) => ProductList(
         id: json["id"],
         productName: json["product_name"],
         totalAmount: json["total_amount"],
@@ -62,9 +69,11 @@ class ProductList {
         subCategory: json["sub_category"],
         productMrp: json["product_mrp"],
         contentId: json["content_id"],
-    );
+        taxPercentage: json["tax_percent"],
+        sellingPrice: json["selling_price"],
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "id": id,
         "product_name": productName,
         "total_amount": totalAmount,
@@ -73,5 +82,7 @@ class ProductList {
         "sub_category": subCategory,
         "product_mrp": productMrp,
         "content_id": contentId,
-    };
+        "tax_percent": taxPercentage,
+        "selling_price": sellingPrice,
+      };
 }

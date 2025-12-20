@@ -115,7 +115,8 @@ class _AddFollowupState extends State<AddFollowup> {
   String callResultReasonId = '';
   String invoiceNumber = '';
   String typeDuration = "";
-
+  String? createLeadCategory = '';
+  String? addLeadSource = '';
   TextEditingController cost = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController calledDate1 = TextEditingController();
@@ -237,6 +238,8 @@ class _AddFollowupState extends State<AddFollowup> {
 
   getData() async {
     startDate.text = DateFormat('dd-MM-yyyy').format(invoiceDate);
+     createLeadCategory = await Common.getSharedPref("createLeadCategory");
+         addLeadSource = await Common.getSharedPref("addLeadSource");
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
@@ -1213,7 +1216,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                     filled: true,
                                     prefixIcon: const Icon(Icons.category,
                                         color: Colors.grey),
-                                    suffixIcon: IconButton(
+                                    suffixIcon:
+                                       createLeadCategory == 'true'?
+                                     IconButton(
                                       icon: const Icon(Icons.add_circle,
                                           color: Colors.green),
                                       onPressed: () {
@@ -1260,7 +1265,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                           ),
                                         );
                                       },
-                                    ),
+                                    ):SizedBox(),
                                     border: const OutlineInputBorder(),
                                     focusedBorder: const OutlineInputBorder(
                                       borderSide:
@@ -1869,12 +1874,12 @@ class _AddFollowupState extends State<AddFollowup> {
                                                         ),
                                                       ),
                                                       GestureDetector(
+                                                        // In the product deletion onTap handler, replace this:
                                                         onTap: () {
                                                           subTotal = subTotal -
-                                                              double.parse(
-                                                                products[index][
-                                                                    'total_amount'],
-                                                              );
+                                                              double.parse(products[
+                                                                      index][
+                                                                  'total_amount']);
                                                           totalTaxAmount = totalTaxAmount -
                                                               double.parse(products[
                                                                           index]
@@ -1885,7 +1890,30 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                       [
                                                                       'quantity']);
 
-                                                          allTotal = subTotal +
+                                                          // CORRECTED VERSION:
+                                                          subTotalGrand =
+                                                              subTotalGrand -
+                                                                  double.parse(products[
+                                                                          index]
+                                                                      [
+                                                                      'total_amount']);
+                                                          subTotal = subTotal -
+                                                              (double.parse(products[
+                                                                          index]
+                                                                      [
+                                                                      'product_rate']) *
+                                                                  double.parse(products[
+                                                                          index]
+                                                                      [
+                                                                      'quantity']));
+                                                          totalTaxAmount =
+                                                              totalTaxAmount -
+                                                                  double.parse(products[
+                                                                          index]
+                                                                      [
+                                                                      'total_tax_amount']);
+
+                                                          allTotal = subTotalGrand +
                                                               double.parse(shippingCharge
                                                                           .text ==
                                                                       ''
@@ -1902,51 +1930,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                               allTotal
                                                                   .toString();
 
-                                                          // products.removeWhere(
-                                                          //   (item) => mapEquals(
-                                                          //       item,
-                                                          //       ({
-                                                          //         "product_name":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'product_name'],
-                                                          //         "product_id":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'product_id'],
-                                                          //         "description":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'description'],
-                                                          //         "product_rate":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'product_rate'],
-                                                          //         "quantity": products[
-                                                          //                 index]
-                                                          //             [
-                                                          //             'quantity'],
-                                                          //         "tax_percent":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'tax_percent'],
-                                                          //         "total_tax_amount":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'total_tax_amount'],
-                                                          //         "total_amount":
-                                                          //             products[
-                                                          //                     index]
-                                                          //                 [
-                                                          //                 'total_amount'],
-                                                          //       })),
-                                                          // );
+                                                          // Remove the product
                                                           products
                                                               .removeAt(index);
                                                           if (renProducts
@@ -1960,6 +1944,11 @@ class _AddFollowupState extends State<AddFollowup> {
                                                             discount.clear();
                                                             shippingCharge
                                                                 .clear();
+                                                            subTotal = 0.00;
+                                                            subTotalGrand =
+                                                                0.00;
+                                                            totalTaxAmount =
+                                                                0.00;
                                                             allTotal = 0.00;
                                                             paidAmount.text =
                                                                 allTotal
@@ -2092,7 +2081,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                               shippingCharge
                                                                   .text) ??
                                                           0.0;
-                                                  if (discountAmount >
+
+                                                   if (discountAmount >
                                                       subTotalGrand) {
                                                     Common.toastMessaage(
                                                         'The discount should not exceed the total amount',
@@ -3878,16 +3868,16 @@ class _AddFollowupState extends State<AddFollowup> {
 
                               // subTotal = subTotal +
                               //     double.parse(productTotalAmountTotal.text);
-                              subTotal =
+                              subTotal +=
                                   double.parse(productTotalAmountTotal.text) *
                                       double.parse(productQty.text);
-                              subTotalGrand =
+// Accumulate subTotalGrand
+                              subTotalGrand +=
                                   double.parse(productTotalAmount.text);
-                              // totalTaxAmount = totalTaxAmount +
-                              //     double.parse(productTaxAmount.text) *
-                              //         double.parse(productQty.text);
-                              totalTaxAmount =
-                                  double.parse(productTaxAmount.text);
+// Accumulate totalTaxAmount
+                              totalTaxAmount +=
+                                  double.parse(productTaxAmount.text) *
+                                      double.parse(productQty.text);
                               allTotal = subTotalGrand +
                                   double.parse(shippingCharge.text == ''
                                       ? '0'

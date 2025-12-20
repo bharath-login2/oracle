@@ -125,6 +125,8 @@ class ProductTemp {
   String productId;
   String qty;
   String amount;
+   String taxAmount;
+    String taxPercentage;
   String productName;
   final String? discountAmount;
   final String? shippingAmount;
@@ -133,6 +135,8 @@ class ProductTemp {
     required this.productId,
     required this.qty,
     required this.amount,
+        required this.taxAmount,
+            required this.taxPercentage,
     required this.productName,
     required this.discountAmount,
     required this.shippingAmount,
@@ -142,6 +146,8 @@ class ProductTemp {
         productId: json["product_id"],
         qty: json["qty"],
         amount: json["amount"],
+        taxAmount: json["tax_amount"],
+        taxPercentage: json["tax_percentage"],
         productName: json["product_name"],
         discountAmount: json["discount_amount"]?.toString() ?? "0.00",
         shippingAmount: json["shipping_amount"]?.toString() ?? "0.00",
@@ -151,6 +157,8 @@ class ProductTemp {
         "product_id": productId,
         "qty": qty,
         "amount": amount,
+        "tax_amount": taxAmount,
+        "tax_percentage": taxPercentage,
         "product_name": productName,
         "discount_amount": discountAmount,
         "shipping_amount": shippingAmount,

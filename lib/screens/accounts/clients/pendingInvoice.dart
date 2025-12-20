@@ -1067,103 +1067,95 @@ class _PendingInvoiceState extends State<PendingInvoice>
                           ],
                         ),
                       ),
-                      filteredInvoices.isNotEmpty
-                          ? Container(
-                              height: 80.0,
-                              color: Colors.grey.shade200,
-                              child: Center(
-                                  child: Padding(
-                                padding: const EdgeInsets.only(left: 40),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                      // Only show total section when there's no search text and there are invoices
+                      if (invSearch.text.isEmpty && filteredInvoices.isNotEmpty)
+                        Container(
+                          height: 80.0,
+                          color: Colors.grey.shade200,
+                          child: Center(
+                              child: Padding(
+                            padding: const EdgeInsets.only(left: 40),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
                                                 0.5,
-                                            child: const Text(
-                                              'Total Invoice Amount ',
-                                              style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold),
-                                            )),
-                                        Text(
-                                          ': ${invoiceResponse!.data.totalInvoiceAmount}',
-                                          style: const TextStyle(
+                                        child: const Text(
+                                          'Total Invoice Amount ',
+                                          style: TextStyle(
                                               color: Colors.black,
                                               fontSize: 15,
                                               fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.5,
-                                            child: const Text(
-                                              'Total Paid Amount ',
-                                              style: TextStyle(
-                                                  color: Colors.green,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold),
-                                            )),
-                                        Text(
-                                          ': ${invoiceResponse!.data.totalInvoicePaid}',
-                                          style: const TextStyle(
-                                              color: Colors.green,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.5,
-                                            child: const Text(
-                                              'Total Balance Amount ',
-                                              style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold),
-                                            )),
-                                        Text(
-                                          ': ${invoiceResponse!.data.balanceAmount}',
-                                          style: const TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
+                                        )),
+                                    Text(
+                                      ': ${invoiceResponse!.data.totalInvoiceAmount}',
+                                      style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),
-                              )),
-                            )
-                          : const SizedBox()
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
+                                        child: const Text(
+                                          'Total Paid Amount ',
+                                          style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
+                                        )),
+                                    Text(
+                                      ': ${invoiceResponse!.data.totalInvoicePaid}',
+                                      style: const TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
+                                        child: const Text(
+                                          'Total Balance Amount ',
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
+                                        )),
+                                    Text(
+                                      ': ${invoiceResponse!.data.balanceAmount}',
+                                      style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )),
+                        )
+                      //  : const SizedBox()
                     ],
                   )
                 : Center(

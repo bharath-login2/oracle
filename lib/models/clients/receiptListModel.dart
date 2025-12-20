@@ -56,6 +56,7 @@ class ListElement {
     String id;
     String receiptNumber;
     String invoiceNumber;
+       String invoiceId;
     String receiptDate;
     String clientId;
     String customerName;
@@ -70,6 +71,7 @@ class ListElement {
         required this.id,
         required this.receiptNumber,
         required this.invoiceNumber,
+        required this.invoiceId,
         required this.receiptDate,
         required this.clientId,
         required this.customerName,
@@ -85,6 +87,7 @@ class ListElement {
         id: json["id"],
         receiptNumber: json["receipt_number"],
         invoiceNumber: json["invoice_number"],
+        invoiceId: json["invoice_id"],
         receiptDate: json["receipt_date"],
         clientId: json["client_id"],
         customerName: json["customer_name"],
@@ -100,6 +103,7 @@ class ListElement {
         "id": id,
         "receipt_number": receiptNumber,
         "invoice_number": invoiceNumber,
+        "invoice_id": invoiceId,
         "receipt_date": receiptDate,
         "client_id": clientId,
         "customer_name": customerName,

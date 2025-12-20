@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart'; // Add this import
+import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/bottom_navigation_bar.dart'; // Add this import
+import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/minimalDashboard.dart';
+import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 
 class RoomDashboard extends StatefulWidget {
   const RoomDashboard({super.key});
@@ -13,6 +23,12 @@ class _RoomDashboardState extends State<RoomDashboard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+   String? ProjectDashboardPermission;
+  String? AccountsDashboardPermission;
+  String? MenuDashboard;
+  String? RenewalDashboardPermission;
+  String? NewleadDashboardPermission;
+      String? adminCheckPermission;
   Map<String, double> _pieChartData = {
     'Available': 24,
     'Booked': 12,
@@ -44,6 +60,12 @@ class _RoomDashboardState extends State<RoomDashboard>
       {'room': '205', 'guest': 'Thomas Clark', 'status': 'Pending'},
     ],
   };
+  
+  // Add variables for BottomNavigation
+  String? token;
+  String? name;
+  String? userId;
+  String? phoneCallLogPermission;
 
   @override
   void initState() {
@@ -60,6 +82,25 @@ class _RoomDashboardState extends State<RoomDashboard>
     );
     _animationController.forward();
     _updatePieChartData();
+    _loadUserData(); // Load user data for bottom navigation
+  }
+
+  Future<void> _loadUserData() async {
+    token = await Common.getSharedPref("token");
+    name = await Common.getSharedPref("name");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission = await Common.getSharedPref("phoneCallLogPermission");
+     ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
+    NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
+    adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
+    setState(() {});
   }
 
   void _updatePieChartData() {
@@ -304,6 +345,62 @@ class _RoomDashboardState extends State<RoomDashboard>
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
+        endDrawer: DraweScreen(token!),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.black,
+          onPressed: () {
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
+            // );
+            ProjectDashboardPermission == "true"
+                ? Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProjectDashboard()),
+                  )
+                : AccountsDashboardPermission == "true"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                AccountsDashboard(token: token!)),
+                      )
+                    : MenuDashboard == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomePage(token)),
+                          )
+                        : RenewalDashboardPermission == "true"
+                            ? Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => RenewalDashboard()),
+                              )
+                            : NewleadDashboardPermission == "true"
+                                ? Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            MinimalDashboard(token)),
+                                  )
+                                : Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Dashboard(token)),
+                                  );
+          },
+          child: Image.asset("assets/icons/menu.png", width: 25),
+        ),
+        bottomNavigationBar: token != null && name != null && userId != null
+            ? BottomNavigation(
+                token!,
+                phoneCallLogPermission: phoneCallLogPermission ?? "",
+                name: name!,
+                userId: userId!,
+              )
+            : null,
         body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,

@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:login2/firebase_options.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
@@ -118,6 +119,10 @@ void overlayMain() {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FlutterDownloader.initialize(
+    debug: true, // Set to false in production
+    ignoreSsl: true // If your server uses SSL
+  );
   if (Platform.isAndroid) {
    final service = FlutterBackgroundService();
   bool isRunning = await service.isRunning();

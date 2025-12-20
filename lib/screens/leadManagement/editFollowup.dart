@@ -123,7 +123,7 @@ class _EditFollowupState extends State<EditFollowup> {
 
         leadSubType = followupDetails!.data!.leadSubCategory.toString();
         leadSubTypeId = followupDetails!.data!.leadSubCategoryId.toString();
-        leadTypeVal.text = followupDetails!.data!.leadCategory.toString();
+       leadTypeVal.text = followupDetails?.data?.leadCategory?.toString() ?? "";
         leadSubTypeVal.text = followupDetails!.data!.leadSubCategory.toString();
         callResultVal.text = followupDetails!.data!.callResult.toString();
         callResponse = followupDetails!.data!.callResponse.toString();
