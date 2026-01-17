@@ -1,8 +1,10 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/lead_management/quotationListModel.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/editQuotationPage.dart';
 import 'package:login2/screens/leadManagement/editUploadQuotation.dart';
@@ -22,12 +24,17 @@ class _QuotationPageState extends State<QuotationPage> {
   bool isLoading = true;
   bool isDeleting = false;
   bool _isUpdatingStatus = false;
+  bool _isSendingQuotation = false;
   int _selectedTabIndex = 0;
-
   DateTimeRange? _createdDateRange;
   Set<String> _selectedStaffIds = {};
   Set<String> _selectedStatuses = {};
   String _staffSearch = '';
+  String name = '';
+  String role = '';
+  String userId = '';
+  String token = '';
+  String phoneCallLogPermission = '';
   List<Staff> _staffList = [];
   bool _staffLoading = false;
   List<QuotationData> quotations = [];
@@ -41,22 +48,87 @@ class _QuotationPageState extends State<QuotationPage> {
     'Rejected',
     'On Hold',
   ];
-  
+
+  bool _hasActiveFilters = false;
+  String _dateFilterText = '';
+  String _staffFilterText = '';
+  String _statusFilterText = '';
+
+  // Add these variables to track filter criteria
+  String? _lastFromDate;
+  String? _lastToDate;
+  List<String> _lastStaffIds = [];
+  List<String> _lastStatuses = [];
+
   @override
   void initState() {
     super.initState();
+    _setInitialFilter();
     fetchQuotations();
   }
 
+  void _setInitialFilter() {
+    if (widget.status == null || widget.status == 'All') {
+      _selectedFilter = 'All';
+    } else {
+      final statusString = widget.status.toString();
+      switch (statusString) {
+        case '0':
+          _selectedFilter = 'Rejected';
+          break;
+        case '1':
+          _selectedFilter = 'Pending';
+          break;
+        case '2':
+          _selectedFilter = 'Approved';
+          break;
+        case '3':
+          _selectedFilter = 'On Hold';
+          break;
+        default:
+          _selectedFilter = 'All';
+      }
+    }
+  }
+
   Future<void> fetchQuotations() async {
+    token = await Common.getSharedPref("token");
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     setState(() => isLoading = true);
-    final result =
-        await HttpService.getQuotationList(widget.status, "", "", [], []);
+
+    // Use saved filter criteria if they exist
+    final fromDate = _lastFromDate ??
+        (_createdDateRange?.start != null
+            ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.start)
+            : null);
+
+    final toDate = _lastToDate ??
+        (_createdDateRange?.end != null
+            ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.end)
+            : null);
+
+    final staffIds =
+        _lastStaffIds.isNotEmpty ? _lastStaffIds : _selectedStaffIds.toList();
+    final statuses =
+        _lastStatuses.isNotEmpty ? _lastStatuses : _selectedStatuses.toList();
+
+    final result = await HttpService.getQuotationList(
+      widget.status,
+      fromDate,
+      toDate,
+      staffIds,
+      statuses,
+    );
 
     if (result != null && result.data != null) {
       setState(() {
         quotations = result.data!;
-        _filteredQuotations = quotations;
+        // Apply local filters after fetching
+        _applyLocalFilters();
         isLoading = false;
       });
     } else {
@@ -65,15 +137,33 @@ class _QuotationPageState extends State<QuotationPage> {
     }
   }
 
+  void _applyLocalFilters() {
+    // First apply base status filter
+    List<QuotationData> tempList = _getBaseFilteredList();
+
+    // Then apply search filter if any
+    if (_searchController.text.isNotEmpty) {
+      final lowerCaseQuery = _searchController.text.toLowerCase();
+      tempList = tempList.where((quote) {
+        final customerName = quote.customerName?.toLowerCase() ?? '';
+        return customerName.contains(lowerCaseQuery);
+      }).toList();
+    }
+
+    setState(() {
+      _filteredQuotations = tempList;
+    });
+  }
+
   void _filterQuotations(String query) {
     if (query.isEmpty) {
       setState(() {
-        _filteredQuotations = quotations;
+        _filteredQuotations = _getBaseFilteredList();
       });
     } else {
       final lowerCaseQuery = query.toLowerCase();
       setState(() {
-        _filteredQuotations = quotations.where((quote) {
+        _filteredQuotations = _getBaseFilteredList().where((quote) {
           final customerName = quote.customerName?.toLowerCase() ?? '';
           return customerName.contains(lowerCaseQuery);
         }).toList();
@@ -84,11 +174,7 @@ class _QuotationPageState extends State<QuotationPage> {
   void _applyFilter(String filter) {
     setState(() {
       _selectedFilter = filter;
-      if (filter == 'All') {
-        _filteredQuotations = quotations;
-      } else {
-        _filteredQuotations = _getBaseFilteredList();
-      }
+      _filteredQuotations = _getBaseFilteredList();
       if (_searchController.text.isNotEmpty) {
         _filterQuotations(_searchController.text);
       }
@@ -97,7 +183,6 @@ class _QuotationPageState extends State<QuotationPage> {
 
   List<QuotationData> _getBaseFilteredList() {
     if (_selectedFilter == 'All') return quotations;
-
     switch (_selectedFilter) {
       case 'Pending':
         return quotations.where((quote) => quote.status == "1").toList();
@@ -132,11 +217,11 @@ class _QuotationPageState extends State<QuotationPage> {
       case "1":
         return "⏳";
       case "0":
-        return "❌"; 
+        return "❌";
       case "2":
-        return "✅"; 
+        return "✅";
       case "3":
-        return "⏸️"; 
+        return "⏸️";
       default:
         return "❓";
     }
@@ -155,6 +240,54 @@ class _QuotationPageState extends State<QuotationPage> {
       default:
         return Colors.grey;
     }
+  }
+
+  void _updateFilterTexts() {
+    // Update date filter text
+    if (_createdDateRange != null) {
+      final fromDate =
+          DateFormat('dd MMM yyyy').format(_createdDateRange!.start);
+      final toDate = DateFormat('dd MMM yyyy').format(_createdDateRange!.end);
+      _dateFilterText = '$fromDate - $toDate';
+    } else {
+      _dateFilterText = '';
+    }
+
+    // Update staff filter text
+    if (_selectedStaffIds.isNotEmpty) {
+      final selectedStaff = _staffList
+          .where((staff) => _selectedStaffIds.contains(staff.userIdStaff))
+          .map((staff) => staff.name)
+          .toList();
+      _staffFilterText = selectedStaff.length > 2
+          ? '${selectedStaff.take(2).join(', ')} +${selectedStaff.length - 2} more'
+          : selectedStaff.join(', ');
+    } else {
+      _staffFilterText = '';
+    }
+
+    // Update status filter text
+    if (_selectedStatuses.isNotEmpty) {
+      final statusMap = {
+        "1": "Pending",
+        "2": "Approved",
+        "0": "Rejected",
+        "3": "On Hold",
+      };
+      final selectedStatusNames = _selectedStatuses
+          .map((status) => statusMap[status] ?? 'Unknown')
+          .toList();
+      _statusFilterText = selectedStatusNames.length > 2
+          ? '${selectedStatusNames.take(2).join(', ')} +${selectedStatusNames.length - 2} more'
+          : selectedStatusNames.join(', ');
+    } else {
+      _statusFilterText = '';
+    }
+
+    // Check if any filters are active
+    _hasActiveFilters = _createdDateRange != null ||
+        _selectedStaffIds.isNotEmpty ||
+        _selectedStatuses.isNotEmpty;
   }
 
   Future<void> _showStatusChangeDialog(QuotationData item) async {
@@ -194,7 +327,8 @@ class _QuotationPageState extends State<QuotationPage> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _getStatusColor(currentStatus).withOpacity(0.1),
+                            color:
+                                _getStatusColor(currentStatus).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -251,7 +385,8 @@ class _QuotationPageState extends State<QuotationPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(currentStatus).withOpacity(0.1),
+                              color: _getStatusColor(currentStatus)
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -447,12 +582,13 @@ class _QuotationPageState extends State<QuotationPage> {
           ),
           child: Row(
             children: [
-              // Icon Container
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isSelected ? color.withOpacity(0.15) : color.withOpacity(0.08),
+                  color: isSelected
+                      ? color.withOpacity(0.15)
+                      : color.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -466,8 +602,6 @@ class _QuotationPageState extends State<QuotationPage> {
                 ),
               ),
               const SizedBox(width: 16),
-              
-              // Text Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,7 +630,9 @@ class _QuotationPageState extends State<QuotationPage> {
                       description,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isSelected ? color.withOpacity(0.8) : Colors.grey[600],
+                        color: isSelected
+                            ? color.withOpacity(0.8)
+                            : Colors.grey[600],
                       ),
                     ),
                   ],
@@ -509,15 +645,16 @@ class _QuotationPageState extends State<QuotationPage> {
     );
   }
 
-  Future<void> _updateQuotationStatus(String quotationId, String newStatus) async {
+  Future<void> _updateQuotationStatus(
+      String quotationId, String newStatus) async {
     setState(() => _isUpdatingStatus = true);
-    
+
     try {
       final response = await HttpService.changeQuotationStatus(
         quotationId: quotationId,
         status: newStatus,
       );
-      
+
       if (response != null && response['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -533,7 +670,7 @@ class _QuotationPageState extends State<QuotationPage> {
             margin: const EdgeInsets.all(16),
           ),
         );
-      
+
         await fetchQuotations();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -569,6 +706,98 @@ class _QuotationPageState extends State<QuotationPage> {
       );
     } finally {
       setState(() => _isUpdatingStatus = false);
+    }
+  }
+
+  Future<void> _sendQuotation(String workorderId, int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Send Quotation'),
+        content: const Text(
+          'Are you sure you want to send this quotation to the customer?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 74, 235, 227),
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isSendingQuotation = true;
+    });
+
+    try {
+      final response = await HttpService.sendQuotation(
+        workOrderId: workorderId,
+      );
+
+      if (response != null && response['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response['message'] ?? 'Quotation sent successfully',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+
+        await fetchQuotations();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response?['message'] ?? 'Failed to send quotation',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      log('Error sending quotation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error: $e',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSendingQuotation = false;
+      });
     }
   }
 
@@ -648,18 +877,17 @@ class _QuotationPageState extends State<QuotationPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
-        // Local variables for the filter sheet
         bool staffLoadingLocal = _staffLoading;
         List<Staff> filteredStaffListLocal = [];
-        
+
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            // Initialize filtered staff list
             filteredStaffListLocal = _staffList.where((staff) {
-              return staff.name.toLowerCase().contains(_staffSearch.toLowerCase());
+              return staff.name
+                  .toLowerCase()
+                  .contains(_staffSearch.toLowerCase());
             }).toList();
-            
-            // Function to load staffs if needed
+
             Future<void> loadStaffsIfNeeded() async {
               if (_staffList.isEmpty && !staffLoadingLocal) {
                 setSheetState(() => staffLoadingLocal = true);
@@ -672,14 +900,15 @@ class _QuotationPageState extends State<QuotationPage> {
                 setSheetState(() => staffLoadingLocal = false);
               }
             }
-            
-            // Load staffs when the sheet opens
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_selectedTabIndex == 1 && _staffList.isEmpty && !staffLoadingLocal) {
+              if (_selectedTabIndex == 1 &&
+                  _staffList.isEmpty &&
+                  !staffLoadingLocal) {
                 loadStaffsIfNeeded();
               }
             });
-            
+
             return SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
               child: Column(
@@ -691,8 +920,8 @@ class _QuotationPageState extends State<QuotationPage> {
                         _filterTabs(setSheetState, loadStaffsIfNeeded),
                         Expanded(
                           child: _filterContent(
-                            setSheetState, 
-                            staffLoadingLocal, 
+                            setSheetState,
+                            staffLoadingLocal,
                             filteredStaffListLocal,
                             loadStaffsIfNeeded,
                           ),
@@ -700,7 +929,7 @@ class _QuotationPageState extends State<QuotationPage> {
                       ],
                     ),
                   ),
-                  _applyFilterButton(),
+                  _applyFilterButton(setSheetState),
                 ],
               ),
             );
@@ -712,24 +941,24 @@ class _QuotationPageState extends State<QuotationPage> {
 
   Widget _filterHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          const Text(
-            "Filters",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      )
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Text(
+              "Filters",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ));
   }
 
-  Widget _filterTabs(StateSetter setSheetState, Future<void> Function() loadStaffsIfNeeded) {
+  Widget _filterTabs(
+      StateSetter setSheetState, Future<void> Function() loadStaffsIfNeeded) {
     final tabs = [
       ("Created Date", Icons.calendar_today),
       ("Created By", Icons.person_outline),
@@ -785,12 +1014,21 @@ class _QuotationPageState extends State<QuotationPage> {
     );
   }
 
-  Widget _createdDateFilter() {
+  Widget _createdDateFilter(StateSetter setSheetState) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            "Select Date Range",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 16),
           _dateField(
             label: "From",
             date: _createdDateRange?.start,
@@ -802,7 +1040,7 @@ class _QuotationPageState extends State<QuotationPage> {
                 lastDate: DateTime.now(),
               );
               if (picked != null) {
-                setState(() {
+                setSheetState(() {
                   _createdDateRange = DateTimeRange(
                     start: picked,
                     end: _createdDateRange?.end ?? picked,
@@ -823,7 +1061,7 @@ class _QuotationPageState extends State<QuotationPage> {
                 lastDate: DateTime.now(),
               );
               if (picked != null) {
-                setState(() {
+                setSheetState(() {
                   _createdDateRange = DateTimeRange(
                     start: _createdDateRange?.start ?? picked,
                     end: picked,
@@ -832,6 +1070,41 @@ class _QuotationPageState extends State<QuotationPage> {
               }
             },
           ),
+          if (_createdDateRange != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_month, color: Colors.blue, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "${DateFormat('dd MMM yyyy').format(_createdDateRange!.start)} - ${DateFormat('dd MMM yyyy').format(_createdDateRange!.end)}",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue[800],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.clear, size: 18, color: Colors.red),
+                    onPressed: () {
+                      setSheetState(() {
+                        _createdDateRange = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -855,7 +1128,7 @@ class _QuotationPageState extends State<QuotationPage> {
             const Icon(Icons.calendar_month, color: Colors.blue),
             const SizedBox(width: 12),
             Text(
-              "$label : ",
+              "$label: ",
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
             Text(
@@ -878,11 +1151,11 @@ class _QuotationPageState extends State<QuotationPage> {
   ) {
     switch (_selectedTabIndex) {
       case 0:
-        return _createdDateFilter();
+        return _createdDateFilter(setSheetState);
       case 1:
         return _createdByFilter(
-          setSheetState, 
-          staffLoadingLocal, 
+          setSheetState,
+          staffLoadingLocal,
           filteredStaffListLocal,
           loadStaffsIfNeeded,
         );
@@ -932,6 +1205,28 @@ class _QuotationPageState extends State<QuotationPage> {
             },
           ),
         ),
+        if (_selectedStaffIds.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _staffList
+                  .where(
+                      (staff) => _selectedStaffIds.contains(staff.userIdStaff))
+                  .map((staff) => Chip(
+                        label: Text(staff.name),
+                        deleteIcon: Icon(Icons.clear, size: 16),
+                        onDeleted: () {
+                          setSheetState(() {
+                            _selectedStaffIds.remove(staff.userIdStaff);
+                          });
+                        },
+                        backgroundColor: Colors.blue.withOpacity(0.1),
+                      ))
+                  .toList(),
+            ),
+          ),
         Expanded(
           child: filteredStaffListLocal.isEmpty && _staffList.isEmpty
               ? Column(
@@ -951,7 +1246,8 @@ class _QuotationPageState extends State<QuotationPage> {
                 )
               : ListView(
                   children: filteredStaffListLocal.map((staff) {
-                    final selected = _selectedStaffIds.contains(staff.userIdStaff);
+                    final selected =
+                        _selectedStaffIds.contains(staff.userIdStaff);
                     return CheckboxListTile(
                       value: selected,
                       onChanged: (val) {
@@ -980,27 +1276,61 @@ class _QuotationPageState extends State<QuotationPage> {
       "On Hold": "3",
     };
 
-    return ListView(
-      padding: const EdgeInsets.only(top: 8),
-      children: statuses.entries.map((e) {
-        return CheckboxListTile(
-          title: Text(e.key),
-          value: _selectedStatuses.contains(e.value),
-          onChanged: (val) {
-            setSheetState(() {
-              val!
-                  ? _selectedStatuses.add(e.value)
-                  : _selectedStatuses.remove(e.value);
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-          dense: true,
-        );
-      }).toList(),
+    return Column(
+      children: [
+        if (_selectedStatuses.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _selectedStatuses.map((status) {
+                final statusName = statuses.entries
+                    .firstWhere((entry) => entry.value == status,
+                        orElse: () => MapEntry("Unknown", "0"))
+                    .key;
+                return Chip(
+                  label: Text(statusName),
+                  deleteIcon: Icon(Icons.clear, size: 16),
+                  onDeleted: () {
+                    setSheetState(() {
+                      _selectedStatuses.remove(status);
+                    });
+                  },
+                  backgroundColor: _getStatusColor(status).withOpacity(0.1),
+                  labelStyle: TextStyle(
+                    color: _getStatusColor(status),
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(top: 8),
+            children: statuses.entries.map((e) {
+              return CheckboxListTile(
+                title: Text(e.key),
+                value: _selectedStatuses.contains(e.value),
+                onChanged: (val) {
+                  setSheetState(() {
+                    val!
+                        ? _selectedStatuses.add(e.value)
+                        : _selectedStatuses.remove(e.value);
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _applyFilterButton() {
+  Widget _applyFilterButton(StateSetter setSheetState) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
@@ -1016,6 +1346,9 @@ class _QuotationPageState extends State<QuotationPage> {
           ),
           child: const Text("Apply Filters"),
           onPressed: () {
+            // Save filter criteria
+            _saveFilterCriteria();
+            _updateFilterTexts();
             Navigator.pop(context);
             _applyAdvancedFilters();
           },
@@ -1024,33 +1357,80 @@ class _QuotationPageState extends State<QuotationPage> {
     );
   }
 
-  Future<void> _applyAdvancedFilters() async {
-    setState(() => isLoading = true);
-    final fromDate = _createdDateRange?.start != null
+  void _saveFilterCriteria() {
+    // Save the current filter criteria
+    _lastFromDate = _createdDateRange?.start != null
         ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.start)
         : null;
 
-    final toDate = _createdDateRange?.end != null
+    _lastToDate = _createdDateRange?.end != null
         ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.end)
         : null;
+
+    _lastStaffIds = _selectedStaffIds.toList();
+    _lastStatuses = _selectedStatuses.toList();
+  }
+
+  Future<void> _applyAdvancedFilters() async {
+    setState(() => isLoading = true);
+
+    // Use saved criteria
+    final fromDate = _lastFromDate ??
+        (_createdDateRange?.start != null
+            ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.start)
+            : null);
+
+    final toDate = _lastToDate ??
+        (_createdDateRange?.end != null
+            ? DateFormat("yyyy-MM-dd").format(_createdDateRange!.end)
+            : null);
+
+    final staffIds =
+        _lastStaffIds.isNotEmpty ? _lastStaffIds : _selectedStaffIds.toList();
+    final statuses =
+        _lastStatuses.isNotEmpty ? _lastStatuses : _selectedStatuses.toList();
 
     final result = await HttpService.getQuotationList(
       widget.status,
       fromDate,
       toDate,
-      _selectedStaffIds.toList(),
-      _selectedStatuses.toList(),
+      staffIds,
+      statuses,
     );
 
     if (result != null && result.data != null) {
       setState(() {
         quotations = result.data!;
-        _filteredQuotations = quotations;
+        _applyLocalFilters(); // Apply local filters after fetching
         isLoading = false;
       });
     } else {
       setState(() => isLoading = false);
     }
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _createdDateRange = null;
+      _selectedStaffIds.clear();
+      _selectedStatuses.clear();
+      _selectedFilter = 'All';
+      _searchController.clear();
+      _hasActiveFilters = false;
+      _dateFilterText = '';
+      _staffFilterText = '';
+      _statusFilterText = '';
+
+      // Clear saved criteria
+      _lastFromDate = null;
+      _lastToDate = null;
+      _lastStaffIds.clear();
+      _lastStatuses.clear();
+
+      _filteredQuotations = quotations;
+    });
+    // Fetch fresh data without filters
+    fetchQuotations();
   }
 
   @override
@@ -1064,8 +1444,18 @@ class _QuotationPageState extends State<QuotationPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text(
-          'Quotations',
+        title: Text(
+          widget.status == "All"
+              ? 'Total Quotations'
+              : widget.status == 0
+                  ? "Rejected Quotation"
+                  : widget.status == 1
+                      ? "Pending Quotation"
+                      : widget.status == 2
+                          ? "Approved Quotation"
+                          : widget.status == 3
+                              ? "On Hold Quotation"
+                              : "Total Quotations",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -1086,7 +1476,7 @@ class _QuotationPageState extends State<QuotationPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddQuotationPage()),
+                MaterialPageRoute(builder: (_) => AddQuotationPage()),
               ).then((_) => fetchQuotations());
             },
           ),
@@ -1104,10 +1494,103 @@ class _QuotationPageState extends State<QuotationPage> {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // if (_hasActiveFilters)
+          //   Container(
+          //     margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          //     padding: const EdgeInsets.all(12),
+          //     decoration: BoxDecoration(
+          //       color: Colors.blue.withOpacity(0.05),
+          //       borderRadius: BorderRadius.circular(12),
+          //       border: Border.all(color: Colors.blue.withOpacity(0.2)),
+          //     ),
+          //     child: Column(
+          //       crossAxisAlignment: CrossAxisAlignment.start,
+          //       children: [
+          //         Row(
+          //           children: [
+          //             Icon(Icons.filter_alt, size: 16, color: Colors.blue),
+          //             const SizedBox(width: 6),
+          //             Text(
+          //               'Active Filters',
+          //               style: TextStyle(
+          //                 fontSize: 14,
+          //                 fontWeight: FontWeight.w600,
+          //                 color: Colors.blue[800],
+          //               ),
+          //             ),
+          //             const Spacer(),
+          //             GestureDetector(
+          //               onTap: _clearAllFilters,
+          //               child: Row(
+          //                 children: [
+          //                   Icon(Icons.clear_all, size: 16, color: Colors.red),
+          //                   const SizedBox(width: 4),
+          //                   Text(
+          //                     'Clear All',
+          //                     style: TextStyle(
+          //                       fontSize: 13,
+          //                       color: Colors.red,
+          //                       fontWeight: FontWeight.w500,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //         const SizedBox(height: 8),
+          //         if (_dateFilterText.isNotEmpty)
+          //           _buildFilterChipDisplay(
+          //             icon: Icons.calendar_today,
+          //             label: 'Date:',
+          //             value: _dateFilterText,
+          //             onClear: () {
+          //               setState(() {
+          //                 _createdDateRange = null;
+          //                 _lastFromDate = null;
+          //                 _lastToDate = null;
+          //                 _updateFilterTexts();
+          //               });
+          //               fetchQuotations();
+          //             },
+          //           ),
+          //         if (_staffFilterText.isNotEmpty)
+          //           _buildFilterChipDisplay(
+          //             icon: Icons.person,
+          //             label: 'Created By:',
+          //             value: _staffFilterText,
+          //             onClear: () {
+          //               setState(() {
+          //                 _selectedStaffIds.clear();
+          //                 _lastStaffIds.clear();
+          //                 _updateFilterTexts();
+          //               });
+          //               fetchQuotations();
+          //             },
+          //           ),
+          //         if (_statusFilterText.isNotEmpty)
+          //           _buildFilterChipDisplay(
+          //             icon: Icons.flag,
+          //             label: 'Status:',
+          //             value: _statusFilterText,
+          //             onClear: () {
+          //               setState(() {
+          //                 _selectedStatuses.clear();
+          //                 _lastStatuses.clear();
+          //                 _updateFilterTexts();
+          //               });
+          //               fetchQuotations();
+          //             },
+          //           ),
+          //       ],
+          //     ),
+          //   ),
+
+          const SizedBox(height: 12),
           if (!isLoading)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding:
+                  EdgeInsets.fromLTRB(16, _hasActiveFilters ? 0 : 16, 16, 8),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -1216,7 +1699,9 @@ class _QuotationPageState extends State<QuotationPage> {
 
           // Results count
           if (!isLoading &&
-              (_searchController.text.isNotEmpty || _selectedFilter != 'All'))
+              (_searchController.text.isNotEmpty ||
+                  _selectedFilter != 'All' ||
+                  _hasActiveFilters))
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -1230,19 +1715,23 @@ class _QuotationPageState extends State<QuotationPage> {
                     ),
                   ),
                   const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      _searchController.clear();
-                      _applyFilter('All');
-                    },
-                    child: const Text(
-                      'Clear',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
+                  if (_searchController.text.isNotEmpty ||
+                      _selectedFilter != 'All' ||
+                      _hasActiveFilters)
+                    TextButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        _applyFilter('All');
+                        _clearAllFilters();
+                      },
+                      child: const Text(
+                        'Clear All',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1311,11 +1800,31 @@ class _QuotationPageState extends State<QuotationPage> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Text(
-                                                  item.customerName ?? "-",
-                                                  style: const TextStyle(
-                                                    fontSize: 16.5,
-                                                    fontWeight: FontWeight.bold,
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            CustomerDashboard(
+                                                                name: name,
+                                                                token: token,
+                                                                userId: userId,
+                                                                phoneCallLogPermission:
+                                                                    phoneCallLogPermission,
+                                                                custId: item
+                                                                    .customerId
+                                                                    .toString()),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text(
+                                                    item.customerName ?? "-",
+                                                    style: const TextStyle(
+                                                      fontSize: 16.5,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -1333,6 +1842,125 @@ class _QuotationPageState extends State<QuotationPage> {
                                                     color: Colors.black87,
                                                   ),
                                                 ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      'Quotation id: ${item.quotationMainId ?? "-"}',
+                                                      style: const TextStyle(
+                                                        fontSize: 13.5,
+                                                        color: Colors.black87,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 25,
+                                                    ),
+                                                    item.type == "Created"
+                                                        ? Row(
+                                                            children: const [
+                                                              Icon(
+                                                                  Icons
+                                                                      .check_circle,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .green),
+                                                              SizedBox(
+                                                                  width: 5),
+                                                              Text(
+                                                                'Created',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      13.5,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          )
+                                                        : Row(
+                                                            children: const [
+                                                              Icon(
+                                                                  Icons
+                                                                      .cloud_upload,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .blue),
+                                                              SizedBox(
+                                                                  width: 5),
+                                                              Text(
+                                                                'Uploaded',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      13.5,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          )
+                                                  ],
+                                                ),
+                                                if (item.isSend == "1")
+                                                  Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            top: 4),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.green.shade50,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .green.shade200,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.check_circle,
+                                                          size: 12,
+                                                          color: Colors
+                                                              .green.shade700,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 4),
+                                                        Text(
+                                                          'Sent',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors
+                                                                .green.shade700,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 4),
+                                                        Icon(
+                                                          Icons.send,
+                                                          size: 10,
+                                                          color: Colors
+                                                              .green.shade700,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
                                               ],
                                             ),
                                           ),
@@ -1425,28 +2053,78 @@ class _QuotationPageState extends State<QuotationPage> {
                                             MainAxisAlignment.end,
                                         children: [
                                           const SizedBox(width: 10),
-
-                                          _actionButton(
-                                            color: const Color.fromARGB(
-                                                255, 106, 144, 214),
-                                            icon: Icons.remove_red_eye,
-                                            tooltip: 'view',
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) => PdfViewPage(
-                                                    quotationId:
-                                                        item.workorderId ?? '',
-                                                    type: item.type ?? '',
+                                          Tooltip(
+                                            message: 'View PDF',
+                                            child: InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => PdfViewPage(
+                                                      quotationId:
+                                                          item.workorderId ??
+                                                              '',
+                                                      type: item.type ?? '',
+                                                    ),
                                                   ),
+                                                );
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Container(
+                                                width: 100,
+                                                height: 38,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      const Color.fromARGB(
+                                                          255, 50, 151, 218),
+                                                      const Color.fromARGB(
+                                                          255, 50, 151, 218),
+                                                    ],
+                                                    begin: Alignment.centerLeft,
+                                                    end: Alignment.centerRight,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.blue
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 6,
+                                                      offset:
+                                                          const Offset(0, 3),
+                                                    ),
+                                                  ],
                                                 ),
-                                              );
-                                            },
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.picture_as_pdf,
+                                                      color: Colors.white,
+                                                      size: 18,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'View',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(width: 10),
                                           _actionButton(
-                                            color: const Color(0xFF425DF5),
+                                            color: const Color.fromARGB(
+                                                255, 50, 151, 218),
                                             icon: Icons.edit_outlined,
                                             tooltip: 'Edit',
                                             onTap: () {
@@ -1507,7 +2185,46 @@ class _QuotationPageState extends State<QuotationPage> {
                                                   onTap: () => _deleteQuotation(
                                                       item.workorderId!, index),
                                                 ),
-
+                                          const SizedBox(width: 10),
+                                          _isSendingQuotation
+                                              ? Container(
+                                                  width: 38,
+                                                  height: 38,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[300],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: const Padding(
+                                                    padding:
+                                                        EdgeInsets.all(8.0),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                              Color>(
+                                                        Color.fromARGB(
+                                                            255, 74, 235, 227),
+                                                      ),
+                                                    ),
+                                                  ))
+                                              : _actionButton(
+                                                  color: const Color.fromARGB(
+                                                      255, 74, 235, 227),
+                                                  icon: item.isSend == "1"
+                                                      ? Icons.check
+                                                      : Icons.send,
+                                                  tooltip: item.isSend == "1"
+                                                      ? 'Already Sent'
+                                                      : 'Send Quotation',
+                                                  onTap: item.isSend == "1"
+                                                      ? null
+                                                      : () => _sendQuotation(
+                                                          item.workorderId!,
+                                                          index),
+                                                ),
                                         ],
                                       ),
                                     ],
@@ -1518,6 +2235,54 @@ class _QuotationPageState extends State<QuotationPage> {
                           },
                         ),
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChipDisplay({
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onClear,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Colors.blue),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onClear,
+            child: Icon(Icons.clear, size: 16, color: Colors.grey),
           ),
         ],
       ),
@@ -1535,7 +2300,9 @@ class _QuotationPageState extends State<QuotationPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (_searchController.text.isNotEmpty)
+                if (_searchController.text.isNotEmpty ||
+                    _hasActiveFilters ||
+                    _selectedFilter != 'All')
                   Icon(
                     Icons.search_off,
                     size: 80,
@@ -1548,12 +2315,36 @@ class _QuotationPageState extends State<QuotationPage> {
                     color: Colors.grey[400],
                   ),
                 const SizedBox(height: 16),
+                Text(
+                  _searchController.text.isNotEmpty ||
+                          _hasActiveFilters ||
+                          _selectedFilter != 'All'
+                      ? "No matching quotations found"
+                      : "No quotations found",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _searchController.text.isNotEmpty
+                      ? "Try a different search term"
+                      : _hasActiveFilters || _selectedFilter != 'All'
+                          ? "Try adjusting your filters"
+                          : "Add or upload a quotation to get started",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (_) => const AddQuotationPage()),
+                      MaterialPageRoute(builder: (_) => AddQuotationPage()),
                     ).then((_) => fetchQuotations());
                   },
                   icon: const Icon(Icons.add, size: 18),
@@ -1568,26 +2359,19 @@ class _QuotationPageState extends State<QuotationPage> {
                         horizontal: 24, vertical: 12),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _searchController.text.isNotEmpty
-                      ? "Try a different search term"
-                      : "Add or upload a quotation to get started",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                if (_searchController.text.isNotEmpty)
+                if (_searchController.text.isNotEmpty ||
+                    _hasActiveFilters ||
+                    _selectedFilter != 'All')
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         _searchController.clear();
-                        _filterQuotations('');
+                        _applyFilter('All');
+                        _clearAllFilters();
                       },
                       icon: const Icon(Icons.clear_all, size: 18),
-                      label: const Text('Clear Search'),
+                      label: const Text('Clear All Filters'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
@@ -1609,7 +2393,7 @@ class _QuotationPageState extends State<QuotationPage> {
     required Color color,
     required IconData icon,
     required String tooltip,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return Tooltip(
       message: tooltip,
@@ -1620,10 +2404,11 @@ class _QuotationPageState extends State<QuotationPage> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: color,
+            color: onTap == null ? Colors.grey[300] : color,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: Colors.white, size: 18),
+          child: Icon(icon,
+              color: onTap == null ? Colors.grey : Colors.white, size: 18),
         ),
       ),
     );
@@ -1687,29 +2472,28 @@ class QuotationDetailsPage extends StatelessWidget {
 
   Widget _detailItem(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              "$label:",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.black87,
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Text(
+                "$label:",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 15, color: Colors.black54),
+            Expanded(
+              flex: 5,
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 15, color: Colors.black54),
+              ),
             ),
-          ),
-        ],
-      )
-    );
+          ],
+        ));
   }
 }

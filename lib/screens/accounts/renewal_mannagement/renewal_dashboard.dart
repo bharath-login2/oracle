@@ -381,6 +381,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RenewalList(
+                                       custId: "",
                                       title: "Current Month",
                                       searchKey: "current_month",
                                       searchMonth: "",
@@ -414,6 +415,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RenewalList(
+                                       custId: "",
                                       title: "Next Month",
                                       searchKey: "next_month",
                                       searchMonth: "",
@@ -447,6 +449,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RenewalList(
+                                       custId: "",
                                       title: "Current Year",
                                       searchKey: "current_year",
                                       searchMonth: "",
@@ -480,6 +483,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RenewalList(
+                                       custId: "",
                                       title: "Expired",
                                       searchMonth: "",
                                       searchKey: "expired",
@@ -590,6 +594,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => RenewalList(
+                                                 custId: "",
                                                 title: renewalDashboard!.data
                                                     .monthReport[index].label,
                                                 searchKey: "",

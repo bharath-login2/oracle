@@ -62,9 +62,12 @@ class _EditInvoiceState extends State<EditInvoice> {
   TextEditingController remarks = TextEditingController();
   TextEditingController search = TextEditingController();
 
+
+  
+
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
-  double totalTaxAmount = 00;
+  double totalTaxAmount = 0.00;
   double allTotal = 0.00;
   bool isPaying = false;
   dynamic paymentMethod;
@@ -80,7 +83,7 @@ class _EditInvoiceState extends State<EditInvoice> {
   var code = '91';
   bool isLoading = true;
   String? errorMessage;
-
+  bool _initialDataLoaded = false;
   void toggleTextFieldVisibility() {
     setState(() {
       isTextFieldVisible = !isTextFieldVisible;
@@ -93,15 +96,28 @@ class _EditInvoiceState extends State<EditInvoice> {
       headerContent = !headerContent;
     });
   }
-
+void _resetAddProductForm() {
+  productName = "Choose Product";
+  productId = "";
+  productDescription.clear();
+  productRate.clear();
+  productQty.clear();
+  productTaxPercent.clear();
+  productTaxAmount.clear();
+  productTotalAmount.clear();
+}
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
   }
 
   getData() async {
+    // Only load initial data once
+    if (_initialDataLoaded && products.isNotEmpty) {
+      return;
+    }
+
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -198,29 +214,48 @@ class _EditInvoiceState extends State<EditInvoice> {
             DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
 
         items = invDetails!.data.products;
+        filteredItems.clear(); // Clear first to avoid duplication
         filteredItems.addAll(items);
 
         if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-          for (int i = 0;
-              i < invoiceEditDetails!.data!.productDetails!.length;
-              i++) {
-            products.add({
-              "product_name":
-                  invoiceEditDetails!.data!.productDetails![i].productName,
-              "product_id":
-                  invoiceEditDetails!.data!.productDetails![i].productId,
-              "description": invoiceEditDetails!
-                  .data!.productDetails![i].productDescription,
-              "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
-              "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
-              "tax_percent":
-                  invoiceEditDetails!.data!.productDetails![i].taxPercentage,
-              "total_tax_amount":
-                  invoiceEditDetails!.data!.productDetails![i].taxAmount,
-              "total_amount":
-                  invoiceEditDetails!.data!.productDetails![i].amount,
-            });
+          // Only clear and reload products on initial load
+          if (products.isEmpty) {
+            products.clear();
+            for (int i = 0;
+                i < invoiceEditDetails!.data!.productDetails!.length;
+                i++) {
+              double rate = double.parse(
+                  invoiceEditDetails!.data!.productDetails![i].rate.toString());
+              double qty = double.parse(
+                  invoiceEditDetails!.data!.productDetails![i].qty.toString());
+              double taxPercent = double.parse(invoiceEditDetails!
+                  .data!.productDetails![i].taxPercentage
+                  .toString());
+              double taxPerUnit = (rate * taxPercent) / 100;
+              double amountExcludingTax = rate * qty;
+              double totalTaxForProduct = taxPerUnit * qty;
+              double totalAmountWithTax =
+                  amountExcludingTax + totalTaxForProduct;
+
+              products.add({
+                "product_name":
+                    invoiceEditDetails!.data!.productDetails![i].productName,
+                "product_id":
+                    invoiceEditDetails!.data!.productDetails![i].productId,
+                "description": invoiceEditDetails!
+                    .data!.productDetails![i].productDescription,
+                "product_rate": rate.toStringAsFixed(2),
+                "quantity": qty.toStringAsFixed(2),
+                "tax_percent": taxPercent.toStringAsFixed(2),
+                "tax_per_unit": taxPerUnit.toStringAsFixed(2),
+                "total_tax_amount": totalTaxForProduct.toStringAsFixed(2),
+                "total_amount":
+                    totalAmountWithTax.toStringAsFixed(2), // Store WITH tax
+              });
+            }
           }
+
+          // Always update totals from server
           subTotal =
               double.parse(invoiceEditDetails!.data!.subTotal.toString());
           totalTaxAmount =
@@ -236,6 +271,7 @@ class _EditInvoiceState extends State<EditInvoice> {
       }
       setState(() {
         isLoading = false;
+        _initialDataLoaded = true;
       });
     } catch (e) {
       print('Error in getData: $e');
@@ -246,120 +282,6 @@ class _EditInvoiceState extends State<EditInvoice> {
     }
   }
 
-  // getData() async {
-  //   setState(() {
-  //     isLoading = true;
-  //     errorMessage = null;
-  //   });
-  //   final connectivityResult = await (Connectivity().checkConnectivity());
-  //   if (connectivityResult == ConnectivityResult.mobile ||
-  //       connectivityResult == ConnectivityResult.wifi) {
-  //     setState(() {
-  //       result = true;
-  //     });
-  //   } else {
-  //     setState(() {
-  //       result = false;
-  //     });
-  //   }
-
-  //   invDetails =
-  //       await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
-  //   if (invDetails == null) {
-  //     setState(() {
-  //       errorMessage = 'Failed to load common details';
-  //       isLoading = false;
-  //     });
-  //     return;
-  //   }
-  //   invoiceEditDetails =
-  //       await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
-  //   if (invoiceEditDetails != null) {
-  //     billingName.text =
-  //         invoiceEditDetails!.data!.billingAddress!.billingName.toString();
-  //     billingAddress.text =
-  //         invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
-  //     billingPhone.text =
-  //         invoiceEditDetails!.data!.billingAddress!.billingContactNo.toString();
-  //     billingGstNo.text =
-  //         invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
-  //     billingPinCode.text =
-  //         invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
-  //     billingPostOffice.text = invoiceEditDetails!
-  //         .data!.billingAddress!.billingPostOffice
-  //         .toString();
-  //     if (billingPinCode.text != '') {
-  //       billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
-  //     }
-  //     if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
-  //             .toString() !=
-  //         '') {
-  //       code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
-  //           .toString();
-  //     }
-
-  //     shippingName.text =
-  //         invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
-  //     shippingAddress.text =
-  //         invoiceEditDetails!.data!.shippingAddress!.shippingAddress.toString();
-  //     shippingPhone.text = invoiceEditDetails!
-  //         .data!.shippingAddress!.shippingContactNo
-  //         .toString();
-  //     shippingGstNo.text =
-  //         invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
-  //     shippingPinCode.text =
-  //         invoiceEditDetails!.data!.shippingAddress!.shippingPincode.toString();
-  //     shippingPostOffice.text = invoiceEditDetails!
-  //         .data!.shippingAddress!.shippingPostOffice
-  //         .toString();
-  //     if (shippingPinCode.text != '') {
-  //       shippingPostal =
-  //           await HttpService.fetchPostOffice(shippingPinCode.text);
-  //     }
-
-  //     invoiceNumber.text = invoiceEditDetails!.data!.displayInvoice.toString();
-  //     fromdate =
-  //         DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
-
-  //     items = invDetails!.data.products;
-  //     filteredItems.addAll(items);
-
-  //     if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-  //       for (int i = 0;
-  //           i < invoiceEditDetails!.data!.productDetails!.length;
-  //           i++) {
-  //         products.add({
-  //           "product_name":
-  //               invoiceEditDetails!.data!.productDetails![i].productName,
-  //           "product_id":
-  //               invoiceEditDetails!.data!.productDetails![i].productId,
-  //           "description":
-  //               invoiceEditDetails!.data!.productDetails![i].productDescription,
-  //           "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
-  //           "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
-  //           "tax_percent":
-  //               invoiceEditDetails!.data!.productDetails![i].taxPercentage,
-  //           "total_tax_amount":
-  //               invoiceEditDetails!.data!.productDetails![i].taxAmount,
-  //           "total_amount": invoiceEditDetails!.data!.productDetails![i].amount,
-  //         });
-  //       }
-  //       subTotal = double.parse(invoiceEditDetails!.data!.subTotal.toString());
-  //       totalTaxAmount =
-  //           double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
-  //       discount.text = invoiceEditDetails!.data!.discountAmount.toString();
-  //       shippingCharge.text =
-  //           invoiceEditDetails!.data!.shippingAmount.toString();
-  //       allTotal = double.parse(
-  //           invoiceEditDetails!.data!.totalInvoiceAmount.toString());
-  //       remarks.text = invoiceEditDetails!.data!.remarks.toString();
-  //     }
-  //     isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
-
-  //     setState(() {});
-  //   }
-  // }
-
   void _editProduct(int index) {
     // Populate the form fields with existing product data
     productName = products[index]['product_name'];
@@ -368,8 +290,8 @@ class _EditInvoiceState extends State<EditInvoice> {
     productRate.text = products[index]['product_rate'];
     productQty.text = products[index]['quantity'];
     productTaxPercent.text = products[index]['tax_percent'];
-    productTaxAmount.text =
-        products[index]['tax_per_unit'] ?? products[index]['total_tax_amount'];
+    productTaxAmount.text = products[index]['tax_per_unit'];
+    // Set total amount WITH tax
     productTotalAmount.text = products[index]['total_amount'];
 
     // Store the index of the product being edited
@@ -383,6 +305,29 @@ class _EditInvoiceState extends State<EditInvoice> {
       context: context,
       pageBuilder: (context, _, __) {
         return StatefulBuilder(builder: (context, setState) {
+          // Calculation function for product editing
+          void productCalculation() {
+            if (productRate.text.isNotEmpty && productQty.text.isNotEmpty) {
+              double rate = double.parse(productRate.text);
+              double qty = double.parse(productQty.text);
+              double taxPercent = productTaxPercent.text.isNotEmpty
+                  ? double.parse(productTaxPercent.text)
+                  : 0.0;
+
+              // Calculate tax per unit
+              double taxPerUnit = (rate * taxPercent) / 100;
+              productTaxAmount.text = taxPerUnit.toStringAsFixed(2);
+
+              // Calculate total amount WITH tax
+              double amountExcludingTax = rate * qty;
+              double totalTaxForProduct = taxPerUnit * qty;
+              double totalAmountWithTax =
+                  amountExcludingTax + totalTaxForProduct;
+
+              productTotalAmount.text = totalAmountWithTax.toStringAsFixed(2);
+            }
+          }
+
           return Align(
             alignment: Alignment.center,
             child: SingleChildScrollView(
@@ -435,6 +380,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                           builder: (context) {
                             return StatefulBuilder(
                                 builder: (context, setState) {
+                              // Create a LOCAL list for searching within this dialog only
+                              List<Product> localFilteredItems = [];
+                              localFilteredItems
+                                  .addAll(items); // Start with all items
+
                               return AlertDialog(
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -449,7 +399,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                         autofocus: true,
                                         onChanged: (value) {
                                           setState(() {
-                                            filteredItems = items
+                                            // Use local list, not class-level filteredItems
+                                            localFilteredItems = items
                                                 .where((item) => item
                                                     .productName
                                                     .toLowerCase()
@@ -472,56 +423,62 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       width: MediaQuery.of(context).size.width *
                                           .8,
                                       child: ListView.builder(
-                                        itemCount: filteredItems.length,
+                                        itemCount: localFilteredItems
+                                            .length, // Use local list
                                         physics: const ScrollPhysics(),
                                         shrinkWrap: true,
                                         itemBuilder: (context, index) {
                                           return ListTile(
-                                              onTap: () {
-                                                if (productQty.text == "") {
-                                                  productQty.text = "1";
-                                                }
-                                                productName =
-                                                    filteredItems[index]
-                                                        .productName;
-                                                productId =
-                                                    filteredItems[index].id;
-                                                productRate.text =
-                                                    filteredItems[index]
-                                                        .sellingPrice;
-                                                productTaxPercent.text =
-                                                    filteredItems[index]
-                                                        .taxPercent;
-                                                productTaxAmount.text =
-                                                    filteredItems[index]
-                                                        .taxAmount;
-                                                productTotalAmount
-                                                    .text = ((double.parse(
-                                                            productRate.text)) *
-                                                        double.parse(
-                                                            productQty.text))
-                                                    .toString();
-                                                productTotalAmountTax
-                                                    .text = ((double.parse(
-                                                                productRate
-                                                                    .text) +
-                                                            double.parse(
-                                                                productTaxAmount
-                                                                    .text)) *
-                                                        double.parse(
-                                                            productQty.text))
-                                                    .toString();
-                                                productTotalAmount
-                                                    .text = double.parse(
-                                                        productTotalAmount.text)
-                                                    .toStringAsFixed(2);
-                                                setState(() {});
-                                                if (context.mounted) {
-                                                  Navigator.pop(context);
-                                                }
-                                              },
-                                              title: Text(filteredItems[index]
-                                                  .productName));
+                                            onTap: () {
+                                              if (productQty.text == "") {
+                                                productQty.text = "1";
+                                              }
+                                              productName = localFilteredItems[
+                                                      index] // Use local list
+                                                  .productName;
+                                              productId =
+                                                  localFilteredItems[index]
+                                                      .id; // Use local list
+                                              productRate
+                                                  .text = localFilteredItems[
+                                                      index] // Use local list
+                                                  .sellingPrice;
+                                              productTaxPercent
+                                                  .text = localFilteredItems[
+                                                      index] // Use local list
+                                                  .taxPercent;
+
+                                              // Calculate based on current quantity
+                                              double rate = double.parse(
+                                                  productRate.text);
+                                              double qty =
+                                                  double.parse(productQty.text);
+                                              double taxPercent = double.parse(
+                                                  productTaxPercent.text);
+                                              double taxPerUnit =
+                                                  (rate * taxPercent) / 100;
+                                              double amountExcludingTax =
+                                                  rate * qty;
+                                              double totalTaxForProduct =
+                                                  taxPerUnit * qty;
+                                              double totalAmountWithTax =
+                                                  amountExcludingTax +
+                                                      totalTaxForProduct;
+
+                                              productTaxAmount.text =
+                                                  taxPerUnit.toStringAsFixed(2);
+                                              productTotalAmount.text =
+                                                  totalAmountWithTax
+                                                      .toStringAsFixed(2);
+                                              setState(() {});
+                                              if (context.mounted) {
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                            title: Text(localFilteredItems[
+                                                    index]
+                                                .productName), // Use local list
+                                          );
                                         },
                                       ),
                                     )
@@ -529,12 +486,13 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 ),
                                 actions: [
                                   TextButton(
-                                      onPressed: () {
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: const Text("Close")),
+                                    onPressed: () {
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                    child: const Text("Close"),
+                                  ),
                                 ],
                               );
                             });
@@ -644,16 +602,36 @@ class _EditInvoiceState extends State<EditInvoice> {
                           ),
                         ),
                         const SizedBox(width: 10),
+                        // SizedBox(
+                        //   width: MediaQuery.of(context).size.width * 0.31,
+                        //   child: TextFormField(
+                        //     controller: productTaxAmount,
+                        //     keyboardType: TextInputType.number,
+                        //     readOnly: true,
+                        //     decoration: const InputDecoration(
+                        //         contentPadding: EdgeInsets.only(
+                        //             left: 10, top: 2, bottom: 2),
+                        //         labelText: 'Tax Amount',
+                        //         fillColor: Colors.white,
+                        //         filled: true,
+                        //         border: OutlineInputBorder(),
+                        //         focusedBorder: OutlineInputBorder(
+                        //           borderSide: BorderSide(color: Colors.grey),
+                        //         ),
+                        //         labelStyle: TextStyle(
+                        //             color: Color.fromARGB(255, 26, 26, 26))),
+                        //   ),
+                        // ),
                         SizedBox(
                           width: MediaQuery.of(context).size.width * 0.31,
                           child: TextFormField(
-                            controller: productTaxAmount,
+                            controller: productTotalAmount,
                             keyboardType: TextInputType.number,
                             readOnly: true,
                             decoration: const InputDecoration(
                                 contentPadding: EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                labelText: 'Tax Amount',
+                                labelText: 'Total Amount',
                                 fillColor: Colors.white,
                                 filled: true,
                                 border: OutlineInputBorder(),
@@ -666,26 +644,26 @@ class _EditInvoiceState extends State<EditInvoice> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 15),
-                    SizedBox(
-                      child: TextFormField(
-                        controller: productTotalAmount,
-                        keyboardType: TextInputType.number,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                            contentPadding:
-                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                            labelText: 'Total Amount',
-                            fillColor: Colors.white,
-                            filled: true,
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(
-                                color: Color.fromARGB(255, 31, 30, 30))),
-                      ),
-                    ),
+                    // const SizedBox(height: 15),
+                    // SizedBox(
+                    //   child: TextFormField(
+                    //     controller: productTotalAmount,
+                    //     keyboardType: TextInputType.number,
+                    //     readOnly: true,
+                    //     decoration: const InputDecoration(
+                    //         contentPadding:
+                    //             EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                    //         labelText: 'Total Amount (With Tax)',
+                    //         fillColor: Colors.white,
+                    //         filled: true,
+                    //         border: OutlineInputBorder(),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.grey),
+                    //         ),
+                    //         labelStyle: TextStyle(
+                    //             color: Color.fromARGB(255, 31, 30, 30))),
+                    //   ),
+                    // ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -736,8 +714,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                   products[editingIndex]['total_amount']);
                               double oldProductTax = double.parse(
                                   products[editingIndex]['total_tax_amount']);
+                              double oldAmountExcludingTax =
+                                  oldProductAmount - oldProductTax;
 
-                              subTotal = subTotal - oldProductAmount;
+                              subTotal = subTotal - oldAmountExcludingTax;
                               totalTaxAmount = totalTaxAmount - oldProductTax;
 
                               // Calculate new values
@@ -747,9 +727,12 @@ class _EditInvoiceState extends State<EditInvoice> {
                                   double.parse(productTaxPercent.text);
                               double taxPerUnit =
                                   double.parse(productTaxAmount.text);
-                              double totalAmount =
-                                  double.parse(productTotalAmount.text);
+
+                              // Calculate amounts
+                              double amountExcludingTax = rate * qty;
                               double totalTaxForProduct = taxPerUnit * qty;
+                              double totalAmountWithTax =
+                                  amountExcludingTax + totalTaxForProduct;
 
                               // Update the product
                               products[editingIndex] = {
@@ -762,15 +745,17 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 "tax_per_unit": taxPerUnit.toStringAsFixed(2),
                                 "total_tax_amount":
                                     totalTaxForProduct.toStringAsFixed(2),
-                                "total_amount": totalAmount.toStringAsFixed(2),
+                                "total_amount": totalAmountWithTax
+                                    .toStringAsFixed(2), // Store WITH tax
                               };
 
                               // Add new values to totals
-                              subTotal = subTotal + totalAmount;
+                              subTotal = subTotal + amountExcludingTax;
                               totalTaxAmount =
                                   totalTaxAmount + totalTaxForProduct;
 
                               allTotal = subTotal +
+                                  totalTaxAmount +
                                   double.parse(shippingCharge.text == ''
                                       ? '0'
                                       : shippingCharge.text) -
@@ -1368,7 +1353,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                           false,
                                                                       showPhoneCode:
                                                                           true,
-                                                                      // optional. Shows phone code before the country name.
                                                                       onSelect:
                                                                           (Country
                                                                               country) {
@@ -1377,18 +1361,12 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                           code =
                                                                               country.phoneCode;
                                                                         });
-
-                                                                        // flag = country.flagEmoji;
-                                                                        // print(countryPickerController.code.value);
-                                                                        // print(flag);
                                                                       },
                                                                     );
                                                                   },
                                                                   child:
                                                                       SizedBox(
-                                                                    // color: Colors.blue,
                                                                     width: 70,
-                                                                    // width: MediaQuery.of(context).size.width/3.5,
                                                                     child: Row(
                                                                         children: [
                                                                           Text(
@@ -1694,425 +1672,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                             ],
                           ),
                         ),
-                        // const SizedBox(
-                        //   height: 5,
-                        // ),
-                        // Padding(
-                        //   padding: const EdgeInsets.only(left: 10, right: 10),
-                        //   child: Row(
-                        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        //     children: [
-                        //        Column(
-                        //         mainAxisAlignment: MainAxisAlignment.start,
-                        //         crossAxisAlignment: CrossAxisAlignment.start,
-                        //         children: [
-                        //           Text(
-                        //             'Shipping Address(${shippingName.text})',
-                        //             style: const TextStyle(fontSize: 15),
-                        //           ),
-                        //         ],
-                        //       ),
-                        //       Padding(
-                        //         padding: const EdgeInsets.only(
-                        //             left: 7, right: 7, top: 7, bottom: 7),
-                        //         child: InkWell(
-                        //           onTap: () async {
-                        //             showGeneralDialog(
-                        //               barrierLabel: "showGeneralDialog",
-                        //               barrierDismissible: true,
-                        //               barrierColor:
-                        //                   Colors.black.withOpacity(0.6),
-                        //               transitionDuration:
-                        //                   const Duration(milliseconds: 400),
-                        //               context: context,
-                        //               pageBuilder: (context, _, __) {
-                        //                 return StatefulBuilder(
-                        //                     builder: (context, setState) {
-                        //                   return Align(
-                        //                     alignment: Alignment.center,
-                        //                     child: SingleChildScrollView(
-                        //                       child: AlertDialog(
-                        //                         content: SizedBox(
-                        //                           width: MediaQuery.of(context).size.width * 1,
-                        //                           child: Column(
-                        //                             children: [
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               const Text(
-                        //                                 'Shipping Address',
-                        //                                 style: TextStyle(
-                        //                                     fontWeight:
-                        //                                         FontWeight
-                        //                                             .bold,
-                        //                                     fontSize: 24),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               TextFormField(
-                        //                                 controller:
-                        //                                     shippingName,
-                        //                                 decoration: const InputDecoration(
-                        //                                         contentPadding:
-                        //                                             EdgeInsets.only(
-                        //                                                 left:
-                        //                                                     10,
-                        //                                                 top:
-                        //                                                     2,
-                        //                                                 bottom:
-                        //                                                     2),
-                        //                                         labelText:
-                        //                                             'Name',
-                        //                                         fillColor:
-                        //                                             Colors
-                        //                                                 .white,
-                        //                                         filled: true,
-                        //                                         prefixIcon: Icon(
-                        //                                             Icons
-                        //                                                 .person,
-                        //                                             color: Colors
-                        //                                                 .grey),
-                        //                                         border:
-                        //                                             OutlineInputBorder(),
-                        //                                         focusedBorder:
-                        //                                             OutlineInputBorder(
-                        //                                           borderSide:
-                        //                                               BorderSide(
-                        //                                                   color:
-                        //                                                       Colors.grey),
-                        //                                         ),
-                        //                                         labelStyle:
-                        //                                             TextStyle(
-                        //                                                 color:
-                        //                                                     Colors.grey)),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               TextFormField(
-                        //                                 controller:
-                        //                                     shippingAddress,
-                        //                                 maxLines: 2,
-                        //                                 decoration:
-                        //                                     const InputDecoration(
-                        //                                         contentPadding:
-                        //                                             EdgeInsets.only(
-                        //                                                 left:
-                        //                                                     10,
-                        //                                                 top:
-                        //                                                     2,
-                        //                                                 bottom:
-                        //                                                     2),
-                        //                                         labelText:
-                        //                                             'Address',
-                        //                                         fillColor:
-                        //                                             Colors
-                        //                                                 .white,
-                        //                                         filled: true,
-                        //                                         prefixIcon: Icon(
-                        //                                             Icons
-                        //                                                 .location_on,
-                        //                                             color: Colors
-                        //                                                 .grey),
-                        //                                         border:
-                        //                                             OutlineInputBorder(),
-                        //                                         focusedBorder:
-                        //                                             OutlineInputBorder(
-                        //                                           borderSide:
-                        //                                               BorderSide(
-                        //                                                   color:
-                        //                                                       Colors.grey),
-                        //                                         ),
-                        //                                         labelStyle:
-                        //                                             TextStyle(
-                        //                                                 color:
-                        //                                                     Colors.grey)),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               TextFormField(
-                        //                                 controller:
-                        //                                     shippingPhone,
-                        //                                 decoration:
-                        //                                     const InputDecoration(
-                        //                                         contentPadding:
-                        //                                             EdgeInsets.only(
-                        //                                                 left:
-                        //                                                     10,
-                        //                                                 top:
-                        //                                                     2,
-                        //                                                 bottom:
-                        //                                                     2),
-                        //                                         labelText:
-                        //                                             'Phone Number',
-                        //                                         fillColor:
-                        //                                             Colors
-                        //                                                 .white,
-                        //                                         filled: true,
-                        //                                         prefixIcon: Icon(
-                        //                                             Icons
-                        //                                                 .phone,
-                        //                                             color: Colors
-                        //                                                 .grey),
-                        //                                         border:
-                        //                                             OutlineInputBorder(),
-                        //                                         focusedBorder:
-                        //                                             OutlineInputBorder(
-                        //                                           borderSide:
-                        //                                               BorderSide(
-                        //                                                   color:
-                        //                                                       Colors.grey),
-                        //                                         ),
-                        //                                         labelStyle:
-                        //                                             TextStyle(
-                        //                                                 color:
-                        //                                                     Colors.grey)),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               TextFormField(
-                        //                                 controller:
-                        //                                     shippingGstNo,
-                        //                                 decoration:
-                        //                                     const InputDecoration(
-                        //                                         contentPadding:
-                        //                                             EdgeInsets.only(
-                        //                                                 left:
-                        //                                                     10,
-                        //                                                 top:
-                        //                                                     2,
-                        //                                                 bottom:
-                        //                                                     2),
-                        //                                         labelText:
-                        //                                             'GST Number',
-                        //                                         fillColor:
-                        //                                             Colors
-                        //                                                 .white,
-                        //                                         filled: true,
-                        //                                         prefixIcon: Icon(
-                        //                                             Icons
-                        //                                                 .arrow_right,
-                        //                                             color: Colors
-                        //                                                 .grey),
-                        //                                         border:
-                        //                                             OutlineInputBorder(),
-                        //                                         focusedBorder:
-                        //                                             OutlineInputBorder(
-                        //                                           borderSide:
-                        //                                               BorderSide(
-                        //                                                   color:
-                        //                                                       Colors.grey),
-                        //                                         ),
-                        //                                         labelStyle:
-                        //                                             TextStyle(
-                        //                                                 color:
-                        //                                                     Colors.grey)),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               TextFormField(
-                        //                                 onChanged:
-                        //                                     (value) async {
-                        //                                   if (value.length >=
-                        //                                       6) {
-                        //                                     shippingPostal =
-                        //                                         await HttpService
-                        //                                             .fetchPostOffice(
-                        //                                                 value);
-                        //                                     setState(() {});
-                        //                                   } else {
-                        //                                     shippingPostal =
-                        //                                         null;
-                        //                                     shippingPostOffice
-                        //                                         .clear();
-                        //                                     setState(() {});
-                        //                                   }
-                        //                                 },
-                        //                                 controller:
-                        //                                     shippingPinCode,
-                        //                                 decoration:
-                        //                                     const InputDecoration(
-                        //                                         contentPadding:
-                        //                                             EdgeInsets.only(
-                        //                                                 left:
-                        //                                                     10,
-                        //                                                 top:
-                        //                                                     2,
-                        //                                                 bottom:
-                        //                                                     2),
-                        //                                         labelText:
-                        //                                             'Pin Code',
-                        //                                         fillColor:
-                        //                                             Colors
-                        //                                                 .white,
-                        //                                         filled: true,
-                        //                                         prefixIcon: Icon(
-                        //                                             Icons
-                        //                                                 .pin_drop,
-                        //                                             color: Colors
-                        //                                                 .grey),
-                        //                                         border:
-                        //                                             OutlineInputBorder(),
-                        //                                         focusedBorder:
-                        //                                             OutlineInputBorder(
-                        //                                           borderSide:
-                        //                                               BorderSide(
-                        //                                                   color:
-                        //                                                       Colors.grey),
-                        //                                         ),
-                        //                                         labelStyle:
-                        //                                             TextStyle(
-                        //                                                 color:
-                        //                                                     Colors.grey)),
-                        //                               ),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               shippingPostal != null
-                        //                                   ? TextFormField(
-                        //                                       onTap: () {
-                        //                                         showDialog(
-                        //                                             context:
-                        //                                                 context,
-                        //                                             builder:
-                        //                                                 (BuildContext
-                        //                                                     context) {
-                        //                                               return AlertDialog(
-                        //                                                   scrollable:
-                        //                                                       true,
-                        //                                                   title:
-                        //                                                       const Text('Post Office'),
-                        //                                                   content: shippingPostal!.postOffice != null
-                        //                                                       ? ListView.builder(
-                        //                                                           shrinkWrap: true,
-                        //                                                           itemCount: shippingPostal!.postOffice!.length,
-                        //                                                           itemBuilder: (context, ind) {
-                        //                                                             return InkWell(
-                        //                                                               onTap: () {
-                        //                                                                 setState(() {
-                        //                                                                   shippingPostOffice.text = shippingPostal!.postOffice![ind].name.toString();
-                        //                                                                   Navigator.pop(context, true);
-                        //                                                                 });
-                        //                                                               },
-                        //                                                               child: SizedBox(
-                        //                                                                 height: 50,
-                        //                                                                 child: Text(
-                        //                                                                   shippingPostal!.postOffice![ind].name.toString(),
-                        //                                                                   style: const TextStyle(fontSize: 18),
-                        //                                                                 ),
-                        //                                                               ),
-                        //                                                             );
-                        //                                                           },
-                        //                                                         )
-                        //                                                       : const Text('No Post Office Found'));
-                        //                                             });
-                        //                                       },
-                        //                                       maxLines: 1,
-                        //                                       readOnly: true,
-                        //                                       controller:
-                        //                                           shippingPostOffice,
-                        //                                       decoration:
-                        //                                           const InputDecoration(
-                        //                                               contentPadding: EdgeInsets.only(
-                        //                                                   left:
-                        //                                                       10,
-                        //                                                   top:
-                        //                                                       2,
-                        //                                                   bottom:
-                        //                                                       2),
-                        //                                               labelText:
-                        //                                                   'Post Office',
-                        //                                               fillColor:
-                        //                                                   Colors
-                        //                                                       .white,
-                        //                                               filled:
-                        //                                                   true,
-                        //                                               prefixIcon: Icon(
-                        //                                                   Icons
-                        //                                                       .arrow_drop_down_circle_outlined,
-                        //                                                   color: Colors
-                        //                                                       .grey),
-                        //                                               border:
-                        //                                                   OutlineInputBorder(),
-                        //                                               focusedBorder:
-                        //                                                   OutlineInputBorder(
-                        //                                                 borderSide:
-                        //                                                     BorderSide(color: Colors.grey),
-                        //                                               ),
-                        //                                               labelStyle:
-                        //                                                   TextStyle(color: Colors.grey)),
-                        //                                     )
-                        //                                   : const SizedBox(),
-                        //                               const SizedBox(
-                        //                                 height: 10,
-                        //                               ),
-                        //                               GestureDetector(
-                        //                                 onTap: () {
-                        //                                   Navigator.of(
-                        //                                           context)
-                        //                                       .pop();
-                        //                                 },
-                        //                                 child: Container(
-                        //                                     decoration: BoxDecoration(
-                        //                                         color: Colors
-                        //                                             .green,
-                        //                                         borderRadius:
-                        //                                             BorderRadius
-                        //                                                 .circular(
-                        //                                                     5)),
-                        //                                     child:
-                        //                                         const Padding(
-                        //                                       padding: EdgeInsets
-                        //                                           .only(
-                        //                                               top: 10,
-                        //                                               bottom:
-                        //                                                   10,
-                        //                                               left:
-                        //                                                   30,
-                        //                                               right:
-                        //                                                   30),
-                        //                                       child: Text(
-                        //                                         'Add',
-                        //                                         style: TextStyle(
-                        //                                             color: Colors
-                        //                                                 .white),
-                        //                                       ),
-                        //                                     )),
-                        //                               )
-                        //                             ],
-                        //                           ),
-                        //                         ),
-                        //                       ),
-                        //                     ),
-                        //                   );
-                        //                 });
-                        //               },
-                        //               transitionBuilder:
-                        //                   (_, animation1, __, child) {
-                        //                 return SlideTransition(
-                        //                   position: Tween(
-                        //                     begin: const Offset(0, 1),
-                        //                     end: const Offset(0, 0),
-                        //                   ).animate(animation1),
-                        //                   child: child,
-                        //                 );
-                        //               },
-                        //             );
-                        //           },
-                        //           child: const Icon(
-                        //             Icons.edit,
-                        //             color: Colors.blue,
-                        //             size: 18,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
                         const SizedBox(
                           height: 10,
                         ),
@@ -2159,16 +1718,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           border: InputBorder.none,
                                         ),
                                         initialValue: fromdate.toString(),
-
-                                        // initialValue or controller.text can be null, empty or a DateTime string otherwise it will throw an error.
                                         type: DateTimePickerType.date,
-                                        //icon: Icon(Icons.calendar_today),
-                                        //dateHintText: 'From Date',
-                                        //controller: fromDate,
                                         firstDate: DateTime(1995),
                                         lastDate: DateTime.now()
                                             .add(const Duration(days: 365)),
-                                        // This will add one year from current date
                                         validator: (value) {
                                           return null;
                                         },
@@ -2179,7 +1732,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                             });
                                           }
                                         },
-                                        // We can also use onSaved
                                         onSaved: (value) {
                                           if (value!.isNotEmpty) {
                                             fromdate = value as DateTime;
@@ -2205,6 +1757,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                             alignment: Alignment.topRight,
                             child: InkWell(
                               onTap: () async {
+                                 _resetAddProductForm();
                                 showGeneralDialog(
                                   barrierLabel: "showGeneralDialog",
                                   barrierDismissible: true,
@@ -2215,6 +1768,39 @@ class _EditInvoiceState extends State<EditInvoice> {
                                   pageBuilder: (context, _, __) {
                                     return StatefulBuilder(
                                         builder: (context, setState) {
+                                      // Calculation function for adding product
+                                      void productCalculation() {
+                                        if (productRate.text.isNotEmpty &&
+                                            productQty.text.isNotEmpty) {
+                                          double rate =
+                                              double.parse(productRate.text);
+                                          double qty =
+                                              double.parse(productQty.text);
+                                          double taxPercent =
+                                              productTaxPercent.text.isNotEmpty
+                                                  ? double.parse(
+                                                      productTaxPercent.text)
+                                                  : 0.0;
+
+                                          double taxPerUnit =
+                                              (rate * taxPercent) / 100;
+                                          productTaxAmount.text =
+                                              taxPerUnit.toStringAsFixed(2);
+
+                                          double amountExcludingTax =
+                                              rate * qty;
+                                          double totalTaxForProduct =
+                                              taxPerUnit * qty;
+                                          double totalAmountWithTax =
+                                              amountExcludingTax +
+                                                  totalTaxForProduct;
+
+                                          productTotalAmount.text =
+                                              totalAmountWithTax
+                                                  .toStringAsFixed(2);
+                                        }
+                                      }
+
                                       return Align(
                                         alignment: Alignment.center,
                                         child: SingleChildScrollView(
@@ -2272,9 +1858,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                     )
                                                   ],
                                                 ),
-                                                const SizedBox(
-                                                  height: 15,
-                                                ),
+                                                const SizedBox(height: 15),
                                                 GestureDetector(
                                                   onTap: () {
                                                     showDialog(
@@ -2309,6 +1893,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                         (value) {
                                                                       setState(
                                                                           () {
+                                                                        filteredItems
+                                                                            .clear();
                                                                         filteredItems = items
                                                                             .where((item) =>
                                                                                 item.productName.toLowerCase().contains(value.toLowerCase()))
@@ -2352,35 +1938,58 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                         (context,
                                                                             index) {
                                                                       return ListTile(
-                                                                          onTap:
-                                                                              () {
-                                                                            if (productQty.text ==
-                                                                                "") {
-                                                                              productQty.text = "1";
-                                                                            }
-                                                                            productName =
-                                                                                filteredItems[index].productName;
-                                                                            productId =
-                                                                                filteredItems[index].id;
-                                                                            productRate.text =
-                                                                                filteredItems[index].sellingPrice;
-                                                                            productTaxPercent.text =
-                                                                                filteredItems[index].taxPercent;
-                                                                            productTaxAmount.text =
-                                                                                filteredItems[index].taxAmount;
-                                                                            productTotalAmount.text =
-                                                                                ((double.parse(productRate.text)) * double.parse(productQty.text)).toString();
-                                                                            productTotalAmountTax.text =
-                                                                                ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
-                                                                            productTotalAmount.text =
-                                                                                double.parse(productTotalAmount.text).toStringAsFixed(2);
-                                                                            setState(() {});
-                                                                            if (context.mounted) {
-                                                                              Navigator.pop(context);
-                                                                            }
-                                                                          },
-                                                                          title:
-                                                                              Text(filteredItems[index].productName));
+                                                                        onTap:
+                                                                            () {
+                                                                          if (productQty.text ==
+                                                                              "") {
+                                                                            productQty.text =
+                                                                                "1";
+                                                                          }
+                                                                          productName =
+                                                                              filteredItems[index].productName;
+                                                                          productId =
+                                                                              filteredItems[index].id;
+                                                                          productRate.text =
+                                                                              filteredItems[index].sellingPrice;
+                                                                          productTaxPercent.text =
+                                                                              filteredItems[index].taxPercent;
+
+                                                                          double
+                                                                              rate =
+                                                                              double.parse(productRate.text);
+                                                                          double
+                                                                              qty =
+                                                                              double.parse(productQty.text);
+                                                                          double
+                                                                              taxPercent =
+                                                                              double.parse(productTaxPercent.text);
+                                                                          double
+                                                                              taxPerUnit =
+                                                                              (rate * taxPercent) / 100;
+                                                                          double
+                                                                              amountExcludingTax =
+                                                                              rate * qty;
+                                                                          double
+                                                                              totalTaxForProduct =
+                                                                              taxPerUnit * qty;
+                                                                          double
+                                                                              totalAmountWithTax =
+                                                                              amountExcludingTax + totalTaxForProduct;
+
+                                                                          productTaxAmount.text =
+                                                                              taxPerUnit.toStringAsFixed(2);
+                                                                          productTotalAmount.text =
+                                                                              totalAmountWithTax.toStringAsFixed(2);
+                                                                          setState(
+                                                                              () {});
+                                                                          if (context
+                                                                              .mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        },
+                                                                        title: Text(
+                                                                            filteredItems[index].productName),
+                                                                      );
                                                                     },
                                                                   ),
                                                                 )
@@ -2388,16 +1997,17 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             ),
                                                             actions: [
                                                               TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    if (context
-                                                                        .mounted) {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    }
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Close")),
+                                                                onPressed: () {
+                                                                  if (context
+                                                                      .mounted) {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  }
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                        "Close"),
+                                                              ),
                                                             ],
                                                           );
                                                         });
@@ -2419,17 +2029,19 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               4),
                                                     ),
                                                     child: Center(
-                                                        child: Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 16.0,
-                                                          vertical: 12.0),
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          SizedBox(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal:
+                                                                    16.0,
+                                                                vertical: 12.0),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            SizedBox(
                                                               width: MediaQuery.of(
                                                                           context)
                                                                       .size
@@ -2440,32 +2052,15 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                 overflow:
                                                                     TextOverflow
                                                                         .ellipsis,
-                                                              )),
-                                                        ],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
-                                                    )),
+                                                    ),
                                                   ),
                                                 ),
-
-                                                // Padding(
-                                                //   padding: const EdgeInsets.all(8.0),
-                                                //   child: SizedBox(
-                                                //     child: TextFormField(
-                                                //       controller: productName,
-                                                //       keyboardType: TextInputType.text,
-                                                //       decoration: const InputDecoration(
-                                                //           hintText: 'Product Name',
-                                                //           contentPadding:
-                                                //           EdgeInsets.symmetric(
-                                                //               vertical: 10,
-                                                //               horizontal: 10),
-                                                //           border: OutlineInputBorder()),
-                                                //     ),
-                                                //   ),
-                                                // ),
-                                                const SizedBox(
-                                                  height: 15,
-                                                ),
+                                                const SizedBox(height: 15),
                                                 Row(
                                                   children: [
                                                     SizedBox(
@@ -2517,9 +2112,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             15))),
                                                       ),
                                                     ),
-                                                    const SizedBox(
-                                                      width: 10,
-                                                    ),
+                                                    const SizedBox(width: 10),
                                                     SizedBox(
                                                       width:
                                                           MediaQuery.of(context)
@@ -2569,10 +2162,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                     ),
                                                   ],
                                                 ),
-                                                const SizedBox(
-                                                  height: 15,
-                                                ),
-
+                                                const SizedBox(height: 15),
                                                 Row(
                                                   children: [
                                                     SizedBox(
@@ -2623,9 +2213,53 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             25))),
                                                       ),
                                                     ),
-                                                    const SizedBox(
-                                                      width: 10,
-                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    // SizedBox(
+                                                    //   width:
+                                                    //       MediaQuery.of(context)
+                                                    //               .size
+                                                    //               .width *
+                                                    //           0.31,
+                                                    //   child: TextFormField(
+                                                    //     controller:
+                                                    //         productTaxAmount,
+                                                    //     keyboardType:
+                                                    //         TextInputType
+                                                    //             .number,
+                                                    //     readOnly: true,
+                                                    //     decoration:
+                                                    //         const InputDecoration(
+                                                    //             contentPadding:
+                                                    //                 EdgeInsets.only(
+                                                    //                     left:
+                                                    //                         10,
+                                                    //                     top: 2,
+                                                    //                     bottom:
+                                                    //                         2),
+                                                    //             labelText:
+                                                    //                 'Tax Amount',
+                                                    //             fillColor:
+                                                    //                 Colors
+                                                    //                     .white,
+                                                    //             filled: true,
+                                                    //             border:
+                                                    //                 OutlineInputBorder(),
+                                                    //             focusedBorder:
+                                                    //                 OutlineInputBorder(
+                                                    //               borderSide:
+                                                    //                   BorderSide(
+                                                    //                       color:
+                                                    //                           Colors.grey),
+                                                    //             ),
+                                                    //             labelStyle: TextStyle(
+                                                    //                 color: Color
+                                                    //                     .fromARGB(
+                                                    //                         255,
+                                                    //                         26,
+                                                    //                         26,
+                                                    //                         26))),
+                                                    //   ),
+                                                    // ),
                                                     SizedBox(
                                                       width:
                                                           MediaQuery.of(context)
@@ -2634,7 +2268,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               0.31,
                                                       child: TextFormField(
                                                         controller:
-                                                            productTaxAmount,
+                                                            productTotalAmount,
                                                         keyboardType:
                                                             TextInputType
                                                                 .number,
@@ -2649,7 +2283,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                         bottom:
                                                                             2),
                                                                 labelText:
-                                                                    'Tax Amount',
+                                                                    'Total Amount',
                                                                 fillColor:
                                                                     Colors
                                                                         .white,
@@ -2674,51 +2308,45 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                     ),
                                                   ],
                                                 ),
-
-                                                const SizedBox(
-                                                  height: 15,
-                                                ),
-                                                SizedBox(
-                                                  child: TextFormField(
-                                                    controller:
-                                                        productTotalAmount,
-                                                    keyboardType:
-                                                        TextInputType.number,
-                                                    readOnly: true,
-                                                    decoration:
-                                                        const InputDecoration(
-                                                            contentPadding:
-                                                                EdgeInsets.only(
-                                                                    left: 10,
-                                                                    top: 2,
-                                                                    bottom: 2),
-                                                            labelText:
-                                                                'Total Amount',
-                                                            fillColor:
-                                                                Colors.white,
-                                                            filled: true,
-                                                            border:
-                                                                OutlineInputBorder(),
-                                                            focusedBorder:
-                                                                OutlineInputBorder(
-                                                              borderSide:
-                                                                  BorderSide(
-                                                                      color: Colors
-                                                                          .grey),
-                                                            ),
-                                                            labelStyle: TextStyle(
-                                                                color: Color
-                                                                    .fromARGB(
-                                                                        255,
-                                                                        31,
-                                                                        30,
-                                                                        30))),
-                                                  ),
-                                                ),
-
-                                                const SizedBox(
-                                                  height: 10,
-                                                ),
+                                                // const SizedBox(height: 15),
+                                                // SizedBox(
+                                                //   child: TextFormField(
+                                                //     controller:
+                                                //         productTotalAmount,
+                                                //     keyboardType:
+                                                //         TextInputType.number,
+                                                //     readOnly: true,
+                                                //     decoration:
+                                                //         const InputDecoration(
+                                                //             contentPadding:
+                                                //                 EdgeInsets.only(
+                                                //                     left: 10,
+                                                //                     top: 2,
+                                                //                     bottom: 2),
+                                                //             labelText:
+                                                //                 'Total Amount (With Tax)',
+                                                //             fillColor:
+                                                //                 Colors.white,
+                                                //             filled: true,
+                                                //             border:
+                                                //                 OutlineInputBorder(),
+                                                //             focusedBorder:
+                                                //                 OutlineInputBorder(
+                                                //               borderSide:
+                                                //                   BorderSide(
+                                                //                       color: Colors
+                                                //                           .grey),
+                                                //             ),
+                                                //             labelStyle: TextStyle(
+                                                //                 color: Color
+                                                //                     .fromARGB(
+                                                //                         255,
+                                                //                         31,
+                                                //                         30,
+                                                //                         30))),
+                                                //   ),
+                                                // ),
+                                                const SizedBox(height: 10),
                                                 Row(
                                                   mainAxisAlignment:
                                                       MainAxisAlignment.center,
@@ -2729,31 +2357,29 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                             .pop();
                                                       },
                                                       child: Container(
-                                                          decoration: BoxDecoration(
-                                                              color:
-                                                                  Colors.white,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5)),
-                                                          child: const Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10,
-                                                                    left: 30,
-                                                                    right: 30),
-                                                            child: Text(
-                                                              'Cancel',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .black),
-                                                            ),
-                                                          )),
+                                                        decoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5)),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 10,
+                                                                  bottom: 10,
+                                                                  left: 30,
+                                                                  right: 30),
+                                                          child: Text(
+                                                            'Cancel',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
-                                                    const SizedBox(
-                                                      width: 10,
-                                                    ),
+                                                    const SizedBox(width: 10),
                                                     GestureDetector(
                                                       onTap: () {
                                                         if (productRate
@@ -2805,14 +2431,18 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               double.parse(
                                                                   productTaxAmount
                                                                       .text);
-                                                          double totalAmount =
-                                                              double.parse(
-                                                                  productTotalAmount
-                                                                      .text);
 
+                                                          // Calculate amounts
+                                                          double
+                                                              amountExcludingTax =
+                                                              rate * qty;
                                                           double
                                                               totalTaxForProduct =
                                                               taxPerUnit * qty;
+                                                          double
+                                                              totalAmountWithTax =
+                                                              amountExcludingTax +
+                                                                  totalTaxForProduct;
 
                                                           products.add({
                                                             "product_name":
@@ -2841,18 +2471,20 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     .toStringAsFixed(
                                                                         2),
                                                             "total_amount":
-                                                                totalAmount
+                                                                totalAmountWithTax
                                                                     .toStringAsFixed(
-                                                                        2),
+                                                                        2), // Store WITH tax
                                                           });
 
+                                                          // Add to totals
                                                           subTotal = subTotal +
-                                                              totalAmount;
+                                                              amountExcludingTax;
                                                           totalTaxAmount =
                                                               totalTaxAmount +
                                                                   totalTaxForProduct;
 
                                                           allTotal = subTotal +
+                                                              totalTaxAmount +
                                                               double.parse(shippingCharge
                                                                           .text ==
                                                                       ''
@@ -2871,6 +2503,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                   .toStringAsFixed(
                                                                       2);
 
+                                                          // Reset form
                                                           productName =
                                                               "Choose Product";
                                                           productId = "";
@@ -2884,137 +2517,34 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               .clear();
                                                           productTotalAmount
                                                               .clear();
+
                                                           Navigator.of(context)
                                                               .pop();
                                                           setState(() {});
                                                         }
                                                       },
-                                                      // onTap: () {
-                                                      //   if (productRate
-                                                      //       .text.isEmpty) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter Product Rate',
-                                                      //         Colors.red);
-                                                      //   } else if (productQty
-                                                      //       .text.isEmpty) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter Product Qty',
-                                                      //         Colors.red);
-                                                      //   } else if (productTaxPercent
-                                                      //       .text.isEmpty) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter Product Tax Percent',
-                                                      //         Colors.red);
-                                                      //   } else if (productTaxAmount
-                                                      //       .text.isEmpty) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter Product Tax Amount',
-                                                      //         Colors.red);
-                                                      //   } else if (productTotalAmount
-                                                      //       .text.isEmpty) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter Product Total Amount',
-                                                      //         Colors.red);
-                                                      //   } else if (double.parse(
-                                                      //           productTaxPercent
-                                                      //               .text) >
-                                                      //       100) {
-                                                      //     Common.toastMessaage(
-                                                      //         'Enter valid tax percentage',
-                                                      //         Colors.red);
-                                                      //   } else {
-                                                      //     products.add({
-                                                      //       "product_name":
-                                                      //           productName,
-                                                      //       "product_id":
-                                                      //           productId,
-                                                      //       "description":
-                                                      //           productDescription
-                                                      //               .text,
-                                                      //       "product_rate":
-                                                      //           productRate
-                                                      //               .text,
-                                                      //       "quantity":
-                                                      //           productQty.text,
-                                                      //       "tax_percent":
-                                                      //           productTaxPercent
-                                                      //               .text,
-                                                      //       "total_tax_amount":
-                                                      //           productTaxAmount
-                                                      //               .text,
-                                                      //       "total_amount":
-                                                      //           productTotalAmount
-                                                      //               .text,
-                                                      //     });
-
-                                                      //     subTotal = subTotal +
-                                                      //         double.parse(
-                                                      //             productTotalAmount
-                                                      //                 .text);
-                                                      //     totalTaxAmount = totalTaxAmount +
-                                                      //         double.parse(
-                                                      //                 productTaxAmount
-                                                      //                     .text) *
-                                                      //             double.parse(
-                                                      //                 productQty
-                                                      //                     .text);
-                                                      //     allTotal = subTotal +
-                                                      //         double.parse(shippingCharge
-                                                      //                     .text ==
-                                                      //                 ''
-                                                      //             ? '0'
-                                                      //             : shippingCharge
-                                                      //                 .text) -
-                                                      //         double.parse(
-                                                      //             discount.text ==
-                                                      //                     ''
-                                                      //                 ? '0'
-                                                      //                 : discount
-                                                      //                     .text);
-                                                      //     paidAmount.text =
-                                                      //         allTotal
-                                                      //             .toString();
-
-                                                      //     productName =
-                                                      //         "Choose Product";
-                                                      //     productId = "";
-                                                      //     productDescription
-                                                      //         .clear();
-                                                      //     productRate.clear();
-                                                      //     productQty.clear();
-                                                      //     productTaxPercent
-                                                      //         .clear();
-                                                      //     productTaxAmount
-                                                      //         .clear();
-                                                      //     productTotalAmount
-                                                      //         .clear();
-                                                      //     Navigator.of(context)
-                                                      //         .pop();
-                                                      //     setState(() {});
-                                                      //   }
-                                                      // },
                                                       child: Container(
-                                                          decoration: BoxDecoration(
-                                                              color:
-                                                                  Colors.green,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5)),
-                                                          child: const Padding(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: 10,
-                                                                    bottom: 10,
-                                                                    left: 25,
-                                                                    right: 25),
-                                                            child: Text(
-                                                              'Add',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white),
-                                                            ),
-                                                          )),
+                                                        decoration: BoxDecoration(
+                                                            color: Colors.green,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5)),
+                                                        child: const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 10,
+                                                                  bottom: 10,
+                                                                  left: 25,
+                                                                  right: 25),
+                                                          child: Text(
+                                                            'Add',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ],
                                                 )
@@ -3067,16 +2597,16 @@ class _EditInvoiceState extends State<EditInvoice> {
                                   columnWidths: {
                                     0: FixedColumnWidth(
                                         MediaQuery.of(context).size.width *
-                                            0.2), // Using 10%
+                                            0.2),
                                     1: FixedColumnWidth(
                                         MediaQuery.of(context).size.width *
-                                            0.16), // Using 30%
+                                            0.16),
                                     2: FixedColumnWidth(
                                         MediaQuery.of(context).size.width *
                                             0.10),
                                     3: FixedColumnWidth(
                                         MediaQuery.of(context).size.width *
-                                            0.16), // Using 20%
+                                            0.16),
                                     4: FixedColumnWidth(
                                         MediaQuery.of(context).size.width *
                                             0.22),
@@ -3116,9 +2646,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               textAlign: TextAlign.center),
                                         ),
                                         Padding(
-                                          padding: EdgeInsets.all(
-                                            8.0,
-                                          ),
+                                          padding: EdgeInsets.all(8.0),
                                           child: Text('Tax',
                                               style: TextStyle(
                                                   fontSize: 12,
@@ -3136,19 +2664,15 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           ),
                                         ),
                                         Padding(
-                                          padding: EdgeInsets.all(
-                                            8.0,
-                                          ),
+                                          padding: EdgeInsets.all(8.0),
                                           child: Text(' ',
                                               style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold),
                                               textAlign: TextAlign.center),
                                         ),
-                                         Padding(
-                                          padding: EdgeInsets.all(
-                                            8.0,
-                                          ),
+                                        Padding(
+                                          padding: EdgeInsets.all(8.0),
                                           child: Text(' ',
                                               style: TextStyle(
                                                   fontSize: 12,
@@ -3174,22 +2698,23 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 Color color = index % 2 == 0
                                     ? const Color(0xFFF3F3F3)
                                     : const Color(0xFFece9fd);
+
                                 return Padding(
                                   padding: const EdgeInsets.all(1.0),
                                   child: Table(
                                     columnWidths: {
                                       0: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.16), // Using 10%
+                                              0.16),
                                       1: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.16), // Using 30%
+                                              0.16),
                                       2: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.10),
                                       3: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.16), // Using 20%
+                                              0.16),
                                       4: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.22),
@@ -3276,19 +2801,23 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           ),
                                           GestureDetector(
                                             onTap: () {
-                                              double productAmount =
+                                              // Calculate amount excluding tax from total amount with tax
+                                              double totalAmountWithTax =
                                                   double.parse(products[index]
                                                       ['total_amount']);
-                                              double productTax = double.parse(
+                                              double totalTax = double.parse(
                                                   products[index]
                                                       ['total_tax_amount']);
+                                              double amountExcludingTax =
+                                                  totalAmountWithTax - totalTax;
 
                                               subTotal =
-                                                  subTotal - productAmount;
+                                                  subTotal - amountExcludingTax;
                                               totalTaxAmount =
-                                                  totalTaxAmount - productTax;
+                                                  totalTaxAmount - totalTax;
 
                                               allTotal = subTotal +
+                                                  totalTaxAmount +
                                                   double.parse(
                                                       shippingCharge.text == ''
                                                           ? '0'
@@ -3307,6 +2836,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               if (products.isEmpty) {
                                                 discount.clear();
                                                 shippingCharge.clear();
+                                                subTotal = 0.00;
+                                                totalTaxAmount = 0.00;
                                                 allTotal = 0.00;
                                                 paidAmount.text =
                                                     allTotal.toStringAsFixed(2);
@@ -3314,72 +2845,6 @@ class _EditInvoiceState extends State<EditInvoice> {
 
                                               setState(() {});
                                             },
-                                            // onTap: () {
-                                            //   subTotal = subTotal -
-                                            //       double.parse(
-                                            //         products[index]
-                                            //             ['total_amount'],
-                                            //       );
-                                            //   totalTaxAmount = totalTaxAmount -
-                                            //       double.parse(products[index][
-                                            //               'total_tax_amount']) *
-                                            //           double.parse(
-                                            //               products[index]
-                                            //                   ['quantity']);
-
-                                            //   allTotal = subTotal +
-                                            //       double.parse(
-                                            //           shippingCharge.text == ''
-                                            //               ? '0'
-                                            //               : shippingCharge
-                                            //                   .text) -
-                                            //       double.parse(
-                                            //           discount.text == ''
-                                            //               ? '0'
-                                            //               : discount.text);
-                                            //   paidAmount.text =
-                                            //       allTotal.toString();
-
-                                            //   products.removeWhere(
-                                            //     (item) => mapEquals(
-                                            //         item,
-                                            //         ({
-                                            //           "product_name":
-                                            //               products[index]
-                                            //                   ['product_name'],
-                                            //           "product_id":
-                                            //               products[index]
-                                            //                   ['product_id'],
-                                            //           "description":
-                                            //               products[index]
-                                            //                   ['description'],
-                                            //           "product_rate":
-                                            //               products[index]
-                                            //                   ['product_rate'],
-                                            //           "quantity":
-                                            //               products[index]
-                                            //                   ['quantity'],
-                                            //           "tax_percent":
-                                            //               products[index]
-                                            //                   ['tax_percent'],
-                                            //           "total_tax_amount":
-                                            //               products[index][
-                                            //                   'total_tax_amount'],
-                                            //           "total_amount":
-                                            //               products[index]
-                                            //                   ['total_amount'],
-                                            //         })),
-                                            //   );
-                                            //   if (products.isEmpty) {
-                                            //     discount.clear();
-                                            //     shippingCharge.clear();
-                                            //     allTotal = 0.00;
-                                            //     paidAmount.text =
-                                            //         allTotal.toString();
-                                            //   }
-
-                                            //   setState(() {});
-                                            // },
                                             child: const Padding(
                                               padding: EdgeInsets.all(8.0),
                                               child: Icon(
@@ -3407,7 +2872,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Total :'),
+                                  const Text('Sub Total (Without Tax):'),
                                   const SizedBox(
                                     width: 10,
                                   ),
@@ -3425,7 +2890,40 @@ class _EditInvoiceState extends State<EditInvoice> {
                                             right: 10,
                                             top: 5,
                                             bottom: 5),
-                                        child: Text(subTotal.toString()),
+                                        child:
+                                            Text(subTotal.toStringAsFixed(2)),
+                                      ))
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Text('Total Tax:'),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.3,
+                                      height: 35,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10,
+                                            right: 10,
+                                            top: 5,
+                                            bottom: 5),
+                                        child: Text(
+                                            totalTaxAmount.toStringAsFixed(2)),
                                       ))
                                 ],
                               ),
@@ -3458,6 +2956,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                             value = '0';
                                           }
                                           allTotal = subTotal +
+                                              totalTaxAmount +
                                               double.parse(
                                                   shippingCharge.text == ''
                                                       ? '0'
@@ -3465,7 +2964,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               double.parse(value);
                                           paidAmount.text = allTotal.toString();
 
-                                          paidAmount.text = allTotal.toString();
                                           setState(() {});
                                         } else {
                                           discount.clear();
@@ -3479,11 +2977,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       decoration: InputDecoration(
                                           contentPadding: const EdgeInsets.only(
                                               left: 10, top: 2, bottom: 2),
-                                          //labelText: 'Invoice Number',
                                           fillColor: Colors.grey[300],
                                           filled: true,
                                           border: const OutlineInputBorder(
-                                            // width: 0.0 produces a thin "hairline" border
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(5)),
                                             borderSide: BorderSide.none,
@@ -3496,37 +2992,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                                               color: Colors.black)),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text('Tax:'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child: Text(totalTaxAmount.toString()),
-                                      ))
                                 ],
                               ),
                             ),
@@ -3559,6 +3024,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           }
 
                                           allTotal = subTotal +
+                                              totalTaxAmount +
                                               double.parse(value) -
                                               double.parse(discount.text == ''
                                                   ? '0'
@@ -3578,11 +3044,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       decoration: InputDecoration(
                                           contentPadding: const EdgeInsets.only(
                                               left: 10, top: 2, bottom: 2),
-                                          //labelText: 'Invoice Number',
                                           fillColor: Colors.grey[300],
                                           filled: true,
                                           border: const OutlineInputBorder(
-                                            // width: 0.0 produces a thin "hairline" border
                                             borderRadius: BorderRadius.all(
                                                 Radius.circular(5)),
                                             borderSide: BorderSide.none,
@@ -3623,9 +3087,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
                                     child: Text(
-                                      // allTotal.toString(),
-                                      (subTotal + totalTaxAmount)
-                                          .toStringAsFixed(2),
+                                      allTotal.toStringAsFixed(2),
                                       style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w500),
@@ -3677,7 +3139,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                             ),
                           ),
                         ),
-
                         const SizedBox(
                           height: 20,
                         ),
@@ -3775,7 +3236,6 @@ class _EditInvoiceState extends State<EditInvoice> {
                     child: Lottie.asset('assets/main/loading.json',
                         fit: BoxFit.fill),
                   ),
-            // resizeToAvoidBottomInset: false,
           )
         : Scaffold(
             backgroundColor: Colors.white,
@@ -3834,34 +3294,17 @@ class _EditInvoiceState extends State<EditInvoice> {
             ));
   }
 
-  // productCalculation() {
-  //   productTaxAmount.text =
-  //       ((double.parse(productRate.text == "" ? "0" : productRate.text) *
-  //                   double.parse(productTaxPercent.text == ""
-  //                       ? "0"
-  //                       : productTaxPercent.text) /
-  //                   100) *
-  //               double.parse(productQty.text == "" ? "0" : productQty.text))
-  //           .toString();
-  //   productTotalAmount.text = ((double.parse(
-  //                   productRate.text == "" ? "0" : productRate.text) *
-  //               double.parse(productQty.text == "" ? "0" : productQty.text)) +
-  //           double.parse(productTaxAmount.text))
-  //       .toString();
-  //   productTotalAmount.text =
-  //       double.parse(productTotalAmount.text).toStringAsFixed(2);
-  //   setState(() {});
-  // }
   productCalculation() {
     double rate = double.parse(productRate.text == "" ? "0" : productRate.text);
     double qty = double.parse(productQty.text == "" ? "0" : productQty.text);
     double taxPercent = double.parse(
         productTaxPercent.text == "" ? "0" : productTaxPercent.text);
     double taxPerUnit = (rate * taxPercent / 100);
-    double totalTax = taxPerUnit * qty;
-    double totalAmount = (rate) * qty;
+    double amountExcludingTax = rate * qty;
+    double totalTaxForProduct = taxPerUnit * qty;
+    double totalAmountWithTax = amountExcludingTax + totalTaxForProduct;
     productTaxAmount.text = taxPerUnit.toStringAsFixed(2);
-    productTotalAmount.text = totalAmount.toStringAsFixed(2);
+    productTotalAmount.text = totalAmountWithTax.toStringAsFixed(2);
     setState(() {});
   }
 }

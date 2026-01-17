@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/customerListModel.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/service/service.dart';
 
 class CustomerSearchBox extends StatefulWidget {
@@ -16,8 +18,17 @@ class _CustomerSearchBoxState extends State<CustomerSearchBox> {
   List<Customer> _searchResults = [];
   bool _isSearching = false;
   bool _showList = false;
-
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   Future<void> searchCustomers(String query) async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+
     if (query.isEmpty) {
       setState(() {
         _searchResults = [];
@@ -58,7 +69,7 @@ class _CustomerSearchBoxState extends State<CustomerSearchBox> {
         children: [
           Center(
             child: SizedBox(
-                width: MediaQuery.of(context).size.width * 2, 
+              width: MediaQuery.of(context).size.width * 2,
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 238, 236, 236),
@@ -78,7 +89,8 @@ class _CustomerSearchBoxState extends State<CustomerSearchBox> {
                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
                     hintText: "Search Customer...",
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 29, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 29, vertical: 14),
                   ),
                 ),
               ),
@@ -103,7 +115,8 @@ class _CustomerSearchBoxState extends State<CustomerSearchBox> {
               child: _isSearching
                   ? const Padding(
                       padding: EdgeInsets.all(20),
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
                     )
                   : _searchResults.isEmpty
                       ? const Padding(
@@ -116,20 +129,33 @@ class _CustomerSearchBoxState extends State<CustomerSearchBox> {
                           itemBuilder: (context, index) {
                             final customer = _searchResults[index];
                             return ListTile(
-                              leading: const Icon(Icons.person_outline, color: Colors.grey),
+                              leading: const Icon(Icons.person_outline,
+                                  color: Colors.grey),
                               title: Text(customer.name ?? ''),
                               subtitle: Text(customer.contactNo ?? ''),
                               onTap: () {
                                 FocusScope.of(context).unfocus();
                                 setState(() => _showList = false);
 
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (context) => ClientDetails(
+                                //       widget.token,
+                                //       customer.id.toString(),
+                                //     ),
+                                //   ),
+                                // );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ClientDetails(
-                                      widget.token,
-                                      customer.id.toString(),
-                                    ),
+                                    builder: (context) => CustomerDashboard(
+                                        name: name!,
+                                        token: widget.token!,
+                                        userId: userId!,
+                                        phoneCallLogPermission:
+                                            phoneCallLogPermission,
+                                        custId: customer.id.toString()),
                                   ),
                                 );
                               },

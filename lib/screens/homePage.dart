@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/models/lead_management/leadDashboardModel.dart';
@@ -16,6 +15,7 @@ import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
+import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
@@ -26,7 +26,12 @@ import 'package:login2/screens/leadManagement/staffReport.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
+import 'package:login2/screens/rental/rentalDashboard.dart';
 import 'package:login2/screens/roombooking/hotelDashboard.dart';
+import 'package:login2/screens/search/search.dart';
+import 'package:login2/screens/serviceman/dashboard_page.dart';
+import 'package:login2/screens/staff_reports/followupCalendarPage.dart';
+import 'package:login2/screens/staff_reports/staffwiseCallReports.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,6 +86,7 @@ class _HomePageState extends State<HomePage> {
   String phoneCallLogPermission = '';
   String viewWorkReportPermission = '';
   String startAndStopWorkPermission = '';
+  String viewLeadPermission = '';
   bool isLoading = false;
   int notificationCount = 0;
   var fromdate = DateTime.now();
@@ -96,6 +102,12 @@ class _HomePageState extends State<HomePage> {
   String createLeadCategory = '';
   String updateLeadCategory = '';
   String deleteLeadCategory = '';
+  String updateLeadPermission = '';
+  String deleteLeadPermission = '';
+  String cloudCallPermission = '';
+  bool updateLeadPermission1 = false;
+  bool deleteLeadPermission1 = false;
+  bool cloudCallPermission1 = false;
   CommonResponse? loginOrNot;
   bool isWorkStarted = false;
   @override
@@ -117,6 +129,7 @@ class _HomePageState extends State<HomePage> {
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
     userId = await Common.getSharedPref("userId");
+    viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     AccountsDashboardPermission =
@@ -138,10 +151,22 @@ class _HomePageState extends State<HomePage> {
     createLeadCategory = await Common.getSharedPref("createLeadCategory");
     updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
     deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
-
+    updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
+    deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
+    cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
     createLeadCategory1 = createLeadCategory == 'true';
     updateLeadCategory1 = updateLeadCategory == 'true';
     deleteLeadCategory1 = deleteLeadCategory == 'true';
+
+    if (updateLeadPermission == 'true') {
+      updateLeadPermission1 = true;
+    }
+    if (deleteLeadPermission == 'true') {
+      deleteLeadPermission1 = true;
+    }
+    if (cloudCallPermission == 'true') {
+      cloudCallPermission1 = true;
+    }
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -214,35 +239,35 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<String?> generateFaceHash(File faceImageFile) async {
-    final faceDetector = FaceDetector(
-      options: FaceDetectorOptions(
-        enableLandmarks: true,
-        enableContours: true,
-        enableClassification: false,
-      ),
-    );
-    final inputImage = InputImage.fromFile(faceImageFile);
-    final faces = await faceDetector.processImage(inputImage);
-    if (faces.isEmpty) return null;
-    final face = faces.first;
-    final landmarks = face.landmarks;
-    final serialized = [
-      landmarks[FaceLandmarkType.leftEye]?.position,
-      landmarks[FaceLandmarkType.rightEye]?.position,
-      landmarks[FaceLandmarkType.noseBase]?.position,
-      landmarks[FaceLandmarkType.leftCheek]?.position,
-      landmarks[FaceLandmarkType.rightCheek]?.position,
-    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
-    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
-    final lipData =
-        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+  // Future<String?> generateFaceHash(File faceImageFile) async {
+  //   final faceDetector = FaceDetector(
+  //     options: FaceDetectorOptions(
+  //       enableLandmarks: true,
+  //       enableContours: true,
+  //       enableClassification: false,
+  //     ),
+  //   );
+  //   final inputImage = InputImage.fromFile(faceImageFile);
+  //   final faces = await faceDetector.processImage(inputImage);
+  //   if (faces.isEmpty) return null;
+  //   final face = faces.first;
+  //   final landmarks = face.landmarks;
+  //   final serialized = [
+  //     landmarks[FaceLandmarkType.leftEye]?.position,
+  //     landmarks[FaceLandmarkType.rightEye]?.position,
+  //     landmarks[FaceLandmarkType.noseBase]?.position,
+  //     landmarks[FaceLandmarkType.leftCheek]?.position,
+  //     landmarks[FaceLandmarkType.rightCheek]?.position,
+  //   ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+  //   final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+  //   final lipData =
+  //       lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
 
-    faceDetector.close();
+  //   faceDetector.close();
 
-    final combined = '$serialized;$lipData';
-    return base64Encode(utf8.encode(combined));
-  }
+  //   final combined = '$serialized;$lipData';
+  //   return base64Encode(utf8.encode(combined));
+  // }
 
   final PageController _pageController = PageController(
     initialPage: 0,
@@ -448,44 +473,104 @@ class _HomePageState extends State<HomePage> {
                                 left: 10, right: 10, top: 10),
                             child: Column(
                               children: [
+                                // Positioned(
+                                //   top: 12,
+                                //   right: 152,
+                                //   child: GestureDetector(
+                                //     onTap: () {},
+                                //     child: Container(
+                                //       padding: const EdgeInsets.all(8),
+                                //       decoration: BoxDecoration(
+                                //         color: Colors.white.withOpacity(0.8),
+                                //         shape: BoxShape.circle,
+                                //       ),
+                                //       child: Icon(
+                                //         Icons.search,
+                                //         color: Colors.blue.shade700,
+                                //         size: 20,
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
                                 SizedBox(
                                   height: 220,
-                                  child: PageView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      controller: _pageController,
-                                      // physics: const NeverScrollableScrollPhysics(),
-                                      itemCount:
-                                          userDashboard!.data.slides.length,
-                                      itemBuilder:
-                                          (BuildContext context, int index) {
-                                        return GestureDetector(
-                                          onLongPress: () {
-                                            setState(() {
-                                              isLongPress = true;
-                                            });
-                                          },
-                                          onLongPressEnd: (details) {
-                                            setState(() {
-                                              isLongPress = false;
-                                            });
+                                  child: Stack(
+                                    children: [
+                                      PageView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        controller: _pageController,
+                                        itemCount:
+                                            userDashboard!.data.slides.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return GestureDetector(
+                                            onLongPress: () {
+                                              setState(() {
+                                                isLongPress = true;
+                                              });
+                                            },
+                                            onLongPressEnd: (details) {
+                                              setState(() {
+                                                isLongPress = false;
+                                              });
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                    userDashboard!.data
+                                                        .slides[index].imageUrl
+                                                        .toString(),
+                                                  ),
+                                                  fit: BoxFit.fill,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+
+                                      // Search Button positioned at top-right corner
+                                      Positioned(
+                                        top: 12,
+                                        right: 12,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) => Search(
+                                                        token: widget.token!,
+                                                        editLead:
+                                                            updateLeadPermission1,
+                                                        deleteLead:
+                                                            deleteLeadPermission1,
+                                                        cloudCall:
+                                                            cloudCallPermission1,
+                                                        leadType: '',
+                                                      )),
+                                            );
                                           },
                                           child: Container(
+                                            padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              image: DecorationImage(
-                                                  image: NetworkImage(
-                                                      userDashboard!
-                                                          .data
-                                                          .slides[index]
-                                                          .imageUrl
-                                                          .toString()),
-                                                  fit: BoxFit.fill),
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.search,
+                                              color: Colors.blue.shade700,
+                                              size: 20,
                                             ),
                                           ),
-                                        );
-                                      }),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(
                                   height: 5,
@@ -514,6 +599,26 @@ class _HomePageState extends State<HomePage> {
                                 const SizedBox(
                                   height: 15,
                                 ),
+                                // Positioned(
+                                //   top: 12,
+                                //   right: 12,
+                                //   child: GestureDetector(
+                                //     onTap: () {
+                                //     },
+                                //     child: Container(
+                                //       padding: const EdgeInsets.all(8),
+                                //       decoration: BoxDecoration(
+                                //         color: Colors.white.withOpacity(0.8),
+                                //         shape: BoxShape.circle,
+                                //       ),
+                                //       child: Icon(
+                                //         Icons.search,
+                                //         color: Colors.blue.shade700,
+                                //         size: 20,
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
                                 Visibility(
                                   visible: role == "Company Admin",
                                   child: Card(
@@ -770,6 +875,31 @@ class _HomePageState extends State<HomePage> {
                                                         ViewUsers(
                                                             widget.token)),
                                               );
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Service') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DashboardPage()),
+                                              );
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Rent') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        RentalDashboard(
+                                                            name: name,
+                                                            token:
+                                                                widget.token!,
+                                                            userId: userId,
+                                                            phoneCallLogPermission:
+                                                                phoneCallLogPermission,
+                                                            custId: "")),
+                                              );
                                             }
                                             //  else if (userDashboard!.data!
                                             //         .modules![i].menuName ==
@@ -961,7 +1091,7 @@ class _HomePageState extends State<HomePage> {
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         ClientList(
-                                                            widget.token!)),
+                                                            widget.token!,_scaffoldKey)),
                                               );
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
@@ -1070,7 +1200,7 @@ class _HomePageState extends State<HomePage> {
                                                                       .size
                                                                       .width *
                                                                   0.9,
-                                                              height: 300,
+                                                              height: 400,
                                                               child: Padding(
                                                                 padding:
                                                                     const EdgeInsets
@@ -1211,7 +1341,7 @@ class _HomePageState extends State<HomePage> {
                                                                             ),
                                                                           ),
                                                                         ),
-                                                                        
+
                                                                         // InkWell(
                                                                         //   onTap:
                                                                         //       () {
@@ -1335,53 +1465,214 @@ class _HomePageState extends State<HomePage> {
                                                                       ],
                                                                     ),
                                                                     SizedBox(
-                                                                      height:
-                                                                          8,
+                                                                      height: 8,
                                                                     ),
                                                                     Row(
-                                                                         mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .spaceBetween,
-                                                                      children: [
-                                                                      InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                  builder: (context) => StaffReport(
-                                                                                      // token: widget.token
-                                                                                      //     .toString(),
-                                                                                      ),
-                                                                                ));
-                                                                          },
-                                                                          child:
-                                                                              Container(
-                                                                            width:
-                                                                                MediaQuery.of(context).size.width * 0.38,
-                                                                            decoration:
-                                                                                BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => StaffReport(
+                                                                                        // token: widget.token
+                                                                                        //     .toString(),
+                                                                                        ),
+                                                                                  ));
+                                                                            },
                                                                             child:
-                                                                                const Padding(
-                                                                              padding: EdgeInsets.all(5),
-                                                                              child: Column(
-                                                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                children: [
-                                                                                  Icon(
-                                                                                    Icons.list_alt,
-                                                                                    size: 15,
-                                                                                  ),
-                                                                                  SizedBox(
-                                                                                    height: 5,
-                                                                                  ),
-                                                                                  Text('Staff Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                ],
+                                                                                Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.38,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.list_alt,
+                                                                                      size: 15,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      height: 5,
+                                                                                    ),
+                                                                                    Text('Staff Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                  ],
+                                                                                ),
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                        ),
-                                                                      ]
-                                                                      ),
+                                                                          SizedBox(
+                                                                            width:
+                                                                                15,
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => DetailedReportsPage(
+                                                                                    token: widget.token!,
+                                                                                    fromDate: fromdate,
+                                                                                    toDate: todate,
+                                                                                    fromDate1: fromdate1,
+                                                                                    toDate1: todate1,
+                                                                                    updateLeadPermission1: updateLeadPermission1,
+                                                                                    deleteLeadPermission1: deleteLeadPermission1,
+                                                                                    cloudCallPermission1: cloudCallPermission1,
+                                                                                    viewLeadPermission: viewLeadPermission,
+                                                                                  ),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.38,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.list_alt,
+                                                                                      size: 15,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      height: 5,
+                                                                                    ),
+                                                                                    Text('Detailed Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ]),
+                                                                    const SizedBox(
+                                                                      height: 8,
+                                                                    ),
+                                                                    Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => FollowupCalendarPage(
+                                                                                        // token: widget.token
+                                                                                        //     .toString(),
+                                                                                        ),
+                                                                                  ));
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.38,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.calendar_month,
+                                                                                      size: 15,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      height: 5,
+                                                                                    ),
+                                                                                    Text('Followup Calendar', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          SizedBox(
+                                                                            width:
+                                                                                15,
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => StaffWiseCallReport(),
+                                                                                  ));
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.38,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.call,
+                                                                                      size: 15,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      height: 5,
+                                                                                    ),
+                                                                                    Text('Call Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          //  SizedBox(
+                                                                          //   width:
+                                                                          //       15,
+                                                                          // ),
+                                                                        ]),
+                                                                    const SizedBox(
+                                                                      height: 8,
+                                                                    ),
+                                                                    Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => ViewAllTargetReportPage(id: userId),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.38,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.track_changes,
+                                                                                      size: 15,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      height: 5,
+                                                                                    ),
+                                                                                    Text('Target Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ]),
                                                                     const SizedBox(
                                                                       height: 8,
                                                                     ),
@@ -1426,7 +1717,7 @@ class _HomePageState extends State<HomePage> {
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const RoomDashboard()));
-                                            }else if (userDashboard!
+                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'products') {
                                               Navigator.push(
@@ -1648,7 +1939,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green,foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -1802,11 +2093,52 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                     if (!context.mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => Dashboard(widget.token)),
-                    );
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //       builder: (_) => Dashboard(widget.token)),
+                    // );
+                    ProjectDashboardPermission == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ProjectDashboard()),
+                          )
+                        : AccountsDashboardPermission == "true"
+                            ? Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AccountsDashboard(
+                                        token: widget.token!)),
+                              )
+                            : MenuDashboard == "true"
+                                ? Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            HomePage(widget.token)),
+                                  )
+                                : RenewalDashboardPermission == "true"
+                                    ? Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                RenewalDashboard()),
+                                      )
+                                    : NewleadDashboardPermission == "true"
+                                        ? Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    MinimalDashboard(
+                                                        widget.token)),
+                                          )
+                                        : Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    Dashboard(widget.token)),
+                                          );
                   } else {
                     showError(res?.message ?? "Failed to start work");
                   }

@@ -12,6 +12,7 @@ import 'package:login2/screens/accounts/clients/print_invoice_view.dart';
 import 'package:login2/screens/accounts/clients/receiptByInvoice.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/deleteInvoiceModel.dart';
@@ -49,6 +50,10 @@ class _UpdatedInvoiceListState extends State<UpdatedInvoiceList> {
   List<Type> filteredTypes = [];
   String typeId = "";
   String typeName = "Choose Type";
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   TextEditingController search = TextEditingController();
   bool isSearch = false;
   Offset? _tapPosition;
@@ -68,6 +73,11 @@ class _UpdatedInvoiceListState extends State<UpdatedInvoiceList> {
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -82,6 +92,9 @@ class _UpdatedInvoiceListState extends State<UpdatedInvoiceList> {
 
     invoiceList = await HttpService.invoiceList(
         widget.token,
+        ""
+        "",
+        "",
         fDate == "From Date" ? "" : fDate.toString(),
         tDate == "To Date" ? "" : tDate.toString(),
         customerId,
@@ -310,17 +323,37 @@ class _UpdatedInvoiceListState extends State<UpdatedInvoiceList> {
                                                               0.6,
                                                           child: InkWell(
                                                             onTap: () {
+                                                              // Navigator.push(
+                                                              //   context,
+                                                              //   MaterialPageRoute(
+                                                              //       builder: (context) => ClientDetails(
+                                                              //           widget
+                                                              //               .token,
+                                                              //           invoiceList!
+                                                              //               .data
+                                                              //               .lists[index]
+                                                              //               .clientId
+                                                              //               .toString())),
+                                                              // );
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder: (context) => ClientDetails(
-                                                                        widget
-                                                                            .token,
-                                                                        invoiceList!
-                                                                            .data
-                                                                            .lists[index]
-                                                                            .clientId
-                                                                            .toString())),
+                                                                  builder: (context) => CustomerDashboard(
+                                                                      name:
+                                                                          name!,
+                                                                      token: widget
+                                                                          .token!,
+                                                                      userId:
+                                                                          userId!,
+                                                                      phoneCallLogPermission:
+                                                                          phoneCallLogPermission,
+                                                                      custId: invoiceList!
+                                                                          .data
+                                                                          .lists[
+                                                                              index]
+                                                                          .clientId
+                                                                          .toString()),
+                                                                ),
                                                               );
                                                             },
                                                             child: Text(
@@ -1441,8 +1474,8 @@ class _UpdatedInvoiceListState extends State<UpdatedInvoiceList> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => AddInvoice(
-                                    widget.token, customerId, "")),
+                                builder: (context) =>
+                                    AddInvoice(widget.token, customerId, "")),
                           ).then((_) {
                             getData();
                           });

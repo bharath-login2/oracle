@@ -79,8 +79,15 @@ class _FileMangerListState extends State<FileMangerList> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       InkWell(
+                        // onTap: () {
+                        //   Navigator.pop(context);
+                        // },
                         onTap: () {
-                          Navigator.pop(context);
+                          if (Navigator.canPop(context)) {
+                            Navigator.maybePop(context);
+                          } else {
+                            Navigator.pop(context);
+                          }
                         },
                         child: Container(
                           height: 25,

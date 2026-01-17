@@ -7,6 +7,7 @@ import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/screens/accounts/clients/addInvoice.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../../core/common.dart';
@@ -18,8 +19,8 @@ import 'log_screen.dart';
 
 class ClientList extends StatefulWidget {
   String token;
-
-  ClientList(this.token, {super.key});
+ GlobalKey<ScaffoldState>? scaffoldKey;
+  ClientList(this.token, this.scaffoldKey, {super.key});
 
   @override
   State<ClientList> createState() => _ClientListState();
@@ -36,6 +37,10 @@ class _ClientListState extends State<ClientList> {
   int page = 1;
   int add = 1;
   int pageSize = 15;
+   String name = '';
+  String role = '';
+  String userId = '';
+    String phoneCallLogPermission = '';
   List<ClientLists> items = [];
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
@@ -78,6 +83,11 @@ class _ClientListState extends State<ClientList> {
   //   }
   // }
   getData() async {
+     name = await Common.getSharedPref("name");
+      role = await Common.getSharedPref("role");
+      userId = await Common.getSharedPref("userId");
+       phoneCallLogPermission =
+          await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -373,7 +383,7 @@ class _ClientListState extends State<ClientList> {
                           child: mainClients!.data.isNotEmpty
                               ? SizedBox(
                                   height:
-                                      MediaQuery.of(context).size.height * .66,
+                                      MediaQuery.of(context).size.height * .86,
                                   child: ScrollablePositionedList.builder(
                                     shrinkWrap: true,
                                     itemScrollController: itemScrollController,
@@ -394,44 +404,39 @@ class _ClientListState extends State<ClientList> {
                                           padding:
                                               const EdgeInsets.only(bottom: 10),
                                           child: InkWell(
+                                         
                                             // onTap: () {
+                                            //   _lastScrollIndex = index;
+                                            //   _shouldRestoreScroll = true;
+
                                             //   Navigator.push(
                                             //     context,
                                             //     MaterialPageRoute(
-                                            //         builder: (context) =>
-                                            //             ClientDetails(
-                                            //                 widget.token,
-                                            //                 items[index]
-                                            //                     .id
-                                            //                     .toString())),
+                                            //       builder: (context) =>
+                                            //           ClientDetails(
+                                            //               widget.token,
+                                            //               items[index]
+                                            //                   .id
+                                            //                   .toString()),
+                                            //     ),
                                             //   ).then((_) {
                                             //     items.clear();
                                             //     page = 1;
                                             //     add = 1;
+                                            //     _shouldRestoreScroll = false;
                                             //     getData();
                                             //   });
                                             // },
-                                            onTap: () {
-                                              _lastScrollIndex = index;
-                                              _shouldRestoreScroll = true;
-
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ClientDetails(
-                                                          widget.token,
-                                                          items[index]
+                                             onTap: () {
+                                               Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    CustomerDashboard(name:name ,token:widget.token!,userId:userId ,phoneCallLogPermission:phoneCallLogPermission,custId: items[index]
                                                               .id
-                                                              .toString()),
-                                                ),
-                                              ).then((_) {
-                                                items.clear();
-                                                page = 1;
-                                                add = 1;
-                                                _shouldRestoreScroll = false;
-                                                getData();
-                                              });
+                                                              .toString(),key:widget.scaffoldKey),
+                                                              ),
+                                                            );
                                             },
                                             child: Container(
                                               decoration: BoxDecoration(
@@ -571,44 +576,44 @@ class _ClientListState extends State<ClientList> {
                                                                 ),
                                                               ],
                                                             )),
-                                                        items[index].totalInvoiceCount !=
-                                                                ''
-                                                            ? Container(
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            30),
-                                                                    color: const Color(
-                                                                        0xff80D1FF)),
-                                                                child: Center(
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .only(
-                                                                        left:
-                                                                            12,
-                                                                        right:
-                                                                            12,
-                                                                        top: 6,
-                                                                        bottom:
-                                                                            6),
-                                                                    child: Text(
-                                                                        items[index]
-                                                                            .totalInvoiceCount
-                                                                            .toString(),
-                                                                        style:
-                                                                            const TextStyle(
-                                                                          color:
-                                                                              Colors.black,
-                                                                          fontSize:
-                                                                              14,
-                                                                          fontWeight:
-                                                                              FontWeight.w600,
-                                                                        )),
-                                                                  ),
-                                                                ),
-                                                              )
-                                                            : const SizedBox()
+                                                        // items[index].totalInvoiceCount !=
+                                                        //         ''
+                                                        //     ? Container(
+                                                        //         decoration: BoxDecoration(
+                                                        //             borderRadius:
+                                                        //                 BorderRadius.circular(
+                                                        //                     30),
+                                                        //             color: const Color(
+                                                        //                 0xff80D1FF)),
+                                                        //         child: Center(
+                                                        //           child:
+                                                        //               Padding(
+                                                        //             padding: const EdgeInsets
+                                                        //                 .only(
+                                                        //                 left:
+                                                        //                     12,
+                                                        //                 right:
+                                                        //                     12,
+                                                        //                 top: 6,
+                                                        //                 bottom:
+                                                        //                     6),
+                                                        //             child: Text(
+                                                        //                 items[index]
+                                                        //                     .totalInvoiceCount
+                                                        //                     .toString(),
+                                                        //                 style:
+                                                        //                     const TextStyle(
+                                                        //                   color:
+                                                        //                       Colors.black,
+                                                        //                   fontSize:
+                                                        //                       14,
+                                                        //                   fontWeight:
+                                                        //                       FontWeight.w600,
+                                                        //                 )),
+                                                        //           ),
+                                                        //         ),
+                                                        //       )
+                                                        //     : const SizedBox()
                                                       ],
                                                     ),
                                                     Row(

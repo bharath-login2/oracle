@@ -28,6 +28,7 @@ import '../../models/callLogs/deleteCallHistoryModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
+import 'dart:math' hide log;
 
 class CallLogs extends StatefulWidget {
   String? token;
@@ -45,6 +46,7 @@ class _CallLogsState extends State<CallLogs> {
   List<Map<String, dynamic>> history = [];
   List historyIndex = [];
   bool onLongPress = false;
+  bool selectAll = false;
   bool refresh = false;
   CallLogHistoryModel? logHistory;
   String? permissionAccess = '';
@@ -103,8 +105,8 @@ class _CallLogsState extends State<CallLogs> {
   @override
   void initState() {
     super.initState();
-    assignStaff = widget.name.toString();
-    assignStaffId = widget.userId.toString();
+    assignStaff = widget.name?.toString() ?? 'Assign Staff';
+    assignStaffId = widget.userId?.toString() ?? '';
     if (Platform.isAndroid) {
       getSharedData();
       getPermission();
@@ -116,6 +118,147 @@ class _CallLogsState extends State<CallLogs> {
       deleteHiveData();
     });
 // loadHiveData();
+  }
+
+  void toggleSelectAll() {
+    setState(() {
+      if (selectAll) {
+        // Deselect all
+        selectAll = false;
+        history.clear();
+        historyIndex.clear();
+        onLongPress = false;
+      } else {
+        // Select all
+        selectAll = true;
+        onLongPress = true;
+
+        // Clear previous selections
+        history.clear();
+        historyIndex.clear();
+
+        // Add all call log entries to history
+        for (int i = 0; i < _callLogEntries.length; i++) {
+          final entry = _callLogEntries.elementAt(i);
+
+          // Skip if already uploaded
+          bool isUploaded = fullHiveData.any((item) =>
+              item.id == entry.timestamp.toString() && item.isUploaded == true);
+
+          if (!isUploaded) {
+            history.add({
+              "name": entry.name ?? "",
+              "phone_number": entry.number,
+              "callTypes": entry.callType
+                  .toString()
+                  .substring(entry.callType.toString().indexOf('.') + 1),
+              "time":
+                  '${DateTime.fromMillisecondsSinceEpoch(entry.timestamp!)}',
+              "duration": entry.duration,
+              "simName": entry.simDisplayName ?? "NIL",
+              "timeStamp": entry.timestamp,
+            });
+            historyIndex.add(i);
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> bulkUploadAll() async {
+    if (history.isEmpty && selectAll) {
+      // If selectAll is true but history is empty, build the list
+      history.clear();
+      historyIndex.clear();
+
+      for (int i = 0; i < _callLogEntries.length; i++) {
+        final entry = _callLogEntries.elementAt(i);
+
+        // Skip if already uploaded
+        bool isUploaded = fullHiveData.any((item) =>
+            item.id == entry.timestamp.toString() && item.isUploaded == true);
+
+        if (!isUploaded) {
+          history.add({
+            "name": entry.name ?? "",
+            "phone_number": entry.number,
+            "callTypes": entry.callType
+                .toString()
+                .substring(entry.callType.toString().indexOf('.') + 1),
+            "time": '${DateTime.fromMillisecondsSinceEpoch(entry.timestamp!)}',
+            "duration": entry.duration,
+            "simName": entry.simDisplayName ?? "NIL",
+            "timeStamp": entry.timestamp,
+          });
+          historyIndex.add(i);
+        }
+      }
+    }
+
+    if (history.isEmpty) {
+      Common.toastMessaage("All logs are already uploaded", Colors.blue);
+      return;
+    }
+
+    Map<String, dynamic> body = {
+      "token": widget.token,
+      'log': history,
+    };
+
+    if (context.mounted) {
+      Common.showProgressDialog(context, "Uploading ${history.length} logs...");
+    }
+
+    CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+
+    if (object1.data == true) {
+      Common.toastMessaage(
+          "${object1.message} (${history.length} logs)", Colors.green);
+
+      // Mark as uploaded in Hive
+      for (var entry in _callLogEntries) {
+        bool existsInHive = await HiveUtil.isCallLogWithIdAndNumberExists(
+            entry.timestamp.toString(), entry.number.toString());
+
+        if (existsInHive) {
+          await HiveUtil.markCallLogAsUploaded(entry.timestamp.toString());
+        } else {
+          HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+              id: entry.timestamp.toString(),
+              name: entry.name.toString(),
+              phoneNumber: entry.number.toString(),
+              callType: entry.callType
+                  .toString()
+                  .substring(entry.callType.toString().indexOf('.') + 1),
+              duration: entry.duration.toString(),
+              timeStamp: entry.timestamp!.toString(),
+              simSlot: entry.simDisplayName ?? "NIL",
+              callRecordFilePath: "",
+              isUploaded: true,
+              isDeleted: false,
+              isEnabled: false);
+          await HiveUtil.addCallLog(hiveCallLog);
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        getSharedData();
+        getData();
+      }
+    } else {
+      Common.toastMessaage(object1.message, Colors.red);
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    }
+
+    setState(() {
+      history.clear();
+      historyIndex.clear();
+      selectAll = false;
+      onLongPress = false;
+    });
   }
 
   Future<void> deleteHiveData() async {
@@ -168,7 +311,6 @@ class _CallLogsState extends State<CallLogs> {
     for (var entry in hiveData) {
       log('Entry 1 MAIN : ${entry.name} || ${entry.phoneNumber} || ${entry.isUploaded} || ${entry.timeStamp}');
     }
-
     setState(() {
       fullHiveData = hiveData;
       // You might also refresh _callLogEntries here if needed
@@ -777,7 +919,6 @@ class _CallLogsState extends State<CallLogs> {
       final isAllowed = permissionAccess == 'true';
       debugPrint("callLogPermission now: $isAllowed");
       uploadPermission = await Common.getSharedPref("uploadCallLog");
-
       String? deleteAccessStr =
           await Common.getSharedPref("accessCallHistoryPermission");
       roleId = await Common.getSharedPref("roleId");
@@ -928,13 +1069,13 @@ class _CallLogsState extends State<CallLogs> {
         final String dateTimeFrom =
             prefs.getString('callLogsStartingTime').toString();
         final DateTime startingTime = DateTime.parse(dateTimeFrom);
-
         // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
         int to = DateTime.now().millisecondsSinceEpoch;
         final Iterable<CallLogEntry> result = await CallLog.query(
           dateFrom: from,
           dateTo: to,
         );
+
         //!
         final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
           final DateTime callTime =
@@ -964,6 +1105,42 @@ class _CallLogsState extends State<CallLogs> {
         final deviceLatestCallLogTime =
             parseCallLogTime(callLogsFromDevice.first.timestamp.toString());
 
+        // final List<HiveCaallHistoryModel> hiveData =
+        //     await HiveUtil.getAllCallLogs();
+
+        // final HiveCaallHistoryModel latestHiveCallLog2 =
+        //     await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
+        // log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
+        // final HiveCaallHistoryModel latestHiveCallLog2 =
+        //     await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
+        // log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
+        // final List<HiveCaallHistoryModel> unuploadedHiveLogs = hiveData
+        //     .where((log) =>
+        //         log.isUploaded == false &&
+        //         log.isEnabled == false &&
+        //         log.isDeleted == false)
+        //     .toList();
+
+        // if (unuploadedHiveLogs.isNotEmpty) {
+        //   log('Found ${unuploadedHiveLogs.length} unuploaded logs in Hive');
+        //   await uploadMissingLogsToServer(unuploadedHiveLogs);
+        //   for (var log in unuploadedHiveLogs) {
+        //     await HiveUtil.markCallLogAsUploaded(log.id);
+        //   }
+
+        //   log('Uploaded ${unuploadedHiveLogs.length} previously unuploaded logs from Hive');
+        // }
+        // final HiveCaallHistoryModel latestHiveCallLog2 =
+        //     await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
+        // log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
+
+        // final List<HiveCaallHistoryModel> unuploadedHiveLogs = hiveData
+        //     .where((log) =>
+        //         log.isUploaded == false &&
+        //         log.isEnabled == false &&
+        //         log.isDeleted == false)
+        //     .toList();
+
         final List<HiveCaallHistoryModel> hiveData =
             await HiveUtil.getAllCallLogs();
 
@@ -971,8 +1148,44 @@ class _CallLogsState extends State<CallLogs> {
             await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
         log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
 
+        final List<HiveCaallHistoryModel> unuploadedHiveLogs = hiveData
+            .where((log) =>
+                log.isUploaded == false &&
+                log.isEnabled == false &&
+                log.isDeleted == false)
+            .toList();
+
+        if (unuploadedHiveLogs.isNotEmpty) {
+          log('Found ${unuploadedHiveLogs.length} unuploaded logs in Hive');
+          setState(() {
+            refresh = true;
+          });
+          bool uploadSuccess =
+              await uploadMissingLogsToServer(unuploadedHiveLogs);
+          if (uploadSuccess) {
+            log('Uploaded ${unuploadedHiveLogs.length} previously unuploaded logs from Hive');
+            if (mounted) {
+              Common.toastMessaage(
+                  "Successfully uploaded ${unuploadedHiveLogs.length} call logs",
+                  Colors.green);
+              await getSharedData();
+              if (selectedIndex == 1) {
+                getData();
+              }
+              printLastUploadedData();
+            }
+          } else {
+            log('Failed to upload logs');
+            setState(() {
+              refresh = false;
+            });
+          }
+        }
+
         final hiveLatestDateTime =
             parseCallLogTime(latestHiveCallLog2.timeStamp);
+        // final hiveLatestDateTime =
+        //     parseCallLogTime(latestHiveCallLog2.timeStamp);
 
         if (hiveLatestDateTime == deviceLatestCallLogTime) {
           log('Latest Hive Call Log and Device Call Log are same.');
@@ -1113,6 +1326,8 @@ class _CallLogsState extends State<CallLogs> {
             // Proceed with upload only for allowed items
             if (allowedCallLogs.isNotEmpty) {
               await uploadMissingLogsToServer(allowedCallLogs);
+              log('=== UPLOAD COMPLETED ===');
+              printLastUploadedData();
             }
 
             if (nonDuplicates.isNotEmpty) {
@@ -1137,10 +1352,111 @@ class _CallLogsState extends State<CallLogs> {
     // setState(() {});
   }
 
-  Future<void> uploadMissingLogsToServer(
+  void printLastUploadedData() async {
+    log('===== LAST UPLOADED DATA FROM HIVE =====');
+
+    final List<HiveCaallHistoryModel> hiveData =
+        await HiveUtil.getAllCallLogs();
+
+    if (hiveData.isEmpty) {
+      log('No data in Hive');
+      return;
+    }
+
+    // Sort by timestamp to get the most recent
+    hiveData.sort((a, b) => b.timeStamp.compareTo(a.timeStamp));
+
+    // Get uploaded items only
+    final uploadedLogs = hiveData.where((log) => log.isUploaded).toList();
+
+    if (uploadedLogs.isEmpty) {
+      log('No uploaded logs found');
+      return;
+    }
+
+    log('Total uploaded logs: ${uploadedLogs.length}');
+    log('Most recent uploaded logs (last 5):');
+
+    // Show last 5 uploaded logs
+    for (var i = 0; i < min(5, uploadedLogs.length); i++) {
+      final entry = uploadedLogs[i];
+      log('[$i] ${DateFormat('dd-MM-yyyy HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(int.parse(entry.timeStamp)))}');
+      log('     Name: ${entry.name}');
+      log('     Phone: ${entry.phoneNumber}');
+      log('     Call Type: ${entry.callType}');
+      log('     Duration: ${entry.duration}s');
+      log('     Is Enabled: ${entry.isEnabled}');
+      log('     Sim: ${entry.simSlot}');
+      log('---------------------------------');
+    }
+
+    // Show the VERY last one in detail
+    final lastEntry = uploadedLogs.first;
+    log('=== VERY LAST UPLOADED ENTRY ===');
+    log('ID: ${lastEntry.id}');
+    log('Timestamp: ${lastEntry.timeStamp}');
+    log('Date: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(int.parse(lastEntry.timeStamp)))}');
+    log('Full Details:');
+    log('  - Name: ${lastEntry.name}');
+    log('  - Phone: ${lastEntry.phoneNumber}');
+    log('  - Call Type: ${lastEntry.callType}');
+    log('  - Duration: ${lastEntry.duration} seconds');
+    log('  - Sim: ${lastEntry.simSlot}');
+    log('  - Is Deleted: ${lastEntry.isDeleted}');
+    log('  - Is Enabled: ${lastEntry.isEnabled}');
+    log('===============================');
+  }
+
+  // Future<void> uploadMissingLogsToServer(
+  //     List<HiveCaallHistoryModel> callLogData) async {
+  //   log("uploadMissingLogsToServer function called");
+
+  //   List<Map<String, dynamic>> missingLogs = callLogData
+  //       .map((log) => {
+  //             "name": log.name,
+  //             "phone_number": log.phoneNumber,
+  //             "callTypes": log.callType
+  //                 .toString()
+  //                 .substring(log.callType.toString().indexOf('.') + 1),
+  //             // "time": DateTime.parse(log.timeStamp).toString(),
+  //             "time":
+  //                 DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
+  //                     .toString(), // log.timestamp,
+  //             // "time": log.timeStamp.toString(), // log.timestamp,
+  //             "duration": log.duration,
+  //             "simName": log.simSlot ?? "NIL",
+  //             "timeStamp": log.timeStamp,
+  //           })
+  //       .toList();
+
+  //   log("⚠️ Found ${missingLogs.length} missing logs.");
+
+  //   if (missingLogs.isNotEmpty) {
+  //     log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
+  //     log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
+
+  //     Map<String, dynamic> body = {
+  //       "token": await Common.getSharedPref("token"),
+  //       'log': missingLogs,
+  //     };
+  //     log('~~ OUTGOING CALL BODY : $body ~~~');
+
+  //     CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+  //     log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
+  //     // await HiveUtil.saveCallLog(missingLogs.last);
+  //     if (object1.data == true) {
+  //       log('~~ OUTGOING CALL success ~~~');
+  //       log('success');
+  //     } else {
+  //       log('~~ OUTGOING CALL failure ~~~');
+  //       log('failure');
+  //     }
+  //   }
+
+  // }
+  Future<bool> uploadMissingLogsToServer(
       List<HiveCaallHistoryModel> callLogData) async {
     log("uploadMissingLogsToServer function called");
-
     List<Map<String, dynamic>> missingLogs = callLogData
         .map((log) => {
               "name": log.name,
@@ -1148,40 +1464,35 @@ class _CallLogsState extends State<CallLogs> {
               "callTypes": log.callType
                   .toString()
                   .substring(log.callType.toString().indexOf('.') + 1),
-              // "time": DateTime.parse(log.timeStamp).toString(),
               "time":
                   DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
-                      .toString(), // log.timestamp,
-              // "time": log.timeStamp.toString(), // log.timestamp,
+                      .toString(),
               "duration": log.duration,
               "simName": log.simSlot ?? "NIL",
               "timeStamp": log.timeStamp,
             })
         .toList();
-
     log("⚠️ Found ${missingLogs.length} missing logs.");
-
     if (missingLogs.isNotEmpty) {
-      log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
-      log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
-
+      log('~~ UPLOADING LOGS : $missingLogs ~~~');
+      log('~~ UPLOADING LOGS length : ${missingLogs.length} ~~~');
       Map<String, dynamic> body = {
         "token": await Common.getSharedPref("token"),
         'log': missingLogs,
       };
-      log('~~ OUTGOING CALL BODY : $body ~~~');
-
       CallLogUploadModel object1 = await HttpService.callLogUpload(body);
-      log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
-      // await HiveUtil.saveCallLog(missingLogs.last);
       if (object1.data == true) {
-        log('~~ OUTGOING CALL success ~~~');
-        log('success');
+        log('~~ UPLOAD SUCCESS ~~~');
+        for (var log in callLogData) {
+          await HiveUtil.markCallLogAsUploaded(log.id);
+        }
+        return true;
       } else {
-        log('~~ OUTGOING CALL failure ~~~');
-        log('failure');
+        log('~~ UPLOAD FAILURE ~~~');
+        return false;
       }
     }
+    return true;
   }
 
   getData() async {
@@ -1199,6 +1510,23 @@ class _CallLogsState extends State<CallLogs> {
       });
     }
   }
+  // getData() async {
+  //   commonDetails = await HttpService.addLeadCommonData(widget.token);
+  //   if (commonDetails != null) {
+  //     setState(() {});
+  //   }
+
+  //   logHistory = await HttpService.callLogHistory(
+  //       widget.token, fromdate, todate, assignStaffId);
+
+  //   if (logHistory != null) {
+  //     setState(() {
+  //       if (isSearch == false && Navigator.canPop(context)) {
+  //         Navigator.of(context).pop();
+  //       }
+  //     });
+  //   }
+  // }
 
   // void getSimDetails() async {
   //   try {
@@ -1278,9 +1606,7 @@ class _CallLogsState extends State<CallLogs> {
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        width: 25,
-                      ),
+                      const SizedBox(width: 25),
                       const Text(
                         'Call Logs',
                         style: TextStyle(color: Colors.white, fontSize: 18),
@@ -1289,33 +1615,74 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                   Row(
                     children: [
-                      uploadPermission == "true" && onLongPress
-                          ? Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 13,
-                                  backgroundColor: Colors.white,
-                                  child: Text(
-                                    history.length.toString(),
+                      // Select All Checkbox - Only show when in call logs tab (selectedIndex == 0)
+                      if (selectedIndex == 0 && permissionAccess == 'true')
+                        Row(
+                          children: [
+                            // Select All Checkbox
+                            InkWell(
+                              onTap: () {
+                                toggleSelectAll();
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    selectAll
+                                        ? Icons.check_box
+                                        : Icons.check_box_outline_blank,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Select All',
                                     style: const TextStyle(
-                                        color: Colors.blue, fontSize: 17),
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
-                                InkWell(
-                                  onTap: () async {
-                                    bulkUpload();
-                                  },
-                                  child: const Icon(
-                                    Icons.upload,
-                                    size: 30,
+                                  const SizedBox(width: 10),
+                                ],
+                              ),
+                            ),
+
+                            // Count of selected items
+                            if (historyIndex.isNotEmpty || selectAll)
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 13,
+                                    backgroundColor: Colors.white,
+                                    child: Text(
+                                      selectAll
+                                          ? _callLogEntries.length.toString()
+                                          : history.length.toString(),
+                                      style: const TextStyle(
+                                          color: Colors.blue, fontSize: 17),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            )
-                          : const SizedBox(),
+                                  const SizedBox(width: 15),
+                                  if (uploadPermission == "true")
+                                    InkWell(
+                                      onTap: () async {
+                                        if (selectAll) {
+                                          await bulkUploadAll();
+                                        } else {
+                                          bulkUpload();
+                                        }
+                                      },
+                                      child: const Icon(
+                                        Icons.upload,
+                                        size: 30,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+
+                      // Original delete functionality
                       deleteHistoryIds.isNotEmpty
                           ? InkWell(
                               onTap: () {
@@ -1332,6 +1699,8 @@ class _CallLogsState extends State<CallLogs> {
                                 color: Colors.red,
                               ))
                           : const SizedBox(),
+
+                      // Settings menu
                       callUploadPermission != null
                           ? Padding(
                               padding:
@@ -1402,6 +1771,166 @@ class _CallLogsState extends State<CallLogs> {
             ),
           ),
         ),
+        // appBar: PreferredSize(
+        //   preferredSize:
+        //       Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+        //   child: Container(
+        //     padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        //     decoration: const BoxDecoration(
+        //       gradient: LinearGradient(
+        //           colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+        //     ),
+        //     child: Padding(
+        //       padding: const EdgeInsets.only(
+        //           left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+        //       child: Row(
+        //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //         children: [
+        //           Row(
+        //             mainAxisAlignment: MainAxisAlignment.center,
+        //             crossAxisAlignment: CrossAxisAlignment.center,
+        //             children: [
+        //               InkWell(
+        //                 onTap: () {
+        //                   Navigator.pop(context);
+        //                 },
+        //                 child: Container(
+        //                   height: 25,
+        //                   width: 25,
+        //                   decoration: BoxDecoration(
+        //                       border: Border.all(color: Colors.white),
+        //                       shape: BoxShape.circle),
+        //                   child: const Icon(
+        //                     Icons.arrow_back_ios_outlined,
+        //                     color: Colors.white,
+        //                     size: 16,
+        //                   ),
+        //                 ),
+        //               ),
+        //               const SizedBox(
+        //                 width: 25,
+        //               ),
+        //               const Text(
+        //                 'Call Logs',
+        //                 style: TextStyle(color: Colors.white, fontSize: 18),
+        //               ),
+        //             ],
+        //           ),
+        //           Row(
+        //             children: [
+        //               uploadPermission == "true" && onLongPress
+        //                   ? Row(
+        //                       children: [
+        //                         CircleAvatar(
+        //                           radius: 13,
+        //                           backgroundColor: Colors.white,
+        //                           child: Text(
+        //                             history.length.toString(),
+        //                             style: const TextStyle(
+        //                                 color: Colors.blue, fontSize: 17),
+        //                           ),
+        //                         ),
+        //                         const SizedBox(
+        //                           width: 15,
+        //                         ),
+        //                         InkWell(
+        //                           onTap: () async {
+        //                             bulkUpload();
+        //                           },
+        //                           child: const Icon(
+        //                             Icons.upload,
+        //                             size: 30,
+        //                           ),
+        //                         ),
+        //                       ],
+        //                     )
+        //                   : const SizedBox(),
+        //               deleteHistoryIds.isNotEmpty
+        //                   ? InkWell(
+        //                       onTap: () {
+        //                         if (deleteAccess) {
+        //                           deleteDialog(context);
+        //                         } else {
+        //                           Common.toastMessaage(
+        //                               "Permission required to delete call history",
+        //                               Colors.red);
+        //                         }
+        //                       },
+        //                       child: const Icon(
+        //                         Icons.delete,
+        //                         color: Colors.red,
+        //                       ))
+        //                   : const SizedBox(),
+        //               callUploadPermission != null
+        //                   ? Padding(
+        //                       padding:
+        //                           const EdgeInsets.only(left: 10, right: 10),
+        //                       child: GestureDetector(
+        //                         onTap: () async {
+        //                           displayOverApps = await Permission
+        //                               .systemAlertWindow.isGranted;
+        //                           if (mounted) {
+        //                             mainPopupButton(context)
+        //                                 .then((value) async {
+        //                               if (value != null) {
+        //                                 if (value == '1') {
+        //                                   Map<String, dynamic> body = {
+        //                                     "token": await Common.getSharedPref(
+        //                                         "token"),
+        //                                     "type": "incoming"
+        //                                   };
+        //                                   CallLogUploadPermissionUpdateModel
+        //                                       perm = await HttpService
+        //                                           .callLogUploadPermissionUpdate(
+        //                                               body);
+        //                                   Common.toastMessaage(
+        //                                       perm.message, Colors.green);
+        //                                   getPermission();
+        //                                   setState(() {});
+        //                                 } else if (value == '2') {
+        //                                   Map<String, dynamic> body = {
+        //                                     "token": await Common.getSharedPref(
+        //                                         "token"),
+        //                                     "type": "outgoing"
+        //                                   };
+        //                                   CallLogUploadPermissionUpdateModel
+        //                                       perm = await HttpService
+        //                                           .callLogUploadPermissionUpdate(
+        //                                               body);
+        //                                   Common.toastMessaage(
+        //                                       perm.message, Colors.green);
+        //                                   getPermission();
+        //                                   setState(() {});
+        //                                 } else if (value == '3') {
+        //                                   if (await Permission
+        //                                       .systemAlertWindow.isGranted) {
+        //                                     openAppSettings();
+        //                                   } else {
+        //                                     Config.requestPermission();
+        //                                   }
+        //                                 } else if (value == '4') {
+        //                                   selectSim(context);
+        //                                 } else if (value == '6') {
+        //                                   askUserNeedsOld(context, true);
+        //                                 }
+        //                               }
+        //                             });
+        //                           }
+        //                         },
+        //                         child: const Icon(
+        //                           Icons.more_vert_rounded,
+        //                           color: Colors.white,
+        //                         ),
+        //                       ),
+        //                     )
+        //                   : const SizedBox()
+        //             ],
+        //           )
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // ),
         body: permissionAccess == 'true' || Platform.isIOS
             ? SingleChildScrollView(
                 child: Column(
@@ -1421,6 +1950,10 @@ class _CallLogsState extends State<CallLogs> {
                                   selectedIndex = 0;
                                   deleteHistoryIds.clear();
                                   onLongPress = false;
+                                  selectAll = false;
+                                  history.clear();
+                                  historyIndex.clear();
+                                  isSearch = true;
                                 });
                               } else {
                                 Common.toastMessaage(
@@ -2003,13 +2536,10 @@ class _CallLogsState extends State<CallLogs> {
                                                                                             log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
                                                                                             if (isThisAlreadyInHiveCallLogDb) {
                                                                                               log('already in hive');
-                                                                                              // update
                                                                                               await HiveUtil.markCallLogAsUploaded(_callLogEntries.elementAt(indexStaff).timestamp.toString());
                                                                                               log('updated in hive');
-                                                                                              // todo : reload data
                                                                                             } else {
                                                                                               log('not in hive');
-                                                                                              // add
                                                                                               try {
                                                                                                 HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
                                                                                                     id: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
@@ -2348,7 +2878,9 @@ class _CallLogsState extends State<CallLogs> {
                                                           color: Colors.grey,
                                                         ),
                                                         counterText: "",
-                                                        hintText: assignStaff,
+                                                        hintText: assignStaff ??
+                                                            widget.name ??
+                                                            'Select Staff',
                                                         isDense: true,
                                                         border: OutlineInputBorder(
                                                             borderSide:
@@ -2366,10 +2898,10 @@ class _CallLogsState extends State<CallLogs> {
                                                   setState(() {
                                                     search = true;
                                                     isSearch = false;
-                                                    Common.showProgressDialog(
-                                                        context, "Loading..");
-                                                    getData();
                                                   });
+                                                  Common.showProgressDialog(
+                                                      context, "Loading..");
+                                                  getData();
                                                 },
                                                 child: Container(
                                                   width: MediaQuery.of(context)

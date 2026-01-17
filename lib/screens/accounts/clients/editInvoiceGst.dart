@@ -81,6 +81,8 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
   bool headerContent = false;
   var code = '91';
   bool sameAsBilling = false;
+  bool isLoading = true;
+  bool _initialDataLoaded = false;
   void toggleTextFieldVisibility() {
     setState(() {
       isTextFieldVisible = !isTextFieldVisible;
@@ -92,6 +94,17 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
       header = !header;
       headerContent = !headerContent;
     });
+  }
+
+  void _resetAddProductForm() {
+    productName = "Choose Product";
+    productId = "";
+    productDescription.clear();
+    productRate.clear();
+    productQty.clear();
+    productTaxPercent.clear();
+    productTaxAmount.clear();
+    productTotalAmount.clear();
   }
 
   double safeParseDouble(dynamic value) {
@@ -183,6 +196,11 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                           builder: (context) {
                             return StatefulBuilder(
                                 builder: (context, setState) {
+                              // Create a LOCAL list for searching within this dialog only
+                              List<Product> localFilteredItems = [];
+                              localFilteredItems
+                                  .addAll(items); // Start with all items
+
                               return AlertDialog(
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -197,7 +215,8 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                         autofocus: true,
                                         onChanged: (value) {
                                           setState(() {
-                                            filteredItems = items
+                                            // Use local list, not class-level filteredItems
+                                            localFilteredItems = items
                                                 .where((item) => item
                                                     .productName
                                                     .toLowerCase()
@@ -220,47 +239,62 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                       width: MediaQuery.of(context).size.width *
                                           .8,
                                       child: ListView.builder(
-                                        itemCount: filteredItems.length,
+                                        itemCount: localFilteredItems
+                                            .length, // Use local list
                                         physics: const ScrollPhysics(),
                                         shrinkWrap: true,
                                         itemBuilder: (context, index) {
                                           return ListTile(
-                                              onTap: () {
-                                                if (productQty.text == "") {
-                                                  productQty.text = "1";
-                                                }
-                                                productName =
-                                                    filteredItems[index]
-                                                        .productName;
-                                                productId =
-                                                    filteredItems[index].id;
-                                                productRate.text =
-                                                    filteredItems[index]
-                                                        .sellingPrice;
-                                                productTaxPercent.text =
-                                                    filteredItems[index]
-                                                        .taxPercent;
-                                                productTaxAmount.text =
-                                                    filteredItems[index]
-                                                        .taxAmount;
-                                                productTotalAmount
-                                                    .text = ((double.parse(
-                                                            productRate.text)) *
-                                                        double.parse(
-                                                            productQty.text))
-                                                    .toString();
-                                                // productTotalAmountTax.text = ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
-                                                productTotalAmount
-                                                    .text = double.parse(
-                                                        productTotalAmount.text)
-                                                    .toStringAsFixed(2);
-                                                setState(() {});
-                                                if (context.mounted) {
-                                                  Navigator.pop(context);
-                                                }
-                                              },
-                                              title: Text(filteredItems[index]
-                                                  .productName));
+                                            onTap: () {
+                                              if (productQty.text == "") {
+                                                productQty.text = "1";
+                                              }
+                                              productName = localFilteredItems[
+                                                      index] // Use local list
+                                                  .productName;
+                                              productId =
+                                                  localFilteredItems[index]
+                                                      .id; // Use local list
+                                              productRate
+                                                  .text = localFilteredItems[
+                                                      index] // Use local list
+                                                  .sellingPrice;
+                                              productTaxPercent
+                                                  .text = localFilteredItems[
+                                                      index] // Use local list
+                                                  .taxPercent;
+
+                                              // Calculate based on current quantity
+                                              double rate = double.parse(
+                                                  productRate.text);
+                                              double qty =
+                                                  double.parse(productQty.text);
+                                              double taxPercent = double.parse(
+                                                  productTaxPercent.text);
+                                              double taxPerUnit =
+                                                  (rate * taxPercent) / 100;
+                                              double amountExcludingTax =
+                                                  rate * qty;
+                                              double totalTaxForProduct =
+                                                  taxPerUnit * qty;
+                                              double totalAmountWithTax =
+                                                  amountExcludingTax +
+                                                      totalTaxForProduct;
+
+                                              productTaxAmount.text =
+                                                  taxPerUnit.toStringAsFixed(2);
+                                              productTotalAmount.text =
+                                                  totalAmountWithTax
+                                                      .toStringAsFixed(2);
+                                              setState(() {});
+                                              if (context.mounted) {
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                            title: Text(localFilteredItems[
+                                                    index]
+                                                .productName), // Use local list
+                                          );
                                         },
                                       ),
                                     )
@@ -268,12 +302,13 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                 ),
                                 actions: [
                                   TextButton(
-                                      onPressed: () {
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: const Text("Close")),
+                                    onPressed: () {
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                    child: const Text("Close"),
+                                  ),
                                 ],
                               );
                             });
@@ -574,6 +609,9 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
   }
 
   getData() async {
+    if (_initialDataLoaded && products.isNotEmpty) {
+      return;
+    }
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -641,44 +679,51 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
       filteredItems.addAll(items);
 
       if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-        for (int i = 0;
-            i < invoiceEditDetails!.data!.productDetails!.length;
-            i++) {
-          products.add({
-            "product_name":
-                invoiceEditDetails!.data!.productDetails![i].productName,
-            "product_id":
-                invoiceEditDetails!.data!.productDetails![i].productId,
-            "description":
-                invoiceEditDetails!.data!.productDetails![i].productDescription,
-            "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
-            "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
-            "tax_percent":
-                invoiceEditDetails!.data!.productDetails![i].taxPercentage,
-            "total_tax_amount":
-                invoiceEditDetails!.data!.productDetails![i].taxAmount,
-            "total_amount": invoiceEditDetails!.data!.productDetails![i].amount,
-          });
-        }
-        subTotal = double.tryParse(
-                invoiceEditDetails?.data?.subTotal?.toString() ?? '') ??
-            0.0;
-        // totalTaxAmount =
-        //     double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
-        final taxValue =
-            invoiceEditDetails?.data?.estimatedTax?.toString() ?? "0";
-        totalTaxAmount = double.tryParse(taxValue) ?? 0.0;
+        if (products.isEmpty) {
+          products.clear();
+          for (int i = 0;
+              i < invoiceEditDetails!.data!.productDetails!.length;
+              i++) {
+            products.add({
+              "product_name":
+                  invoiceEditDetails!.data!.productDetails![i].productName,
+              "product_id":
+                  invoiceEditDetails!.data!.productDetails![i].productId,
+              "description": invoiceEditDetails!
+                  .data!.productDetails![i].productDescription,
+              "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
+              "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
+              "tax_percent":
+                  invoiceEditDetails!.data!.productDetails![i].taxPercentage,
+              "total_tax_amount":
+                  invoiceEditDetails!.data!.productDetails![i].taxAmount,
+              "total_amount":
+                  invoiceEditDetails!.data!.productDetails![i].amount,
+            });
+          }
+          subTotal = double.tryParse(
+                  invoiceEditDetails?.data?.subTotal?.toString() ?? '') ??
+              0.0;
+          // totalTaxAmount =
+          //     double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
+          final taxValue =
+              invoiceEditDetails?.data?.estimatedTax?.toString() ?? "0";
+          totalTaxAmount = double.tryParse(taxValue) ?? 0.0;
 
-        discount.text = invoiceEditDetails!.data!.discountAmount.toString();
-        shippingCharge.text =
-            invoiceEditDetails!.data!.shippingAmount.toString();
-        allTotal = double.parse(
-            invoiceEditDetails!.data!.totalInvoiceAmount.toString());
-        remarks.text = invoiceEditDetails!.data!.remarks.toString();
+          discount.text = invoiceEditDetails!.data!.discountAmount.toString();
+          shippingCharge.text =
+              invoiceEditDetails!.data!.shippingAmount.toString();
+          allTotal = double.parse(
+              invoiceEditDetails!.data!.totalInvoiceAmount.toString());
+          remarks.text = invoiceEditDetails!.data!.remarks.toString();
+        }
       }
       isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
 
-      setState(() {});
+      setState(() {
+        isLoading = false;
+        _initialDataLoaded = true;
+      });
     }
   }
 
@@ -2530,6 +2575,7 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                             alignment: Alignment.topRight,
                             child: InkWell(
                               onTap: () async {
+                                _resetAddProductForm();
                                 showGeneralDialog(
                                   barrierLabel: "showGeneralDialog",
                                   barrierDismissible: true,
@@ -2608,6 +2654,13 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                                         return StatefulBuilder(
                                                             builder: (context,
                                                                 setState) {
+                                                          // Create a LOCAL list for searching within this dialog only
+                                                          List<Product>
+                                                              localFilteredItems =
+                                                              [];
+                                                          localFilteredItems.addAll(
+                                                              items); // Start with all items
+
                                                           return AlertDialog(
                                                             content: Column(
                                                               mainAxisSize:
@@ -2634,7 +2687,8 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                                                         (value) {
                                                                       setState(
                                                                           () {
-                                                                        filteredItems = items
+                                                                        // Use local list, not class-level filteredItems
+                                                                        localFilteredItems = items
                                                                             .where((item) =>
                                                                                 item.productName.toLowerCase().contains(value.toLowerCase()))
                                                                             .toList();
@@ -2667,8 +2721,8 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                                                   child: ListView
                                                                       .builder(
                                                                     itemCount:
-                                                                        filteredItems
-                                                                            .length,
+                                                                        localFilteredItems
+                                                                            .length, // Use local list
                                                                     physics:
                                                                         const ScrollPhysics(),
                                                                     shrinkWrap:
@@ -2677,33 +2731,59 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                                                         (context,
                                                                             index) {
                                                                       return ListTile(
-                                                                          onTap:
-                                                                              () {
-                                                                            if (productQty.text ==
-                                                                                "") {
-                                                                              productQty.text = "1";
-                                                                            }
-                                                                            productName =
-                                                                                filteredItems[index].productName;
-                                                                            productId =
-                                                                                filteredItems[index].id;
-                                                                            productRate.text =
-                                                                                filteredItems[index].sellingPrice;
-                                                                            productTaxPercent.text =
-                                                                                filteredItems[index].taxPercent;
-                                                                            productTaxAmount.text =
-                                                                                filteredItems[index].taxAmount;
-                                                                            productTotalAmount.text =
-                                                                                ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
-                                                                            productTotalAmount.text =
-                                                                                double.parse(productTotalAmount.text).toStringAsFixed(2);
-                                                                            setState(() {});
-                                                                            if (context.mounted) {
-                                                                              Navigator.pop(context);
-                                                                            }
-                                                                          },
-                                                                          title:
-                                                                              Text(filteredItems[index].productName));
+                                                                        onTap:
+                                                                            () {
+                                                                          if (productQty.text ==
+                                                                              "") {
+                                                                            productQty.text =
+                                                                                "1";
+                                                                          }
+                                                                          productName = localFilteredItems[index] // Use local list
+                                                                              .productName;
+                                                                          productId =
+                                                                              localFilteredItems[index].id; // Use local list
+                                                                          productRate.text = localFilteredItems[index] // Use local list
+                                                                              .sellingPrice;
+                                                                          productTaxPercent.text = localFilteredItems[index] // Use local list
+                                                                              .taxPercent;
+
+                                                                          // Calculate based on current quantity
+                                                                          double
+                                                                              rate =
+                                                                              double.parse(productRate.text);
+                                                                          double
+                                                                              qty =
+                                                                              double.parse(productQty.text);
+                                                                          double
+                                                                              taxPercent =
+                                                                              double.parse(productTaxPercent.text);
+                                                                          double
+                                                                              taxPerUnit =
+                                                                              (rate * taxPercent) / 100;
+                                                                          double
+                                                                              amountExcludingTax =
+                                                                              rate * qty;
+                                                                          double
+                                                                              totalTaxForProduct =
+                                                                              taxPerUnit * qty;
+                                                                          double
+                                                                              totalAmountWithTax =
+                                                                              amountExcludingTax + totalTaxForProduct;
+
+                                                                          productTaxAmount.text =
+                                                                              taxPerUnit.toStringAsFixed(2);
+                                                                          productTotalAmount.text =
+                                                                              totalAmountWithTax.toStringAsFixed(2);
+                                                                          setState(
+                                                                              () {});
+                                                                          if (context
+                                                                              .mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        },
+                                                                        title: Text(
+                                                                            localFilteredItems[index].productName), // Use local list
+                                                                      );
                                                                     },
                                                                   ),
                                                                 )
@@ -2711,16 +2791,17 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                                             ),
                                                             actions: [
                                                               TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    if (context
-                                                                        .mounted) {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    }
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Close")),
+                                                                onPressed: () {
+                                                                  if (context
+                                                                      .mounted) {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  }
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                        "Close"),
+                                                              ),
                                                             ],
                                                           );
                                                         });
@@ -3456,17 +3537,21 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                           ),
                                           GestureDetector(
                                             onTap: () {
-                                              subTotal = subTotal -
-                                                  double.parse(
-                                                    products[index]
-                                                        ['total_amount'],
-                                                  );
-                                              totalTaxAmount = totalTaxAmount -
-                                                  double.parse(products[index][
+                                              // Calculate the amounts to subtract
+                                              double productAmount =
+                                                  double.parse(products[index]
+                                                      ['total_amount']);
+                                              double productTax = double.parse(
+                                                      products[index][
                                                           'total_tax_amount']) *
-                                                      double.parse(
-                                                          products[index]
-                                                              ['quantity']);
+                                                  double.parse(products[index]
+                                                      ['quantity']);
+
+                                              // Update totals
+                                              subTotal =
+                                                  subTotal - productAmount;
+                                              totalTaxAmount =
+                                                  totalTaxAmount - productTax;
 
                                               allTotal = subTotal +
                                                   double.parse(
@@ -3481,36 +3566,9 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                               paidAmount.text =
                                                   allTotal.toString();
 
-                                              products.removeWhere(
-                                                (item) => mapEquals(
-                                                    item,
-                                                    ({
-                                                      "product_name":
-                                                          products[index]
-                                                              ['product_name'],
-                                                      "product_id":
-                                                          products[index]
-                                                              ['product_id'],
-                                                      "description":
-                                                          products[index]
-                                                              ['description'],
-                                                      "product_rate":
-                                                          products[index]
-                                                              ['product_rate'],
-                                                      "quantity":
-                                                          products[index]
-                                                              ['quantity'],
-                                                      "tax_percent":
-                                                          products[index]
-                                                              ['tax_percent'],
-                                                      "total_tax_amount":
-                                                          products[index][
-                                                              'total_tax_amount'],
-                                                      "total_amount":
-                                                          products[index]
-                                                              ['total_amount'],
-                                                    })),
-                                              );
+                                              // Simply remove by index instead of using mapEquals
+                                              products.removeAt(index);
+
                                               if (products.isEmpty) {
                                                 discount.clear();
                                                 shippingCharge.clear();
@@ -3522,13 +3580,88 @@ class _EditInvoiceGstState extends State<EditInvoiceGst> {
                                               setState(() {});
                                             },
                                             child: const Padding(
-                                              padding: EdgeInsets.all(8.0),
+                                              padding: EdgeInsets.all(7.0),
                                               child: Icon(
                                                 Icons.delete_outline,
                                                 color: Colors.red,
                                               ),
                                             ),
                                           ),
+                                          // GestureDetector(
+                                          //   onTap: () {
+                                          //     subTotal = subTotal -
+                                          //         double.parse(
+                                          //           products[index]
+                                          //               ['total_amount'],
+                                          //         );
+                                          //     totalTaxAmount = totalTaxAmount -
+                                          //         double.parse(products[index][
+                                          //                 'total_tax_amount']) *
+                                          //             double.parse(
+                                          //                 products[index]
+                                          //                     ['quantity']);
+
+                                          //     allTotal = subTotal +
+                                          //         double.parse(
+                                          //             shippingCharge.text == ''
+                                          //                 ? '0'
+                                          //                 : shippingCharge
+                                          //                     .text) -
+                                          //         double.parse(
+                                          //             discount.text == ''
+                                          //                 ? '0'
+                                          //                 : discount.text);
+                                          //     paidAmount.text =
+                                          //         allTotal.toString();
+
+                                          //     products.removeWhere(
+                                          //       (item) => mapEquals(
+                                          //           item,
+                                          //           ({
+                                          //             "product_name":
+                                          //                 products[index]
+                                          //                     ['product_name'],
+                                          //             "product_id":
+                                          //                 products[index]
+                                          //                     ['product_id'],
+                                          //             "description":
+                                          //                 products[index]
+                                          //                     ['description'],
+                                          //             "product_rate":
+                                          //                 products[index]
+                                          //                     ['product_rate'],
+                                          //             "quantity":
+                                          //                 products[index]
+                                          //                     ['quantity'],
+                                          //             "tax_percent":
+                                          //                 products[index]
+                                          //                     ['tax_percent'],
+                                          //             "total_tax_amount":
+                                          //                 products[index][
+                                          //                     'total_tax_amount'],
+                                          //             "total_amount":
+                                          //                 products[index]
+                                          //                     ['total_amount'],
+                                          //           })),
+                                          //     );
+                                          //     if (products.isEmpty) {
+                                          //       discount.clear();
+                                          //       shippingCharge.clear();
+                                          //       allTotal = 0.00;
+                                          //       paidAmount.text =
+                                          //           allTotal.toString();
+                                          //     }
+
+                                          //     setState(() {});
+                                          //   },
+                                          //   child: const Padding(
+                                          //     padding: EdgeInsets.all(8.0),
+                                          //     child: Icon(
+                                          //       Icons.delete_outline,
+                                          //       color: Colors.red,
+                                          //     ),
+                                          //   ),
+                                          // ),
                                         ],
                                       ),
                                     ],

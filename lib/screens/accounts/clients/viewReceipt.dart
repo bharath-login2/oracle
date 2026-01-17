@@ -83,6 +83,8 @@ class _ViewReceiptState extends State<ViewReceipt> {
 
     invoiceList = await HttpService.invoiceList(
         widget.token,
+        "",
+        "",
         fDate == "From Date" ? "" : fDate.toString(),
         tDate == "To Date" ? "" : tDate.toString(),
         customerId,

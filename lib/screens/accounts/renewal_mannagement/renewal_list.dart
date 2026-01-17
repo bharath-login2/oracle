@@ -17,6 +17,7 @@ import 'package:login2/models/renewal/renewal_template_model.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_details.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/view_history.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -24,12 +25,14 @@ import 'package:shimmer/shimmer.dart';
 import 'renew_quick_renewal.dart';
 
 class RenewalList extends StatefulWidget {
+  String custId;
   String title;
   String searchKey;
   String searchMonth;
   int renewed;
   RenewalList(
       {super.key,
+      required this.custId,
       required this.title,
       required this.renewed,
       required this.searchKey,
@@ -77,6 +80,11 @@ class _RenewalListState extends State<RenewalList> {
   String toDate = "";
   bool isAllSelected = false;
   String multiBranch = "true";
+  String? name = '';
+  String? token = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   DateTime? selectedValue;
   String? selectedRenewalValue;
   final ItemScrollController itemScrollController = ItemScrollController();
@@ -92,6 +100,12 @@ class _RenewalListState extends State<RenewalList> {
   }
 
   getDetails() async {
+    token = await Common.getSharedPref("token");
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     detailsResponse = await HttpService.getRenewalDetails();
     if (detailsResponse != null) {
       filteredNames = detailsResponse!.data.customer;
@@ -164,6 +178,7 @@ class _RenewalListState extends State<RenewalList> {
 
   getList() async {
     listResponse = await HttpService.renewalList(
+        widget.custId,
         page,
         pageSize,
         clientId,
@@ -574,15 +589,30 @@ class _RenewalListState extends State<RenewalList> {
                                                               await Common
                                                                   .getSharedPref(
                                                                       "token");
+                                                          // Navigator.push(
+                                                          //     context,
+                                                          //     MaterialPageRoute(
+                                                          //       builder: (context) =>
+                                                          //           ClientDetails(
+                                                          //               token,
+                                                          //               items[index]
+                                                          //                   .clientId),
+                                                          //     ))
                                                           Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    ClientDetails(
-                                                                        token,
-                                                                        items[index]
-                                                                            .clientId),
-                                                              )).then((_) {
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) => CustomerDashboard(
+                                                                  name: name!,
+                                                                  token: token,
+                                                                  userId:
+                                                                      userId!,
+                                                                  phoneCallLogPermission:
+                                                                      phoneCallLogPermission,
+                                                                  custId: items[
+                                                                          index]
+                                                                      .clientId),
+                                                            ),
+                                                          ).then((_) {
                                                             page = 1;
                                                             add = 1;
                                                             items.clear();
@@ -690,12 +720,25 @@ class _RenewalListState extends State<RenewalList> {
                                                                           token =
                                                                           await Common.getSharedPref(
                                                                               "token");
-                                                                      Navigator.push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                ClientDetails(token, items[index].clientId),
-                                                                          )).then((_) {
+                                                                      // Navigator.push(
+                                                                      //     context,
+                                                                      //     MaterialPageRoute(
+                                                                      //       builder: (context) =>
+                                                                      //           ClientDetails(token, items[index].clientId),
+                                                                      //     ))
+                                                                      Navigator
+                                                                          .push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) => CustomerDashboard(
+                                                                              name: name!,
+                                                                              token: token,
+                                                                              userId: userId!,
+                                                                              phoneCallLogPermission: phoneCallLogPermission,
+                                                                              custId: items[index].clientId),
+                                                                        ),
+                                                                      ).then(
+                                                                          (_) {
                                                                         page =
                                                                             1;
                                                                         add = 1;

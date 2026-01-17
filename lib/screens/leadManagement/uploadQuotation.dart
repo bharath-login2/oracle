@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/quotation_uploadform_model.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/workOrderIdModel.dart';
 import 'package:login2/service/service.dart';
 import 'package:dio/dio.dart';
@@ -30,22 +32,36 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
   final TextEditingController _districtController = TextEditingController();
   final TextEditingController _totalAmountController = TextEditingController();
   final TextEditingController _remarksController = TextEditingController();
-  final TextEditingController _customerCtrl = TextEditingController(); // Added for searchable dropdown
+  final TextEditingController nationalityController = TextEditingController();
+  final TextEditingController _customerCtrl =
+      TextEditingController(); // Added for searchable dropdown
   List<CustomerDetails> _customers = [];
   List<WorkOrder> _workOrders = [];
   bool _isLoading = false;
   bool _isSubmitting = false;
   bool _isLoadingCustomers = true;
   bool _isLoadingWorkOrders = false;
+  bool isLoadingState = true;
+  bool isLoadingDistrict = false;
+  StateModel? stateModel;
+  List<StateList> stateList = [];
+  String? selectedStateId;
+  String? selectedStateName;
+
+  DistrictModel? districtModel;
+  List<DistrictList> districtList = [];
+  String? selectedDistrictId;
+  String? selectedDistrictName;
   QuotationFormData _formData = QuotationFormData();
-    bool _isRefreshingCustomers = false;
-     late Future<CustomerExpenseListModel?> customersFuture;
-         String? token;
+  bool _isRefreshingCustomers = false;
+  late Future<CustomerExpenseListModel?> customersFuture;
+  String? token;
   @override
   void initState() {
     super.initState();
     _enquiryDateController.text =
         DateFormat('dd-MM-yyyy').format(DateTime.now());
+    _getStates();
     _loadCustomers();
     _loadToken();
   }
@@ -60,13 +76,42 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
     _totalAmountController.dispose();
     _remarksController.dispose();
     _customerCtrl.dispose();
+    nationalityController.dispose();
     super.dispose();
   }
 
-    Future<void> _loadToken() async {
-    token = await Common.getSharedPref("token");
+  Future<void> _getStates() async {
+    setState(() => isLoadingState = true);
+    final response = await HttpService.getState();
+    if (response != null && response.status == true) {
+      setState(() {
+        stateList = response.data;
+        isLoadingState = false;
+      });
+    } else {
+      setState(() => isLoadingState = false);
+    }
   }
 
+  Future<void> _getDistricts(String stateId) async {
+    setState(() {
+      isLoadingDistrict = true;
+    });
+
+    final response = await HttpService.getDistrict(stateId);
+    if (response != null && response.status == true) {
+      setState(() {
+        districtList = response.data;
+        isLoadingDistrict = false;
+      });
+    } else {
+      setState(() => isLoadingDistrict = false);
+    }
+  }
+
+  Future<void> _loadToken() async {
+    token = await Common.getSharedPref("token");
+  }
 
   Future<void> _loadCustomers() async {
     setState(() => _isLoadingCustomers = true);
@@ -110,7 +155,8 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
       _loadCustomerDetails(customerId),
     ]);
   }
- Future<void> _refreshAfterCustomerAdded() async {
+
+  Future<void> _refreshAfterCustomerAdded() async {
     setState(() {
       _isRefreshingCustomers = true;
     });
@@ -119,7 +165,7 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
       // Refresh customer list
       customersFuture = HttpService.getCustomers();
       setState(() {});
-      
+
       if (mounted) {
         Common.toastMessaage('Customer added successfully', Colors.green);
       }
@@ -134,6 +180,7 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
       });
     }
   }
+
   Future<void> _loadWorkOrders(String customerId) async {
     setState(() => _isLoadingWorkOrders = true);
     final workOrderModel = await _httpService.getWorkorderId(customerId);
@@ -154,24 +201,101 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
         detailsModel.data.isNotEmpty) {
       final customerData = detailsModel.data.first;
       _addressController.text = customerData.address;
-      _stateController.text = customerData.state;
-      _districtController.text = customerData.district;
+      nationalityController.text = customerData.nationality;
+      final stateIdFromApi = customerData.state;
+      final districtIdFromApi = customerData.district;
+      if (stateIdFromApi.isNotEmpty && stateIdFromApi != "0") {
+        String? stateName;
+        if (stateList.isNotEmpty) {
+          final matchedState = stateList.firstWhere(
+            (state) => state.id == stateIdFromApi,
+            orElse: () => StateList(id: '', name: ''),
+          );
+          stateName = matchedState.name;
+        }
 
-      setState(() {
-        _formData = _formData.copyWith(
-          address: customerData.address,
-          state: customerData.state,
-          district: customerData.district,
-          postOffice: customerData.postOffice,
-          pincode: customerData.pincode,
-          nationality: customerData.nationality,
-        );
-      });
+        if (stateIdFromApi != selectedStateId) {
+          await _getDistricts(stateIdFromApi);
+        }
+        setState(() {
+          _formData = _formData.copyWith(
+            address: customerData.address,
+            state: stateIdFromApi,
+            district: districtIdFromApi,
+            postOffice: customerData.postOffice,
+            pincode: customerData.pincode,
+            nationality: customerData.nationality,
+          );
+          selectedStateId = stateIdFromApi;
+          selectedStateName = stateName ?? stateIdFromApi;
+        });
+      }
+      if (districtIdFromApi.isNotEmpty && districtIdFromApi != "0") {
+        String? districtName;
+        if (districtList.isNotEmpty) {
+          final matchedDistrict = districtList.firstWhere(
+            (district) => district.id == districtIdFromApi,
+            orElse: () => DistrictList(id: '', name: ''),
+          );
+          districtName = matchedDistrict.name;
+        }
+
+        setState(() {
+          selectedDistrictId = districtIdFromApi;
+          selectedDistrictName = districtName ?? districtIdFromApi;
+        });
+      }
     }
   }
 
+  // Future<void> _loadCustomerDetails(String customerId) async {
+  //   final detailsModel = await _httpService.getCustomerDetails(customerId);
+  //   if (detailsModel != null &&
+  //       detailsModel.status == "success" &&
+  //       detailsModel.data.isNotEmpty) {
+  //     final customerData = detailsModel.data.first;
+  //     _addressController.text = customerData.address;
+  //     nationalityController.text = customerData.nationality;
+  //     final stateIdFromApi = customerData.state;
+  //     final districtIdFromApi = customerData.district;
+  //     String? stateName;
+  //     if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
+  //       final matchedState = stateList.firstWhere(
+  //         (state) => state.id == stateIdFromApi,
+  //         orElse: () => StateList(id: '', name: ''),
+  //       );
+  //       stateName = matchedState.name;
+  //     }
+  //     if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
+  //       await _getDistricts(stateIdFromApi);
+  //     }
+  //     String? districtName;
+  //     if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
+  //       final matchedDistrict = districtList.firstWhere(
+  //         (district) => district.id == districtIdFromApi,
+  //         orElse: () => DistrictList(id: '', name: ''),
+  //       );
+  //       districtName = matchedDistrict.name;
+  //     }
 
-   Future<bool?> _showQuickAddCustomerDialog(BuildContext context) async {
+  //     setState(() {
+  //       _formData = _formData.copyWith(
+  //         address: customerData.address,
+  //         state: stateIdFromApi,
+  //         district: districtIdFromApi,
+  //         postOffice: customerData.postOffice,
+  //         pincode: customerData.pincode,
+  //         nationality: customerData.nationality,
+  //       );
+  //       selectedStateId = stateIdFromApi;
+  //       selectedStateName = stateName ?? stateIdFromApi;
+  //       selectedDistrictId = districtIdFromApi;
+  //       selectedDistrictName = districtName ?? districtIdFromApi;
+  //     });
+  //   }
+  // }
+
+  Future<bool?> _showQuickAddCustomerDialog(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -191,36 +315,36 @@ class _UploadQuotationPageState extends State<UploadQuotationPage> {
     );
   }
 
- // Update the type in _showCustomerSearchDialog to use CustomerDetails
-void _showCustomerSearchDialog(List<CustomerDetails> customers) {
-   FocusNode searchFocusNode = FocusNode();
-   bool shouldAutoFocus = true;
-  showDialog(
-    context: context,
-    builder: (context) {
-      TextEditingController searchCtrl = TextEditingController();
-      List<CustomerDetails> filteredList = List.from(customers);
+  // Update the type in _showCustomerSearchDialog to use CustomerDetails
+  void _showCustomerSearchDialog(List<CustomerDetails> customers) {
+    FocusNode searchFocusNode = FocusNode();
+    bool shouldAutoFocus = true;
+    showDialog(
+      context: context,
+      builder: (context) {
+        TextEditingController searchCtrl = TextEditingController();
+        List<CustomerDetails> filteredList = List.from(customers);
 
-      return StatefulBuilder(
-        builder: (context, setDialogState) {
-          if (shouldAutoFocus) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            if (shouldAutoFocus) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   FocusScope.of(context).requestFocus(searchFocusNode);
                 }
               });
             }
-          return AlertDialog(
-            scrollable: true,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Select Customer"),
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.blue, size: 24),
-                  onPressed: () async {
-                          shouldAutoFocus = false;
-                           final result = await _showQuickAddCustomerDialog(context);
+            return AlertDialog(
+              scrollable: true,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Select Customer"),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.blue, size: 24),
+                    onPressed: () async {
+                      shouldAutoFocus = false;
+                      final result = await _showQuickAddCustomerDialog(context);
                       if (result != null && result) {
                         Navigator.pop(context);
                         await _refreshAfterCustomerAdded();
@@ -230,80 +354,81 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                           _showCustomerSearchDialog(customers);
                         }
                       }
-                    // final result = await _showQuickAddCustomerDialog(context);
-                    // if (result != null && result) {
-                    //   await _refreshAfterCustomerAdded();
-                    //   // Re-open the dialog with updated list
-                    //   if (mounted) {
-                    //     Navigator.pop(context);
-                    //     _showCustomerSearchDialog(customers);
-                    //   }
-                    // }
-                  },
-                ),
-              ],
-            ),
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: MediaQuery.of(context).size.height * 0.55,
-              child: Column(
-                children: [
-                  TextField(
-                    controller: searchCtrl,
-                      focusNode: searchFocusNode,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        filteredList = customers
-                            .where((c) => c.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
+                      // final result = await _showQuickAddCustomerDialog(context);
+                      // if (result != null && result) {
+                      //   await _refreshAfterCustomerAdded();
+                      //   // Re-open the dialog with updated list
+                      //   if (mounted) {
+                      //     Navigator.pop(context);
+                      //     _showCustomerSearchDialog(customers);
+                      //   }
+                      // }
                     },
-                    decoration: InputDecoration(
-                      hintText: "Search customer",
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: filteredList.isEmpty
-                        ? const Center(child: Text("No customers found"))
-                        : ListView.builder(
-                            itemCount: filteredList.length,
-                            itemBuilder: (context, index) {
-                              final cust = filteredList[index];
-                              return InkWell(
-                                onTap: () {
-                                  _handleCustomerSelection(cust);
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  height: 45,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  child: Text(
-                                    cust.name,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
                   ),
                 ],
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.55,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      focusNode: searchFocusNode,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          filteredList = customers
+                              .where((c) => c.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Search customer",
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: filteredList.isEmpty
+                          ? const Center(child: Text("No customers found"))
+                          : ListView.builder(
+                              itemCount: filteredList.length,
+                              itemBuilder: (context, index) {
+                                final cust = filteredList[index];
+                                return InkWell(
+                                  onTap: () {
+                                    _handleCustomerSelection(cust);
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    alignment: Alignment.centerLeft,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    child: Text(
+                                      cust.name,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   Future<void> _handleCustomerSelection(CustomerDetails customer) async {
     setState(() {
@@ -316,7 +441,7 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
       _customerCtrl.text = customer.name; // Set the selected customer name
       _workOrders = [];
       _formData = _formData.copyWith(workOrderId: null);
-      
+
       // Clear address fields until new data loads
       _addressController.clear();
       _stateController.clear();
@@ -458,8 +583,12 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
         'enquiry_date': _enquiryDateController.text,
         'quotation_id': _quotationIdController.text,
         'address': _addressController.text,
-        'state': _stateController.text,
-        'district': _districtController.text,
+        'state': selectedStateId ?? '',
+        'district': selectedDistrictId ?? '',
+        'state_name': selectedStateName ?? '',
+        'district_name': selectedDistrictName ?? '',
+        // 'state': _stateController.text,
+        // 'district': _districtController.text,
         'total_amount': _totalAmountController.text,
         'contact_no': _formData.contactNo ?? '',
         'email_id': _formData.emailId ?? '',
@@ -467,7 +596,7 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
         'pincode': _formData.pincode ?? '',
         'nationality': _formData.nationality ?? '',
       });
-      
+
       if (_formData.quotationFile != null) {
         formDataToSend.files.add(MapEntry(
           'quotation_file',
@@ -614,7 +743,9 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12),
                       suffixIcon: const Icon(Icons.arrow_drop_down),
-                      errorText: _formData.customerId == null ? 'Please select a customer' : null,
+                      errorText: _formData.customerId == null
+                          ? 'Please select a customer'
+                          : null,
                     ),
                     onTap: () {
                       if (_customers.isNotEmpty) {
@@ -787,8 +918,6 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
     );
   }
 
-  // ... [Keep all other _build methods unchanged] ...
-
   Widget _buildAddressSection() {
     return Card(
       elevation: 0,
@@ -838,6 +967,7 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
             const SizedBox(height: 16),
             Row(
               children: [
+                // State Dropdown
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -848,7 +978,7 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                               size: 20, color: Theme.of(context).primaryColor),
                           const SizedBox(width: 8),
                           const Text(
-                            'State *',
+                            'State',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -857,29 +987,67 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _stateController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter state',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter state';
-                          }
-                          return null;
-                        },
-                      ),
+                      isLoadingState
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<String>(
+                              value: (selectedStateId == null ||
+                                      selectedStateId == "0" ||
+                                      selectedStateId!.isEmpty)
+                                  ? null
+                                  : selectedStateId,
+                              hint: const Text("Select State"),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text("Select State"),
+                                ),
+                                ...stateList.map((state) {
+                                  return DropdownMenuItem<String>(
+                                    value: state.id,
+                                    child: Text(state.name),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedStateId = value;
+                                  if (value != null) {
+                                    final state = stateList.firstWhere(
+                                      (s) => s.id == value,
+                                      orElse: () => StateList(id: '', name: ''),
+                                    );
+                                    if (state.id.isNotEmpty) {
+                                      selectedStateName = state.name;
+                                    }
+                                  } else {
+                                    selectedStateName = null;
+                                  }
+                                  selectedDistrictId = null;
+                                  selectedDistrictName = null;
+                                  districtList.clear();
+                                });
+                                if (value != null) _getDistricts(value);
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select state';
+                                }
+                                return null;
+                              },
+                            ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 16),
-
-                // District
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -890,7 +1058,7 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                               size: 20, color: Theme.of(context).primaryColor),
                           const SizedBox(width: 8),
                           const Text(
-                            'District *',
+                            'District',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -899,28 +1067,94 @@ void _showCustomerSearchDialog(List<CustomerDetails> customers) {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _districtController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter district',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter district';
-                          }
-                          return null;
-                        },
-                      ),
+                      isLoadingDistrict
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<String>(
+                              value: (selectedDistrictId == null ||
+                                      selectedDistrictId == "0" ||
+                                      selectedDistrictId!.isEmpty)
+                                  ? null
+                                  : selectedDistrictId,
+                              hint: const Text("Select District"),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text("Select District"),
+                                ),
+                                ...districtList.map((district) {
+                                  return DropdownMenuItem<String>(
+                                    value: district.id,
+                                    child: Text(district.name),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedDistrictId = value;
+                                  if (value != null) {
+                                    final district = districtList.firstWhere(
+                                      (d) => d.id == value,
+                                      orElse: () =>
+                                          DistrictList(id: '', name: ''),
+                                    );
+                                    if (district.id.isNotEmpty) {
+                                      selectedDistrictName = district.name;
+                                    }
+                                  } else {
+                                    selectedDistrictName = null;
+                                  }
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please select district';
+                                }
+                                return null;
+                              },
+                            ),
                     ],
                   ),
                 ),
               ],
             ),
+
+            // // Nationality field
+            // const SizedBox(height: 16),
+            // Row(
+            //   children: [
+            //     Icon(Icons.flag_outlined,
+            //         size: 20, color: Theme.of(context).primaryColor),
+            //     const SizedBox(width: 8),
+            //     const Text(
+            //       'Nationality',
+            //       style: TextStyle(
+            //         fontWeight: FontWeight.w500,
+            //         fontSize: 14,
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(height: 8),
+            // TextFormField(
+            //   controller: nationalityController,
+            //   decoration: InputDecoration(
+            //     hintText: 'Enter nationality',
+            //     border: OutlineInputBorder(
+            //       borderRadius: BorderRadius.circular(8),
+            //     ),
+            //     contentPadding:
+            //         const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            //   ),
+            // ),
 
             // Customer contact info (read-only)
             if (_formData.customerId != null) ...[

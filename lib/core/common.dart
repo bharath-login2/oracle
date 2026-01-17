@@ -27,6 +27,19 @@ class Common {
     }
   }
 
+  static String trimCountryCode({
+  required String mobileNumber,
+  required String countryCode,
+}) {
+  if (mobileNumber.isEmpty) return mobileNumber;
+  final cleanNumber = mobileNumber.replaceAll('+', '');
+  if (cleanNumber.startsWith(countryCode)) {
+    return cleanNumber.substring(countryCode.length);
+  }
+  return cleanNumber;
+}
+
+
   static addPlus(String number) async {
     if (number.length == 12) {
       return "+$number";

@@ -6,7 +6,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/commonConfigureModel.dart';
@@ -183,35 +182,35 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
         await HttpService.leadProgressbar(token, fromDate, toDate, callStatus);
   }
 
-  Future<String?> generateFaceHash(File faceImageFile) async {
-    final faceDetector = FaceDetector(
-      options: FaceDetectorOptions(
-        enableLandmarks: true,
-        enableContours: true,
-        enableClassification: false,
-      ),
-    );
-    final inputImage = InputImage.fromFile(faceImageFile);
-    final faces = await faceDetector.processImage(inputImage);
-    if (faces.isEmpty) return null;
-    final face = faces.first;
-    final landmarks = face.landmarks;
-    final serialized = [
-      landmarks[FaceLandmarkType.leftEye]?.position,
-      landmarks[FaceLandmarkType.rightEye]?.position,
-      landmarks[FaceLandmarkType.noseBase]?.position,
-      landmarks[FaceLandmarkType.leftCheek]?.position,
-      landmarks[FaceLandmarkType.rightCheek]?.position,
-    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
-    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
-    final lipData =
-        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+  // Future<String?> generateFaceHash(File faceImageFile) async {
+  //   final faceDetector = FaceDetector(
+  //     options: FaceDetectorOptions(
+  //       enableLandmarks: true,
+  //       enableContours: true,
+  //       enableClassification: false,
+  //     ),
+  //   );
+  //   final inputImage = InputImage.fromFile(faceImageFile);
+  //   final faces = await faceDetector.processImage(inputImage);
+  //   if (faces.isEmpty) return null;
+  //   final face = faces.first;
+  //   final landmarks = face.landmarks;
+  //   final serialized = [
+  //     landmarks[FaceLandmarkType.leftEye]?.position,
+  //     landmarks[FaceLandmarkType.rightEye]?.position,
+  //     landmarks[FaceLandmarkType.noseBase]?.position,
+  //     landmarks[FaceLandmarkType.leftCheek]?.position,
+  //     landmarks[FaceLandmarkType.rightCheek]?.position,
+  //   ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+  //   final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+  //   final lipData =
+  //       lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
 
-    faceDetector.close();
+  //   faceDetector.close();
 
-    final combined = '$serialized;$lipData';
-    return base64Encode(utf8.encode(combined));
-  }
+  //   final combined = '$serialized;$lipData';
+  //   return base64Encode(utf8.encode(combined));
+  // }
 
   // Future<void> captureFace() async {
   //   final faceImage = await Navigator.of(context).push<File>(
@@ -529,7 +528,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green,foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();

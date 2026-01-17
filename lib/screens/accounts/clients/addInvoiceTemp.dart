@@ -21,7 +21,8 @@ import '../../../service/service.dart';
 class AddInvoiceTemp extends StatefulWidget {
   String token;
   String clientId;
-  AddInvoiceTemp(this.token, this.clientId, {super.key});
+  String custName;
+  AddInvoiceTemp(this.token, this.clientId, this.custName, {super.key});
   @override
   State<AddInvoiceTemp> createState() => _AddInvoiceTempState();
 }
@@ -592,8 +593,8 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                         maxLines: 2,
                                                         decoration:
                                                             const InputDecoration(
-                                                                contentPadding: EdgeInsets
-                                                                    .only(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
                                                                         left:
                                                                             10,
                                                                         top: 2,
@@ -633,8 +634,8 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                         maxLines: 2,
                                                         decoration:
                                                             const InputDecoration(
-                                                                contentPadding: EdgeInsets
-                                                                    .only(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
                                                                         left:
                                                                             10,
                                                                         top: 2,
@@ -674,8 +675,8 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                         maxLines: 2,
                                                         decoration:
                                                             const InputDecoration(
-                                                                contentPadding: EdgeInsets
-                                                                    .only(
+                                                                contentPadding:
+                                                                    EdgeInsets.only(
                                                                         left:
                                                                             10,
                                                                         top: 2,
@@ -1205,7 +1206,7 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                                                 Colors.grey),
                                                                   )),
                                                         ),
-                                                         const SizedBox(
+                                                        const SizedBox(
                                                             height: 10),
                                                         TextFormField(
                                                           controller:
@@ -1230,7 +1231,7 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                                                                 Colors.grey),
                                                                   )),
                                                         ),
-                                                         const SizedBox(
+                                                        const SizedBox(
                                                             height: 10),
                                                         TextFormField(
                                                           controller:
@@ -3132,7 +3133,8 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                       Colors.red);
                                 } else {
                                   Common.showProgressDialog(
-                                      context, "Loading..");
+                                      context, "Loading...");
+                                        Navigator.pop(context);
 
                                   var body = FormData.fromMap({
                                     "token": widget.token,
@@ -3187,6 +3189,7 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                   if (context.mounted) {
                                     Common.showProgressDialog(
                                         context, "Loading..");
+                                    Navigator.pop(context);
                                   }
                                   AddInvoiceModel inv =
                                       await HttpService.addInvoiceProforma(
@@ -3206,7 +3209,11 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                         MaterialPageRoute(
                                             builder: (context) =>
                                                 ProformaInvoiceList(
-                                                    widget.token)),
+                                                    widget.token,
+                                                    "",
+                                                    widget.custName,
+                                                    "",
+                                                    "")),
                                       );
                                     }
                                   } else {
@@ -3895,138 +3902,150 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
       builder: (context) {
         return Builder(builder: (context) {
           return StatefulBuilder(builder: (context, setState) {
+            // Create a LOCAL list for this dialog
+            List<Product> localFilteredItems = [];
+            localFilteredItems.addAll(items); // Start with all items
+
             return AlertDialog(
-                scrollable: true,
-                title: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                            onTap: () {
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Icon(Icons.close)),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: TextField(
-                        autocorrect: false,
-                        keyboardType: TextInputType.visiblePassword,
-                        autofocus: true,
-                        onChanged: (value) {
-                          setState(() {
-                            filteredItems = items
-                                .where((item) => item.productName
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()))
-                                .toList();
-                          });
+              scrollable: true,
+              title: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
                         },
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.only(left: 8),
-                          labelStyle: TextStyle(
-                            color: Colors.grey,
-                          ),
-                          labelText: 'Search...',
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(15.0)),
-                          ),
+                        child: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          // Use local list, not class-level filteredItems
+                          localFilteredItems = items
+                              .where((item) => item.productName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 8),
+                        labelStyle: TextStyle(
+                          color: Colors.grey,
+                        ),
+                        labelText: 'Search...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.all(Radius.circular(15.0)),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                content: SizedBox(
-                  height: MediaQuery.of(context).size.height * .4,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: const Color(0xFFFCFBFA)),
-                          child: ListTile(
-                            onTap: () {
-                              if (type == "add") {
-                                if (productQty.text == "") {
-                                  productQty.text = "1";
-                                }
-                                productName = filteredItems[index].productName;
-                                productId = filteredItems[index].id;
-                                productRate.text =
-                                    filteredItems[index].sellingPrice;
-                                productTaxPercent.text =
-                                    filteredItems[index].taxPercent;
-                                productTaxAmount.text =
-                                    filteredItems[index].taxAmount;
-                                productTotalAmount.text =
-                                    ((double.parse(productRate.text) +
-                                                double.parse(
-                                                    productTaxAmount.text)) *
-                                            double.parse(productQty.text))
-                                        .toString();
-                                productTotalAmount.text =
-                                    double.parse(productTotalAmount.text)
-                                        .toStringAsFixed(2);
-                                if (paymentStatus == "paid") {
-                                  paidAmount.text = productTotalAmount.text;
-                                }
-                                typeDuration =
-                                    filteredItems[index].noOfDays ?? '0';
-                              } else {
-                                if (renProductQty.text == "") {
-                                  renProductQty.text = "1";
-                                }
-                                renProductName =
-                                    filteredItems[index].productName;
-                                renProductId = filteredItems[index].id;
-                                renProductRate.text =
-                                    filteredItems[index].sellingPrice;
-                                renProductTaxPercent.text =
-                                    filteredItems[index].taxPercent;
-                                renProductTaxAmount.text =
-                                    filteredItems[index].taxAmount;
-                                renProductTotalAmount.text =
-                                    ((double.parse(renProductRate.text) +
-                                                double.parse(
-                                                    renProductTaxAmount.text)) *
-                                            double.parse(renProductQty.text))
-                                        .toString();
-                                renProductTotalAmount.text =
-                                    double.parse(renProductTotalAmount.text)
-                                        .toStringAsFixed(2);
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                height: MediaQuery.of(context).size.height * .4,
+                width: MediaQuery.of(context).size.width * .8,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: localFilteredItems.length, // Use local list
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: const Color(0xFFFCFBFA),
+                        ),
+                        child: ListTile(
+                          onTap: () {
+                            if (type == "add") {
+                              if (productQty.text == "") {
+                                productQty.text = "1";
                               }
-                              setState(() {});
-                              if (context.mounted) {
-                                Navigator.pop(context);
+                              productName = localFilteredItems[index]
+                                  .productName; // Use local list
+                              productId = localFilteredItems[index]
+                                  .id; // Use local list
+                              productRate.text = localFilteredItems[index]
+                                  .sellingPrice; // Use local list
+                              productTaxPercent.text = localFilteredItems[index]
+                                  .taxPercent; // Use local list
+                              productTaxAmount.text = localFilteredItems[index]
+                                  .taxAmount; // Use local list
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              if (paymentStatus == "paid") {
+                                paidAmount.text = productTotalAmount.text;
                               }
-                            },
-                            title: Text(filteredItems[index].productName),
-                            leading: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child: Text(filteredItems[index].productName[0]),
-                            ),
+                              typeDuration = localFilteredItems[index]
+                                  .noOfDays; // Use local list
+                            } else {
+                              if (renProductQty.text == "") {
+                                renProductQty.text = "1";
+                              }
+                              renProductName = localFilteredItems[index]
+                                  .productName; // Use local list
+                              renProductId = localFilteredItems[index]
+                                  .id; // Use local list
+                              renProductRate.text = localFilteredItems[index]
+                                  .sellingPrice; // Use local list
+                              renProductTaxPercent.text =
+                                  localFilteredItems[index]
+                                      .taxPercent; // Use local list
+                              renProductTaxAmount.text =
+                                  localFilteredItems[index]
+                                      .taxAmount; // Use local list
+                              renProductTotalAmount.text =
+                                  ((double.parse(renProductRate.text) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(renProductQty.text))
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                            }
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(localFilteredItems[index]
+                              .productName), // Use local list
+                          leading: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.white,
+                            child: Text(localFilteredItems[index]
+                                .productName[0]), // Use local list
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ));
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
           });
         });
       },

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/service/service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -74,6 +75,10 @@ class _SearchState extends State<Search> {
   int currentPage = 1;
   int pageSize = 5;
   String? branch;
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   var outputFormat = DateFormat('dd-MM-yyyy');
   dynamic status;
   List checkedResponseItems = [];
@@ -160,6 +165,11 @@ class _SearchState extends State<Search> {
     Colors.blueAccent,
   ];
   getData(sort, isFirst, status1) async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -367,7 +377,7 @@ class _SearchState extends State<Search> {
               ),
             ),
             body: SingleChildScrollView(
-               controller: scrollController,
+              controller: scrollController,
               child: Column(
                 children: [
                   Padding(
@@ -492,18 +502,36 @@ class _SearchState extends State<Search> {
                                               color: Colors.grey.shade100,
                                               child: ListTile(
                                                 onTap: () {
+                                                  // Navigator.push(
+                                                  //     context,
+                                                  //     MaterialPageRoute(
+                                                  //       builder: (context) =>
+                                                  //           ClientDetails(
+                                                  //               widget.token,
+                                                  //               response!
+                                                  //                   .data
+                                                  //                   .customers[
+                                                  //                       index]
+                                                  //                   .id),
+                                                  //     ));
                                                   Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            ClientDetails(
-                                                                widget.token,
-                                                                response!
-                                                                    .data
-                                                                    .customers[
-                                                                        index]
-                                                                    .id),
-                                                      ));
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          CustomerDashboard(
+                                                              name: name!,
+                                                              token:
+                                                                  widget.token!,
+                                                              userId: userId!,
+                                                              phoneCallLogPermission:
+                                                                  phoneCallLogPermission,
+                                                              custId: response!
+                                                                  .data
+                                                                  .customers[
+                                                                      index]
+                                                                  .id),
+                                                    ),
+                                                  );
                                                 },
                                                 leading: const CircleAvatar(
                                                     backgroundColor:
@@ -575,8 +603,8 @@ class _SearchState extends State<Search> {
                                     //    },
                                     //    ),
                                     //  ),
-                                     if (isLoadingMore)
-                                    buildDetailedShimmerLoading(),
+                                    if (isLoadingMore)
+                                      buildDetailedShimmerLoading(),
                                     if (response!.data.leadData.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -1523,29 +1551,29 @@ class _SearchState extends State<Search> {
   }
 
   Widget buildDetailedShimmerLoading() {
-  return ListView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: 3, 
-    itemBuilder: (context, index) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-        child: Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            width: MediaQuery.of(context).size.width * 1,
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 1,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Future<dynamic> chooseCallDialog(BuildContext context, int index) {
     return showDialog(

@@ -15,6 +15,7 @@ import 'package:login2/screens/accounts/clients/viewInvoiceGst.dart';
 import 'package:login2/screens/accounts/clients/viewInvoiceTemp.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/deleteInvoiceModel.dart';
@@ -58,7 +59,10 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
   List<String> collectedByIds = [];
   List<String> createdByNames = [];
   List<String> createdByIds = [];
-
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   List<String> selectedStaffIds = [];
   List<String> selectedStaffNames = [];
   @override
@@ -128,6 +132,11 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
   // }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     customers.clear();
     filteredCustomers.clear();
     final connectivityResult = await (Connectivity().checkConnectivity());
@@ -331,17 +340,37 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
                                                               0.6,
                                                           child: InkWell(
                                                             onTap: () {
+                                                              // Navigator.push(
+                                                              //   context,
+                                                              //   MaterialPageRoute(
+                                                              //       builder: (context) => ClientDetails(
+                                                              //           widget
+                                                              //               .token,
+                                                              //           invoiceList!
+                                                              //               .data
+                                                              //               .lists[index]
+                                                              //               .clientId
+                                                              //               .toString())),
+                                                              // );
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder: (context) => ClientDetails(
-                                                                        widget
-                                                                            .token,
-                                                                        invoiceList!
-                                                                            .data
-                                                                            .lists[index]
-                                                                            .clientId
-                                                                            .toString())),
+                                                                  builder: (context) => CustomerDashboard(
+                                                                      name:
+                                                                          name!,
+                                                                      token: widget
+                                                                          .token!,
+                                                                      userId:
+                                                                          userId!,
+                                                                      phoneCallLogPermission:
+                                                                          phoneCallLogPermission,
+                                                                      custId: invoiceList!
+                                                                          .data
+                                                                          .lists[
+                                                                              index]
+                                                                          .clientId
+                                                                          .toString()),
+                                                                ),
                                                               );
                                                             },
                                                             child: Text(
@@ -1255,7 +1284,7 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    AddInvoiceTemp(widget.token, customerId)),
+                                    AddInvoiceTemp(widget.token, customerId,"")),
                           ).then((_) {
                             getData();
                           });

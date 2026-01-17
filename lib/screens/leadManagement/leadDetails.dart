@@ -22,6 +22,7 @@ import 'package:login2/models/callLogs/callLogUploadModel.dart';
 import 'package:login2/models/lead_management/deleteLeadModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/leadManagement/post_confirmed_followup.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
@@ -138,6 +139,10 @@ class _LeadDetailsState extends State<LeadDetails> {
   String deletePath = '';
   bool addCustomeFeild = false;
   bool refresh = false;
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   final List<Color> _colors = [
     Colors.teal,
     Colors.blueAccent,
@@ -228,7 +233,7 @@ class _LeadDetailsState extends State<LeadDetails> {
       Get.put(AudioRecordController());
   final ImageUploadController imageUploadController =
       Get.put(ImageUploadController());
-List<Map<String, dynamic>> history = [];
+  List<Map<String, dynamic>> history = [];
   bool folderActionEnable = false;
   String rawId = '';
   String selectedRawIndex = '';
@@ -247,11 +252,11 @@ List<Map<String, dynamic>> history = [];
   String whatsappOfficial = "";
   String? permissionAccess = '';
   String? uploadPermission = '';
-    String roleId = "";
-    late bool deleteAccess;
-    int from =
+  String roleId = "";
+  late bool deleteAccess;
+  int from =
       DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
-        CallLogUploadPermissionModel? callUploadPermission;
+  CallLogUploadPermissionModel? callUploadPermission;
   @override
   void initState() {
     super.initState();
@@ -266,6 +271,7 @@ List<Map<String, dynamic>> history = [];
     widget.fromDate ??= DateTime.now().toString();
     widget.toDate ??= DateTime.now().toString();
   }
+
   List<HiveCaallHistoryModel> fullHiveData = [];
   getPermission() async {
     Map<String, dynamic> body2 = {
@@ -645,8 +651,7 @@ List<Map<String, dynamic>> history = [];
     // setState(() {});
   }
 
-
-   Future<void> uploadMissingLogsToServer(
+  Future<void> uploadMissingLogsToServer(
       List<HiveCaallHistoryModel> callLogData) async {
     log("uploadMissingLogsToServer function called");
 
@@ -693,8 +698,7 @@ List<Map<String, dynamic>> history = [];
     }
   }
 
-
-   Future<void> loadHiveData() async {
+  Future<void> loadHiveData() async {
     fullHiveData.clear();
     final List<HiveCaallHistoryModel> hiveData =
         await HiveUtil.getAllCallLogs();
@@ -711,6 +715,11 @@ List<Map<String, dynamic>> history = [];
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     contactPermission = await Common.getSharedPref("saveContactPermission");
     transferPermission = await Common.getSharedPref("transferLeads");
     cloudCall = await Common.getSharedPref("cloudCallPermission");
@@ -2454,17 +2463,33 @@ List<Map<String, dynamic>> history = [];
                                                                   .data
                                                                   .isCreateOrder !=
                                                               true) {
+                                                        // Navigator.push(
+                                                        //   context,
+                                                        //   MaterialPageRoute(
+                                                        //       builder: (context) =>
+                                                        //           ClientDetails(
+                                                        //               widget
+                                                        //                   .token,
+                                                        //               leadDetailsAdditional!
+                                                        //                   .data
+                                                        //                   .customerId
+                                                        //                   .toString())),
+                                                        // )
                                                         Navigator.push(
                                                           context,
                                                           MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  ClientDetails(
-                                                                      widget
-                                                                          .token,
-                                                                      leadDetailsAdditional!
-                                                                          .data
-                                                                          .customerId
-                                                                          .toString())),
+                                                            builder: (context) => CustomerDashboard(
+                                                                name: name!,
+                                                                token: widget
+                                                                    .token!,
+                                                                userId: userId!,
+                                                                phoneCallLogPermission:
+                                                                    phoneCallLogPermission,
+                                                                custId: leadDetailsAdditional!
+                                                                    .data
+                                                                    .customerId
+                                                                    .toString()),
+                                                          ),
                                                         ).then((r) {
                                                           getData();
                                                         });
@@ -2863,7 +2888,9 @@ List<Map<String, dynamic>> history = [];
                                                                                 () {
                                                                               Navigator.push(
                                                                                 context,
-                                                                                MaterialPageRoute(builder: (context) => ClientDetails(widget.token, leadDetailsAdditional!.data.customerId.toString())),
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => CustomerDashboard(name: name!, token: widget.token!, userId: userId!, phoneCallLogPermission: phoneCallLogPermission, custId: leadDetailsAdditional!.data.customerId.toString()),
+                                                                                ),
                                                                               ).then((r) {
                                                                                 getData();
                                                                               });

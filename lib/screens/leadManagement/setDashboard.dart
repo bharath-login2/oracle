@@ -130,6 +130,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
           'Room Booking': object1.data!.roomModule == 'true',
           'Menu': true,
           'New Lead': object1.data!.leadModule == 'true',
+            'Job Card': object1.data!.JobCard == 'true',
         };
 
         final hasPermission = permissionMap[selectedDashboardName] ?? false;
@@ -191,6 +192,8 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
                 object1.data!.QuotationDashboard.toString());
             Common.saveSharedPref(
                 "RoomDashboard", object1.data!.RoomDashboard.toString());
+                 Common.saveSharedPref(
+                "JobCard", object1.data!.JobCard.toString());
             Common.saveSharedPref(
                 "RoomModule", object1.data!.roomModule.toString());
             Common.saveSharedPref(
@@ -268,8 +271,16 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
               );
               return;
             }
+             if (object1.data!.JobCard == "true" ) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => MinimalDashboard(token)),
+                (route) => false,
+              );
+              return;
+            }
             if (object1.data!.RoomDashboard == "true" &&
-                object1.data!.RoomModule == "true") {
+                object1.data!.roomModule == "true") {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => RoomDashboard()),

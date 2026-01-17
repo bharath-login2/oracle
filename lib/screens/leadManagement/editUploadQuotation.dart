@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/lead_management/districtModel.dart';
+import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/uploadedQuotationModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
 import 'package:login2/models/lead_management/workOrderIdModel.dart';
@@ -44,7 +46,17 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
   String? _currentFileUrl;
   String? _selectedCustomerId;
   String? _selectedWorkOrderId;
+  bool isLoadingState = true;
+  bool isLoadingDistrict = false;
+  StateModel? stateModel;
+  List<StateList> stateList = [];
+  String? selectedStateId;
+  String? selectedStateName;
 
+  DistrictModel? districtModel;
+  List<DistrictList> districtList = [];
+  String? selectedDistrictId;
+  String? selectedDistrictName;
   UploadedQuotationModeData? _quotationData;
 
   @override
@@ -52,6 +64,7 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
     super.initState();
     _loadQuotationDetails();
     _loadCustomers();
+    _getStates();
   }
 
   @override
@@ -67,6 +80,39 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
     super.dispose();
   }
 
+  Future<void> _getStates() async {
+    setState(() => isLoadingState = true);
+    final response = await HttpService.getState();
+    if (response != null && response.status == true) {
+      setState(() {
+        stateList = response.data;
+        isLoadingState = false;
+      });
+    } else {
+      setState(() => isLoadingState = false);
+    }
+  }
+
+  Future<void> _getDistricts(String stateId) async {
+    setState(() {
+      isLoadingDistrict = true;
+      districtList = [];
+      selectedDistrictId = null;
+      selectedDistrictName = null;
+      _districtController.clear();
+    });
+
+    final response = await HttpService.getDistrict(stateId);
+    if (response != null && response.status == true) {
+      setState(() {
+        districtList = response.data;
+        isLoadingDistrict = false;
+      });
+    } else {
+      setState(() => isLoadingDistrict = false);
+    }
+  }
+
   Future<void> _loadQuotationDetails() async {
     try {
       final response =
@@ -79,17 +125,20 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
           _quotationIdController.text = response.data.quoteId;
           _enquiryDateController.text = response.data.enquiryDate;
           _addressController.text = response.data.address;
-          _stateController.text = response.data.state;
-          _districtController.text = response.data.district;
           _customerNameController.text = response.data.customerName;
           _selectedCustomerId = response.data.customerId;
           _selectedWorkOrderId = response.data.workorderId;
           _totalAmountController.text = response.data.totalAmount;
-          if (response.data.customerId.isNotEmpty) {
-            _loadWorkOrders(response.data.customerId);
-            _loadCustomerDetails(response.data.customerId);
-          }
         });
+        await _loadCustomers();
+        _matchStateAndDistrict(response.data.state, response.data.district);
+
+        if (response.data.customerId.isNotEmpty) {
+          await Future.wait([
+            _loadWorkOrders(response.data.customerId),
+            _loadCustomerDetails(response.data.customerId),
+          ]);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -107,6 +156,44 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
       );
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  void _matchStateAndDistrict(String stateId, String districtId) {
+    if (stateId.isNotEmpty && stateId != "0" && stateList.isNotEmpty) {
+      StateList? matchedState = stateList.firstWhere(
+        (state) => state.id == stateId,
+        orElse: () => StateList(id: '', name: ''),
+      );
+
+      if (matchedState.id.isNotEmpty) {
+        setState(() {
+          selectedStateId = matchedState.id;
+          selectedStateName = matchedState.name;
+          _stateController.text = matchedState.name;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _getDistricts(matchedState.id).then((_) {
+            if (districtId.isNotEmpty &&
+                districtId != "0" &&
+                districtList.isNotEmpty) {
+              DistrictList? matchedDistrict = districtList.firstWhere(
+                (district) => district.id == districtId,
+                orElse: () => DistrictList(id: '', name: ''),
+              );
+
+              if (matchedDistrict.id.isNotEmpty) {
+                setState(() {
+                  selectedDistrictId = matchedDistrict.id;
+                  selectedDistrictName = matchedDistrict.name;
+                  _districtController.text = matchedDistrict.name;
+                });
+              }
+            }
+          });
+        });
+      }
     }
   }
 
@@ -242,11 +329,49 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
           detailsModel.data.isNotEmpty) {
         final customerData = detailsModel.data.first;
 
-        setState(() {
+        final stateIdFromApi = customerData.state;
+        final districtIdFromApi = customerData.district;
+        if (selectedStateId == null &&
+            stateIdFromApi.isNotEmpty &&
+            stateIdFromApi != "0") {
+          String? stateName;
+          if (stateList.isNotEmpty) {
+            final matchedState = stateList.firstWhere(
+              (state) => state.id == stateIdFromApi,
+              orElse: () => StateList(id: '', name: ''),
+            );
+            stateName = matchedState.name;
+          }
+
+          if (stateIdFromApi != selectedStateId) {
+            await _getDistricts(stateIdFromApi);
+          }
+          setState(() {
+            selectedStateId = stateIdFromApi;
+            selectedStateName = stateName ?? stateIdFromApi;
+            _stateController.text = stateName ?? stateIdFromApi;
+          });
+        }
+        if (selectedDistrictId == null &&
+            districtIdFromApi.isNotEmpty &&
+            districtIdFromApi != "0") {
+          String? districtName;
+          if (districtList.isNotEmpty) {
+            final matchedDistrict = districtList.firstWhere(
+              (district) => district.id == districtIdFromApi,
+              orElse: () => DistrictList(id: '', name: ''),
+            );
+            districtName = matchedDistrict.name;
+          }
+          setState(() {
+            selectedDistrictId = districtIdFromApi;
+            selectedDistrictName = districtName ?? districtIdFromApi;
+            _districtController.text = districtName ?? districtIdFromApi;
+          });
+        }
+        if (_addressController.text.isEmpty) {
           _addressController.text = customerData.address;
-          _stateController.text = customerData.state;
-          _districtController.text = customerData.district;
-        });
+        }
       }
     } catch (e) {
       print('Error loading customer details: $e');
@@ -294,20 +419,20 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                       Navigator.pop(context);
                     },
                   ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.image,
-                        color: Theme.of(context).primaryColor),
-                    title: const Text('Image',
-                        style: TextStyle(fontWeight: FontWeight.w500)),
-                    onTap: () async {
-                      final file = await _pickImage();
-                      if (file != null) {
-                        setState(() => _quotationFile = file);
-                      }
-                      Navigator.pop(context);
-                    },
-                  ),
+                  // const Divider(height: 1),
+                  // ListTile(
+                  //   leading: Icon(Icons.image,
+                  //       color: Theme.of(context).primaryColor),
+                  //   title: const Text('Image',
+                  //       style: TextStyle(fontWeight: FontWeight.w500)),
+                  //   onTap: () async {
+                  //     final file = await _pickImage();
+                  //     if (file != null) {
+                  //       setState(() => _quotationFile = file);
+                  //     }
+                  //     Navigator.pop(context);
+                  //   },
+                  // ),
                 ],
               ),
             ),
@@ -377,8 +502,6 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
 
   Future<void> _updateQuotation() async {
     if (!_formKey.currentState!.validate()) return;
-
-    // Validate customer selection
     if (_selectedCustomerId == null || _selectedCustomerId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -388,33 +511,29 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
       );
       return;
     }
-
     setState(() => _isSubmitting = true);
-
     try {
       final token = await Common.getSharedPref('token');
-
-      // Create FormData correctly - don't use fromMap()
       final formData = FormData();
-
-      // Add all fields
       formData.fields.add(MapEntry('token', token ?? ''));
       formData.fields.add(MapEntry('id', widget.quotationId));
       formData.fields.add(MapEntry('customer_id', _selectedCustomerId ?? ''));
       formData.fields
           .add(MapEntry('customer_name', _customerNameController.text));
-      formData.fields.add(MapEntry('work_order_id', _selectedWorkOrderId ?? ''));
+      formData.fields
+          .add(MapEntry('work_order_id', _selectedWorkOrderId ?? ''));
       formData.fields
           .add(MapEntry('enquiry_date', _enquiryDateController.text));
       formData.fields
           .add(MapEntry('quotation_id', _quotationIdController.text));
       formData.fields.add(MapEntry('address', _addressController.text));
-      formData.fields.add(MapEntry('state', _stateController.text));
-      formData.fields.add(MapEntry('district', _districtController.text));
+      formData.fields.add(MapEntry('state', selectedStateId ?? ''));
+      formData.fields.add(MapEntry('district', selectedDistrictId ?? ''));
+      formData.fields.add(MapEntry('state_name', selectedStateName ?? ''));
+      formData.fields
+          .add(MapEntry('district_name', selectedDistrictName ?? ''));
       formData.fields
           .add(MapEntry('total_amount', _totalAmountController.text));
-
-      // Add file only if a new one is selected
       if (_quotationFile != null) {
         formData.files.add(MapEntry(
           'quotation_file',
@@ -424,9 +543,7 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
           ),
         ));
       }
-
       final response = await _httpService.updateUploadedQuotation(formData);
-
       if (response != null && response['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -561,7 +678,9 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12),
                       suffixIcon: const Icon(Icons.arrow_drop_down),
-                      errorText: _selectedCustomerId == null ? 'Please select a customer' : null,
+                      errorText: _selectedCustomerId == null
+                          ? 'Please select a customer'
+                          : null,
                     ),
                     onTap: () {
                       if (_customers.isNotEmpty) {
@@ -569,7 +688,8 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                       }
                     },
                     validator: (value) {
-                      if (_selectedCustomerId == null || _selectedCustomerId!.isEmpty) {
+                      if (_selectedCustomerId == null ||
+                          _selectedCustomerId!.isEmpty) {
                         return 'Please select a customer';
                       }
                       return null;
@@ -817,6 +937,7 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
             const SizedBox(height: 16),
             Row(
               children: [
+                // State Dropdown
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +948,7 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                               size: 20, color: Theme.of(context).primaryColor),
                           const SizedBox(width: 8),
                           const Text(
-                            'State *',
+                            'State',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -836,27 +957,65 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _stateController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter state',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter state';
-                          }
-                          return null;
-                        },
-                      ),
+                      isLoadingState
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<String>(
+                              value: (selectedStateId == null ||
+                                      selectedStateId == "0" ||
+                                      selectedStateId!.isEmpty)
+                                  ? null
+                                  : selectedStateId,
+                              hint: const Text("Select State"),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text("Select State"),
+                                ),
+                                ...stateList.map((state) {
+                                  return DropdownMenuItem<String>(
+                                    value: state.id,
+                                    child: Text(state.name),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedStateId = value;
+                                  if (value != null) {
+                                    final state = stateList.firstWhere(
+                                      (s) => s.id == value,
+                                      orElse: () => StateList(id: '', name: ''),
+                                    );
+                                    if (state.id.isNotEmpty) {
+                                      selectedStateName = state.name;
+                                      _stateController.text = state.name;
+                                    }
+                                  } else {
+                                    selectedStateName = null;
+                                    _stateController.clear();
+                                  }
+                                  selectedDistrictId = null;
+                                  selectedDistrictName = null;
+                                  _districtController.clear();
+                                  districtList.clear();
+                                });
+                                if (value != null) _getDistricts(value);
+                              },
+                            ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 16),
+                // District Dropdown
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -867,7 +1026,7 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                               size: 20, color: Theme.of(context).primaryColor),
                           const SizedBox(width: 8),
                           const Text(
-                            'District *',
+                            'District',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -876,23 +1035,56 @@ class _EditUploadedQuotationPageState extends State<EditUploadedQuotationPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _districtController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter district',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter district';
-                          }
-                          return null;
-                        },
-                      ),
+                      isLoadingDistrict
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<String>(
+                              value: (selectedDistrictId == null ||
+                                      selectedDistrictId == "0" ||
+                                      selectedDistrictId!.isEmpty)
+                                  ? null
+                                  : selectedDistrictId,
+                              hint: const Text("Select District"),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text("Select District"),
+                                ),
+                                ...districtList.map((district) {
+                                  return DropdownMenuItem<String>(
+                                    value: district.id,
+                                    child: Text(district.name),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedDistrictId = value;
+                                  if (value != null) {
+                                    final district = districtList.firstWhere(
+                                      (d) => d.id == value,
+                                      orElse: () =>
+                                          DistrictList(id: '', name: ''),
+                                    );
+                                    if (district.id.isNotEmpty) {
+                                      selectedDistrictName = district.name;
+                                      _districtController.text = district.name;
+                                    }
+                                  } else {
+                                    selectedDistrictName = null;
+                                    _districtController.clear();
+                                  }
+                                });
+                              },
+                            ),
                     ],
                   ),
                 ),

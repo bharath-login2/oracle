@@ -309,7 +309,7 @@ class _PendingExpenseHistoryPageState extends State<PendingExpenseHistoryPage> {
             },
             itemBuilder: (context) => const [
               //PopupMenuItem(value: "refresh", child: Text("🔄 Refresh")),
-              PopupMenuItem(value: "add", child: Text("Add Pending History")),
+              PopupMenuItem(value: "add", child: Text("Add Pending Expense")),
             ],
           ),
         ],

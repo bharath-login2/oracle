@@ -35,6 +35,7 @@ import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/sidebarscreens/accountsSidebarScreen.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:shimmer/shimmer.dart';
@@ -53,6 +54,9 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   String token = '';
   String name = '';
   String userId = '';
+    String staffId = '';
+      bool isExpired = false;
+        bool loadmore = false;
   String startAndStopWorkPermission = '';
   Offset _floatingButtonPosition = Offset.zero;
   bool _showFloatingOptions = false;
@@ -194,6 +198,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     setState(() {
       notificationCount = leadDashboard!.data.unreadNotification;
     });
+    configure = await HttpService.configure(token);
+        if (configure != null) {
+          isExpired = configure!.data!.isExpired!;
+          setState(() {});
+        }
   }
 
   getList() async {
@@ -702,7 +711,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     builder: (context) =>
                                                                         InvoiceList(widget
                                                                             .token
-                                                                            .toString())),
+                                                                            .toString(),"","","")),
                                                               );
                                                             } else if (list[
                                                                         i] ==
@@ -715,7 +724,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     builder: (context) =>
                                                                         ProformaInvoiceList(widget
                                                                             .token
-                                                                            .toString())),
+                                                                            .toString(),"","","","")),
                                                               );
                                                             } else if (list[
                                                                         i] ==
@@ -788,7 +797,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                 MaterialPageRoute(
                                                                     builder: (context) =>
                                                                         ClientList(
-                                                                            widget.token)),
+                                                                            widget.token,_scaffoldKey,)),
                                                               );
                                                             }
                                                           },
@@ -1867,17 +1876,36 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: () {
-                      if (_scaffoldKey.currentState != null) {
-                        _scaffoldKey.currentState!.openEndDrawer();
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Image.asset("assets/icons/menu.png", width: 20),
-                    ),
-                  ),
+                  // InkWell(
+                  //   onTap: () {
+                  //     if (_scaffoldKey.currentState != null) {
+                  //       _scaffoldKey.currentState!.openEndDrawer();
+                  //     }
+                  //   },
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.only(right: 20),
+                  //     child: Image.asset("assets/icons/menu.png", width: 20),
+                  //   ),
+                  // ),
+                  AccountsMenuWidget(
+                  token: widget.token!,
+                  name: name,
+                  userId: userId,
+                  staffId: staffId,
+                  isExpired: isExpired,
+                  configure: configure,
+                  leadDashboard: leadDashboard,
+                  fromdate: fromdate.toString(),
+                  todate: todate.toString(),
+                  loadmore: loadmore,
+                  onDataRefresh: () {
+                    getData();
+                  },
+                  onStaffwiseRefresh: getList,
+                ),
+                SizedBox(
+                  width: 12,
+                ),
                 ],
               ),
             ],

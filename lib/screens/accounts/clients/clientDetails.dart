@@ -594,7 +594,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                       builder: (context) =>
                                                           AddInvoice(
                                                               widget.token,
-                                                              widget.clientId,"")),
+                                                              widget.clientId,
+                                                              "")),
                                                 ).then((_) {
                                                   getData();
                                                 });
@@ -2185,7 +2186,34 @@ class _ClientDetailsState extends State<ClientDetails> {
                                         ),
                                       ],
                                     )
-                                  : const SizedBox()
+                                  : const SizedBox(),
+                              mainClientDetail!.data.invoice.isNotEmpty &&
+                                      mainClientDetail!.data.receipts.isNotEmpty
+                                  ? Row(
+                                     
+                                      children: [
+                                        SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.5,
+                                            child: const Text(
+                                              'Balance Amount ',
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold),
+                                            )),
+                                        Text(
+                                          ': ${(double.tryParse(mainClientDetail!.data.totalInvoiceAmount.toString()) ?? 0) - (double.tryParse(mainClientDetail!.data.totalReceiptAmount.toString()) ?? 0)}',
+                                          style: const TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    )
+                                  : const SizedBox(),
                             ],
                           ),
                         )),

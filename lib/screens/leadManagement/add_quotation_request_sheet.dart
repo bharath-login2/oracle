@@ -27,7 +27,7 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
 
   CustomerExp? selectedCustomer;
   Staff? selectedStaff;
-  String? priority;
+  String? priority = "Normal";
   DateTime? dueDate;
   final TextEditingController remarksCtrl = TextEditingController();
   final TextEditingController customerCtrl = TextEditingController();
@@ -219,8 +219,8 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
   }
 
   void _showCustomerSearchDialog(List<CustomerExp> customers) {
-     FocusNode searchFocusNode = FocusNode();
-     bool shouldAutoFocus = true;
+    FocusNode searchFocusNode = FocusNode();
+    bool shouldAutoFocus = true;
     showDialog(
       context: context,
       builder: (context) {
@@ -245,8 +245,8 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
                   IconButton(
                     icon: const Icon(Icons.add, color: Colors.blue, size: 24),
                     onPressed: () async {
-                            shouldAutoFocus = false;
-                             final result = await _showQuickAddCustomerDialog(context);
+                      shouldAutoFocus = false;
+                      final result = await _showQuickAddCustomerDialog(context);
                       if (result != null && result) {
                         Navigator.pop(context);
                         await _refreshAfterCustomerAdded();
@@ -276,7 +276,7 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
                   children: [
                     TextField(
                       controller: searchCtrl,
-                        focusNode: searchFocusNode,
+                      focusNode: searchFocusNode,
                       onChanged: (value) {
                         setDialogState(() {
                           filteredList = customers
@@ -350,7 +350,7 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
       // Refresh customer list
       customersFuture = HttpService.getCustomers();
       setState(() {});
-      
+
       if (mounted) {
         Common.toastMessaage('Customer added successfully', Colors.green);
       }
@@ -430,7 +430,7 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
   }
 
   void _showStaffSearchDialog(List<Staff> staffs) {
-     FocusNode searchFocusNode = FocusNode();
+    FocusNode searchFocusNode = FocusNode();
     showDialog(
       context: context,
       builder: (context) {
@@ -439,9 +439,9 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
-               WidgetsBinding.instance.addPostFrameCallback((_) {
-            FocusScope.of(context).requestFocus(searchFocusNode);
-          });
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              FocusScope.of(context).requestFocus(searchFocusNode);
+            });
             return AlertDialog(
               scrollable: true,
               title: const Text("Select Staff"),
@@ -452,7 +452,7 @@ class _AddQuotationRequestSheetState extends State<AddQuotationRequestSheet> {
                   children: [
                     TextField(
                       controller: searchCtrl,
-                        focusNode: searchFocusNode,
+                      focusNode: searchFocusNode,
                       onChanged: (value) {
                         setDialogState(() {
                           filteredList = staffs

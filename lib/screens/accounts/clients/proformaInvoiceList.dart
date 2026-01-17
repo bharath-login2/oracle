@@ -6,13 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/models/clients/invoiceListTempModel.dart';
-import 'package:login2/models/clients/invoiceListTempModel.dart ' hide InvoiceListModelTemp;
+import 'package:login2/models/clients/invoiceListTempModel.dart '
+    hide InvoiceListModelTemp;
 import 'package:login2/screens/accounts/clients/addInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/editInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/print_invoice_view_temp.dart';
 import 'package:login2/screens/accounts/clients/receiptByInvoice.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/deleteInvoiceModel.dart';
@@ -24,8 +26,11 @@ import 'editInvoice.dart';
 
 class ProformaInvoiceList extends StatefulWidget {
   String token;
-
-  ProformaInvoiceList(this.token, {super.key});
+  String custId;
+    String custName;
+  String status;
+    String isDash;
+  ProformaInvoiceList(this.token, this.custId, this.custName, this.status, this.isDash, {super.key});
 
   @override
   State<ProformaInvoiceList> createState() => _ProformaInvoiceListState();
@@ -58,7 +63,10 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   List<String> createdByNames = [];
   List<String> createdByIds = [];
   Timer? _debounce;
-  
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   List<String> selectedStaffIds = [];
   List<String> selectedStaffNames = [];
   List<String> selectedStatuses = [];
@@ -68,7 +76,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   List<String> selectedTypeNames = [];
   int page = 1;
   List<GetInvoiceSearchData> items = [];
-  
+
   bool _isStatusSelected(String status) {
     return selectedStatuses.contains(status);
   }
@@ -118,6 +126,11 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     customers.clear();
     filteredCustomers.clear();
     final connectivityResult = await (Connectivity().checkConnectivity());
@@ -141,6 +154,9 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
 
     invoiceList = await HttpService.invoiceListTemp(
         widget.token,
+        widget.isDash,
+        widget.status,
+        widget.custId,
         fDate == "From Date" ? "" : fDate.toString(),
         tDate == "To Date" ? "" : tDate.toString(),
         customerFilter,
@@ -154,14 +170,22 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
       // Apply local search filtering
       if (searchQuery.isNotEmpty) {
         invoiceList!.data.lists = invoiceList!.data.lists.where((invoice) {
-          return invoice.customerName.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                 invoice.invoiceNumber.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                 (invoice.products.isNotEmpty && 
-                  invoice.products[0].productName.toLowerCase().contains(searchQuery.toLowerCase())) ||
-                 invoice.createdBy.toLowerCase().contains(searchQuery.toLowerCase());
+          return invoice.customerName
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase()) ||
+              invoice.invoiceNumber
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase()) ||
+              (invoice.products.isNotEmpty &&
+                  invoice.products[0].productName
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase())) ||
+              invoice.createdBy
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase());
         }).toList();
       }
-      
+
       searchData = await HttpService.getInvoiceSearchTemp(widget.token);
       customers = searchData!.data.customers;
       filteredCustomers = List.from(customers);
@@ -209,7 +233,121 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     return result == true
         ? Scaffold(
             backgroundColor: Colors.grey.shade300,
-            appBar: PreferredSize(
+            appBar: 
+            widget.custName != ""?
+                PreferredSize(
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+              child: Container(
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 10.0, top: 10.0, bottom: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              height: 25,
+                              width: 25,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white),
+                                  shape: BoxShape.circle),
+                              child: const Icon(
+                                Icons.arrow_back_ios_outlined,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 25,
+                          ),
+                          // const Text(
+                          //   'Proforma Invoice List',
+                          //   style: TextStyle(color: Colors.white, fontSize: 18),
+                          // ),
+                            Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (widget.custName != null &&
+                                        widget.custName!.isNotEmpty)
+                                      Text(
+                                        widget.custName!,
+                                        //  "Customer Leads",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      // widget.customerName!,
+                                      "Proforma Invoice List",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.normal,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: InkWell(
+                              onTap: () {
+                                filtrationSheet(context);
+                              },
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    color: const Color(0xFFd5f5f4),
+                                    borderRadius: BorderRadius.circular(5)),
+                                child: Center(
+                                    child: Image.asset(
+                                        "assets/icons/filter.png",
+                                        width: 20)),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              addInvoiceDialogTemp(context);
+                            },
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ): 
+            PreferredSize(
               preferredSize:
                   Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
               child: Container(
@@ -316,11 +454,14 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                 style: const TextStyle(color: Colors.black),
                                 decoration: InputDecoration(
                                   hintText: 'Search by Customer Name',
-                                  hintStyle: const TextStyle(color: Colors.grey),
-                                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                                  hintStyle:
+                                      const TextStyle(color: Colors.grey),
+                                  prefixIcon: const Icon(Icons.search,
+                                      color: Colors.grey),
                                   suffixIcon: search.text.isNotEmpty
                                       ? IconButton(
-                                          icon: const Icon(Icons.clear, color: Colors.grey),
+                                          icon: const Icon(Icons.clear,
+                                              color: Colors.grey),
                                           onPressed: () {
                                             search.clear();
                                             page = 1;
@@ -348,20 +489,26 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                             ),
                             const SizedBox(width: 10),
                             // Clear all filters button
-                            if (search.text.isNotEmpty || 
+                            if (search.text.isNotEmpty ||
                                 selectedStatuses.isNotEmpty ||
                                 selectedCustomerIds.isNotEmpty ||
                                 selectedTypeIds.isNotEmpty ||
                                 createdByIds.isNotEmpty ||
-                                fDate != DateFormat('dd-MM-yyyy').format(
-                                    DateTime(DateTime.now().year, DateTime.now().month, 1)) ||
-                                tDate != DateFormat('dd-MM-yyyy').format(DateTime.now()))
+                                fDate !=
+                                    DateFormat('dd-MM-yyyy').format(DateTime(
+                                        DateTime.now().year,
+                                        DateTime.now().month,
+                                        1)) ||
+                                tDate !=
+                                    DateFormat('dd-MM-yyyy')
+                                        .format(DateTime.now()))
                               IconButton(
                                 onPressed: () {
                                   clearAllFilters();
                                   getData();
                                 },
-                                icon: const Icon(Icons.refresh, color: Colors.blue),
+                                icon: const Icon(Icons.refresh,
+                                    color: Colors.blue),
                                 tooltip: 'Clear all filters',
                               ),
                           ],
@@ -377,52 +524,56 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.only(
-                                        left: 12, right: 12, top: 12, bottom: 80),
+                                        left: 12,
+                                        right: 12,
+                                        top: 12,
+                                        bottom: 80),
                                     child: invoiceList!.data.lists.isNotEmpty
                                         ? ListView.builder(
                                             physics:
                                                 const NeverScrollableScrollPhysics(),
                                             shrinkWrap: true,
-                                            itemCount: invoiceList!.data.lists.length,
+                                            itemCount:
+                                                invoiceList!.data.lists.length,
                                             itemBuilder: (context, index) {
                                               return Padding(
-                                                padding:
-                                                    const EdgeInsets.only(bottom: 10),
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 10),
                                                 child: InkWell(
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                         boxShadow: [
                                                           BoxShadow(
                                                             color: Colors.grey
-                                                                .withOpacity(0.2),
+                                                                .withOpacity(
+                                                                    0.2),
                                                             spreadRadius: 1,
                                                             blurRadius: 1,
                                                             offset:
-                                                                const Offset(1, 1),
+                                                                const Offset(
+                                                                    1, 1),
                                                           )
                                                         ],
                                                         borderRadius:
-                                                            BorderRadius.circular(5),
+                                                            BorderRadius.circular(
+                                                                5),
                                                         color: invoiceList!
                                                                     .data
-                                                                    .lists[index]
+                                                                    .lists[
+                                                                        index]
                                                                     .invoiceCreated
                                                                     .toString() ==
                                                                 "1"
                                                             ? const Color.fromARGB(
                                                                 255, 228, 248, 216)
-                                                            : invoiceList!
-                                                                        .data
-                                                                        .lists[index]
-                                                                        .isApproved
+                                                            : invoiceList!.data.lists[index].isApproved
                                                                         .toString() ==
                                                                     "Y"
                                                                 ? const Color.fromARGB(
                                                                     255, 243, 248, 216)
                                                                 : invoiceList!
                                                                             .data
-                                                                            .lists[
-                                                                                index]
+                                                                            .lists[index]
                                                                             .isRejected
                                                                             .toString() ==
                                                                         "Y"
@@ -430,10 +581,12 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                     : Colors.white),
                                                     child: Padding(
                                                       padding:
-                                                          const EdgeInsets.all(14.0),
+                                                          const EdgeInsets.all(
+                                                              14.0),
                                                       child: Column(
                                                         crossAxisAlignment:
-                                                            CrossAxisAlignment.start,
+                                                            CrossAxisAlignment
+                                                                .start,
                                                         children: [
                                                           Row(
                                                             mainAxisAlignment:
@@ -448,17 +601,34 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                     0.6,
                                                                 child: InkWell(
                                                                   onTap: () {
-                                                                    Navigator.push(
+                                                                    // Navigator.push(
+                                                                    //   context,
+                                                                    //   MaterialPageRoute(
+                                                                    //       builder: (context) => ClientDetails(
+                                                                    //           widget
+                                                                    //               .token,
+                                                                    //           invoiceList!
+                                                                    //               .data
+                                                                    //               .lists[index]
+                                                                    //               .clientId
+                                                                    //               .toString())),
+                                                                    // );
+                                                                    Navigator
+                                                                        .push(
                                                                       context,
                                                                       MaterialPageRoute(
-                                                                          builder: (context) => ClientDetails(
-                                                                              widget
-                                                                                  .token,
-                                                                              invoiceList!
-                                                                                  .data
-                                                                                  .lists[index]
-                                                                                  .clientId
-                                                                                  .toString())),
+                                                                        builder: (context) => CustomerDashboard(
+                                                                            name:
+                                                                                name!,
+                                                                            token: widget
+                                                                                .token!,
+                                                                            userId:
+                                                                                userId!,
+                                                                            phoneCallLogPermission:
+                                                                                phoneCallLogPermission,
+                                                                            custId:
+                                                                                invoiceList!.data.lists[index].clientId.toString()),
+                                                                      ),
                                                                     );
                                                                   },
                                                                   child: Text(
@@ -473,10 +643,10 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                               .ellipsis,
                                                                       style:
                                                                           const TextStyle(
-                                                                        fontSize: 16,
+                                                                        fontSize:
+                                                                            16,
                                                                         fontWeight:
-                                                                            FontWeight
-                                                                                .w600,
+                                                                            FontWeight.w600,
                                                                       )),
                                                                 ),
                                                               ),
@@ -486,12 +656,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                         BorderRadius
                                                                             .circular(
                                                                                 2),
-                                                                    color: invoiceList!
-                                                                                .data
-                                                                                .lists[
-                                                                                    index]
-                                                                                .invoiceCreated
-                                                                                .toString() ==
+                                                                    color: invoiceList!.data.lists[index].invoiceCreated.toString() ==
                                                                             '1'
                                                                         ? const Color
                                                                             .fromARGB(
@@ -502,52 +667,38 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                         : const Color(
                                                                             0xfffcbcbc)),
                                                                 child: Center(
-                                                                  child: Padding(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .only(
-                                                                            left: 12,
-                                                                            right: 12,
-                                                                            top: 6,
-                                                                            bottom:
-                                                                                6),
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left:
+                                                                            12,
+                                                                        right:
+                                                                            12,
+                                                                        top: 6,
+                                                                        bottom:
+                                                                            6),
                                                                     child: Text(
-                                                                        invoiceList!
-                                                                                    .data
-                                                                                    .lists[
-                                                                                        index]
-                                                                                    .invoiceCreated
-                                                                                    .toString() ==
+                                                                        invoiceList!.data.lists[index].invoiceCreated.toString() ==
                                                                                 '1'
                                                                             ? "Created"
-                                                                            : invoiceList!.data.lists[index].isApproved.toString() ==
-                                                                                    "Y"
+                                                                            : invoiceList!.data.lists[index].isApproved.toString() == "Y"
                                                                                 ? "Approved"
-                                                                                : invoiceList!.data.lists[index].isRejected.toString() ==
-                                                                                        "Y"
+                                                                                : invoiceList!.data.lists[index].isRejected.toString() == "Y"
                                                                                     ? "Rejected"
                                                                                     : "Not Created",
-                                                                        style:
-                                                                            TextStyle(
-                                                                          color: invoiceList!.data.lists[index].invoiceCreated.toString() ==
-                                                                                  '1'
-                                                                              ? Colors
-                                                                                  .white
-                                                                              : invoiceList!.data.lists[index].isApproved.toString() ==
-                                                                                      "Y"
-                                                                                  ? const Color.fromARGB(
-                                                                                      255,
-                                                                                      240,
-                                                                                      255,
-                                                                                      154)
+                                                                        style: TextStyle(
+                                                                          color: invoiceList!.data.lists[index].invoiceCreated.toString() == '1'
+                                                                              ? Colors.white
+                                                                              : invoiceList!.data.lists[index].isApproved.toString() == "Y"
+                                                                                  ? const Color.fromARGB(255, 240, 255, 154)
                                                                                   : invoiceList!.data.lists[index].isRejected.toString() == "Y"
                                                                                       ? const Color.fromARGB(255, 255, 126, 180)
                                                                                       : Colors.red,
                                                                           fontSize:
                                                                               14,
                                                                           fontWeight:
-                                                                              FontWeight
-                                                                                  .w600,
+                                                                              FontWeight.w600,
                                                                         )),
                                                                   ),
                                                                 ),
@@ -558,19 +709,22 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                             height: 5,
                                                           ),
                                                           SizedBox(
-                                                            width:
-                                                                MediaQuery.of(context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.6,
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.6,
                                                             child: Text(
                                                               "Proforma No : ${invoiceList!.data.lists[index].invoiceNumber}",
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
-                                                              style: const TextStyle(
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontSize: 14,
                                                                 fontWeight:
-                                                                    FontWeight.w400,
+                                                                    FontWeight
+                                                                        .w400,
                                                               ),
                                                             ),
                                                           ),
@@ -578,11 +732,11 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                             height: 5,
                                                           ),
                                                           SizedBox(
-                                                            width:
-                                                                MediaQuery.of(context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.8,
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.8,
                                                             child: Text(
                                                               invoiceList!
                                                                           .data
@@ -593,12 +747,15 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                       1
                                                                   ? "Products : ${invoiceList!.data.lists[index].products[0].productName} + ${invoiceList!.data.lists[index].products.length - 1} more..."
                                                                   : "Products : ${invoiceList!.data.lists[index].products[0].productName}",
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
-                                                              style: const TextStyle(
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontSize: 14,
                                                                 fontWeight:
-                                                                    FontWeight.w400,
+                                                                    FontWeight
+                                                                        .w400,
                                                               ),
                                                             ),
                                                           ),
@@ -606,19 +763,22 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                             height: 5,
                                                           ),
                                                           SizedBox(
-                                                            width:
-                                                                MediaQuery.of(context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.6,
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.6,
                                                             child: Text(
                                                               "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
-                                                              style: const TextStyle(
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontSize: 14,
                                                                 fontWeight:
-                                                                    FontWeight.w400,
+                                                                    FontWeight
+                                                                        .w400,
                                                               ),
                                                             ),
                                                           ),
@@ -643,7 +803,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                           .ellipsis,
                                                                   style:
                                                                       const TextStyle(
-                                                                    fontSize: 14,
+                                                                    fontSize:
+                                                                        14,
                                                                     fontWeight:
                                                                         FontWeight
                                                                             .w400,
@@ -668,32 +829,29 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                             .start,
                                                                     children: [
                                                                       const SizedBox(
-                                                                        height: 5,
+                                                                        height:
+                                                                            5,
                                                                       ),
                                                                       Row(
                                                                         children: [
                                                                           const Icon(
-                                                                            Icons
-                                                                                .calendar_month,
-                                                                            color: Colors
-                                                                                .grey,
-                                                                            size: 20,
+                                                                            Icons.calendar_month,
+                                                                            color:
+                                                                                Colors.grey,
+                                                                            size:
+                                                                                20,
                                                                           ),
                                                                           const SizedBox(
-                                                                            width: 8,
+                                                                            width:
+                                                                                8,
                                                                           ),
                                                                           Text(
                                                                               "${invoiceList!.data.lists[index].invoiceDate} ${invoiceList!.data.lists[index].invoiceAt}",
-                                                                              maxLines:
-                                                                                  2,
-                                                                              overflow:
-                                                                                  TextOverflow.ellipsis,
-                                                                              style:
-                                                                                  const TextStyle(
-                                                                                fontSize:
-                                                                                    12,
-                                                                                fontWeight:
-                                                                                    FontWeight.w400,
+                                                                              maxLines: 2,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                              style: const TextStyle(
+                                                                                fontSize: 12,
+                                                                                fontWeight: FontWeight.w400,
                                                                               )),
                                                                         ],
                                                                       ),
@@ -704,137 +862,93 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                               Row(
                                                                 children: [
                                                                   InkWell(
-                                                                    onTap: _pdfLoadingStates[
-                                                                                index] ==
+                                                                    onTap: _pdfLoadingStates[index] ==
                                                                             true
                                                                         ? null
                                                                         : () async {
-                                                                            setState(
-                                                                                () {
-                                                                              _pdfLoadingStates[index] =
-                                                                                  true;
+                                                                            setState(() {
+                                                                              _pdfLoadingStates[index] = true;
                                                                             });
 
                                                                             final pdfPath =
-                                                                                await HttpService
-                                                                                    .printInvoiceTemp(
-                                                                              widget
-                                                                                  .token,
-                                                                              invoiceList!
-                                                                                  .data
-                                                                                  .lists[index]
-                                                                                  .id
-                                                                                  .toString(),
+                                                                                await HttpService.printInvoiceTemp(
+                                                                              widget.token,
+                                                                              invoiceList!.data.lists[index].id.toString(),
                                                                             );
 
-                                                                            setState(
-                                                                                () {
-                                                                              _pdfLoadingStates[index] =
-                                                                                  false;
+                                                                            setState(() {
+                                                                              _pdfLoadingStates[index] = false;
                                                                             });
 
                                                                             if (pdfPath !=
                                                                                 null) {
-                                                                              Navigator
-                                                                                  .push(
+                                                                              Navigator.push(
                                                                                 context,
                                                                                 MaterialPageRoute(
-                                                                                  builder: (_) =>
-                                                                                      PrintInvoiceViewTemp(pdfPath: pdfPath),
+                                                                                  builder: (_) => PrintInvoiceViewTemp(pdfPath: pdfPath),
                                                                                 ),
                                                                               );
                                                                             } else {
-                                                                              ScaffoldMessenger.of(context)
-                                                                                  .showSnackBar(
-                                                                                const SnackBar(
-                                                                                    content: Text("Failed to load invoice")),
+                                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                                const SnackBar(content: Text("Failed to load invoice")),
                                                                               );
                                                                             }
                                                                           },
-                                                                    child: Container(
+                                                                    child:
+                                                                        Container(
                                                                       decoration:
                                                                           BoxDecoration(
                                                                         borderRadius:
                                                                             BorderRadius.circular(2),
-                                                                        color: _pdfLoadingStates[
-                                                                                    index] ==
+                                                                        color: _pdfLoadingStates[index] ==
                                                                                 true
-                                                                            ? Colors
-                                                                                .green
-                                                                                .shade300
-                                                                            : Colors
-                                                                                .green
-                                                                                .shade100,
+                                                                            ? Colors.green.shade300
+                                                                            : Colors.green.shade100,
                                                                       ),
-                                                                      child: Padding(
-                                                                        padding:
-                                                                            const EdgeInsets.all(
-                                                                                8.0),
-                                                                        child: _pdfLoadingStates[
-                                                                                    index] ==
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .all(
+                                                                            8.0),
+                                                                        child: _pdfLoadingStates[index] ==
                                                                                 true
                                                                             ? SizedBox(
-                                                                                height:
-                                                                                    20,
-                                                                                width:
-                                                                                    20,
-                                                                                child:
-                                                                                    CircularProgressIndicator(
-                                                                                  strokeWidth:
-                                                                                      2,
-                                                                                  valueColor:
-                                                                                      AlwaysStoppedAnimation<Color>(Colors.green.shade800),
+                                                                                height: 20,
+                                                                                width: 20,
+                                                                                child: CircularProgressIndicator(
+                                                                                  strokeWidth: 2,
+                                                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade800),
                                                                                 ),
                                                                               )
                                                                             : Container(
-                                                                                height:
-                                                                                    20,
-                                                                                width:
-                                                                                    20,
-                                                                                decoration:
-                                                                                    const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
+                                                                                height: 20,
+                                                                                width: 20,
+                                                                                decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
                                                                               ),
                                                                       ),
                                                                     ),
                                                                   ),
                                                                   Visibility(
-                                                                    visible: invoiceList!
-                                                                                .data
-                                                                                .lists[
-                                                                                    index]
-                                                                                .invType ==
+                                                                    visible: invoiceList!.data.lists[index].invType ==
                                                                             "1" ||
-                                                                        invoiceList!
-                                                                                .data
-                                                                                .lists[
-                                                                                    index]
-                                                                                .invType ==
+                                                                        invoiceList!.data.lists[index].invType ==
                                                                             "2",
                                                                     child: Row(
                                                                       children: [
                                                                         const SizedBox(
-                                                                          width: 10,
+                                                                          width:
+                                                                              10,
                                                                         ),
-                                                                        invoiceList!
-                                                                                    .data
-                                                                                    .lists[index]
-                                                                                    .invoiceCreated ==
+                                                                        invoiceList!.data.lists[index].invoiceCreated ==
                                                                                 "0"
-                                                                            ? PopupMenuButton<
-                                                                                String>(
-                                                                                shape:
-                                                                                    RoundedRectangleBorder(
-                                                                                  borderRadius:
-                                                                                      BorderRadius.circular(12),
+                                                                            ? PopupMenuButton<String>(
+                                                                                shape: RoundedRectangleBorder(
+                                                                                  borderRadius: BorderRadius.circular(12),
                                                                                 ),
-                                                                                color:
-                                                                                    Colors.white,
-                                                                                elevation:
-                                                                                    4,
-                                                                                onSelected:
-                                                                                    (value) async {
-                                                                                  if (value ==
-                                                                                      'delete') {
+                                                                                color: Colors.white,
+                                                                                elevation: 4,
+                                                                                onSelected: (value) async {
+                                                                                  if (value == 'delete') {
                                                                                     showDialog(
                                                                                       context: context,
                                                                                       builder: (BuildContext context) {
@@ -875,8 +989,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                         );
                                                                                       },
                                                                                     );
-                                                                                  } else if (value ==
-                                                                                      'create') {
+                                                                                  } else if (value == 'create') {
                                                                                     Navigator.push(
                                                                                       context,
                                                                                       MaterialPageRoute(
@@ -888,8 +1001,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                         ),
                                                                                       ),
                                                                                     );
-                                                                                  } else if (value ==
-                                                                                      'approve') {
+                                                                                  } else if (value == 'approve') {
                                                                                     Common.showProgressDialog(context, "Approving...");
                                                                                     bool result = await HttpService.approveProforma(
                                                                                       invoiceList!.data.lists[index].id.toString(),
@@ -901,8 +1013,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                     } else {
                                                                                       Common.toastMessaage("Failed to approve proforma", Colors.red);
                                                                                     }
-                                                                                  } else if (value ==
-                                                                                      'reject') {
+                                                                                  } else if (value == 'reject') {
                                                                                     showDialog(
                                                                                       context: context,
                                                                                       builder: (BuildContext context) {
@@ -935,8 +1046,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                         );
                                                                                       },
                                                                                     );
-                                                                                  } else if (value ==
-                                                                                      'edit') {
+                                                                                  } else if (value == 'edit') {
                                                                                     Navigator.push(
                                                                                       context,
                                                                                       MaterialPageRoute(builder: (context) => EditInvoiceTemp(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
@@ -945,8 +1055,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                     });
                                                                                   }
                                                                                 },
-                                                                                itemBuilder:
-                                                                                    (context) => [
+                                                                                itemBuilder: (context) => [
                                                                                   const PopupMenuItem(
                                                                                     value: 'create',
                                                                                     child: Row(
@@ -998,17 +1107,13 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                                                     ),
                                                                                   ),
                                                                                 ],
-                                                                                child:
-                                                                                    Container(
-                                                                                  decoration:
-                                                                                      BoxDecoration(
+                                                                                child: Container(
+                                                                                  decoration: BoxDecoration(
                                                                                     color: Colors.grey.shade200,
                                                                                     borderRadius: BorderRadius.circular(4),
                                                                                   ),
-                                                                                  padding:
-                                                                                      const EdgeInsets.all(8),
-                                                                                  child:
-                                                                                      const Icon(Icons.more_vert, color: Colors.black54),
+                                                                                  padding: const EdgeInsets.all(8),
+                                                                                  child: const Icon(Icons.more_vert, color: Colors.black54),
                                                                                 ),
                                                                               )
                                                                             : SizedBox(),
@@ -1045,7 +1150,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                                                   'No Data Found',
                                                   style: TextStyle(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.w500),
+                                                      fontWeight:
+                                                          FontWeight.w500),
                                                 ),
                                               ],
                                             ),
@@ -1151,7 +1257,8 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                           builder: (context) {
                             return StatefulBuilder(
                                 builder: (context, setState) {
-                              TextEditingController searchDialogController = TextEditingController();
+                              TextEditingController searchDialogController =
+                                  TextEditingController();
                               return AlertDialog(
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -1271,7 +1378,7 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    AddInvoiceTemp(widget.token, customerId)),
+                                    AddInvoiceTemp(widget.token, customerId,widget.custName)),
                           ).then((_) {
                             getData();
                           });

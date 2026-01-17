@@ -17,11 +17,13 @@ class BottomNavigation extends StatefulWidget {
   String phoneCallLogPermission;
   String? name;
   String? userId;
+  GlobalKey<ScaffoldState>? scaffoldKey; 
 
   BottomNavigation(this.token,
       {required this.phoneCallLogPermission,
       this.name,
       this.userId,
+      this.scaffoldKey,
       super.key});
 
   @override
@@ -30,10 +32,15 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   String whatsappPermissions = "";
+  String workWithoutLogin = "";
   bool uploadCallLog = false;
   String viewStaff = "";
   String startAndStopWorkPermission = "";
   CommonResponse? loginOrNot;
+
+  // REMOVE this line - you don't need it here
+  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     getPermissions();
@@ -43,6 +50,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   getPermissions() async {
     try {
+      workWithoutLogin = await Common.getSharedPref("workWithoutLogin");
       whatsappPermissions = await Common.getSharedPref("officialWhatsApp");
       viewStaff = await Common.getSharedPref("viewStaffPermission");
       var uploadCallLogPref = await Common.getSharedPref("uploadCallLog");
@@ -72,8 +80,9 @@ class _BottomNavigationState extends State<BottomNavigation> {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      // REMOVE this key - it's not needed
+      // key: _scaffoldKey,
       height: 55,
-      //bottom navigation bar on scaffold
       color: const Color(0xFF406dbe),
       shape: const AutomaticNotchedShape(
           RoundedRectangleBorder(
@@ -81,11 +90,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
                   topLeft: Radius.circular(15), topRight: Radius.circular(15))),
           RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(15)))),
-      //shape of notch
-
-      //notche margin between floating button and bottom appbar
       child: Row(
-        //children inside bottom appbar
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -93,21 +98,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
               onTap: () {
-                // if (startAndStopWorkPermission == "true") {
-                //   if (loginOrNot?.status != true) {
-                //     _dialoguelogin(context, 'Please login to continue');
-                //   } else {
-                //     Navigator.of(context).push(
-                //       MaterialPageRoute(
-                //           builder: (context) => HomePage(widget.token)),
-                //     );
-                //   }
-                // } else {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (context) => HomePage(widget.token)),
                 );
-                // }
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,
@@ -127,7 +121,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
                   return;
                 }
                 if (startAndStopWorkPermission == "true") {
-                  if (loginOrNot?.status != true) {
+                  if (workWithoutLogin != "true") {
                     _dialoguelogin(context, 'Please login to continue');
                   } else {
                     if (Platform.isAndroid) {
@@ -210,11 +204,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
               onTap: () {
-                // if (whatsappPermissions == "true") {
                 if (whatsappPermissions != 'true') {
                   _dialogue(context, 'whattsApp');
                 } else if (startAndStopWorkPermission == "true") {
-                  if (loginOrNot?.status != true) {
+                  if (workWithoutLogin != "true") {
                     _dialoguelogin(context, 'Please login to continue');
                   } else {
                     Navigator.push(
@@ -230,9 +223,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
                         builder: (context) => const ChatHomeScreen()),
                   );
                 }
-                // } else {
-                //   _dialogue(context, 'whattsApp');
-                // }
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,
@@ -244,41 +234,24 @@ class _BottomNavigationState extends State<BottomNavigation> {
               ),
             ),
           ),
+          // const SizedBox(width: 5),
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
               onTap: () {
-                // if (viewStaff == "true") {
-                if (viewStaff != 'true') {
-                  _dialogue(context, 'Add Leads Permission Denied');
-                } else if (startAndStopWorkPermission == "true") {
-                  if (loginOrNot?.status != true) {
-                    _dialoguelogin(context, 'Please login to continue');
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ViewUsers(widget.token),
-                      ),
-                    );
-                  }
+                if (widget.scaffoldKey != null &&
+                    widget.scaffoldKey!.currentState != null) {
+                  widget.scaffoldKey!.currentState!.openEndDrawer();
                 } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ViewUsers(widget.token),
-                    ),
-                  );
+                  Scaffold.of(context).openEndDrawer();
                 }
-                // } else {
-                //   _dialogue(context, 'viewStaffPermission');
-                // }
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,
                 child: const Icon(
-                  Icons.person,
+                  Icons.menu,
                   color: Colors.white,
+                  size: 24,
                 ),
               ),
             ),

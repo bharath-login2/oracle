@@ -4586,7 +4586,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               keyboardType: TextInputType.number,
                               onChanged: (val) {
                                 if (val.isEmpty) {
-                                  prodTaxExisting.text = "0";
+                                  prodTaxExisting.text = "";
                                   // keep cursor at the end
                                   prodTaxExisting.selection =
                                       TextSelection.fromPosition(

@@ -30,7 +30,6 @@ class HiveUtil {
     return Hive.box<HiveCaallHistoryModel>(CALL_HISTORY_BOX);
   }
   
-  //! Ensure Hive is initialized before proceeding
   static Future<void> ensureInitialized() async {
     if (!_initialized) {
       await init();

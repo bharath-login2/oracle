@@ -2,7 +2,10 @@
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:login2/models/clients/hideInvoiceModel.dart';
+import 'package:login2/screens/accounts/clients/print_invoice_view.dart';
 import 'package:login2/screens/accounts/clients/viewInvoice.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
@@ -34,11 +37,16 @@ class _PendingInvoiceState extends State<PendingInvoice>
   List<ListElement> filteredInvoices = [];
   String customerId = "";
   String customerName = "Customer";
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   TextEditingController search = TextEditingController();
   TextEditingController invSearch = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   double _scrollPosition = 0.0;
   bool isSearch = false;
+  Offset? _tapPosition;
   @override
   bool get wantKeepAlive => true;
   @override
@@ -65,6 +73,11 @@ class _PendingInvoiceState extends State<PendingInvoice>
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -95,6 +108,25 @@ class _PendingInvoiceState extends State<PendingInvoice>
       setState(() {});
     }
   }
+
+
+  void refreshInvoiceList() async {
+  setState(() {
+    filteredInvoices.clear();
+  });
+  
+  invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
+  if (invoiceResponse != null) {
+    invoices = invoiceResponse!.data.lists;
+    filteredInvoices.addAll(invoices);
+    
+    if (invSearch.text.isNotEmpty) {
+      filterInvoices(invSearch.text);
+    }
+    
+    setState(() {});
+  }
+}
 
   filterInvoices(String value) {
     setState(() {
@@ -284,9 +316,13 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                                               .id!;
                                                                       search
                                                                           .clear();
-                                                                      filteredItems
-                                                                          .addAll(
+                                                                      // filteredItems
+                                                                      //     .addAll(
+                                                                      //         items);
+                                                                      filteredItems =
+                                                                          List.from(
                                                                               items);
+
                                                                       setState(
                                                                           () {});
                                                                       if (context
@@ -314,8 +350,11 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                             // },
                                                             onPressed: () {
                                                               search.clear();
-                                                              filteredItems
-                                                                  .addAll(
+                                                              // filteredItems
+                                                              //     .addAll(
+                                                              //         items);
+                                                              filteredItems =
+                                                                  List.from(
                                                                       items);
                                                               if (context
                                                                   .mounted) {
@@ -521,16 +560,33 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                             0.6,
                                                         child: InkWell(
                                                           onTap: () {
+                                                            // Navigator.push(
+                                                            //   context,
+                                                            //   MaterialPageRoute(
+                                                            //       builder: (context) => ClientDetails(
+                                                            //           widget
+                                                            //               .token,
+                                                            //           filteredInvoices[
+                                                            //                   index]
+                                                            //               .clientId
+                                                            //               .toString())),
+                                                            // )
                                                             Navigator.push(
                                                               context,
                                                               MaterialPageRoute(
-                                                                  builder: (context) => ClientDetails(
-                                                                      widget
-                                                                          .token,
-                                                                      filteredInvoices[
-                                                                              index]
-                                                                          .clientId
-                                                                          .toString())),
+                                                                builder: (context) => CustomerDashboard(
+                                                                    name: name!,
+                                                                    token: widget
+                                                                        .token!,
+                                                                    userId:
+                                                                        userId!,
+                                                                    phoneCallLogPermission:
+                                                                        phoneCallLogPermission,
+                                                                    custId: filteredInvoices[
+                                                                            index]
+                                                                        .clientId
+                                                                        .toString()),
+                                                              ),
                                                             ).then((_) {
                                                               getData();
                                                             });
@@ -823,26 +879,56 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                       Row(
                                                         children: [
                                                           InkWell(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) => ViewInvoice(
-                                                                        widget
-                                                                            .token,
-                                                                        filteredInvoices[index]
-                                                                            .id
-                                                                            .toString(),
-                                                                        filteredInvoices[index]
-                                                                            .clientId
-                                                                            .toString(),
-                                                                        filteredInvoices[index]
-                                                                            .invoiceNumber
-                                                                            .toString())),
-                                                              ).then((_) {
-                                                                getData();
-                                                              });
+                                                            onTap: () async {
+                                                              final pdfPath =
+                                                                  await HttpService
+                                                                      .printInvoice(
+                                                                widget.token,
+                                                                filteredInvoices[
+                                                                        index]
+                                                                    .id
+                                                                    .toString(),
+                                                              );
+
+                                                              if (pdfPath !=
+                                                                  null) {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (_) =>
+                                                                        PrintInvoiceView(
+                                                                            pdfPath:
+                                                                                pdfPath),
+                                                                  ),
+                                                                );
+                                                              } else {
+                                                                ScaffoldMessenger.of(
+                                                                        context)
+                                                                    .showSnackBar(const SnackBar(
+                                                                        content:
+                                                                            Text("Failed to load invoice")));
+                                                              }
                                                             },
+                                                            // onTap: () {
+                                                            //   Navigator.push(
+                                                            //     context,
+                                                            //     MaterialPageRoute(
+                                                            //         builder: (context) => ViewInvoice(
+                                                            //             widget
+                                                            //                 .token,
+                                                            //             filteredInvoices[index]
+                                                            //                 .id
+                                                            //                 .toString(),
+                                                            //             filteredInvoices[index]
+                                                            //                 .clientId
+                                                            //                 .toString(),
+                                                            //             filteredInvoices[index]
+                                                            //                 .invoiceNumber
+                                                            //                 .toString())),
+                                                            //   ).then((_) {
+                                                            //     getData();
+                                                            //   });
+                                                            // },
                                                             child: Container(
                                                               decoration: BoxDecoration(
                                                                   borderRadius:
@@ -959,13 +1045,113 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                             width: 10,
                                                           ),
                                                           InkWell(
-                                                            onTap: () {
-                                                              showDialog(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6),
+                                                            onTapDown:
+                                                                (TapDownDetails
+                                                                    details) {
+                                                              _tapPosition = details
+                                                                  .globalPosition;
+                                                            },
+                                                            onTap: () async {
+                                                              final Offset pos = _tapPosition ??
+                                                                  Offset(
+                                                                      MediaQuery.of(context)
+                                                                              .size
+                                                                              .width /
+                                                                          2,
+                                                                      MediaQuery.of(context)
+                                                                              .size
+                                                                              .height /
+                                                                          2);
+
+                                                              final RenderBox
+                                                                  overlay =
+                                                                  Overlay.of(context)
+                                                                          .context
+                                                                          .findRenderObject()
+                                                                      as RenderBox;
+
+                                                              final RelativeRect
+                                                                  position =
+                                                                  RelativeRect
+                                                                      .fromRect(
+                                                                Rect.fromLTWH(
+                                                                  pos.dx,
+                                                                  pos.dy,
+                                                                  0,
+                                                                  0,
+                                                                ),
+                                                                Offset.zero &
+                                                                    overlay
+                                                                        .size,
+                                                              );
+
+                                                              final value =
+                                                                  await showMenu<
+                                                                      String>(
+                                                                context:
+                                                                    context,
+                                                                position:
+                                                                    position,
+                                                                shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            8)),
+                                                                elevation: 8,
+                                                                items: [
+                                                                  // filteredInvoices[index].id
+
+                                                                  const PopupMenuItem(
+                                                                    value:
+                                                                        'delete',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                            Icons
+                                                                                .delete_outline,
+                                                                            color:
+                                                                                Colors.red),
+                                                                        SizedBox(
+                                                                            width:
+                                                                                8),
+                                                                        Text(
+                                                                            "Delete"),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+
+                                                                  const PopupMenuItem(
+                                                                    value:
+                                                                        'hide',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                            Icons
+                                                                                .hide_source_outlined,
+                                                                            color:
+                                                                                Colors.blue),
+                                                                        SizedBox(
+                                                                            width:
+                                                                                8),
+                                                                        Text(
+                                                                            "Hide Invoice"),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              );
+
+                                                              if (value ==
+                                                                  'hide') {
+                                                                showDialog(
                                                                   context:
                                                                       context,
                                                                   builder:
                                                                       (BuildContext
-                                                                          context) {
+                                                                          ctx) {
                                                                     return AlertDialog(
                                                                       scrollable:
                                                                           true,
@@ -973,62 +1159,194 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                                           'Please Confirm'),
                                                                       content:
                                                                           const Text(
-                                                                              'Are you sure to Delete?'),
+                                                                              'Are you sure you want to hide this invoice?'),
                                                                       actions: [
                                                                         TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.pop(context);
-                                                                            },
-                                                                            child:
-                                                                                const Text('No')),
+                                                                          onPressed: () =>
+                                                                              Navigator.of(ctx).pop(),
+                                                                          child:
+                                                                              const Text('No'),
+                                                                        ),
                                                                         TextButton(
-                                                                            onPressed:
-                                                                                () async {
-                                                                              Common.showProgressDialog(context, "Loading..");
-                                                                              DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, filteredInvoices[index].id);
-                                                                              if (deleteInvoice.data == true) {
-                                                                                Common.toastMessaage(deleteInvoice.message, Colors.green);
-                                                                                if (context.mounted) {
-                                                                                  Navigator.pop(context);
-                                                                                  Navigator.pop(context);
-                                                                                }
-                                                                                getData();
-                                                                              } else {
-                                                                                Common.toastMessaage(deleteInvoice.message, Colors.red);
-                                                                                if (context.mounted) {
-                                                                                  Navigator.of(context).pop();
-                                                                                }
-                                                                              }
-                                                                            },
-                                                                            child:
-                                                                                const Text('Yes')),
+                                                                          onPressed:
+                                                                              () async {
+                                                                            Common.showProgressDialog(ctx,
+                                                                                "Loading..");
+
+                                                                            final HideInvoiceModel?
+                                                                                hideInvoice =
+                                                                                await HttpService.hideInvoice(
+                                                                              widget.token,
+                                                                              filteredInvoices[index].id,
+                                                                            );
+
+                                                                            if (!context.mounted)
+                                                                              return;
+
+                                                                            Navigator.of(ctx).pop();
+                                                                            if (hideInvoice != null &&
+                                                                                hideInvoice.data == true) {
+                                                                              Common.toastMessaage(
+                                                                                hideInvoice.message ?? "Invoice hidden successfully",
+                                                                                Colors.green,
+                                                                              );
+
+                                                                              Navigator.of(ctx).pop(); 
+                                                                              refreshInvoiceList();
+                                                                            } else {
+                                                                              Common.toastMessaage(
+                                                                                hideInvoice?.message ?? "Failed to hide invoice",
+                                                                                Colors.red,
+                                                                              );
+                                                                            }
+                                                                          },
+                                                                          child:
+                                                                              const Text('Yes'),
+                                                                        ),
                                                                       ],
                                                                     );
-                                                                  });
+                                                                  },
+                                                                );
+                                                              } else if (value ==
+                                                                  'delete') {
+                                                                showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          ctx) {
+                                                                    return AlertDialog(
+                                                                      scrollable:
+                                                                          true,
+                                                                      title: const Text(
+                                                                          'Please Confirm'),
+                                                                      content:
+                                                                          const Text(
+                                                                              'Are you sure you want to delete this invoice?'),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                          onPressed: () =>
+                                                                              Navigator.of(ctx).pop(),
+                                                                          child:
+                                                                              const Text('No'),
+                                                                        ),
+                                                                        TextButton(
+                                                                          onPressed:
+                                                                              () async {
+                                                                            Common.showProgressDialog(context,
+                                                                                "Loading..");
+                                                                            DeleteInvoiceModel
+                                                                                deleteInvoice =
+                                                                                await HttpService.deleteInvoice(widget.token, filteredInvoices[index].id);
+                                                                            if (deleteInvoice.data ==
+                                                                                true) {
+                                                                              Common.toastMessaage(deleteInvoice.message, Colors.green);
+                                                                              if (context.mounted) {
+                                                                                Navigator.pop(context);
+                                                                                Navigator.pop(context);
+                                                                              }
+                                                                              getData();
+                                                                            } else {
+                                                                              Common.toastMessaage(deleteInvoice.message, Colors.red);
+                                                                              if (context.mounted) {
+                                                                                Navigator.of(context).pop();
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          child:
+                                                                              const Text('Yes'),
+                                                                        ),
+                                                                      ],
+                                                                    );
+                                                                  },
+                                                                );
+                                                              }
                                                             },
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: const Color(
-                                                                      0xfffcbcbc)),
-                                                              child:
-                                                                  const Padding(
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .all(
-                                                                            8.0),
-                                                                child: Icon(
-                                                                    Icons
-                                                                        .delete_outline,
-                                                                    color: Colors
-                                                                        .red),
+                                                            child:
+                                                                const Padding(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(6.0),
+                                                              child: Icon(
+                                                                Icons
+                                                                    .more_horiz_outlined,
+                                                                color: Colors
+                                                                    .black54,
+                                                                size: 26,
                                                               ),
                                                             ),
                                                           ),
+                                                          // InkWell(
+                                                          //   onTap: () {
+                                                          //     showDialog(
+                                                          //         context:
+                                                          //             context,
+                                                          //         builder:
+                                                          //             (BuildContext
+                                                          //                 context) {
+                                                          //           return AlertDialog(
+                                                          //             scrollable:
+                                                          //                 true,
+                                                          //             title: const Text(
+                                                          //                 'Please Confirm'),
+                                                          //             content:
+                                                          //                 const Text(
+                                                          //                     'Are you sure to Delete?'),
+                                                          //             actions: [
+                                                          //               TextButton(
+                                                          //                   onPressed:
+                                                          //                       () {
+                                                          //                     Navigator.pop(context);
+                                                          //                   },
+                                                          //                   child:
+                                                          //                       const Text('No')),
+                                                          //               TextButton(
+                                                          //                   onPressed:
+                                                          //                       () async {
+                                                          //                     Common.showProgressDialog(context, "Loading..");
+                                                          //                     DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, filteredInvoices[index].id);
+                                                          //                     if (deleteInvoice.data == true) {
+                                                          //                       Common.toastMessaage(deleteInvoice.message, Colors.green);
+                                                          //                       if (context.mounted) {
+                                                          //                         Navigator.pop(context);
+                                                          //                         Navigator.pop(context);
+                                                          //                       }
+                                                          //                       getData();
+                                                          //                     } else {
+                                                          //                       Common.toastMessaage(deleteInvoice.message, Colors.red);
+                                                          //                       if (context.mounted) {
+                                                          //                         Navigator.of(context).pop();
+                                                          //                       }
+                                                          //                     }
+                                                          //                   },
+                                                          //                   child:
+                                                          //                       const Text('Yes')),
+                                                          //             ],
+                                                          //           );
+                                                          //         });
+                                                          //   },
+                                                          //   child: Container(
+                                                          //     decoration: BoxDecoration(
+                                                          //         borderRadius:
+                                                          //             BorderRadius
+                                                          //                 .circular(
+                                                          //                     2),
+                                                          //         color: const Color(
+                                                          //             0xfffcbcbc)),
+                                                          //     child:
+                                                          //         const Padding(
+                                                          //       padding:
+                                                          //           EdgeInsets
+                                                          //               .all(
+                                                          //                   8.0),
+                                                          //       child: Icon(
+                                                          //           Icons
+                                                          //               .delete_outline,
+                                                          //           color: Colors
+                                                          //               .red),
+                                                          //     ),
+                                                          //   ),
+                                                          // ),
                                                         ],
                                                       )
                                                     ],

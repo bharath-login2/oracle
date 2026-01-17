@@ -102,12 +102,19 @@ class _ListFilesState extends State<ListFiles> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     InkWell(
+                      // onTap: () {
+                      //   Navigator.of(context).pushAndRemoveUntil(
+                      //       MaterialPageRoute(
+                      //           builder: (context) =>
+                      //               FileMangerList(widget.token)),
+                      //       (Route<dynamic> route) => false);
+                      // },
                       onTap: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    FileMangerList(widget.token)),
-                            (Route<dynamic> route) => false);
+                        if (Navigator.canPop(context)) {
+                          Navigator.maybePop(context);
+                        } else {
+                          Navigator.pop(context);
+                        }
                       },
                       child: Container(
                         height: 25,

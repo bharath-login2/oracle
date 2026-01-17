@@ -31,7 +31,7 @@ class MaterialData {
   final String? unitName;
   final String? unitPrice;
   final String? currentStock;
-
+final String? gstPercentage;
   MaterialData({
     this.materialId,
     this.materialName,
@@ -39,6 +39,7 @@ class MaterialData {
     this.unitName,
     this.unitPrice,
     this.currentStock,
+        this.gstPercentage,
   });
 
   factory MaterialData.fromJson(Map<String, dynamic> json) {
@@ -49,6 +50,7 @@ class MaterialData {
       unitName: json['unit_name'] ?? "",
       unitPrice: json['unit_price'] ?? "",
       currentStock: json['current_stock'] ?? "",
+      gstPercentage: json['gst_percentage'] ?? "",
     );
   }
 
@@ -59,5 +61,6 @@ class MaterialData {
     'unit_name': unitName,
     'unit_price': unitPrice,
     'current_stock': currentStock,
+    'gst_percentage': gstPercentage,
   };
 }

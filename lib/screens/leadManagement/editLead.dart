@@ -301,9 +301,18 @@ class _EditLeadState extends State<EditLead> {
           clientName.text = leadDetails!.data!.clientName?.toString() ?? '';
 
           // Fix duplicate assignment
+          // String contactNumber =
+          //     leadDetails!.data!.contactNumber1?.toString() ?? '';
+          // contactNo.text = Common.trimPlus91(contactNumber);
           String contactNumber =
               leadDetails!.data!.contactNumber1?.toString() ?? '';
-          contactNo.text = Common.trimPlus91(contactNumber);
+
+          code = leadDetails!.data!.countryCode?.toString() ?? '91';
+
+          contactNo.text = Common.trimCountryCode(
+            mobileNumber: contactNumber,
+            countryCode: code,
+          );
 
           cost.text = leadDetails!.data!.cost?.toString() ?? '';
           address.text = leadDetails!.data!.address?.toString() ?? '';
@@ -869,7 +878,7 @@ class _EditLeadState extends State<EditLead> {
                         height: 50,
                         child: TextFormField(
                           controller: contactNo,
-                           keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                               labelText: 'Contact Number',
                               fillColor: Colors.white,

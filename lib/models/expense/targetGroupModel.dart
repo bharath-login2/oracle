@@ -36,6 +36,7 @@ class TargetGroupAll {
     String isGroup;
     String targetAmount;
     String staffName;
+     String isCompany;
     String totalAchieved;
     String taxInclude;
 
@@ -46,6 +47,7 @@ class TargetGroupAll {
         required this.targetAmount,
         required this.staffName,
         required this.totalAchieved,
+          required this.isCompany,
         required this.taxInclude,
     });
 
@@ -56,6 +58,7 @@ class TargetGroupAll {
         targetAmount: json["target_amount"]??"",
         staffName: json["staff_name"]??"",
         totalAchieved: json["total_achieved"]??"",
+          isCompany: json["is_company"]??"",
         taxInclude: json["tax_include"]??"",
     );
 
@@ -66,6 +69,7 @@ class TargetGroupAll {
         "target_amount": targetAmount,
         "staff_name": staffName,
         "total_achieved": totalAchieved,
+          "is_company": isCompany,
         "tax_include": taxInclude,
     };
 }

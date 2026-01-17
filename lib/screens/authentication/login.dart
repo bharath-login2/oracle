@@ -6,7 +6,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
@@ -182,42 +181,42 @@ class _LoginState extends State<Login> {
 //   }
 // }
 
-  Future<String?> generateFaceHash(File faceImageFile) async {
-    final faceDetector = FaceDetector(
-      options: FaceDetectorOptions(
-        enableLandmarks: true,
-        enableContours: true,
-        enableClassification: false,
-      ),
-    );
+  // Future<String?> generateFaceHash(File faceImageFile) async {
+  //   final faceDetector = FaceDetector(
+  //     options: FaceDetectorOptions(
+  //       enableLandmarks: true,
+  //       enableContours: true,
+  //       enableClassification: false,
+  //     ),
+  //   );
 
-    final inputImage = InputImage.fromFile(faceImageFile);
-    final faces = await faceDetector.processImage(inputImage);
+  //   final inputImage = InputImage.fromFile(faceImageFile);
+  //   final faces = await faceDetector.processImage(inputImage);
 
-    if (faces.isEmpty) return null;
+  //   if (faces.isEmpty) return null;
 
-    final face = faces.first;
-    final landmarks = face.landmarks;
+  //   final face = faces.first;
+  //   final landmarks = face.landmarks;
 
-    // Serialize key landmarks
-    final serialized = [
-      landmarks[FaceLandmarkType.leftEye]?.position,
-      landmarks[FaceLandmarkType.rightEye]?.position,
-      landmarks[FaceLandmarkType.noseBase]?.position,
-      landmarks[FaceLandmarkType.leftCheek]?.position,
-      landmarks[FaceLandmarkType.rightCheek]?.position,
-    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+  //   // Serialize key landmarks
+  //   final serialized = [
+  //     landmarks[FaceLandmarkType.leftEye]?.position,
+  //     landmarks[FaceLandmarkType.rightEye]?.position,
+  //     landmarks[FaceLandmarkType.noseBase]?.position,
+  //     landmarks[FaceLandmarkType.leftCheek]?.position,
+  //     landmarks[FaceLandmarkType.rightCheek]?.position,
+  //   ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
 
-    // Add lip contours (optional but increases uniqueness)
-    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
-    final lipData =
-        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+  //   // Add lip contours (optional but increases uniqueness)
+  //   final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+  //   final lipData =
+  //       lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
 
-    faceDetector.close();
+  //   faceDetector.close();
 
-    final combined = '$serialized;$lipData';
-    return base64Encode(utf8.encode(combined));
-  }
+  //   final combined = '$serialized;$lipData';
+  //   return base64Encode(utf8.encode(combined));
+  // }
 
   // Future<void> captureFace() async {
   //   final faceImage = await Navigator.of(context).push<File>(
@@ -389,10 +388,13 @@ class _LoginState extends State<Login> {
                 object1.data!.QuotationDashboard.toString());
                      Common.saveSharedPref("RoomDashboard",
                 object1.data!.RoomDashboard.toString());
+                  Common.saveSharedPref("JobCard",
+                object1.data!.JobCard.toString());
                 //////////////Modules permissions /////////////////////////////////////////
                Common.saveSharedPref("RoomModule",
                 object1.data!.roomModule.toString());
-
+                Common.saveSharedPref("workWithoutLogin",
+                object1.data!.workWithoutLogin.toString());
                 Common.saveSharedPref("quotationModule",
                 object1.data!.quotationModule.toString());
                   Common.saveSharedPref("workModule",

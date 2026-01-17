@@ -240,10 +240,10 @@ class _AddUserState extends State<AddUser> {
                           hintTextColor: Colors.white,
                           backgroundColor: Colors.white,
                           controller: phoneNumber,
-                          keyboardType: TextInputType.text, // Use text keyboard
+                          keyboardType: TextInputType.number,
                           inputFormatters: [
                             FilteringTextInputFormatter
-                                .digitsOnly, // Only allow digits
+                                .digitsOnly,
                           ],
                           width: 0.9,
                           iconData: Icons.call,
@@ -350,120 +350,315 @@ class _AddUserState extends State<AddUser> {
                           iconData: Icons.email,
                         ),
                         const SizedBox(height: 15),
-                        Padding(
+                       Padding(
                           padding: const EdgeInsets.only(left: 20, right: 20),
-                          child: SizedBox(
-                            height: 50,
-                            child: TextFormField(
-                              onTap: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        scrollable: true,
-                                        title: const Text('Accessible Users'),
-                                        content: SizedBox(
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              .32,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              .8,
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: commonDetails!
-                                                .data!.users!.length,
-                                            itemBuilder: (context, ind) {
-                                              return CheckboxListTile(
-                                                title: SizedBox(
-                                                  width: 200,
-                                                  child: Text(
-                                                    commonDetails!.data!
-                                                        .users![ind].staffName
-                                                        .toString(),
-                                                    style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                        fontSize: 14),
-                                                  ),
-                                                ),
-                                                value: checkedItems.contains(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Accessible Users',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              SizedBox(
+                                height: 50,
+                                child: TextFormField(
+                                  onTap: () {
+                                    List<String> tempCheckedItems =
+                                        List.from(checkedItems);
+                                    List<String> tempCheckedItemsName =
+                                        List.from(checkedItemsName);
+
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return StatefulBuilder(
+                                          builder: (context, setStateDialog) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text(
+                                                  'Accessible Users'),
+                                              content: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .32,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: commonDetails!
+                                                      .data!.users!.length,
+                                                  itemBuilder: (context, ind) {
+                                                    String userId =
                                                         commonDetails!.data!
                                                             .users![ind].userId
-                                                            .toString())
-                                                    ? true
-                                                    : false,
-                                                onChanged: (bool? value) {
-                                                  if (value == true) {
+                                                            .toString();
+                                                    String userName =
+                                                        commonDetails!
+                                                            .data!
+                                                            .users![ind]
+                                                            .staffName
+                                                            .toString();
+
+                                                    return CheckboxListTile(
+                                                      title: SizedBox(
+                                                        width: 200,
+                                                        child: Text(
+                                                          userName,
+                                                          style:
+                                                              const TextStyle(
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      value: tempCheckedItems
+                                                          .contains(userId),
+                                                      onChanged: (bool? value) {
+                                                        setStateDialog(() {
+                                                          if (value == true) {
+                                                            if (!tempCheckedItems
+                                                                .contains(
+                                                                    userId)) {
+                                                              tempCheckedItems
+                                                                  .add(userId);
+                                                              tempCheckedItemsName
+                                                                  .add(
+                                                                      userName);
+                                                            }
+                                                          } else {
+                                                            tempCheckedItems
+                                                                .remove(userId);
+                                                            tempCheckedItemsName
+                                                                .remove(
+                                                                    userName);
+                                                          }
+                                                        });
+                                                      },
+                                                      controlAffinity:
+                                                          ListTileControlAffinity
+                                                              .leading,
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
                                                     setState(() {
-                                                      checkedItems.add(
-                                                          commonDetails!
-                                                              .data!
-                                                              .users![ind]
-                                                              .userId
-                                                              .toString());
-                                                      checkedItemsName.add(
-                                                          commonDetails!
-                                                              .data!
-                                                              .users![ind]
-                                                              .staffName
-                                                              .toString());
+                                                      checkedItems = List.from(
+                                                          tempCheckedItems);
+                                                      checkedItemsName = List.from(
+                                                          tempCheckedItemsName);
                                                     });
-                                                  } else {
-                                                    setState(() {
-                                                      checkedItems.remove(
-                                                          commonDetails!
-                                                              .data!
-                                                              .users![ind]
-                                                              .userId
-                                                              .toString());
-                                                      checkedItemsName.remove(
-                                                          commonDetails!
-                                                              .data!
-                                                              .users![ind]
-                                                              .staffName
-                                                              .toString());
-                                                    });
-                                                  }
-                                                },
-                                                controlAffinity:
-                                                    ListTileControlAffinity
-                                                        .leading,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: const Text('Done'),
-                                          ),
-                                        ],
-                                      );
-                                    });
-                              },
-                              maxLines: 1,
-                              readOnly: true,
-                              decoration: const InputDecoration(
-                                  hintText: 'Accessible Users',
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                  prefixIcon: Icon(
-                                      Icons.arrow_drop_down_circle_outlined,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: const Text('Done'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  maxLines: 1,
+                                  readOnly: true,
+                                  controller: TextEditingController(
+                                    text: checkedItemsName.isNotEmpty
+                                        ? checkedItemsName.length == 1
+                                            ? checkedItemsName.first
+                                            : '${checkedItemsName.length} users selected'
+                                        : '',
                                   ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
+                                  decoration: InputDecoration(
+                                    hintText: checkedItemsName.isEmpty
+                                        ? 'Select accessible users'
+                                        : '',
+                                    fillColor: Colors.white,
+                                    filled: true,
+                                    prefixIcon: const Icon(
+                                      Icons.arrow_drop_down_circle_outlined,
+                                      color: Colors.grey,
+                                    ),
+                                    border: const OutlineInputBorder(),
+                                    focusedBorder: const OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.grey),
+                                    ),
+                                    suffixIcon: checkedItemsName.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear,
+                                                size: 20),
+                                            onPressed: () {
+                                              setState(() {
+                                                checkedItems.clear();
+                                                checkedItemsName.clear();
+                                              });
+                                            },
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        if (checkedItemsName.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children:
+                                  checkedItemsName.asMap().entries.map((entry) {
+                                int index = entry.key;
+                                String userName = entry.value;
+                                return Chip(
+                                  label: Text(userName),
+                                  deleteIcon: const Icon(Icons.close, size: 16),
+                                  onDeleted: () {
+                                    setState(() {
+                                      String userId = checkedItems[index];
+                                      checkedItems.removeAt(index);
+                                      checkedItemsName.removeAt(index);
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        const SizedBox(height: 15),
+
+                        // Padding(
+                        //   padding: const EdgeInsets.only(left: 20, right: 20),
+                        //   child: SizedBox(
+                        //     height: 50,
+                        //     child: TextFormField(
+                        //       onTap: () {
+                        //         showDialog(
+                        //             context: context,
+                        //             builder: (BuildContext context) {
+                        //               return AlertDialog(
+                        //                 scrollable: true,
+                        //                 title: const Text('Accessible Users'),
+                        //                 content: SizedBox(
+                        //                   height: MediaQuery.of(context)
+                        //                           .size
+                        //                           .height *
+                        //                       .32,
+                        //                   width: MediaQuery.of(context)
+                        //                           .size
+                        //                           .height *
+                        //                       .8,
+                        //                   child: ListView.builder(
+                        //                     shrinkWrap: true,
+                        //                     itemCount: commonDetails!
+                        //                         .data!.users!.length,
+                        //                     itemBuilder: (context, ind) {
+                        //                       return CheckboxListTile(
+                        //                         title: SizedBox(
+                        //                           width: 200,
+                        //                           child: Text(
+                        //                             commonDetails!.data!
+                        //                                 .users![ind].staffName
+                        //                                 .toString(),
+                        //                             style: const TextStyle(
+                        //                                 color: Colors.black,
+                        //                                 fontWeight:
+                        //                                     FontWeight.w400,
+                        //                                 fontSize: 14),
+                        //                           ),
+                        //                         ),
+                        //                         value: checkedItems.contains(
+                        //                                 commonDetails!.data!
+                        //                                     .users![ind].userId
+                        //                                     .toString())
+                        //                             ? true
+                        //                             : false,
+                        //                         onChanged: (bool? value) {
+                        //                           if (value == true) {
+                        //                             setState(() {
+                        //                               checkedItems.add(
+                        //                                   commonDetails!
+                        //                                       .data!
+                        //                                       .users![ind]
+                        //                                       .userId
+                        //                                       .toString());
+                        //                               checkedItemsName.add(
+                        //                                   commonDetails!
+                        //                                       .data!
+                        //                                       .users![ind]
+                        //                                       .staffName
+                        //                                       .toString());
+                        //                             });
+                        //                           } else {
+                        //                             setState(() {
+                        //                               checkedItems.remove(
+                        //                                   commonDetails!
+                        //                                       .data!
+                        //                                       .users![ind]
+                        //                                       .userId
+                        //                                       .toString());
+                        //                               checkedItemsName.remove(
+                        //                                   commonDetails!
+                        //                                       .data!
+                        //                                       .users![ind]
+                        //                                       .staffName
+                        //                                       .toString());
+                        //                             });
+                        //                           }
+                        //                         },
+                        //                         controlAffinity:
+                        //                             ListTileControlAffinity
+                        //                                 .leading,
+                        //                       );
+                        //                     },
+                        //                   ),
+                        //                 ),
+                        //                 actions: [
+                        //                   TextButton(
+                        //                     onPressed: () {
+                        //                       Navigator.pop(context);
+                        //                     },
+                        //                     child: const Text('Done'),
+                        //                   ),
+                        //                 ],
+                        //               );
+                        //             });
+                        //       },
+                        //       maxLines: 1,
+                        //       readOnly: true,
+                        //       decoration: const InputDecoration(
+                        //           hintText: 'Accessible Users',
+                        //           fillColor: Colors.white,
+                        //           filled: true,
+                        //           prefixIcon: Icon(
+                        //               Icons.arrow_drop_down_circle_outlined,
+                        //               color: Colors.grey),
+                        //           border: OutlineInputBorder(),
+                        //           focusedBorder: OutlineInputBorder(
+                        //             borderSide: BorderSide(color: Colors.grey),
+                        //           ),
+                        //           labelStyle: TextStyle(color: Colors.grey)),
+                        //     ),
+                        //   ),
+                        // ),
                         const SizedBox(height: 15),
                         Padding(
                           padding: const EdgeInsets.only(left: 20, right: 20),
@@ -536,6 +731,7 @@ class _AddUserState extends State<AddUser> {
                           hintTextColor: Colors.white,
                           backgroundColor: Colors.white,
                           controller: salary,
+                          keyboardType: TextInputType.number,
                           width: 0.9,
                           iconData: Icons.currency_rupee,
                         ),
@@ -562,83 +758,83 @@ class _AddUserState extends State<AddUser> {
                             });
                           },
                         ),
-                        const SizedBox(height: 10),
-                        checkedItemsName.isNotEmpty
-                            ? Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 20, right: 10),
-                                child: SizedBox(
-                                  height: 30,
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: checkedItemsName.length,
-                                    itemBuilder: (context, i) {
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 5),
-                                        child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              .25,
-                                          height: 30,
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 0),
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                                  const BorderRadius.all(
-                                                      Radius.circular(6))),
-                                          child: Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  checkedItemsName[i],
-                                                  style: const TextStyle(
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.only(right: 5),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width * .4,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.white, width: 0),
-                                      color: Colors.grey.shade300,
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.circular(6))),
-                                  child: const Center(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'No User Selected',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                        const SizedBox(height: 15),
+                        // const SizedBox(height: 10),
+                        // checkedItemsName.isNotEmpty
+                        //     ? Padding(
+                        //         padding:
+                        //             const EdgeInsets.only(left: 20, right: 10),
+                        //         child: SizedBox(
+                        //           height: 30,
+                        //           child: ListView.builder(
+                        //             shrinkWrap: true,
+                        //             scrollDirection: Axis.horizontal,
+                        //             itemCount: checkedItemsName.length,
+                        //             itemBuilder: (context, i) {
+                        //               return Padding(
+                        //                 padding:
+                        //                     const EdgeInsets.only(right: 5),
+                        //                 child: Container(
+                        //                   width: MediaQuery.of(context)
+                        //                           .size
+                        //                           .width *
+                        //                       .25,
+                        //                   height: 30,
+                        //                   decoration: BoxDecoration(
+                        //                       border: Border.all(
+                        //                           color: Colors.white,
+                        //                           width: 0),
+                        //                       color: Colors.grey.shade300,
+                        //                       borderRadius:
+                        //                           const BorderRadius.all(
+                        //                               Radius.circular(6))),
+                        //                   child: Center(
+                        //                     child: Row(
+                        //                       mainAxisAlignment:
+                        //                           MainAxisAlignment.center,
+                        //                       children: [
+                        //                         Text(
+                        //                           checkedItemsName[i],
+                        //                           style: const TextStyle(
+                        //                             color: Colors.black,
+                        //                           ),
+                        //                         ),
+                        //                       ],
+                        //                     ),
+                        //                   ),
+                        //                 ),
+                        //               );
+                        //             },
+                        //           ),
+                        //         ),
+                        //       )
+                        //     : Padding(
+                        //         padding: const EdgeInsets.only(right: 5),
+                        //         child: Container(
+                        //           width: MediaQuery.of(context).size.width * .4,
+                        //           height: 30,
+                        //           decoration: BoxDecoration(
+                        //               border: Border.all(
+                        //                   color: Colors.white, width: 0),
+                        //               color: Colors.grey.shade300,
+                        //               borderRadius: const BorderRadius.all(
+                        //                   Radius.circular(6))),
+                        //           child: const Center(
+                        //             child: Row(
+                        //               mainAxisAlignment:
+                        //                   MainAxisAlignment.center,
+                        //               children: [
+                        //                 Text(
+                        //                   'No User Selected',
+                        //                   style: TextStyle(
+                        //                     color: Colors.black,
+                        //                   ),
+                        //                 ),
+                        //               ],
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //const SizedBox(height: 15),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(

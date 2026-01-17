@@ -5,11 +5,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/addInvoiceGstModel.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/editInvoiceDetailsModelGST.dart';
 import 'package:login2/models/clients/editInvoiceDetailsModelTemp.dart';
+import 'package:login2/models/clients/hideInvoiceModel.dart';
 import 'package:login2/models/clients/invoiceAddCommonDetailsModelGST.dart';
 import 'package:login2/models/clients/invoiceAddCommonDetailsModelTemp.dart';
 import 'package:login2/models/clients/invoiceListModelGst.dart';
@@ -18,6 +20,10 @@ import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/printInvoiceModel.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/clients/receiptListAccountsModel.dart';
+import 'package:login2/models/customers/customerDashboardModel.dart';
+import 'package:login2/models/customers/customerLeadModel.dart';
+import 'package:login2/models/customers/customerProjectModel.dart';
+import 'package:login2/models/customers/customerQuotationModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/models/expense/bank_acc_list.dart';
@@ -118,10 +124,33 @@ import 'package:login2/models/renewal/renewal_followup_details.dart';
 import 'package:login2/models/renewal/renewal_followup_list.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/models/renewal/rivert_client.dart';
+import 'package:login2/models/rental/customerRentalProductModel.dart';
+import 'package:login2/models/rental/rentReturnModel.dart';
+import 'package:login2/models/rental/rentalDashbaordModel.dart';
+import 'package:login2/models/rental/rentalIssueModel.dart';
+import 'package:login2/models/rental/rentalLocationModel.dart';
+import 'package:login2/models/roomManagement/editListModel.dart';
+import 'package:login2/models/roomManagement/fileUploadModel.dart';
+import 'package:login2/models/roomManagement/roomDashboardModel.dart';
+import 'package:login2/models/roomManagement/roomListModel.dart';
+import 'package:login2/models/roomManagement/roomNumberListModel.dart';
+import 'package:login2/models/roomManagement/roomProductsModel.dart';
+import 'package:login2/models/roomManagement/roomTypesModel.dart';
 import 'package:login2/models/search/search.dart';
+import 'package:login2/models/serviceman/currentWorkStatusModel.dart';
+import 'package:login2/models/serviceman/customerModel.dart';
+import 'package:login2/models/serviceman/getRoleModel.dart';
+import 'package:login2/models/serviceman/pushNotificationModel.dart';
+import 'package:login2/models/serviceman/receivedThroughModel.dart';
+import 'package:login2/models/serviceman/staffModel.dart';
+import 'package:login2/models/serviceman/workCategoryGraphModel.dart';
+import 'package:login2/models/serviceman/workCategoryModel.dart';
+import 'package:login2/models/serviceman/workOrderIdModel.dart';
+import 'package:login2/models/serviceman/workTypeModel.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/staff_report/targetReportModel.dart';
+import 'package:login2/models/userManagement/companyTargetModel.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
 import 'package:login2/models/renewal/renewal_template_model.dart';
 import 'package:path_provider/path_provider.dart';
@@ -269,6 +298,8 @@ import '../models/officialWhatsapp/template_content_model.dart';
 import '../models/officialWhatsapp/templateModel.dart';
 import '../models/removeUserModel.dart';
 import '../models/resetPasswordModel.dart';
+import '../models/serviceman/customerTypeModel.dart';
+import '../models/serviceman/workModel.dart';
 import '../models/settings/deleteFbLeadsModel.dart';
 import '../models/settings/facebookSettingsModel.dart';
 import '../models/settings/sendNotificationModel.dart';
@@ -2644,6 +2675,8 @@ class HttpService {
   // }
   static Future invoiceList(
     String token,
+    String custId,
+    String fromDash,
     String fromDate,
     String toDate,
     String clientId,
@@ -2655,6 +2688,8 @@ class HttpService {
   ) async {
     var formData = FormData.fromMap({
       'token': token,
+      'cust_id': custId,
+      'from_dashboard': fromDash,
       'from_date': fromDate,
       'to_date': toDate,
       'client_id': clientId,
@@ -2684,6 +2719,9 @@ class HttpService {
 
   static Future invoiceListTemp(
     String token,
+    String isDash,
+    String status,
+    String custId,
     String fromDate,
     String toDate,
     String clientId,
@@ -2695,6 +2733,9 @@ class HttpService {
   ) async {
     var formData = FormData.fromMap({
       'token': token,
+      'from_dashboard': isDash,
+      'status': status,
+      'cust_id': custId,
       'from_date': fromDate,
       'to_date': toDate,
       'client_id': clientId,
@@ -2795,6 +2836,31 @@ class HttpService {
     }
   }
 
+  static Future<HideInvoiceModel?> hideInvoice(
+    String token,
+    String invoiceId,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        "token": token,
+        "invoice_id": invoiceId,
+      });
+
+      final result = await _dio.post(
+        "${await Config.getUrl()}hide_invoice",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data is Map<String, dynamic>) {
+        return HideInvoiceModel.fromJson(result.data);
+      }
+    } catch (e, s) {
+      log("hideInvoice error: $e");
+      log("stacktrace: $s");
+    }
+    return null;
+  }
+
   static Future deleteInvoiceTemp(token, invoiceId) async {
     var params = {"token": token, "invoice_id": invoiceId};
     try {
@@ -2883,10 +2949,12 @@ class HttpService {
     }
   }
 
-  static Future receptList(
-      token, fromDate, toDate, page, pageSize, headId, searchKey, type) async {
+  static Future receptList(token, custId, fromDash, fromDate, toDate, page,
+      pageSize, headId, searchKey, type) async {
     var formData = FormData.fromMap({
       'token': token,
+      'cust_id': custId,
+      'from_dashboard': fromDash,
       'from_date': fromDate == "From Date" ? "" : fromDate,
       'to_date': toDate == "To Date" ? "" : toDate,
       'page': page,
@@ -3718,7 +3786,7 @@ class HttpService {
   static Future<SendMesaageModel?> sendMessage(
     String groupId,
     String messageData,
-    String? filePath,
+    dynamic filePaths,
     bool isImage,
   ) async {
     try {
@@ -3726,36 +3794,69 @@ class HttpService {
       final Map<String, dynamic> formMap = {
         "group_id": groupId,
         "message_data": messageData,
-        "is_image": true,
+        "is_image": isImage,
         "token": token,
       };
+      if (filePaths != null) {
+        final List<String> files = filePaths is String
+            ? [filePaths]
+            : filePaths is List<String>
+                ? filePaths
+                : filePaths is List<XFile>
+                    ? filePaths.map((x) => x.path).toList()
+                    : [];
+        if (files.isNotEmpty) {
+          final multipartFiles = <MultipartFile>[];
+          for (final filePath in files) {
+            if (filePath.isNotEmpty) {
+              final fileExtension = filePath.split('.').last.toLowerCase();
+              MediaType contentType;
+              if (fileExtension == 'mp3') {
+                contentType = MediaType('audio', 'mpeg');
+              } else if (fileExtension == 'wav') {
+                contentType = MediaType('audio', 'wav');
+              } else if (fileExtension == 'mp4') {
+                contentType = MediaType('video', 'mp4');
+              } else if (fileExtension == 'mov') {
+                contentType = MediaType('video', 'quicktime');
+              } else if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+                contentType = MediaType('image', 'jpeg');
+              } else if (fileExtension == 'png') {
+                contentType = MediaType('image', 'png');
+              } else if (fileExtension == 'gif') {
+                contentType = MediaType('image', 'gif');
+              } else if (fileExtension == 'webp') {
+                contentType = MediaType('image', 'webp');
+              } else if (fileExtension == 'pdf') {
+                contentType = MediaType('application', 'pdf');
+              } else if (fileExtension == 'doc' || fileExtension == 'docx') {
+                contentType = MediaType('application', 'msword');
+              } else if (fileExtension == 'xls' || fileExtension == 'xlsx') {
+                contentType = MediaType('application', 'vnd.ms-excel');
+              } else if (fileExtension == 'ppt' || fileExtension == 'pptx') {
+                contentType = MediaType('application', 'vnd.ms-powerpoint');
+              } else if (fileExtension == 'txt') {
+                contentType = MediaType('text', 'plain');
+              } else {
+                contentType = MediaType('application', 'octet-stream');
+              }
+              final multipartFile = await MultipartFile.fromFile(
+                filePath,
+                filename: filePath.split('/').last,
+                contentType: contentType,
+              );
+              multipartFiles.add(multipartFile);
+            }
+          }
 
-      if (filePath != null && filePath.isNotEmpty) {
-        final fileExtension = filePath.split('.').last.toLowerCase();
-        MediaType contentType;
-        if (fileExtension == 'mp3') {
-          contentType = MediaType('audio', 'mpeg');
-        } else if (fileExtension == 'wav') {
-          contentType = MediaType('audio', 'wav');
-        } else if (fileExtension == 'mp4') {
-          contentType = MediaType('video', 'mp4');
-        } else if (fileExtension == 'mov') {
-          contentType = MediaType('video', 'quicktime');
-        } else if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
-          contentType = MediaType('image', 'jpeg');
-        } else if (fileExtension == 'png') {
-          contentType = MediaType('image', 'png');
-        } else if (fileExtension == 'pdf') {
-          contentType = MediaType('application', 'pdf');
-        } else {
-          contentType = MediaType('application', 'octet-stream');
+          if (multipartFiles.isNotEmpty) {
+            if (multipartFiles.length == 1) {
+              formMap["fileName"] = multipartFiles.first;
+            } else {
+              formMap["fileName[]"] = multipartFiles;
+            }
+          }
         }
-
-        formMap["fileName"] = await MultipartFile.fromFile(
-          filePath,
-          filename: filePath.split('/').last,
-          contentType: contentType,
-        );
       }
 
       final formData = FormData.fromMap(formMap);
@@ -3765,6 +3866,9 @@ class HttpService {
         options: Options(
           contentType: 'multipart/form-data',
           responseType: ResponseType.json,
+          headers: {
+            'Accept': 'application/json',
+          },
         ),
       );
 
@@ -4885,6 +4989,7 @@ class HttpService {
   }
 
   static Future renewalList(
+    custId,
     page,
     pageSize,
     clientId,
@@ -4900,6 +5005,7 @@ class HttpService {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "page": page,
+      "cust_id": custId,
       "page_size": pageSize,
       "client_id": clientId,
       "from_date": fromDate ?? "",
@@ -6924,7 +7030,6 @@ class HttpService {
       log("getAllTargetReport error: $e");
       log("Stacktrace: $stacktrace");
     }
-
     return null;
   }
 
@@ -7700,6 +7805,28 @@ class HttpService {
     }
   }
 
+  static Future<CompanyTargetModel?> getCompanyTargets() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}companyTarget",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return CompanyTargetModel.fromJson(response.data);
+      } else {
+        print("❌ Error response: ${response.data}");
+        return null;
+      }
+    } catch (e) {
+      print("🔥 Exception while fetching company location: $e");
+      return null;
+    }
+  }
+
   static Future<bool> removeLocation({
     required String companyId,
     required String nickname,
@@ -8053,6 +8180,8 @@ class HttpService {
 
   static Future<ReceiptListAccountsModel?> receptListAccounts(
     String token,
+    String fromDash,
+    String custId,
     String fromDate,
     String toDate,
     int page,
@@ -8063,6 +8192,8 @@ class HttpService {
   ) async {
     var formData = FormData.fromMap({
       'token': token,
+      'from_dashboard': fromDash,
+      'cust_id': custId,
       'from_date': fromDate == "From Date" ? "" : fromDate,
       'to_date': toDate == "To Date" ? "" : toDate,
       'page': page,
@@ -8940,130 +9071,1474 @@ class HttpService {
     return null;
   }
 
-   static Future<RequestDetailsResponseModel?> requestDetails(String id) async {
-  try {
+  static Future<RequestDetailsResponseModel?> requestDetails(String id) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      if (token.isEmpty) {
+        print("⚠️ Token is empty");
+        return null;
+      }
+
+      if (id.isEmpty) {
+        print("⚠️ Request ID is empty");
+        return null;
+      }
+
+      print("🔍 Fetching request details for ID: $id");
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}view_request_api",
+        data: FormData.fromMap({
+          'token': token,
+          'request_id': id,
+        }),
+        options: Options(
+          contentType: 'multipart/form-data',
+          headers: {
+            'Accept': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      print("🟢 Get Request Details Response Status: ${response.statusCode}");
+      if (response.data == null) {
+        print("⚠️ Null response data received");
+        return null;
+      }
+
+      if (response.statusCode == 200) {
+        try {
+          final result = RequestDetailsResponseModel.fromJson(response.data);
+
+          if (result.status?.toLowerCase() == 'success') {
+            print("✅ Request details fetched successfully");
+            print("📊 Customer: ${result.data?.request?.customerName}");
+            print(
+                "📊 Products count: ${result.data?.request?.products?.length ?? 0}");
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+            // You might want to show this to the user
+            // Common.showToast(result.message ?? 'Request failed');
+          }
+        } catch (e, stack) {
+          print("🔥 Error parsing response: $e");
+          print("Stack: $stack");
+          print("Response data: ${response.data}");
+          return null;
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+        print("Response: ${response.data}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in requestDetails: $e");
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          print("⏰ Timeout error: ${e.message}");
+          break;
+        case DioExceptionType.badResponse:
+          print("🚫 Bad response: ${e.response?.statusCode}");
+          print("Response data: ${e.response?.data}");
+          break;
+        case DioExceptionType.cancel:
+          print("❌ Request cancelled");
+          break;
+        case DioExceptionType.unknown:
+          print("❓ Unknown error: ${e.message}");
+          break;
+        default:
+          print("⚠️ Other Dio error: ${e.type}");
+      }
+
+      if (e.response != null) {
+        print("Response data: ${e.response?.data}");
+        print("Response status: ${e.response?.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in requestDetails: $e");
+      print("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<String?> printReceipt(String receiptId, String invId) async {
     final token = await Common.getSharedPref('token') ?? '';
 
-    if (token.isEmpty) {
-      print("⚠️ Token is empty");
+    try {
+      final formData = FormData.fromMap({
+        "token": token,
+        "receipt_id": receiptId,
+        "invoice_id": invId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}printReceipt",
+        data: formData,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final dir = await getTemporaryDirectory();
+      final file = File("${dir.path}/receipt_$receiptId.pdf");
+
+      await file.writeAsBytes(response.data, flush: true);
+
+      return file.path;
+    } catch (e) {
+      log("❌ Error in printReceipt: $e");
       return null;
     }
+  }
 
-    if (id.isEmpty) {
-      print("⚠️ Request ID is empty");
-      return null;
-    }
+  static Future<RoomDashboardResponse?> getRoomDashboard() async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
 
-    print("🔍 Fetching request details for ID: $id");
+      final response = await _dio.post(
+        "${await Config.getUrl()}getRoomDashboard",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
 
-    final response = await _dio.post(
-      "${await Config.getUrl()}view_request_api",
-      data: FormData.fromMap({
-        'token': token,
-        'request_id': id,
-      }),
-      options: Options(
-        contentType: 'multipart/form-data',
-        headers: {
-          'Accept': 'application/json',
-        },
-        sendTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    );
+      print("🟢 Get Room Dashboard Response: ${response.data}");
 
-    print("🟢 Get Request Details Response Status: ${response.statusCode}");
-    if (response.data == null) {
-      print("⚠️ Null response data received");
-      return null;
-    }
+      if (response.statusCode == 200 && response.data != null) {
+        final result = RoomDashboardResponse.fromJson(response.data);
 
-    if (response.statusCode == 200) {
-      try {
-        final result = RequestDetailsResponseModel.fromJson(response.data);
-
-        if (result.status?.toLowerCase() == 'success') {
-          print("✅ Request details fetched successfully");
-          print("📊 Customer: ${result.data?.request?.customerName}");
-          print("📊 Products count: ${result.data?.request?.products?.length ?? 0}");
+        if (result.status == true) {
           return result;
         } else {
           print("⚠️ API Failed: ${result.message}");
-          // You might want to show this to the user
-          // Common.showToast(result.message ?? 'Request failed');
         }
-      } catch (e, stack) {
-        print("🔥 Error parsing response: $e");
-        print("Stack: $stack");
-        print("Response data: ${response.data}");
-        return null;
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
       }
-    } else {
-      print("⚠️ Unexpected status code: ${response.statusCode}");
-      print("Response: ${response.data}");
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRoomDashboard: $e");
+      print("StackTrace: $stackTrace");
     }
-  } on DioException catch (e) {
-    print("🔥 DioException in requestDetails: $e");
-    
-    // More specific error handling
-    switch (e.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        print("⏰ Timeout error: ${e.message}");
-        break;
-      case DioExceptionType.badResponse:
-        print("🚫 Bad response: ${e.response?.statusCode}");
-        print("Response data: ${e.response?.data}");
-        break;
-      case DioExceptionType.cancel:
-        print("❌ Request cancelled");
-        break;
-      case DioExceptionType.unknown:
-        print("❓ Unknown error: ${e.message}");
-        break;
-      default:
-        print("⚠️ Other Dio error: ${e.type}");
-    }
-    
-    if (e.response != null) {
-      print("Response data: ${e.response?.data}");
-      print("Response status: ${e.response?.statusCode}");
-    }
-  } catch (e, stackTrace) {
-    print("🔥 Exception in requestDetails: $e");
-    print("StackTrace: $stackTrace");
-  }
 
-  return null;
-}
-
- static Future<String?> printReceipt(String receiptId, String invId) async {
-  final token = await Common.getSharedPref('token') ?? '';
-
-  try {
-    final formData = FormData.fromMap({
-      "token": token,
-      "receipt_id": receiptId,
-      "invoice_id": invId,
-    });
-
-    final response = await _dio.post(
-      "${await Config.getUrl()}printReceipt",
-      data: formData,
-      options: Options(responseType: ResponseType.bytes),
-    );
-
-    final dir = await getTemporaryDirectory();
-    final file = File("${dir.path}/receipt_$receiptId.pdf");
-
-    await file.writeAsBytes(response.data, flush: true);
-
-    return file.path;
-  } catch (e) {
-    log("❌ Error in printReceipt: $e");
     return null;
   }
-}
 
+  static Future<RoomListResponse?> getRoomList(String status) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      final response = await _dio.post(
+        "${await Config.getUrl()}getBookingLists",
+        data: FormData.fromMap({
+          'token': token,
+          'status': status,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      print("🟢 Get Room List Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        final result = RoomListResponse.fromJson(response.data);
+        if (result.status == true) {
+          print(
+              "✅ Room list fetched successfully. Count: ${result.data.length}");
+          return result;
+        } else {
+          print("⚠️ API Failed: ${result.message}");
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getRoomList: ${e.message}");
+      print("Response: ${e.response?.data}");
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRoomList: $e");
+      print("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> sendQuotation({
+    required String workOrderId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+
+      final formData = FormData.fromMap({
+        'token': token,
+        'id': workOrderId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}send_quotation",
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      print("🟢 Send Quotation Response: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in sendQuotation: $e");
+      print("StackTrace: $stackTrace");
+      rethrow;
+    }
+    return null;
+  }
+
+  static Future<RoomTypeResponse?> getRoomTypes() async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      final response = await _dio.post(
+        "${await Config.getUrl()}getRoomType",
+        data: FormData.fromMap({
+          'token': token,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      print("🟢 Get Room Type Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic>? responseData = response.data;
+        if (responseData != null) {
+          final result = RoomTypeResponse.fromJson(responseData);
+          if (result.status == true) {
+            print(
+                "✅ Room types fetched successfully. Count: ${result.data.length}");
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+            return result;
+          }
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getRoomTypes: ${e.message}");
+      print("Response: ${e.response?.data}");
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRoomTypes: $e");
+      print("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  static Future<RoomNumberListResponse?> getRoomNumbers(
+      String roomTypeId) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      final response = await _dio.post(
+        "${await Config.getUrl()}fetchRoomsByType",
+        data: FormData.fromMap({
+          'token': token,
+          'room_type_id': roomTypeId,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      print("🟢 Get Room Numbers Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic>? responseData = response.data;
+        if (responseData != null) {
+          final result = RoomNumberListResponse.fromJson(responseData);
+          if (result.status == true) {
+            print(
+                "✅ Room numbers fetched successfully. Count: ${result.data.length}");
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+            return result;
+          }
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getRoomNumbers: ${e.message}");
+      print("Response: ${e.response?.data}");
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRoomNumbers: $e");
+      print("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  static Future<RoomProductListModel?> getRoomProducts() async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      final response = await _dio.post(
+        "${await Config.getUrl()}getProducts",
+        data: FormData.fromMap({
+          'token': token,
+          'product_type': "Material",
+        }),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      print("🟢 Get Room Products Response: ${response.data}");
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic>? responseData = response.data;
+        if (responseData != null) {
+          final result = RoomProductListModel.fromJson(responseData);
+          if (result.status == true) {
+            print(
+                "✅ Room products fetched successfully. Count: ${result.data.length}");
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+            return result;
+          }
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getRoomProducts: ${e.message}");
+      print("Response: ${e.response?.data}");
+    } catch (e, stackTrace) {
+      print("🔥 Exception in getRoomProducts: $e");
+      print("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  static Future<BookingResponse?> submitBooking({
+    required Map<String, dynamic> bookingData,
+    File? idProofFile,
+    bool isEdit = false,
+  }) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      final endpoint = isEdit ? 'updateBooking' : 'createBooking';
+      final url = "${await Config.getUrl()}$endpoint";
+      print("🟢 ${isEdit ? 'Updating' : 'Submitting'} booking data to API...");
+      print("📦 Booking data payload: $bookingData");
+      print(
+          "📁 ID Proof file: ${idProofFile != null ? idProofFile.path : 'No file'}");
+      print("🔗 API URL: $url");
+      print("📝 Mode: ${isEdit ? 'Edit' : 'Create'}");
+      final formData = FormData.fromMap({
+        'token': token,
+        'booking_data': jsonEncode(bookingData),
+      });
+      if (isEdit && bookingData['bookingId'] != null) {
+        formData.fields.add(MapEntry('booking_id', bookingData['bookingId']));
+        print("📝 Edit Mode: Booking ID = ${bookingData['bookingId']}");
+      }
+      if (idProofFile != null && idProofFile.existsSync()) {
+        final fileName = idProofFile.path.split('/').last;
+        formData.files.add(
+          MapEntry(
+            'id_proof',
+            await MultipartFile.fromFile(
+              idProofFile.path,
+              filename: fileName,
+            ),
+          ),
+        );
+        print("📎 Attached file: $fileName");
+      } else if (idProofFile != null) {
+        print("⚠️ File does not exist at path: ${idProofFile.path}");
+      }
+      print("📤 Sending multipart request...");
+      final response = await _dio.post(
+        url,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 60),
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      print(
+          "🟢 ${isEdit ? 'Update' : 'Submit'} Booking Response Status: ${response.statusCode}");
+      print(
+          "📄 ${isEdit ? 'Update' : 'Submit'} Booking Response Body: ${response.data}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic>? responseData = response.data;
+        if (responseData != null) {
+          final result = BookingResponse.fromJson(responseData);
+          if (result.status == true) {
+            print("✅ Booking ${isEdit ? 'updated' : 'created'} successfully!");
+            if (!isEdit) {
+              print("📋 Booking ID: ${result.bookingId}");
+            }
+            print("📋 Message: ${result.message}");
+            return result;
+          } else {
+            print("⚠️ API Failed: ${result.message}");
+            print("📋 Error details: ${result.errorDetails}");
+            return result;
+          }
+        }
+      } else {
+        print("⚠️ Unexpected status code: ${response.statusCode}");
+        print("📋 Response body: ${response.data}");
+      }
+    } on DioException catch (e) {
+      print(
+          "🔥 DioException in ${isEdit ? 'update' : 'submit'}Booking: ${e.message}");
+      print("🔍 Error type: ${e.type}");
+      if (e.response != null) {
+        print("📋 Response status: ${e.response!.statusCode}");
+        print("📋 Response data: ${e.response!.data}");
+        print("📋 Response headers: ${e.response!.headers}");
+      }
+      if (e.type == DioExceptionType.connectionTimeout) {
+        print(
+            "⏱️ Connection timeout while ${isEdit ? 'updating' : 'submitting'} booking");
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        print(
+            "⏱️ Receive timeout while ${isEdit ? 'updating' : 'submitting'} booking");
+      } else if (e.type == DioExceptionType.sendTimeout) {
+        print(
+            "⏱️ Send timeout while ${isEdit ? 'updating' : 'submitting'} booking");
+      } else if (e.type == DioExceptionType.badResponse) {
+        print("❌ Bad response from server");
+      } else if (e.type == DioExceptionType.cancel) {
+        print("❌ Request cancelled");
+      } else if (e.type == DioExceptionType.unknown) {
+        print("❓ Unknown Dio error: ${e.error}");
+      }
+    } catch (e, stackTrace) {
+      print("🔥 Exception in ${isEdit ? 'update' : 'submit'}Booking: $e");
+      print("📋 StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<BookingDetailsResponse?> getListDataOnEdit(
+      String bookingId) async {
+    try {
+      final token = await Common.getSharedPref('token') ?? '';
+      if (token.isEmpty) {
+        print('❌ Token is empty');
+        return null;
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_booking",
+        data: FormData.fromMap({
+          'token': token,
+          'booking_id': bookingId,
+        }),
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+      print("🟢 Get Booking Details Response Status: ${response.statusCode}");
+      print("🟢 Response Data: ${response.data}");
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = response.data;
+        if (responseData.isEmpty) {
+          print("⚠️ Response data is empty");
+          return null;
+        }
+        try {
+          final result = BookingDetailsResponse.fromJson(responseData);
+          if (result.status == true) {
+            print("✅ Booking details fetched successfully");
+            if (result.data != null) {
+              print("📋 Booking ID: ${result.data!.bookingDetails.id}");
+              print("📋 Invoice: ${result.data!.bookingDetails.invoiceNumber}");
+              print(
+                  "📋 Total Amount: ${result.data!.bookingDetails.totalAmount}");
+              print("📋 Rooms: ${result.data!.bookingRoomsList.length}");
+            }
+
+            return result;
+          } else {
+            print("⚠️ API returned false status: ${result.message}");
+            return null;
+          }
+        } catch (e) {
+          print("❌ Error parsing response to model: $e");
+          print("❌ Raw response: ${response.data}");
+          return null;
+        }
+      } else {
+        print("❌ Unexpected status code: ${response.statusCode}");
+        print("❌ Response: ${response.data}");
+        return null;
+      }
+    } on DioException catch (e) {
+      print("🔥 DioException in getListDataOnEdit: ${e.message}");
+
+      if (e.type == DioExceptionType.connectionTimeout) {
+        print("⏱️ Connection timeout");
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        print("⏱️ Receive timeout");
+      } else if (e.type == DioExceptionType.sendTimeout) {
+        print("⏱️ Send timeout");
+      }
+
+      if (e.response != null) {
+        print("📊 Response status: ${e.response?.statusCode}");
+        print("📊 Response data: ${e.response?.data}");
+      }
+
+      return null;
+    } catch (e, stackTrace) {
+      print("🔥 Unexpected error in getListDataOnEdit: $e");
+      print("📜 StackTrace: $stackTrace");
+      return null;
+    }
+  }
+
+  Future<Uint8List?> fetchInvoicePdfBytes(String bookingId) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final formData = FormData.fromMap({
+        "token": token,
+        "booking_id": bookingId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}printBookingInvoice",
+        data: formData,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return Uint8List.fromList(response.data);
+      }
+      return null;
+    } catch (e) {
+      log("PDF fetch error: $e");
+      return null;
+    }
+  }
+
+  Future<WorkCategoryModelGraph?> getCategoryGraph() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_work_category_stats",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return WorkCategoryModelGraph.fromJson(response.data);
+      } else {
+        log(
+          "getCategoryGraph: Unexpected response or status code ${response.statusCode}",
+        );
+      }
+    } catch (e, stackTrace) {
+      log("getCategoryGraph error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<GetRoleModel?> getRoleId() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getRoleId",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return GetRoleModel.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<WorkModelPage?> getWorkList(
+    String staffId,
+    String date,
+    String typeId,
+  ) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+      "status": typeId,
+    });
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}api_workorders",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return WorkModelPage.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("api_workorders error: $e");
+    }
+    return null;
+  }
+
+  Future<CurrentStatus?> checkCurrentWorkStatus() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}checkCurrentWorkStatus",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return CurrentStatus.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<WorkTypeModel?> getWorkType() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getWorkType",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return WorkTypeModel.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> startWorkService(
+    String workId,
+    String remarks,
+    String? milestone,
+    String? productId,
+    List<Map<String, dynamic>> selectedMaterials,
+    String? selectedCustomerId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "workId": workId,
+        "remarks": remarks,
+        "milestone": milestone,
+        "product_id": productId,
+        "materials": jsonEncode(selectedMaterials),
+        "customer_id": selectedCustomerId,
+      });
+      final result = await _dio.post(
+        "${await Config.getUrl()}startWork",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return result.data;
+      }
+    } catch (e) {
+      log("Error in startWork: $e");
+    }
+    return {"status": false, "message": "Failed to start work"};
+  }
+
+  Future<Map<String, dynamic>> pauseWorkService(
+    String workId,
+    String status,
+    String remarks,
+    String? milestone,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "workId": workId,
+        "status": status,
+        "remarks": remarks,
+        "milestone": milestone,
+      });
+      final result = await _dio.post(
+        "${await Config.getUrl()}pauseWork",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return result.data;
+      }
+    } catch (e) {
+      log("Error in pauseWork: $e");
+    }
+    return {"status": false, "message": "Failed to pause work"};
+  }
+
+  Future<Map<String, dynamic>> stopWorkService(
+    String workId,
+    String status,
+    String remarks,
+    String? milestone,
+    String? productId,
+    List<Map<String, dynamic>> selectedMaterials,
+    String? selectedCustomerId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "work_order_id": workId,
+        "status": status,
+        "remark": remarks,
+        "stoppipeline_name": milestone,
+        "product_id": productId,
+        "materials": jsonEncode(selectedMaterials),
+        "customer_id": selectedCustomerId,
+      });
+      final result = await _dio.post(
+        "${await Config.getUrl()}stopWork",
+        data: formData,
+      );
+      if (result.statusCode == 200 && result.data != null) {
+        return result.data;
+      }
+    } catch (e) {
+      log("Error in stopWork: $e");
+    }
+    return {"status": false, "message": "Failed to stop work"};
+  }
+
+  Future<bool> deleteWorkOrder(String workOrderId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "WorkOrderID": workOrderId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_workorder",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data["status"] == true) {
+          return true;
+        } else {
+          log("Delete failed: ${data["message"]}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("deleteWorkOrder error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return false;
+  }
+
+  Future<CustomerModelService?> getCustomerListService() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getCustomerName",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return CustomerModelService.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<CustomerTypeModel?> getCustomerType() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getCustomerType",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return CustomerTypeModel.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<WorkOrderDetailsModel?> getWorkEditDetails(String workOrderId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "WorkOrderID": workOrderId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_workorder_for_edit",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return WorkOrderDetailsModel.fromJson(data);
+        } else {
+          log("Invalid response format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("getCustomerDetails error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<StaffsModel?> getStaffName() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getStaffName",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return StaffsModel.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<WorkCategory?> getWorkCategory() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getWorkCategory",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return WorkCategory.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<ReceivedThroughModel?> getReceivedThrough() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref("token"),
+    });
+
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}getReceivedThrough",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        return ReceivedThroughModel.fromJson(result.data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e) {
+      log("getCustomerList error: $e");
+    }
+    return null;
+  }
+
+  Future<bool> updateWorkService(Map<String, dynamic> body) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      body["token"] = token;
+
+      final formData = FormData.fromMap(body);
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_workorder",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          if (data["status"] == true) {
+            log("✅ Work order updated successfully");
+            return true;
+          } else {
+            log("⚠️ Update failed: ${data["message"]}");
+            return false;
+          }
+        } else {
+          log("Invalid response format: Expected Map, got ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("updateWork error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return false;
+  }
+
+  Future<bool> deletePushNotification(String notificationId) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref("token"),
+        "notification_id": notificationId,
+      });
+
+      var result = await _dio.post(
+        "${await Config.getUrl()}delete_push_notification",
+        data: formData,
+      );
+
+      if (result.statusCode == 200 && result.data['status'] == true) {
+        return true;
+      } else {
+        log("Failed to delete notification: ${result.data}");
+        return false;
+      }
+    } catch (e) {
+      log("Error deleting notification: $e");
+      return false;
+    }
+  }
+
+  Future<PushNotificationModel?> getPushNotification() async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final formData = FormData.fromMap({"token": token});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_push_notification",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data != null && data is Map<String, dynamic>) {
+          return PushNotificationModel.fromJson(data);
+        } else {
+          log("Invalid data format in push notification response");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("Push Notification error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> addWorkService(
+      Map<String, dynamic> body) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token, ...body});
+      final result = await _dio.post(
+        "${await Config.getUrl()}addWork",
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      if (result.statusCode == 200 && result.data != null) {
+        final data = json.decode(result.data.toString());
+        return Map<String, dynamic>.from(data);
+      } else {
+        log("Unexpected status code: ${result.statusCode}");
+      }
+    } catch (e, st) {
+      log("addWork error: $e");
+      log(st.toString());
+    }
+    return null;
+  }
+
+  static Future<CustomerDashboardModel?> getCustomerDashboard(
+      String custId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("Token is null or empty");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "cust_id": custId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}customer_dashboard",
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          if (data['status'] == true) {
+            return CustomerDashboardModel.fromJson(data);
+          } else {
+            log("API returned false status: ${data['message']}");
+            return null;
+          }
+        } else {
+          log("Invalid data format: Expected Map but got ${data.runtimeType}");
+          return null;
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+        log("Response: ${response.data}");
+        return null;
+      }
+    } on DioException catch (e) {
+      log("Dio error in getCustomerDashboard: ${e.message}");
+
+      if (e.response != null) {
+        log("Response data: ${e.response?.data}");
+        log("Response status: ${e.response?.statusCode}");
+      }
+      return null;
+    } catch (e, stackTrace) {
+      log("Unexpected error in getCustomerDashboard: $e");
+      log("StackTrace: $stackTrace");
+      return null;
+    }
+  }
+
+  static Future<GetCustomerLeadsModel?> getCustomerLeads(String custId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("Token is null or empty");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "cust_id": custId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_customer_lead",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data != null && data is Map<String, dynamic>) {
+          if (data.containsKey("status") && data.containsKey("data")) {
+            return GetCustomerLeadsModel.fromJson(data);
+          } else {
+            log("Invalid response structure in Customer Leads: Missing required fields");
+            log("Response data: $data");
+          }
+        } else {
+          log("Invalid data format in Customer Leads response");
+          log("Response data type: ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+      }
+    } on DioException catch (e) {
+      log("Dio error in Customer Leads: ${e.message}");
+      if (e.response != null) {
+        log("Response status: ${e.response?.statusCode}");
+        log("Response data: ${e.response?.data}");
+      }
+    } catch (e, stackTrace) {
+      log("Unexpected error in Customer Leads: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<CustomerwiseQuotationList?> getCustomerQuotations(
+      String custId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("Token is null or empty");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "cust_id": custId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_customer_quotations",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data != null && data is Map<String, dynamic>) {
+          if (data.containsKey("status") && data.containsKey("data")) {
+            return CustomerwiseQuotationList.fromJson(data);
+          } else {
+            log("Invalid response structure in Customer Leads: Missing required fields");
+            log("Response data: $data");
+          }
+        } else {
+          log("Invalid data format in Customer Leads response");
+          log("Response data type: ${data.runtimeType}");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+      }
+    } on DioException catch (e) {
+      log("Dio error in Customer Leads: ${e.message}");
+      if (e.response != null) {
+        log("Response status: ${e.response?.statusCode}");
+        log("Response data: ${e.response?.data}");
+      }
+    } catch (e, stackTrace) {
+      log("Unexpected error in Customer Leads: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<CustomerwiseProjectModel?> getCustomerProjects(
+      String custId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("Token is null or empty");
+        return null;
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_customer_project_list",
+        data: FormData.fromMap({
+          "token": token,
+          "cust_id": custId,
+        }),
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> json =
+            Map<String, dynamic>.from(response.data);
+
+        return CustomerwiseProjectModel.fromJson(json);
+      }
+    } on DioException catch (e) {
+      log("Dio error in Customer Projects: ${e.message}");
+    } catch (e, stackTrace) {
+      log("Unexpected error: $e");
+      log("StackTrace: $stackTrace");
+    }
+
+    return null;
+  }
+
+  static Future<RentalDashboardModel?> getRentalDashboard(String date) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("Token is null or empty");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "date": date,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}rent_dashboard_api",
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data != null && data is Map<String, dynamic>) {
+          try {
+            return RentalDashboardModel.fromJson(data);
+          } catch (e) {
+            log("Error parsing RentalDashboardModel: $e");
+            if (data["status"] == true) {
+              final emptyDashboardData = RentalDashboardData(
+                filterDate: "",
+                rentIssued: 0,
+                rentReturned: 0,
+                pendingReturn: 0,
+                rentOverdue: 0,
+                todayPayment: 0,
+                todayCash: 0,
+                todayBank: 0,
+                overdueCount: 0,
+                overdueList: [],
+              );
+              return RentalDashboardModel(
+                status: true,
+                message: data["message"]?.toString() ?? "No data available",
+                data: emptyDashboardData,
+              );
+            } else {
+              final emptyDashboardData = RentalDashboardData(
+                filterDate: "",
+                rentIssued: 0,
+                rentReturned: 0,
+                pendingReturn: 0,
+                rentOverdue: 0,
+                todayPayment: 0,
+                todayCash: 0,
+                todayBank: 0,
+                overdueCount: 0,
+                overdueList: [],
+              );
+
+              return RentalDashboardModel(
+                status: false,
+                message: data["message"]?.toString() ??
+                    "Failed to fetch dashboard data",
+                data: emptyDashboardData,
+              );
+            }
+          }
+        } else {
+          log("Invalid data format in response");
+          log("Response data: $data");
+        }
+      } else {
+        log("Unexpected status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+      }
+    } on DioException catch (e) {
+      log("Dio error in getRentalDashboard: ${e.message}");
+      if (e.response != null) {
+        log("Response status: ${e.response?.statusCode}");
+        log("Response data: ${e.response?.data}");
+        if (e.response?.statusCode == 401) {
+          log("Unauthorized - Token might be expired");
+        } else if (e.response?.statusCode == 404) {
+          log("Endpoint not found");
+        } else if (e.response?.statusCode == 500) {
+          log("Server error");
+        }
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        log("Request timeout occurred");
+      }
+    } catch (e, stackTrace) {
+      log("Unexpected error in getRentalDashboard: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<RentIssueModel?> getRentalIssueList(
+      {Map<String, dynamic>? filters}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      Map<String, dynamic> formDataMap = {"token": token};
+      if (filters != null) {
+        formDataMap.addAll(filters);
+      }
+      final formData = FormData.fromMap(formDataMap);
+      final response = await _dio.post(
+        "${await Config.getUrl()}rent_issue_list_api",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return RentIssueModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("getRentalIssueList error: $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> createRentalIssue(
+      Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}create_rental_issue",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      log("createRentalIssue error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<RetalLocationModel?> getRentalLocation() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      Map<String, dynamic> formDataMap = {"token": token};
+
+      final formData = FormData.fromMap(formDataMap);
+      final response = await _dio.post(
+        "${await Config.getUrl()}location_list_api",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return RetalLocationModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("getRentalIssueList error: $e");
+    }
+    return null;
+  }
+
+  Future<RentalReturnModel?> getRentalReturnList(
+      {Map<String, dynamic>? filters}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      Map<String, dynamic> formDataMap = {"token": token};
+
+      if (filters != null) formDataMap.addAll(filters);
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}rent_return_list_api",
+        data: FormData.fromMap(formDataMap),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return RentalReturnModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("getRentalReturnList error: $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> createRentalReturn(
+      Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+      final response = await _dio.post(
+        "${await Config.getUrl()}create_rental_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      log("createRentalReturn error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<CustomerRentalProductListModel?> getCustomerProductRental(
+    String customerId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "customer_id": customerId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_rent_issue_by_customer",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return CustomerRentalProductListModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("getCustomerProductRental error: $e");
+    }
+    return null;
+  }
 }

@@ -9,6 +9,7 @@ import 'package:login2/screens/accounts/clients/addInvoiceUpdated.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
 import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/widgets/receiptListFilterWidget.dart';
 import 'package:lottie/lottie.dart';
 import 'package:open_filex/open_filex.dart';
@@ -25,10 +26,20 @@ import 'clientDetails.dart';
 // ignore: must_be_immutable
 class ReceiptList extends StatefulWidget {
   String token;
+  String? custId;
+  String? custName;
+  String? fromDash;
   String? fdate;
   String? tdate;
   String? type;
-  ReceiptList(this.token, {super.key, this.fdate, this.tdate, this.type});
+  ReceiptList(this.token,
+      {super.key,
+      this.custId,
+      this.custName,
+      this.fromDash,
+      this.fdate,
+      this.tdate,
+      this.type});
 
   @override
   State<ReceiptList> createState() => _ReceiptListState();
@@ -46,14 +57,24 @@ class _ReceiptListState extends State<ReceiptList> {
   TextEditingController search = TextEditingController();
   int page = 1;
   int add = 1;
-  int pageSize = 15;
+  int pageSize = 25;
   bool _isDetailedView = true;
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   String headName = "Select Head";
   bool _showFloatingOptions = false;
   Offset _floatingButtonPosition = Offset(16, 16);
+  // bool get isFiltered =>
+  //     currentFilters.isNotEmpty ||
+  //     (!_ignoreWidgetDates && (widget.fdate != null || widget.tdate != null));
   bool get isFiltered =>
       currentFilters.isNotEmpty ||
-      (!_ignoreWidgetDates && (widget.fdate != null || widget.tdate != null));
+      (!_ignoreWidgetDates &&
+          ((widget.fdate?.trim().isNotEmpty ?? false) ||
+              (widget.tdate?.trim().isNotEmpty ?? false)));
+
   bool _ignoreWidgetDates = false;
   String headId = "";
   List<AccountHead> allAccountHeads = [];
@@ -80,7 +101,8 @@ class _ReceiptListState extends State<ReceiptList> {
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
 
     type = widget.type ?? "0";
-    if (widget.fdate != null && widget.tdate != null) {
+    if ((widget.fdate != null && widget.tdate != null) &&
+        (widget.fdate != "" && widget.tdate != "")) {
       try {
         final fromDate = DateFormat('dd-MM-yyyy').parse(widget.fdate!);
         final toDate = DateFormat('dd-MM-yyyy').parse(widget.tdate!);
@@ -252,12 +274,9 @@ class _ReceiptListState extends State<ReceiptList> {
                 widget.tdate!.isNotEmpty) {
               initialFilters['created_to'] = widget.tdate;
             }
-
-            // Add other filters
             initialFilters.addAll(currentFilters);
             initialFilters.remove('created_from');
             initialFilters.remove('created_to');
-
             return SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.only(
@@ -384,6 +403,11 @@ class _ReceiptListState extends State<ReceiptList> {
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     type = widget.type ?? "0";
     if (widget.fdate != null && widget.tdate != null) {
       fDate = widget.fdate!;
@@ -435,8 +459,17 @@ class _ReceiptListState extends State<ReceiptList> {
     String headId =
         headIds != null && headIds.isNotEmpty ? headIds.join(',') : '';
     try {
-      ReceiptListModel? newData = await HttpService.receptList(widget.token,
-          fDateFilter, tDateFilter, page, pageSize, headId, search.text, type);
+      ReceiptListModel? newData = await HttpService.receptList(
+          widget.token,
+          widget.custId,
+          widget.fromDash,
+          fDateFilter,
+          tDateFilter,
+          page,
+          pageSize,
+          headId,
+          search.text,
+          type);
       _fetchAccountTotals(fDateFilter, tDateFilter, headId, search.text, type);
       if (newData != null) {
         setState(() {
@@ -463,6 +496,8 @@ class _ReceiptListState extends State<ReceiptList> {
       ReceiptListAccountsModel? accountData =
           await HttpService.receptListAccounts(
         widget.token,
+        widget.fromDash!,
+        widget.custId!,
         fDateFilter ?? "",
         tDateFilter ?? "",
         1,
@@ -528,82 +563,191 @@ class _ReceiptListState extends State<ReceiptList> {
     return result == true
         ? Scaffold(
             backgroundColor: Colors.grey.shade300,
-            appBar: PreferredSize(
-              preferredSize:
-                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-              child: Container(
-                padding:
-                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 10.0, top: 10.0, bottom: 10.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              height: 25,
-                              width: 25,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.white),
-                                  shape: BoxShape.circle),
-                              child: const Icon(
-                                Icons.arrow_back_ios_outlined,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 25,
-                          ),
-                          const Text(
-                            'Receipt List',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ],
+            appBar: widget.custName != ""
+                ? PreferredSize(
+                    preferredSize: Size.fromHeight(
+                        MediaQuery.of(context).size.height * 0.08),
+                    child: Container(
+                      padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).padding.top),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.filter_alt,
-                              color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 10.0, top: 10.0, bottom: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    height: 25,
+                                    width: 25,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.white),
+                                        shape: BoxShape.circle),
+                                    child: const Icon(
+                                      Icons.arrow_back_ios_outlined,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 25,
+                                ),
+                                // const Text(
+                                //   'Receipt List',
+                                //   style: TextStyle(color: Colors.white, fontSize: 18),
+                                // ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (widget.custName != null &&
+                                        widget.custName!.isNotEmpty)
+                                      Text(
+                                        widget.custName!,
+                                        //  "Customer Leads",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      // widget.customerName!,
+                                      "Receipt List",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.normal,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            onPressed: _showFilters,
-                          ),
-                          SizedBox(
-                            width: 8,
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _isDetailedView ? Icons.list : Icons.filter_list,
-                              color: Colors.white,
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.filter_alt,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _showFilters,
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _isDetailedView
+                                        ? Icons.list
+                                        : Icons.filter_list,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isDetailedView = !_isDetailedView;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isDetailedView = !_isDetailedView;
-                              });
-                            },
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
+                  )
+                : PreferredSize(
+                    preferredSize: Size.fromHeight(
+                        MediaQuery.of(context).size.height * 0.08),
+                    child: Container(
+                      padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).padding.top),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 10.0, top: 10.0, bottom: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    height: 25,
+                                    width: 25,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.white),
+                                        shape: BoxShape.circle),
+                                    child: const Icon(
+                                      Icons.arrow_back_ios_outlined,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 25,
+                                ),
+                                const Text(
+                                  'Receipt List',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.filter_alt,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _showFilters,
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _isDetailedView
+                                        ? Icons.list
+                                        : Icons.filter_list,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isDetailedView = !_isDetailedView;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
             body: receiptList != null
                 ? Column(
                     children: [
@@ -793,14 +937,21 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                           InkWell(
                                                                         onTap:
                                                                             () {
+                                                                          // Navigator
+                                                                          //     .push(
+                                                                          //   context,
+                                                                          //   MaterialPageRoute(
+                                                                          //       builder: (context) => ClientDetails(
+                                                                          //             widget.token,
+                                                                          //             items[index].clientId.toString(),
+                                                                          //           )),
+                                                                          // )
                                                                           Navigator
                                                                               .push(
                                                                             context,
                                                                             MaterialPageRoute(
-                                                                                builder: (context) => ClientDetails(
-                                                                                      widget.token,
-                                                                                      items[index].clientId.toString(),
-                                                                                    )),
+                                                                              builder: (context) => CustomerDashboard(name: name!, token: widget.token!, userId: userId!, phoneCallLogPermission: phoneCallLogPermission, custId: items[index].clientId.toString()),
+                                                                            ),
                                                                           ).then(
                                                                               (_) {
                                                                             items.clear();
@@ -1008,15 +1159,14 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                   const Spacer(),
                                                                   Flexible(
                                                                     child: Text(
-                                                                      items[index]
-                                                                          .collectedStaff,
+                                                                      "Collected By: ${items[index].collectedStaff}",
                                                                       overflow:
                                                                           TextOverflow
                                                                               .ellipsis,
                                                                       style:
                                                                           const TextStyle(
                                                                         fontSize:
-                                                                            12,
+                                                                            10,
                                                                         color: Colors
                                                                             .grey,
                                                                       ),
@@ -1047,7 +1197,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                   const Spacer(),
                                                                   Flexible(
                                                                     child: Text(
-                                                                      "Created By: ${items[index].collectedStaff}",
+                                                                      "Created By: ${items[index].createdBy}",
                                                                       overflow:
                                                                           TextOverflow
                                                                               .ellipsis,
@@ -1116,11 +1266,23 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                         InkWell(
                                                                       onTap:
                                                                           () {
+                                                                        // Navigator
+                                                                        //     .push(
+                                                                        //   context,
+                                                                        //   MaterialPageRoute(
+                                                                        //       builder: (context) => ClientDetails(widget.token, items[index].clientId.toString())),
+                                                                        // )
                                                                         Navigator
                                                                             .push(
                                                                           context,
                                                                           MaterialPageRoute(
-                                                                              builder: (context) => ClientDetails(widget.token, items[index].clientId.toString())),
+                                                                            builder: (context) => CustomerDashboard(
+                                                                                name: name!,
+                                                                                token: widget.token!,
+                                                                                userId: userId!,
+                                                                                phoneCallLogPermission: phoneCallLogPermission,
+                                                                                custId: items[index].clientId.toString()),
+                                                                          ),
                                                                         ).then(
                                                                             (_) {
                                                                           items

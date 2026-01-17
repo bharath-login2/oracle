@@ -37,7 +37,6 @@ import 'colorConst.dart';
 import 'components/imageHelper.dart';
 import 'imageViewScreen.dart';
 import 'listFileManager.dart';
-// import 'package:web_socket_channel/status.dart' as status;
 
 // const String _serverUrl = 'wss://websocket.login2.co.in:8080';
 
@@ -56,7 +55,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  List list = [];
+  List<XFile> list = []; // Changed to List<XFile>
   final imageHelper = ImageHelper();
   final messageController = TextEditingController();
   final argumentController = <TextEditingController>[];
@@ -72,7 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessage> items = [];
   List argList = [];
   int page = 1;
-  int pageSize = 10;
+  int pageSize = 100;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
   MediaModel? mediaDetails;
@@ -739,113 +738,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 color: ColorConstant.grey,
                                               ),
                                             ),
-                                            // const SizedBox(
-                                            //   width: 15,
-                                            // ),
-                                            // GestureDetector(
-                                            //   onTap: () async {
-                                            //     showDialog(
-                                            //       context: context,
-                                            //       builder:
-                                            //           (BuildContext context) {
-                                            //         return AlertDialog(
-                                            //           scrollable: true,
-                                            //           title: const Text(
-                                            //               'Select Source'),
-                                            //           content: Column(
-                                            //             crossAxisAlignment:
-                                            //                 CrossAxisAlignment
-                                            //                     .start,
-                                            //             children: [
-                                            //               TextButton(
-                                            //                 onPressed:
-                                            //                     () async {
-                                            //                   await pickedImage(
-                                            //                       context,
-                                            //                       ImageSource
-                                            //                           .camera);
-                                            //                   if (userImage ==
-                                            //                       null) {
-                                            //                   } else {
-                                            //                     Navigator.push(
-                                            //                         context,
-                                            //                         MaterialPageRoute(
-                                            //                           builder:
-                                            //                               (context) =>
-                                            //                                   ImageViewScreen(
-                                            //                             image:
-                                            //                                 userImage,
-                                            //                             val:
-                                            //                                 '1',
-                                            //                             groupId:
-                                            //                                 widget.groupId,
-                                            //                           ),
-                                            //                         )).then((t) {
-                                            //                       page = 1;
-                                            //                       add = 1;
-                                            //                       items.clear();
-                                            //                       getchat(widget
-                                            //                           .groupId);
-                                            //                     });
-                                            //                   }
-                                            //                 },
-                                            //                 child: const Text(
-                                            //                     "Camera"),
-                                            //               ),
-                                            //               TextButton(
-                                            //                 onPressed:
-                                            //                     () async {
-                                            //                   await pickedImage(
-                                            //                       context,
-                                            //                       ImageSource
-                                            //                           .gallery);
-                                            //                   if (userImage ==
-                                            //                       null) {
-                                            //                   } else {
-                                            //                     Navigator.push(
-                                            //                         context,
-                                            //                         MaterialPageRoute(
-                                            //                           builder:
-                                            //                               (context) =>
-                                            //                                   ImageViewScreen(
-                                            //                             image:
-                                            //                                 userImage,
-                                            //                             val:
-                                            //                                 '1',
-                                            //                             groupId:
-                                            //                                 widget.groupId,
-                                            //                           ),
-                                            //                         )).then((t) {
-                                            //                       page = 1;
-                                            //                       add = 1;
-                                            //                       items.clear();
-                                            //                       getchat(widget
-                                            //                           .groupId);
-                                            //                     });
-                                            //                   }
-                                            //                 },
-                                            //                 child: const Text(
-                                            //                     "Gallery"),
-                                            //               ),
-                                            //               TextButton(
-                                            //                 onPressed: () {
-                                            //                   Navigator.pop(
-                                            //                       context);
-                                            //                 },
-                                            //                 child: const Text(
-                                            //                     "Cancel"),
-                                            //               ),
-                                            //             ],
-                                            //           ),
-                                            //         );
-                                            //       },
-                                            //     );
-                                            //   },
-                                            //   child: const Icon(
-                                            //     Icons.mic,
-                                            //     color: ColorConstant.grey,
-                                            //   ),
-                                            // ),
                                           ],
                                         ),
                                       ),
@@ -870,11 +762,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                               isImage = true;
                                             }
                                             await sendingMessage(
-                                                widget.groupId,
-                                                messageController.text,
-                                                list,
-                                                isImage);
+                                              widget.groupId,
+                                              messageController.text,
+                                              list,
+                                              isImage,
+                                            );
                                             messageController.clear();
+                                            isTyped = false;
+                                            list.clear();
                                             setState(() {});
                                           },
                                           icon: const Icon(Icons.send))
@@ -933,280 +828,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Future<Object?> attachDialog(BuildContext context) {
-  //   return showGeneralDialog(
-  //     barrierLabel: "showGeneralDialog",
-  //     barrierDismissible: true,
-  //     barrierColor: Colors.black.withOpacity(0.6),
-  //     transitionDuration: const Duration(milliseconds: 400),
-  //     context: context,
-  //     pageBuilder: (context, _, __) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return Align(
-  //               alignment: Alignment.bottomCenter,
-  //               child: IntrinsicHeight(
-  //                 child: Container(
-  //                   width: double.maxFinite,
-  //                   clipBehavior: Clip.antiAlias,
-  //                   padding: const EdgeInsets.all(16),
-  //                   decoration: const BoxDecoration(
-  //                     color: Colors.white,
-  //                     borderRadius: BorderRadius.only(
-  //                       topLeft: Radius.circular(16),
-  //                       topRight: Radius.circular(16),
-  //                     ),
-  //                   ),
-  //                   child: Material(
-  //                       color: Colors.white,
-  //                       child: SingleChildScrollView(
-  //                         scrollDirection: Axis.horizontal,
-  //                         child: Column(
-  //                           children: [
-  //                             const SizedBox(height: 20),
-  //                             Row(
-  //                               children: [
-  //                                 InkWell(
-  //                                   onTap: () async {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (context) => ListFileManager(
-  //                                             'document', widget.groupId),
-  //                                       ),
-  //                                     ).then((r) {
-  //                                       page = 1;
-  //                                       add = 1;
-  //                                       items.clear();
-  //                                       getchat(widget.groupId);
-  //                                     });
-  //                                   },
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Container(
-  //                                         height: 40.0,
-  //                                         width: 40.0,
-  //                                         decoration: const BoxDecoration(
-  //                                           image: DecorationImage(
-  //                                             image: AssetImage(
-  //                                                 'assets/icons/doc.png'),
-  //                                             fit: BoxFit.fill,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       const SizedBox(
-  //                                         height: 3,
-  //                                       ),
-  //                                       SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.2,
-  //                                         child: const Center(
-  //                                           child: Text(
-  //                                             'Docs',
-  //                                             overflow: TextOverflow.ellipsis,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                                 InkWell(
-  //                                   onTap: () {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (context) => ListFileManager(
-  //                                             'video', widget.groupId),
-  //                                       ),
-  //                                     ).then((r) {
-  //                                       page = 1;
-  //                                       add = 1;
-  //                                       items.clear();
-  //                                       getchat(widget.groupId);
-  //                                     });
-  //                                   },
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Container(
-  //                                         height: 40.0,
-  //                                         width: 40.0,
-  //                                         decoration: const BoxDecoration(
-  //                                           image: DecorationImage(
-  //                                             image: AssetImage(
-  //                                                 'assets/icons/mp4.png'),
-  //                                             fit: BoxFit.fill,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       const SizedBox(
-  //                                         height: 3,
-  //                                       ),
-  //                                       SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.2,
-  //                                         child: const Center(
-  //                                           child: Text(
-  //                                             'Video',
-  //                                             overflow: TextOverflow.ellipsis,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                                 InkWell(
-  //                                   onTap: () {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (context) => ListFileManager(
-  //                                             'image', widget.groupId),
-  //                                       ),
-  //                                     ).then((r) {
-  //                                       page = 1;
-  //                                       add = 1;
-  //                                       items.clear();
-  //                                       getchat(widget.groupId);
-  //                                     });
-  //                                   },
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Container(
-  //                                         height: 40.0,
-  //                                         width: 40.0,
-  //                                         decoration: const BoxDecoration(
-  //                                           image: DecorationImage(
-  //                                             image: AssetImage(
-  //                                                 'assets/icons/picture.png'),
-  //                                             fit: BoxFit.fill,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       const SizedBox(
-  //                                         height: 3,
-  //                                       ),
-  //                                       SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.2,
-  //                                         child: const Center(
-  //                                           child: Text(
-  //                                             'Gallery',
-  //                                             overflow: TextOverflow.ellipsis,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                                 InkWell(
-  //                                   onTap: () {
-  //                                     Navigator.push(
-  //                                       context,
-  //                                       MaterialPageRoute(
-  //                                         builder: (context) => ListFileManager(
-  //                                             'audio', widget.groupId),
-  //                                       ),
-  //                                     ).then((r) {
-  //                                       page = 1;
-  //                                       add = 1;
-  //                                       items.clear();
-  //                                       getchat(widget.groupId);
-  //                                     });
-  //                                   },
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Container(
-  //                                         height: 40.0,
-  //                                         width: 40.0,
-  //                                         decoration: const BoxDecoration(
-  //                                           image: DecorationImage(
-  //                                             image: AssetImage(
-  //                                                 'assets/icons/audio.png'),
-  //                                             fit: BoxFit.fill,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       const SizedBox(
-  //                                         height: 3,
-  //                                       ),
-  //                                       SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.2,
-  //                                         child: const Center(
-  //                                           child: Text(
-  //                                             'Audio',
-  //                                             overflow: TextOverflow.ellipsis,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 ),
-  //                                 InkWell(
-  //                                   onTap: () {
-  //                                     templateDialog(context);
-  //                                   },
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Container(
-  //                                         height: 40.0,
-  //                                         width: 40.0,
-  //                                         decoration: const BoxDecoration(
-  //                                           image: DecorationImage(
-  //                                             image: AssetImage(
-  //                                                 'assets/icons/template.png'),
-  //                                             fit: BoxFit.fill,
-  //                                           ),
-  //                                         ),
-  //                                       ),
-  //                                       const SizedBox(
-  //                                         height: 3,
-  //                                       ),
-  //                                       SizedBox(
-  //                                         width: MediaQuery.of(context)
-  //                                                 .size
-  //                                                 .width *
-  //                                             0.2,
-  //                                         child: const Center(
-  //                                           child: Text(
-  //                                             'Template',
-  //                                             overflow: TextOverflow.ellipsis,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     ],
-  //                                   ),
-  //                                 )
-  //                               ],
-  //                             ),
-  //                             const SizedBox(height: 20),
-  //                           ],
-  //                         ),
-  //                       )),
-  //                 ),
-  //               ));
-  //         },
-  //       );
-  //     },
-  //     transitionBuilder: (_, animation1, __, child) {
-  //       return SlideTransition(
-  //         position: Tween(
-  //           begin: const Offset(0, 1),
-  //           end: const Offset(0, 0),
-  //         ).animate(animation1),
-  //         child: child,
-  //       );
-  //     },
-  //   );
-  // }
   Future<Object?> attachDialog(BuildContext parentContext, String groupId) {
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
@@ -1217,34 +838,103 @@ class _ChatScreenState extends State<ChatScreen> {
       pageBuilder: (context, _, __) {
         return Align(
           alignment: Alignment.bottomCenter,
-          child: IntrinsicHeight(
-            child: Container(
-              width: double.maxFinite,
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
+          child: Container(
+            width: double.maxFinite,
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              child: Material(
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+            ),
+            child: Material(
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _attachmentOption(parentContext, 'Docs',
-                          'assets/icons/doc.png', 'document', groupId),
-                      _attachmentOption(parentContext, 'Video',
-                          'assets/icons/mp4.png', 'video', groupId),
-                      _attachmentOption(parentContext, 'Gallery',
-                          'assets/icons/picture.png', 'image', groupId),
-                      _attachmentOption(parentContext, 'Audio',
-                          'assets/icons/audio.png', 'audio', groupId),
+                      const Text(
+                        'Attach File',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, size: 24),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: _attachmentOption(
+                              parentContext,
+                              'Docs',
+                              'assets/icons/doc.png',
+                              'document',
+                              groupId,
+                            ),
+                          ),
+                          Expanded(
+                            child: _attachmentOption(
+                              parentContext,
+                              'Video',
+                              'assets/icons/mp4.png',
+                              'video',
+                              groupId,
+                            ),
+                          ),
+                          Expanded(
+                            child: _attachmentOption(
+                              parentContext,
+                              'Gallery',
+                              'assets/icons/picture.png',
+                              'image',
+                              groupId,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: _attachmentOption(
+                              parentContext,
+                              'Audio',
+                              'assets/icons/audio.png',
+                              'audio',
+                              groupId,
+                            ),
+                          ),
+                          Expanded(
+                            child: _attachmentOption(
+                              parentContext,
+                              'Template',
+                              'assets/icons/template.png',
+                              'template',
+                              groupId,
+                            ),
+                          ),
+                          const Expanded(child: SizedBox()),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
           ),
@@ -1274,90 +964,307 @@ class _ChatScreenState extends State<ChatScreen> {
         Navigator.of(parentContext, rootNavigator: true).pop();
         await Future.delayed(const Duration(milliseconds: 200));
 
-        if (format == 'image' || format == 'video') {
-          XFile? pickedFile;
+        if (format == 'template') {
+          templateDialog(parentContext);
+          return;
+        }
 
-          if (format == 'image') {
-            pickedFile =
-                await ImagePicker().pickImage(source: ImageSource.gallery);
-          } else if (format == 'video') {
-            pickedFile =
-                await ImagePicker().pickVideo(source: ImageSource.gallery);
-          }
-
-          if (pickedFile != null) {
-            final filePath = pickedFile.path;
-
-            Navigator.push(
-              parentContext,
-              MaterialPageRoute(
-                builder: (context) => ImageViewScreenBottom(
-                  filePath: filePath,
-                  val: '1',
-                  groupId: groupId,
-                ),
-              ),
-            ).then((_) {
-              page = 1;
-              add = 1;
-              items.clear();
-              getchat(widget.groupId);
-            });
-          }
-        } else if (format == 'document' || format == 'audio') {
-          FilePickerResult? result = await FilePicker.platform.pickFiles(
-            type: format == 'document' ? FileType.custom : FileType.audio,
-            allowedExtensions:
-                format == 'document' ? ['pdf', 'doc', 'docx', 'txt'] : null,
-          );
-
-          if (result != null && result.files.isNotEmpty) {
-            final filePath = result.files.first.path;
-            if (filePath != null) {
-              Navigator.push(
-                parentContext,
-                MaterialPageRoute(
-                  builder: (context) => ImageViewScreenBottom(
-                    filePath: filePath,
-                    val: '1',
-                    groupId: groupId,
-                  ),
-                ),
-              ).then((_) {
-                page = 1;
-                add = 1;
-                items.clear();
-                getchat(widget.groupId);
-              });
-            }
-          }
+        if (format == 'image') {
+          await _handleMultipleImageSelection(parentContext, groupId);
+        } else if (format == 'video') {
+          await _handleMultipleVideoSelection(parentContext, groupId);
+        } else if (format == 'document') {
+          await _handleMultipleDocumentSelection(parentContext, groupId);
+        } else if (format == 'audio') {
+          await _handleMultipleAudioSelection(parentContext, groupId);
         }
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Container(
+        width: 72,
+        margin: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              height: 40,
-              width: 40,
+              height: 56,
+              width: 56,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(iconPath),
-                  fit: BoxFit.fill,
+                color: format == 'template'
+                    ? ColorConstant.barGreen.withOpacity(0.1)
+                    : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: format == 'template'
+                      ? ColorConstant.barGreen.withOpacity(0.3)
+                      : Colors.grey.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(iconPath),
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 8),
             SizedBox(
-              width: MediaQuery.of(parentContext).size.width * 0.2,
+              width: 70,
               child: Center(
-                child: Text(label, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: format == 'template'
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: format == 'template'
+                        ? ColorConstant.barGreen
+                        : Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+ Future<void> _handleMultipleImageSelection(
+    BuildContext context, String groupId) async {
+  try {
+    final pickedFiles = await ImagePicker().pickMultiImage(
+      imageQuality: 85,
+      maxWidth: 1920,
+      maxHeight: 1080,
+    );
+
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      List<XFile> selectedFiles = pickedFiles.toList();
+      _navigateToImageView(context, selectedFiles, groupId);
+    }
+  } catch (e) {
+    log('Error selecting images: $e');
+    Common.toastMessaage('Error selecting images', Colors.red);
+  }
+}
+
+ Future<void> _handleMultipleVideoSelection(
+    BuildContext context, String groupId) async {
+  try {
+    final pickedFiles = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      allowMultiple: true,
+    );
+
+    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+      List<XFile> selectedFiles = [];
+      
+      for (var platformFile in pickedFiles.files) {
+        if (platformFile.path != null) {
+          selectedFiles.add(XFile(platformFile.path!));
+        } else if (platformFile.bytes != null) {
+          final tempDir = Directory.systemTemp;
+          final tempFile = File('${tempDir.path}/${platformFile.name}');
+          await tempFile.writeAsBytes(platformFile.bytes!);
+          selectedFiles.add(XFile(tempFile.path));
+        }
+      }
+
+      if (selectedFiles.isNotEmpty) {
+        _navigateToImageView(context, selectedFiles, groupId);
+      }
+    }
+  } catch (e) {
+    log('Error selecting videos: $e');
+    Common.toastMessaage('Error selecting videos', Colors.red);
+  }
+}
+
+Future<void> _handleMultipleAudioSelection(
+    BuildContext context, String groupId) async {
+  try {
+    final pickedFiles = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+      allowMultiple: true,
+    );
+
+    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+      List<XFile> selectedFiles = [];
+      
+      for (var platformFile in pickedFiles.files) {
+        if (platformFile.path != null) {
+          selectedFiles.add(XFile(platformFile.path!));
+        } else if (platformFile.bytes != null) {
+          final tempDir = Directory.systemTemp;
+          final tempFile = File('${tempDir.path}/${platformFile.name}');
+          await tempFile.writeAsBytes(platformFile.bytes!);
+          selectedFiles.add(XFile(tempFile.path));
+        }
+      }
+
+      if (selectedFiles.isNotEmpty) {
+        _navigateToImageView(context, selectedFiles, groupId);
+      }
+    }
+  } catch (e) {
+    log('Error selecting audio files: $e');
+    Common.toastMessaage('Error selecting audio files', Colors.red);
+  }
+}
+
+  Future<void> _handleMultipleDocumentSelection(
+    BuildContext context, String groupId) async {
+  try {
+    final pickedFiles = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowMultiple: true,
+      allowedExtensions: [
+        'pdf',
+        'doc',
+        'docx',
+        'txt',
+        'rtf',
+        'odt',
+        'xls',
+        'xlsx',
+        'ppt',
+        'pptx'
+      ],
+    );
+
+    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+      List<XFile> selectedFiles = [];
+      
+      for (var platformFile in pickedFiles.files) {
+        if (platformFile.path != null) {
+          // Create XFile from the file path
+          selectedFiles.add(XFile(platformFile.path!));
+        } else if (platformFile.bytes != null) {
+          final tempDir = Directory.systemTemp;
+          final tempFile = File('${tempDir.path}/${platformFile.name}');
+          await tempFile.writeAsBytes(platformFile.bytes!);
+          selectedFiles.add(XFile(tempFile.path));
+        }
+      }
+
+      if (selectedFiles.isNotEmpty) {
+        _navigateToImageView(context, selectedFiles, groupId);
+      } else {
+        Common.toastMessaage('No valid files selected', Colors.red);
+      }
+    }
+  } catch (e) {
+    log('Error selecting documents: $e');
+    Common.toastMessaage('Error selecting documents: ${e.toString()}', Colors.red);
+  }
+}
+
+  // Future<void> _handleMultipleAudioSelection(
+  //     BuildContext context, String groupId) async {
+  //   try {
+  //     final pickedFiles = await FilePicker.platform.pickFiles(
+  //       type: FileType.audio,
+  //       allowMultiple: true,
+  //     );
+
+  //     if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+  //       List<XFile> selectedFiles = pickedFiles.files
+  //           .where((file) => file.path != null)
+  //           .map((file) => XFile(file.path!))
+  //           .toList();
+
+  //       if (selectedFiles.isNotEmpty) {
+  //         _navigateToImageView(context, selectedFiles, groupId);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     log('Error selecting audio files: $e');
+  //     Common.toastMessaage('Error selecting audio files', Colors.red);
+  //   }
+  // }
+
+  Future<String?> _showImageSelectionDialog(BuildContext context) async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Images'),
+          content: const Text('Choose how you want to select images:'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'single'),
+              child: const Text('Single Image'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'multiple'),
+              child: const Text('Multiple Images'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToImageView(
+      BuildContext context, List<XFile> files, String groupId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewScreenBottom(
+          listFiles: files,
+          val: files.length > 1 ? '2' : '1',
+          groupId: groupId,
+        ),
+      ),
+    ).then((_) {
+      page = 1;
+      add = 1;
+      items.clear();
+      getchat(widget.groupId);
+    });
+  }
+
+  sendingMessage(String groupId, String messageData, List<XFile> files,
+      bool isImage) async {
+    setState(() {
+      buttonStatus = true;
+    });
+
+    try {
+      final filePaths = files.map((file) => file.path).toList();
+
+      sendMessageModel = await HttpService.sendMessage(
+        groupId,
+        messageData,
+        filePaths,
+        isImage,
+      );
+
+      if (sendMessageModel != null && sendMessageModel!.status == true) {
+        page = 1;
+        add = 1;
+        items.clear();
+        await getchat(groupId);
+      }
+    } catch (e, s) {
+      log('Error in sendMessage: $e');
+      log(s.toString());
+    } finally {
+      setState(() {
+        buttonStatus = false;
+      });
+    }
   }
 
   Align chatWidget1(int index, BuildContext context) {
@@ -1581,10 +1488,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 onTap: () async {
                                   final url =
                                       "https://www.google.com/maps?q=${items[index].messageText.latitude},${items[index].messageText.longitude}";
-                                  // if (await canLaunchUrl(Uri.parse(url))) {
                                   await launchUrl(Uri.parse(url),
                                       mode: LaunchMode.externalApplication);
-                                  //}
                                 },
                                 child: const Center(
                                   child: Padding(
@@ -1683,7 +1588,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          // Header: Avatar + Name + Company
                                           Row(
                                             children: [
                                               const CircleAvatar(
@@ -1735,10 +1639,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                               ),
                                             ],
                                           ),
-
                                           const SizedBox(height: 12),
-
-                                          // WhatsApp Style Buttons
                                           Row(
                                             children: [
                                               Expanded(
@@ -2690,8 +2591,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                           .fill,
                                                                       image: AssetImage(
                                                                           'assets/icons/mp4.png')),
-                                                                  // image: AssetImage(
-                                                                  //     'assets/images/img.jpeg')),
                                                                 ),
                                                               ),
                                                               const SizedBox(
@@ -2847,7 +2746,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                             onTap: () {
                                                               isFilemanager =
                                                                   true;
-
                                                               templateImage =
                                                                   mediaDetails!
                                                                       .data![i]
@@ -2883,8 +2781,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                               .fill,
                                                                           image:
                                                                               AssetImage('assets/icons/picture.png')),
-                                                                      // image: AssetImage(
-                                                                      //     'assets/images/img.jpeg')),
                                                                     ),
                                                                   ),
                                                                   const SizedBox(
@@ -3052,7 +2948,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                 onTap: () {
                                                                   isFilemanager =
                                                                       true;
-
                                                                   templateImage =
                                                                       mediaDetails!
                                                                           .data![
@@ -3090,8 +2985,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                           image: DecorationImage(
                                                                               fit: BoxFit.fill,
                                                                               image: AssetImage('assets/icons/doc.png')),
-                                                                          // image: AssetImage(
-                                                                          //     'assets/images/img.jpeg')),
                                                                         ),
                                                                       ),
                                                                       const SizedBox(
@@ -3202,20 +3095,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                     const SizedBox(
                                       width: 10,
                                     ),
-                                    // Container(
-                                    //   height: 40,
-                                    //   width: 40,
-                                    //   decoration: BoxDecoration(
-                                    //       color: Colors.green,
-                                    //       borderRadius:
-                                    //           BorderRadius.circular(12)),
-                                    //   child: const Center(
-                                    //     child: Text(
-                                    //       "Add",
-                                    //       style: TextStyle(color: Colors.white),
-                                    //     ),
-                                    //   ),
-                                    // )
                                   ],
                                 ),
                               ),
@@ -3353,7 +3232,6 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 TextButton(
                   onPressed: () async {
-                    // Get.back();
                     await pickTemplateImage(context, ImageSource.camera);
                     dropDownHeight = 510;
                     if (context.mounted) {
@@ -3364,7 +3242,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Get.back();
                     await pickTemplateImage(context, ImageSource.gallery);
                     dropDownHeight = 510;
                     isFilemanager = false;
@@ -3376,7 +3253,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Get.back();
+                    Navigator.pop(context);
                   },
                   child: const Text("Cancel"),
                 ),
@@ -3484,7 +3361,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Get.back();
                     await pickTemplateImage(context, ImageSource.gallery);
                     dropDownHeight = 510;
                     if (context.mounted) {
@@ -3495,7 +3371,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Get.back();
+                    Navigator.pop(context);
                   },
                   child: const Text("Cancel"),
                 ),
@@ -3531,7 +3407,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    // Get.back();
                     await pickTemplateImage(context, ImageSource.gallery);
                     dropDownHeight = 510;
                     if (context.mounted) {
@@ -3542,7 +3417,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Get.back();
+                    Navigator.pop(context);
                   },
                   child: const Text("Cancel"),
                 ),
@@ -3566,9 +3441,7 @@ class _ChatScreenState extends State<ChatScreen> {
         print('Template Image Path after setState: $templateImage');
       }
     } catch (e) {
-      // log(e.toString());
-      // Get.snackbar('Permission Denied',
-      //     'Please grant access to the gallery to pick an image.');
+      log(e.toString());
     }
   }
 
@@ -3707,60 +3580,6 @@ class _ChatScreenState extends State<ChatScreen> {
       Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);
     }
     if (mounted) {
-      setState(() {
-        buttonStatus = false;
-      });
-    }
-  }
-
-  // sendingMessage(groupId, messageData, fileName, isImage) async {
-  //   setState(() {
-  //     buttonStatus = true;
-  //   });
-  //   sendMessageModel =
-  //       await HttpService.sendMessage(groupId, messageData, fileName, isImage);
-  //   if (sendMessageModel != null && sendMessageModel!.status == true) {
-  //     page = 1;
-  //     add = 1;
-  //     items.clear();
-  //     await getchat(groupId);
-  //     setState(() {
-  //       buttonStatus = false;
-  //     });
-  //   }
-  // }
-
-  sendingMessage(groupId, messageData, fileName, isImage) async {
-    setState(() {
-      buttonStatus = true;
-    });
-    try {
-      print("➡️ Calling API: HttpService.sendMessage...");
-      if (messageData is List) {
-        messageData = messageData.join(",");
-      }
-      if (fileName is List) {
-        fileName = fileName.join(",");
-      }
-      sendMessageModel = await HttpService.sendMessage(
-        groupId,
-        messageData,
-        fileName,
-        isImage,
-      );
-      print("✅ API Response Received: ${sendMessageModel?.toJson()}");
-      if (sendMessageModel != null && sendMessageModel!.status == true) {
-        page = 1;
-        add = 1;
-        items.clear();
-        await getchat(groupId);
-      } else {
-        print("⚠️ API returned false or null status");
-      }
-    } catch (e, s) {
-      print("❌ ERROR in sendMessage: $e");
-      print(s);
-    } finally {
       setState(() {
         buttonStatus = false;
       });

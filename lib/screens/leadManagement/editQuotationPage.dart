@@ -34,7 +34,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
   String selectedRateType = "Fixed Rate";
   CustomerModel? _customerModel;
   QuotationTemplateModel? _templateModel;
- details.QuotationTemplateDetailsModel? _templateDetailsModel;
+  details.QuotationTemplateDetailsModel? _templateDetailsModel;
   CustomerWorkDetailsModel? _workOrderModel;
   QuotationDetailsModel? _quotationData;
   String? selectedTemplateId;
@@ -62,7 +62,8 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
   // Controllers for search fields
   final TextEditingController _customerController = TextEditingController();
   final Map<int, TextEditingController> _materialControllers = {};
-  final TextEditingController _templateSearchController = TextEditingController();
+  final TextEditingController _templateSearchController =
+      TextEditingController();
 
   final TextEditingController enquiryDateController = TextEditingController();
   List<MaterialData> materials = [];
@@ -95,6 +96,26 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
     } else {
       setState(() => isLoadingState = false);
     }
+  }
+
+  Map<String, double> _calculateGrandTotals() {
+    double totalGstAmount = 0;
+    double totalSubTotal = 0;
+
+    for (int i = 0; i < productRows.length; i++) {
+      final total = _calculateTotal(i);
+      double gstPercentage =
+          double.tryParse(productRows[i].gstController.text) ?? 0.0;
+      double gstAmount = total * (gstPercentage / 100);
+
+      totalGstAmount += gstAmount;
+      totalSubTotal += _calculateSubTotal(i);
+    }
+
+    return {
+      'gstAmount': totalGstAmount,
+      'subTotal': totalSubTotal,
+    };
   }
 
   Future<void> _getDistricts(String stateId) async {
@@ -205,7 +226,8 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
             if (districtName.isNotEmpty && districtList.isNotEmpty) {
               // Find matching district
               DistrictList? matchedDistrict = districtList.firstWhere(
-                (district) => district.name.toLowerCase() == districtName.toLowerCase(),
+                (district) =>
+                    district.name.toLowerCase() == districtName.toLowerCase(),
                 orElse: () => DistrictList(id: '', name: ''),
               );
 
@@ -303,7 +325,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
 
   void _showCustomerSearchDialog(List<CustomerDetails> customers) {
     if (_customerModel?.data.isEmpty ?? true) return;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -329,7 +351,8 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                         // Reopen dialog if cancelled
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) {
-                            _showCustomerSearchDialog(_customerModel?.data ?? []);
+                            _showCustomerSearchDialog(
+                                _customerModel?.data ?? []);
                           }
                         });
                       }
@@ -356,11 +379,13 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                       },
                       decoration: InputDecoration(
                         hintText: "Search customer",
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 10),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -436,102 +461,104 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
   }
 
   Future<void> _loadCustomerDetails(String customerId) async {
-  if (customerId.isEmpty) return;
+    if (customerId.isEmpty) return;
 
-  try {
-    final httpService = HttpService();
-    final customerDetails = await httpService.getCustomerDetails(customerId);
+    try {
+      final httpService = HttpService();
+      final customerDetails = await httpService.getCustomerDetails(customerId);
 
-    if (customerDetails != null &&
-        customerDetails.data.isNotEmpty &&
-        customerDetails.status == "success") {
-      final customerData = customerDetails.data.first;
+      if (customerDetails != null &&
+          customerDetails.data.isNotEmpty &&
+          customerDetails.status == "success") {
+        final customerData = customerDetails.data.first;
 
-      // The API returns IDs, not names
-      final stateIdFromApi = customerData.state; // This is actually state ID
-      final districtIdFromApi = customerData.district; // This is actually district ID
+        // The API returns IDs, not names
+        final stateIdFromApi = customerData.state; // This is actually state ID
+        final districtIdFromApi =
+            customerData.district; // This is actually district ID
 
-      // Find state name from stateList using the ID
-      String? stateName;
-      if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
-        final matchedState = stateList.firstWhere(
-          (state) => state.id == stateIdFromApi,
-          orElse: () => StateList(id: '', name: ''),
-        );
-        stateName = matchedState.name;
-      }
-
-      // If state is found, load districts for that state
-      if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
-        await _getDistricts(stateIdFromApi);
-        
-        // Wait a bit for districts to load
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
-
-      // Find district name from districtList using the ID
-      String? districtName;
-      if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
-        final matchedDistrict = districtList.firstWhere(
-          (district) => district.id == districtIdFromApi,
-          orElse: () => DistrictList(id: '', name: ''),
-        );
-        districtName = matchedDistrict.name;
-      }
-
-      setState(() {
-        addressController.text = customerData.address;
-        nationalityController.text = customerData.nationality;
-        
-        // Set state dropdown
-        if (stateIdFromApi.isNotEmpty) {
-          selectedStateId = stateIdFromApi;
-          selectedStateName = stateName ?? stateIdFromApi; // Fallback to ID if name not found
-          stateController.text = stateName ?? stateIdFromApi;
-        } else {
-          selectedStateId = null;
-          selectedStateName = null;
-          stateController.clear();
+        // Find state name from stateList using the ID
+        String? stateName;
+        if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
+          final matchedState = stateList.firstWhere(
+            (state) => state.id == stateIdFromApi,
+            orElse: () => StateList(id: '', name: ''),
+          );
+          stateName = matchedState.name;
         }
-        
-        // Set district dropdown
-        if (districtIdFromApi.isNotEmpty) {
-          selectedDistrictId = districtIdFromApi;
-          selectedDistrictName = districtName ?? districtIdFromApi; // Fallback to ID if name not found
-          districtController.text = districtName ?? districtIdFromApi;
-        } else {
-          selectedDistrictId = null;
-          selectedDistrictName = null;
+
+        // If state is found, load districts for that state
+        if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
+          await _getDistricts(stateIdFromApi);
+
+          // Wait a bit for districts to load
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+
+        // Find district name from districtList using the ID
+        String? districtName;
+        if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
+          final matchedDistrict = districtList.firstWhere(
+            (district) => district.id == districtIdFromApi,
+            orElse: () => DistrictList(id: '', name: ''),
+          );
+          districtName = matchedDistrict.name;
+        }
+
+        setState(() {
+          addressController.text = customerData.address;
+          nationalityController.text = customerData.nationality;
+
+          // Set state dropdown
+          if (stateIdFromApi.isNotEmpty) {
+            selectedStateId = stateIdFromApi;
+            selectedStateName =
+                stateName ?? stateIdFromApi; // Fallback to ID if name not found
+            stateController.text = stateName ?? stateIdFromApi;
+          } else {
+            selectedStateId = null;
+            selectedStateName = null;
+            stateController.clear();
+          }
+
+          // Set district dropdown
+          if (districtIdFromApi.isNotEmpty) {
+            selectedDistrictId = districtIdFromApi;
+            selectedDistrictName = districtName ??
+                districtIdFromApi; // Fallback to ID if name not found
+            districtController.text = districtName ?? districtIdFromApi;
+          } else {
+            selectedDistrictId = null;
+            selectedDistrictName = null;
+            districtController.clear();
+          }
+        });
+
+        // Log for debugging
+        log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
+        log("State Name: $stateName, District Name: $districtName");
+      } else {
+        setState(() {
+          addressController.clear();
           districtController.clear();
-        }
-      });
+          stateController.clear();
+          nationalityController.clear();
+          selectedStateId = null;
+          selectedDistrictId = null;
+          selectedStateName = null;
+          selectedDistrictName = null;
+          districtList.clear();
+        });
+      }
+    } catch (e, stack) {
+      log("Customer details loading error: $e");
+      log(stack.toString());
 
-      // Log for debugging
-      log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
-      log("State Name: $stateName, District Name: $districtName");
-      
-    } else {
-      setState(() {
-        addressController.clear();
-        districtController.clear();
-        stateController.clear();
-        nationalityController.clear();
-        selectedStateId = null;
-        selectedDistrictId = null;
-        selectedStateName = null;
-        selectedDistrictName = null;
-        districtList.clear();
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load customer details")),
+      );
     }
-  } catch (e, stack) {
-    log("Customer details loading error: $e");
-    log(stack.toString());
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Failed to load customer details")),
-    );
   }
-}
 
   Future<void> _refreshAfterCustomerAdded() async {
     setState(() {
@@ -691,7 +718,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
 
   void _showTemplateSearchDialog() {
     if (_templateModel?.data.isEmpty ?? true) return;
-    
+
     _templateSearchController.clear();
     List<TemplateData> filteredList = List.from(_templateModel!.data);
 
@@ -722,7 +749,8 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                       },
                       decoration: InputDecoration(
                         hintText: "Search template...",
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1016,7 +1044,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        
+
                         // State Dropdown
                         Row(
                           children: [
@@ -1025,7 +1053,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    "State *",
+                                    "State ",
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -1050,15 +1078,16 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                               vertical: 10,
                                             ),
                                           ),
-                                         
                                           items: stateList.map((state) {
                                             return DropdownMenuItem<String>(
                                               value: state.id,
                                               child: Text(state.name),
                                               onTap: () {
                                                 setState(() {
-                                                  selectedStateName = state.name;
-                                                  stateController.text = state.name;
+                                                  selectedStateName =
+                                                      state.name;
+                                                  stateController.text =
+                                                      state.name;
                                                 });
                                               },
                                             );
@@ -1067,14 +1096,17 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                             setState(() {
                                               selectedStateId = value;
                                               if (value != null) {
-                                                final state = stateList.firstWhere(
+                                                final state =
+                                                    stateList.firstWhere(
                                                   (s) => s.id == value,
-                                                  orElse: () =>
-                                                      StateList(id: '', name: ''),
+                                                  orElse: () => StateList(
+                                                      id: '', name: ''),
                                                 );
                                                 if (state.id.isNotEmpty) {
-                                                  selectedStateName = state.name;
-                                                  stateController.text = state.name;
+                                                  selectedStateName =
+                                                      state.name;
+                                                  stateController.text =
+                                                      state.name;
                                                 }
                                               } else {
                                                 selectedStateName = null;
@@ -1085,7 +1117,8 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                               districtController.clear();
                                               districtList.clear();
                                             });
-                                            if (value != null) _getDistricts(value);
+                                            if (value != null)
+                                              _getDistricts(value);
                                           },
                                         ),
                                 ],
@@ -1097,7 +1130,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    "District *",
+                                    "District ",
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -1122,7 +1155,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                               vertical: 10,
                                             ),
                                           ),
-                                         
                                           items: districtList.map((district) {
                                             return DropdownMenuItem<String>(
                                               value: district.id,
@@ -1165,7 +1197,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 10),
                         Row(
                           children: [
@@ -1218,7 +1250,9 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                                     'Select Template',
                               ),
                               readOnly: true,
-                              validator: (_) => selectedTemplateId == null ? "Required" : null,
+                              validator: (_) => selectedTemplateId == null
+                                  ? "Required"
+                                  : null,
                               onTap: _showTemplateSearchDialog,
                               decoration: InputDecoration(
                                 hintText: "Select Template",
@@ -1609,16 +1643,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
             ),
           ),
         ),
-        Expanded(
-          flex: 1,
-          child: Text(
-            "Unit*",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
-            ),
-          ),
-        ),
         SizedBox(width: 8),
         Expanded(
           flex: 2,
@@ -1633,7 +1657,17 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
         Expanded(
           flex: 2,
           child: Text(
-            "GST*",
+            "GST %*",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.teal.shade800,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            "GST Amount",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.teal.shade800,
@@ -1665,6 +1699,13 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
   }
 
   Widget _buildProductRow(int index, ProductRow row) {
+    // Calculate GST Amount
+    double calculateGstAmount() {
+      final total = _calculateTotal(index);
+      double gstPercentage = double.tryParse(row.gstController.text) ?? 0.0;
+      return total * (gstPercentage / 100);
+    }
+
     // Ensure controller exists for this row
     if (!_materialControllers.containsKey(index)) {
       _materialControllers[index] = TextEditingController(
@@ -1802,14 +1843,6 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
             ),
           ),
           Expanded(
-            flex: 1,
-            child: Text(
-              row.materialData?.unitName ?? row.originalUnit ?? 'Unit',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-          Expanded(
             flex: 2,
             child: Text(
               "₹${_calculateTotal(index).toStringAsFixed(2)}",
@@ -1838,6 +1871,18 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                 ),
               ),
               onChanged: (value) => setState(() {}),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "₹${calculateGstAmount().toStringAsFixed(2)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Colors.orange,
+              ),
             ),
           ),
           Expanded(
@@ -2062,6 +2107,7 @@ class ProductRow {
   TextEditingController rateController;
   TextEditingController gstController;
   String? originalUnit;
+  String? gstAmount;
 
   ProductRow({
     this.materialId,
@@ -2070,5 +2116,6 @@ class ProductRow {
     required this.rateController,
     required this.gstController,
     this.originalUnit,
+    this.gstAmount,
   });
 }

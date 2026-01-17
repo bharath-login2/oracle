@@ -382,232 +382,235 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 height: 10,
                               )
                             : const SizedBox(),
-                        invDetails!.data.companyDetails.isNotEmpty
-                            ? Column(
-                                children: [
-                                  InkWell(
-                                    onTap: headerToggle,
-                                    child: Visibility(
-                                      visible: header,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, right: 10),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Container(
-                                                color: Colors.white,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .3,
-                                                child: Center(
-                                                  child: Image.network(
-                                                    invDetails!
-                                                        .data
-                                                        .companyDetails[0]
-                                                        .companyLogo
-                                                        .toString(),
-                                                    width: 100,
-                                                  ),
-                                                )),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                const Text(
-                                                  'Registration Number',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyRegNo
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                const Text(
-                                                  'Contact Number',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyContactNo
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                              ],
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: headerToggle,
-                                    child: Visibility(
-                                      visible: headerContent,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10, right: 10),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Container(
-                                                    color: Colors.white,
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            .3,
-                                                    child: Center(
-                                                      child: Image.network(
-                                                        invDetails!
-                                                            .data
-                                                            .companyDetails[0]
-                                                            .companyLogo
-                                                            .toString(),
-                                                        width: 150,
-                                                      ),
-                                                    )),
-                                                const Text(
-                                                  'Address',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                SizedBox(
-                                                    width: 200,
-                                                    child: Text(
-                                                      invDetails!
-                                                          .data
-                                                          .companyDetails[0]
-                                                          .companyAddress
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 14),
-                                                    )),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyEmail
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                              ],
-                                            ),
-                                            Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                const Text(
-                                                  'Registration Number',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyRegNo
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                const Text(
-                                                  'Contact Number',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyContactNo
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                                const Text(
-                                                  'Pin code',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.grey),
-                                                ),
-                                                Text(
-                                                  invDetails!
-                                                      .data
-                                                      .companyDetails[0]
-                                                      .companyPincode
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                                const SizedBox(
-                                                  height: 5,
-                                                ),
-                                              ],
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const SizedBox(),
+                        // invDetails!.data.companyDetails.isNotEmpty
+                        //     ? Column(
+                        //         children: [
+                        //           InkWell(
+                        //             onTap: headerToggle,
+                        //             child: Visibility(
+                        //               visible: header,
+                        //               child: Padding(
+                        //                 padding: const EdgeInsets.only(
+                        //                     left: 10, right: 10),
+                        //                 child: Row(
+                        //                   mainAxisAlignment:
+                        //                       MainAxisAlignment.spaceBetween,
+                        //                   children: [
+                        //                     Container(
+                        //                         color: Colors.white,
+                        //                         width: MediaQuery.of(context)
+                        //                                 .size
+                        //                                 .width *
+                        //                             .3,
+                        //                         child: Center(
+                        //                           child: Image.network(
+                        //                             invDetails!
+                        //                                 .data
+                        //                                 .companyDetails[0]
+                        //                                 .companyLogo
+                        //                                 .toString(),
+                        //                             width: 100,
+                        //                           ),
+                        //                         )),
+                        //                     Column(
+                        //                       crossAxisAlignment:
+                        //                           CrossAxisAlignment.end,
+                        //                       children: [
+                        //                         const Text(
+                        //                           'Registration Number',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyRegNo
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                         const SizedBox(
+                        //                           height: 5,
+                        //                         ),
+                        //                         const Text(
+                        //                           'Contact Number',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyContactNo
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                       ],
+                        //                     )
+                        //                   ],
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //           ),
+                        //           InkWell(
+                        //             onTap: headerToggle,
+                        //             child: Visibility(
+                        //               visible: headerContent,
+                        //               child: Padding(
+                        //                 padding: const EdgeInsets.only(
+                        //                     left: 10, right: 10),
+                        //                 child: Row(
+                        //                   mainAxisAlignment:
+                        //                       MainAxisAlignment.spaceBetween,
+                        //                   crossAxisAlignment:
+                        //                       CrossAxisAlignment.start,
+                        //                   children: [
+                        //                     Column(
+                        //                       mainAxisAlignment:
+                        //                           MainAxisAlignment.start,
+                        //                       crossAxisAlignment:
+                        //                           CrossAxisAlignment.start,
+                        //                       children: [
+                        //                         Container(
+                        //                             color: Colors.white,
+                        //                             width:
+                        //                                 MediaQuery.of(context)
+                        //                                         .size
+                        //                                         .width *
+                        //                                     .3,
+                        //                             child: Center(
+                        //                               child: Image.network(
+                        //                                 invDetails!
+                        //                                     .data
+                        //                                     .companyDetails[0]
+                        //                                     .companyLogo
+                        //                                     .toString(),
+                        //                                 width: 150,
+                        //                               ),
+                        //                             )),
+                        //                         const Text(
+                        //                           'Address',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         SizedBox(
+                        //                             width: 200,
+                        //                             child: Text(
+                        //                               invDetails!
+                        //                                   .data
+                        //                                   .companyDetails[0]
+                        //                                   .companyAddress
+                        //                                   .toString(),
+                        //                               style: const TextStyle(
+                        //                                   fontSize: 14),
+                        //                             )),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyEmail
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                       ],
+                        //                     ),
+                        //                     Column(
+                        //                       mainAxisAlignment:
+                        //                           MainAxisAlignment.start,
+                        //                       crossAxisAlignment:
+                        //                           CrossAxisAlignment.end,
+                        //                       children: [
+                        //                         const Text(
+                        //                           'Registration Number',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyRegNo
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                         const SizedBox(
+                        //                           height: 5,
+                        //                         ),
+                        //                         const Text(
+                        //                           'Contact Number',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyContactNo
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                         const SizedBox(
+                        //                           height: 5,
+                        //                         ),
+                        //                         const Text(
+                        //                           'Pin code',
+                        //                           style: TextStyle(
+                        //                               fontSize: 12,
+                        //                               fontWeight:
+                        //                                   FontWeight.bold,
+                        //                               color: Colors.grey),
+                        //                         ),
+                        //                         Text(
+                        //                           invDetails!
+                        //                               .data
+                        //                               .companyDetails[0]
+                        //                               .companyPincode
+                        //                               .toString(),
+                        //                           style: const TextStyle(
+                        //                               fontSize: 14),
+                        //                         ),
+                        //                         const SizedBox(
+                        //                           height: 5,
+                        //                         ),
+                        //                       ],
+                        //                     )
+                        //                   ],
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //           ),
+                        //         ],
+                        //       )
+                        //     : const SizedBox(),
                         header == false
                             ? const SizedBox(
                                 height: 5,
                               )
                             : const SizedBox(),
-                        const Divider(),
+                      //  const Divider(),
+                      SizedBox(
+                          height: 10,
+                        ),
                         Padding(
                           padding: const EdgeInsets.only(left: 10, right: 10),
                           child: Row(
@@ -3842,16 +3845,37 @@ class _AddInvoiceState extends State<AddInvoice> {
                         const SizedBox(
                           width: 10,
                         ),
-                        SizedBox(
+                        // SizedBox(
+                        //   width: 110,
+                        //   child: TextFormField(
+                        //     controller: productTaxAmount,
+                        //     keyboardType: TextInputType.number,
+                        //     readOnly: true,
+                        //     decoration: const InputDecoration(
+                        //         contentPadding: EdgeInsets.only(
+                        //             left: 10, top: 2, bottom: 2),
+                        //         labelText: 'Tax Amount',
+                        //         fillColor: Colors.white,
+                        //         filled: true,
+                        //         // prefixIcon:
+                        //         //     Icon(Icons.arrow_right, color: Colors.grey),
+                        //         border: OutlineInputBorder(),
+                        //         focusedBorder: OutlineInputBorder(
+                        //           borderSide: BorderSide(color: Colors.grey),
+                        //         ),
+                        //         labelStyle: TextStyle(color: Colors.grey)),
+                        //   ),
+                        // ),
+                         SizedBox(
                           width: 110,
                           child: TextFormField(
-                            controller: productTaxAmount,
+                            controller: productTotalAmount,
                             keyboardType: TextInputType.number,
                             readOnly: true,
                             decoration: const InputDecoration(
                                 contentPadding: EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                labelText: 'Tax Amount',
+                                labelText: 'Total Amount',
                                 fillColor: Colors.white,
                                 filled: true,
                                 // prefixIcon:
@@ -3865,29 +3889,29 @@ class _AddInvoiceState extends State<AddInvoice> {
                         ),
                       ],
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    SizedBox(
-                      child: TextFormField(
-                        controller: productTotalAmount,
-                        keyboardType: TextInputType.number,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                            contentPadding:
-                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                            labelText: 'Total Amount',
-                            fillColor: Colors.white,
-                            filled: true,
-                            // prefixIcon:
-                            //     Icon(Icons.arrow_right, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
+                    // const SizedBox(
+                    //   height: 15,
+                    // ),
+                    // SizedBox(
+                    //   child: TextFormField(
+                    //     controller: productTotalAmount,
+                    //     keyboardType: TextInputType.number,
+                    //     readOnly: true,
+                    //     decoration: const InputDecoration(
+                    //         contentPadding:
+                    //             EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                    //         labelText: 'Total Amount',
+                    //         fillColor: Colors.white,
+                    //         filled: true,
+                    //         // prefixIcon:
+                    //         //     Icon(Icons.arrow_right, color: Colors.grey),
+                    //         border: OutlineInputBorder(),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.grey),
+                    //         ),
+                    //         labelStyle: TextStyle(color: Colors.grey)),
+                    //   ),
+                    // ),
                     const SizedBox(
                       height: 10,
                     ),
@@ -4393,148 +4417,141 @@ class _AddInvoiceState extends State<AddInvoice> {
     );
   }
 
-  Future<dynamic> productDialog(BuildContext context, String type) {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return Builder(builder: (context) {
-          return StatefulBuilder(builder: (context, setState) {
-            return AlertDialog(
-                scrollable: true,
-                title: Column(
+Future<dynamic> productDialog(BuildContext context, String type) {
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return Builder(builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          // Create a LOCAL list for this dialog
+          List<Product> localFilteredItems = [];
+          localFilteredItems.addAll(items); // Start with all items
+          
+          return AlertDialog(
+            scrollable: true,
+            title: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                            onTap: () {
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Icon(Icons.close)),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: TextField(
-                        autocorrect: false,
-                        keyboardType: TextInputType.visiblePassword,
-                        autofocus: true,
-                        onChanged: (value) {
-                          setState(() {
-                            filteredItems = items
-                                .where((item) => item.productName
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()))
-                                .toList();
-                          });
-                        },
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.only(left: 8),
-                          labelStyle: TextStyle(
-                            color: Colors.grey,
-                          ),
-                          labelText: 'Search...',
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(15.0)),
-                          ),
-                        ),
-                      ),
+                    GestureDetector(
+                      onTap: () {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Icon(Icons.close),
                     ),
                   ],
                 ),
-                content: SizedBox(
-                  height: MediaQuery.of(context).size.height * .4,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: const Color(0xFFFCFBFA)),
-                          child: ListTile(
-                            onTap: () {
-                              if (type == "add") {
-                                if (productQty.text == "") {
-                                  productQty.text = "1";
-                                }
-                                productName = filteredItems[index].productName;
-                                productId = filteredItems[index].id;
-                                productRate.text =
-                                    filteredItems[index].sellingPrice;
-                                productTaxPercent.text =
-                                    filteredItems[index].taxPercent;
-                                productTaxAmount.text =
-                                    filteredItems[index].taxAmount;
-                                productTotalAmount.text =
-                                    ((double.parse(productRate.text) +
-                                                double.parse(
-                                                    productTaxAmount.text)) *
-                                            double.parse(productQty.text))
-                                        .toString();
-                                productTotalAmount.text =
-                                    double.parse(productTotalAmount.text)
-                                        .toStringAsFixed(2);
-                                if (paymentStatus == "paid") {
-                                  paidAmount.text = productTotalAmount.text;
-                                }
-                                typeDuration = filteredItems[index].noOfDays;
-                              } else {
-                                if (renProductQty.text == "") {
-                                  renProductQty.text = "1";
-                                }
-                                renProductName =
-                                    filteredItems[index].productName;
-                                renProductId = filteredItems[index].id;
-                                renProductRate.text =
-                                    filteredItems[index].sellingPrice;
-                                renProductTaxPercent.text =
-                                    filteredItems[index].taxPercent;
-                                renProductTaxAmount.text =
-                                    filteredItems[index].taxAmount;
-                                renProductTotalAmount.text =
-                                    ((double.parse(renProductRate.text) +
-                                                double.parse(
-                                                    renProductTaxAmount.text)) *
-                                            double.parse(renProductQty.text))
-                                        .toString();
-                                renProductTotalAmount.text =
-                                    double.parse(renProductTotalAmount.text)
-                                        .toStringAsFixed(2);
-                              }
-                              setState(() {});
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
-                            title: Text(filteredItems[index].productName),
-                            leading: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child: Text(filteredItems[index].productName[0]),
-                            ),
-                          ),
-                        ),
-                      );
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: TextField(
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        // Use local list, not class-level filteredItems
+                        localFilteredItems = items
+                            .where((item) => item.productName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
                     },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.only(left: 8),
+                      labelStyle: TextStyle(
+                        color: Colors.grey,
+                      ),
+                      labelText: 'Search...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                      ),
+                    ),
                   ),
-                ));
-          });
+                ),
+              ],
+            ),
+            content: SizedBox(
+              height: MediaQuery.of(context).size.height * .4,
+              width: MediaQuery.of(context).size.width * .8,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: localFilteredItems.length, // Use local list
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: const Color(0xFFFCFBFA),
+                      ),
+                      child: ListTile(
+                        onTap: () {
+                          if (type == "add") {
+                            if (productQty.text == "") {
+                              productQty.text = "1";
+                            }
+                            productName = localFilteredItems[index].productName; // Use local list
+                            productId = localFilteredItems[index].id; // Use local list
+                            productRate.text = localFilteredItems[index].sellingPrice; // Use local list
+                            productTaxPercent.text = localFilteredItems[index].taxPercent; // Use local list
+                            productTaxAmount.text = localFilteredItems[index].taxAmount; // Use local list
+                            productTotalAmount.text = ((double.parse(productRate.text) +
+                                        double.parse(productTaxAmount.text)) *
+                                    double.parse(productQty.text))
+                                .toString();
+                            productTotalAmount.text = double.parse(productTotalAmount.text)
+                                .toStringAsFixed(2);
+                            if (paymentStatus == "paid") {
+                              paidAmount.text = productTotalAmount.text;
+                            }
+                            typeDuration = localFilteredItems[index].noOfDays; // Use local list
+                          } else {
+                            if (renProductQty.text == "") {
+                              renProductQty.text = "1";
+                            }
+                            renProductName = localFilteredItems[index].productName; // Use local list
+                            renProductId = localFilteredItems[index].id; // Use local list
+                            renProductRate.text = localFilteredItems[index].sellingPrice; // Use local list
+                            renProductTaxPercent.text = localFilteredItems[index].taxPercent; // Use local list
+                            renProductTaxAmount.text = localFilteredItems[index].taxAmount; // Use local list
+                            renProductTotalAmount.text = ((double.parse(renProductRate.text) +
+                                        double.parse(renProductTaxAmount.text)) *
+                                    double.parse(renProductQty.text))
+                                .toString();
+                            renProductTotalAmount.text = double.parse(renProductTotalAmount.text)
+                                .toStringAsFixed(2);
+                          }
+                          setState(() {});
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        title: Text(localFilteredItems[index].productName), // Use local list
+                        leading: CircleAvatar(
+                          radius: 15,
+                          backgroundColor: Colors.white,
+                          child: Text(localFilteredItems[index].productName[0]), // Use local list
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
         });
-      },
-    );
-  }
+      });
+    },
+  );
+}
 
   Future<Object?> changeAmount(
       BuildContext context,

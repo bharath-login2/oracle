@@ -31,6 +31,7 @@ class Data {
   String? NewleadDashboard;
   String? QuotationDashboard;
   String? RoomDashboard;
+    String? JobCard;
   String? adminCheck;
   String? createStaff;
   String? viewStaff;
@@ -101,6 +102,7 @@ class Data {
   String? workModule;
   String? quotationModule;
   String? roomModule;
+  String? workWithoutLogin;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -110,6 +112,7 @@ class Data {
     this.NewleadDashboard,
     this.QuotationDashboard,
     this.RoomDashboard,
+     this.JobCard,
     this.adminCheck,
     this.createStaff,
     this.viewStaff,
@@ -180,6 +183,7 @@ class Data {
     this.workModule,
     this.quotationModule,
     this.roomModule,
+     this.workWithoutLogin,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -191,6 +195,7 @@ class Data {
     NewleadDashboard = json['dashboard_new_lead'];
     QuotationDashboard = json['dashboard_quotation'];
     RoomDashboard = json['dashboard_room_booking'];
+    JobCard = json['dashboard_job_card'];
     adminCheck = json['admins_check'];
     createStaff = json['create_staff'];
     viewStaff = json['view_staff'];
@@ -261,6 +266,7 @@ class Data {
        workModule = json['work_management_module'];
         quotationModule = json['quotations_module'];
          roomModule = json['room_management_module'];
+          workWithoutLogin = json['work_without_login'];
          
   }
 
@@ -274,6 +280,7 @@ class Data {
     data['dashboard_new_lead'] = NewleadDashboard;
     data['dashboard_quotation'] = QuotationDashboard;
     data['dashboard_room_booking'] = RoomDashboard;
+     data['dashboard_job_card'] = JobCard;
     data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
@@ -339,6 +346,7 @@ class Data {
     data['work_management_module'] = workModule;
     data['quotations_module'] = quotationModule;
     data['room_management_module'] = roomModule;
+     data['work_without_login'] = workWithoutLogin;
     return data;
   }
 }

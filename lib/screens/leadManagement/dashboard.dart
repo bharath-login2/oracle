@@ -8,7 +8,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/models/callLogs/callLogUploadModel.dart';
@@ -40,6 +39,7 @@ import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
+import 'package:login2/screens/leadManagement/privilagePage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
@@ -51,6 +51,8 @@ import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/screens/search/search.dart';
+import 'package:login2/screens/serviceman/dashboard_page.dart';
+import 'package:login2/screens/sidebarscreens/leadSidebarScreen.dart';
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/widgets/customerListDropdown.dart';
 import 'package:lottie/lottie.dart';
@@ -158,6 +160,7 @@ class _DashboardState extends State<Dashboard> {
   String viewTargetReportPermission = '';
   String addWorkPermission = '';
   String startAndStopWorkPermission = '';
+  String workWithoutLogin = '';
   String adminCheckPermission = '';
   String viewAttendanceSection = '';
   String multipleUsersCheck = '';
@@ -690,35 +693,35 @@ class _DashboardState extends State<Dashboard> {
         await HttpService.leadProgressbar(token, fromDate, toDate, callStatus);
   }
 
-  Future<String?> generateFaceHash(File faceImageFile) async {
-    final faceDetector = FaceDetector(
-      options: FaceDetectorOptions(
-        enableLandmarks: true,
-        enableContours: true,
-        enableClassification: false,
-      ),
-    );
-    final inputImage = InputImage.fromFile(faceImageFile);
-    final faces = await faceDetector.processImage(inputImage);
-    if (faces.isEmpty) return null;
-    final face = faces.first;
-    final landmarks = face.landmarks;
-    final serialized = [
-      landmarks[FaceLandmarkType.leftEye]?.position,
-      landmarks[FaceLandmarkType.rightEye]?.position,
-      landmarks[FaceLandmarkType.noseBase]?.position,
-      landmarks[FaceLandmarkType.leftCheek]?.position,
-      landmarks[FaceLandmarkType.rightCheek]?.position,
-    ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
-    final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
-    final lipData =
-        lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
+  // Future<String?> generateFaceHash(File faceImageFile) async {
+  //   final faceDetector = FaceDetector(
+  //     options: FaceDetectorOptions(
+  //       enableLandmarks: true,
+  //       enableContours: true,
+  //       enableClassification: false,
+  //     ),
+  //   );
+  //   final inputImage = InputImage.fromFile(faceImageFile);
+  //   final faces = await faceDetector.processImage(inputImage);
+  //   if (faces.isEmpty) return null;
+  //   final face = faces.first;
+  //   final landmarks = face.landmarks;
+  //   final serialized = [
+  //     landmarks[FaceLandmarkType.leftEye]?.position,
+  //     landmarks[FaceLandmarkType.rightEye]?.position,
+  //     landmarks[FaceLandmarkType.noseBase]?.position,
+  //     landmarks[FaceLandmarkType.leftCheek]?.position,
+  //     landmarks[FaceLandmarkType.rightCheek]?.position,
+  //   ].map((p) => p != null ? '${p.x.round()},${p.y.round()}' : '0,0').join(';');
+  //   final lipPoints = face.contours[FaceContourType.upperLipTop]?.points ?? [];
+  //   final lipData =
+  //       lipPoints.take(3).map((p) => '${p.x.round()},${p.y.round()}').join(';');
 
-    faceDetector.close();
+  //   faceDetector.close();
 
-    final combined = '$serialized;$lipData';
-    return base64Encode(utf8.encode(combined));
-  }
+  //   final combined = '$serialized;$lipData';
+  //   return base64Encode(utf8.encode(combined));
+  // }
 
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -754,7 +757,7 @@ class _DashboardState extends State<Dashboard> {
     renewalPermission = await Common.getSharedPref("renewalPermission");
     accPermission = await Common.getSharedPref("accPermission");
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
-     proformaInvoiceMenu =
+    proformaInvoiceMenu =
         await Common.getSharedPref("proformaInvoiceMenu") ?? "";
     gstInvoiceMenu = await Common.getSharedPref("gstInvoiceMenu") ?? "";
     pendingInvoiceMenu = await Common.getSharedPref("pendingInvoiceMenu") ?? "";
@@ -796,6 +799,7 @@ class _DashboardState extends State<Dashboard> {
           await Common.getSharedPref("viewWorkReportPermission");
       startAndStopWorkPermission =
           await Common.getSharedPref("startAndStopWorkPermission");
+      workWithoutLogin = await Common.getSharedPref("workWithoutLogin");
       adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
       viewAttendanceSection =
           await Common.getSharedPref("viewAttendanceSection");
@@ -1152,7 +1156,8 @@ class _DashboardState extends State<Dashboard> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -1963,6 +1968,7 @@ class _DashboardState extends State<Dashboard> {
                           phoneCallLogPermission: phoneCallLogPermission,
                           name: name,
                           userId: userId,
+                          scaffoldKey: _scaffoldKey,
                         )
                       : const SizedBox(),
                 ),
@@ -2226,6 +2232,7 @@ class _DashboardState extends State<Dashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
+                                custId: "",
                                 title: "Current Month",
                                 searchKey: "current_month",
                                 searchMonth: "",
@@ -2257,6 +2264,7 @@ class _DashboardState extends State<Dashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
+                                custId: "",
                                 title: "Next Month",
                                 searchKey: "next_month",
                                 searchMonth: "",
@@ -2288,6 +2296,7 @@ class _DashboardState extends State<Dashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
+                                custId: "",
                                 title: "Current Year",
                                 searchKey: "current_year",
                                 searchMonth: "",
@@ -2315,6 +2324,7 @@ class _DashboardState extends State<Dashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
+                                custId: "",
                                 title: "Expired",
                                 searchMonth: "",
                                 searchKey: "expired",
@@ -2398,6 +2408,7 @@ class _DashboardState extends State<Dashboard> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => RenewalList(
+                                          custId: "",
                                           title: renewalDashboard!
                                               .data.monthReport[index].label,
                                           searchKey: "",
@@ -2566,9 +2577,12 @@ class _DashboardState extends State<Dashboard> {
                                                     context,
                                                     MaterialPageRoute(
                                                         builder: (context) =>
-                                                            InvoiceList(widget
-                                                                .token
-                                                                .toString())),
+                                                            InvoiceList(
+                                                                widget.token
+                                                                    .toString(),
+                                                                "",
+                                                                "",
+                                                                "")),
                                                   );
                                                 } else if (list[i] ==
                                                         "Proforma Invoices" &&
@@ -2580,7 +2594,10 @@ class _DashboardState extends State<Dashboard> {
                                                         builder: (context) =>
                                                             ProformaInvoiceList(
                                                                 widget.token
-                                                                    .toString())),
+                                                                    .toString(),
+                                                                "",
+                                                                "",
+                                                                "","")),
                                                   );
                                                 } else if (list[i] ==
                                                         "GST Invoices" &&
@@ -2634,7 +2651,7 @@ class _DashboardState extends State<Dashboard> {
                                                     MaterialPageRoute(
                                                         builder: (context) =>
                                                             ClientList(
-                                                                widget.token!)),
+                                                                widget.token!,_scaffoldKey)),
                                                   );
                                                 }
                                               },
@@ -3626,6 +3643,15 @@ class _DashboardState extends State<Dashboard> {
                                         );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
+                                          'Service') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  DashboardPage()),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
                                           'whatsapp') {
                                         Navigator.push(
                                           context,
@@ -3633,8 +3659,7 @@ class _DashboardState extends State<Dashboard> {
                                               builder: (context) =>
                                                   const ChatHomeScreen()),
                                         );
-                                      }
-                                      else if (userDashboard!
+                                      } else if (userDashboard!
                                               .data.modules[i].menuName ==
                                           'room_management') {
                                         Navigator.push(
@@ -3669,7 +3694,7 @@ class _DashboardState extends State<Dashboard> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  ClientList(widget.token!)),
+                                                  ClientList(widget.token!,_scaffoldKey)),
                                         );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
@@ -3992,7 +4017,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -4079,66 +4104,9 @@ class _DashboardState extends State<Dashboard> {
                                       children: [
                                         InkWell(
                                           onTap: () {
-                                            // Navigator.push(
-                                            //   context,
-                                            //   MaterialPageRoute(builder: (context) => SearchPage(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, '')),
-                                            // ).then((r) {
-                                            //   getData(widget.token, fromdate, todate);
-                                            //   if (loadmore == true) {
-                                            //     getStaffwise();
-                                            //   }
-                                            // });
-                                            // Navigator.push(
-                                            //   context,
-                                            //   PageRouteBuilder(
-                                            //     pageBuilder: (context,
-                                            //             animation,
-                                            //             secondaryAnimation) =>
-                                            //         Search(
-                                            //       token: widget.token!,
-                                            //       editLead:
-                                            //           updateLeadPermission1,
-                                            //       deleteLead:
-                                            //           deleteLeadPermission1,
-                                            //       cloudCall:
-                                            //           cloudCallPermission1,
-                                            //     ),
-                                            //     transitionsBuilder:
-                                            //         (context,
-                                            //             animation,
-                                            //             secondaryAnimation,
-                                            //             child) {
-                                            //       const begin = Offset(0.0, 1.0); // Slide from the right
-                                            //       const end = Offset.zero;
-                                            //       const curve =
-                                            //           Curves.easeInOut;
-
-                                            //       var tween = Tween(
-                                            //               begin: begin,
-                                            //               end: end)
-                                            //           .chain(CurveTween(
-                                            //               curve: curve));
-                                            //       var offsetAnimation =
-                                            //           animation
-                                            //               .drive(tween);
-
-                                            //       return SlideTransition(
-                                            //         position:
-                                            //             offsetAnimation,
-                                            //         child: child,
-                                            //       );
-                                            //     },
-                                            //   ),
-                                            // ).then((r) {
-                                            //   getData(widget.token,
-                                            //       fromdate, todate);
-                                            //   if (loadmore == true) {
-                                            //     getStaffwise();
-                                            //   }
-                                            // });
                                             if (startAndStopWorkPermission ==
                                                 "true") {
-                                              if (loginOrNot?.status != true) {
+                                              if (workWithoutLogin != "true") {
                                                 _dialoguelogin(context,
                                                     'Please login to continue');
                                               } else {
@@ -4235,7 +4203,7 @@ class _DashboardState extends State<Dashboard> {
                                                   context, 'Call History');
                                             } else if (startAndStopWorkPermission ==
                                                 "true") {
-                                              if (loginOrNot?.status != true) {
+                                              if (workWithoutLogin != "true") {
                                                 _dialoguelogin(context,
                                                     'Please login to continue');
                                               } else {
@@ -4673,860 +4641,885 @@ class _DashboardState extends State<Dashboard> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    if (configure != null)
-                                      isExpired == false &&
-                                              leadDashboard != null
-                                          ? PopupMenuButton(
-                                              child: Container(
-                                                width: 35,
-                                                height: 35,
-                                                decoration: BoxDecoration(
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        blurRadius: 3,
-                                                        color: Colors
-                                                            .grey.shade800,
-                                                      )
-                                                    ],
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Image.asset(
-                                                    "assets/icons/settings.png",
-                                                  ),
-                                                ),
-                                              ),
-                                              itemBuilder: (context) {
-                                                return [
-                                                  const PopupMenuItem<int>(
-                                                      value: 11,
-                                                      child: Row(
-                                                        children: [
-                                                          SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child: Icon(
-                                                              Icons
-                                                                  .upload_outlined,
-                                                            ),
-                                                          ),
-                                                          SizedBox(
-                                                            width: 10,
-                                                          ),
-                                                          Text('Upload Logs'),
-                                                        ],
-                                                      )),
-                                                  PopupMenuItem<int>(
-                                                      value: 9,
-                                                      child: Row(
-                                                        children: [
-                                                          SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child: Image.asset(
-                                                              "assets/icons/all_reports.png",
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 10,
-                                                          ),
-                                                          const Text(
-                                                              'All Report'),
-                                                        ],
-                                                      )),
-                                                  PopupMenuItem<int>(
-                                                      value: 2,
-                                                      child: Row(
-                                                        children: [
-                                                          SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child: Image.asset(
-                                                              "assets/icons/leadCategory.png",
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 10,
-                                                          ),
-                                                          const Text(
-                                                              'Lead Category'),
-                                                        ],
-                                                      )),
-                                                  PopupMenuItem<int>(
-                                                      value: 6,
-                                                      child: Row(
-                                                        children: [
-                                                          SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child: Image.asset(
-                                                              "assets/icons/callHistory.png",
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 10,
-                                                          ),
-                                                          const Text(
-                                                              'Call History'),
-                                                        ],
-                                                      )),
+                                    // const SizedBox(width: 10),
+                                    // if (configure != null)
+                                    //   isExpired == false &&
+                                    //           leadDashboard != null
+                                    //       ? PopupMenuButton(
+                                    //           child: Container(
+                                    //             width: 35,
+                                    //             height: 35,
+                                    //             decoration: BoxDecoration(
+                                    //                 boxShadow: [
+                                    //                   BoxShadow(
+                                    //                     blurRadius: 3,
+                                    //                     color: Colors
+                                    //                         .grey.shade800,
+                                    //                   )
+                                    //                 ],
+                                    //                 shape: BoxShape.circle,
+                                    //                 color: Colors.white),
+                                    //             child: Padding(
+                                    //               padding:
+                                    //                   const EdgeInsets.all(8.0),
+                                    //               child: Image.asset(
+                                    //                 "assets/icons/settings.png",
+                                    //               ),
+                                    //             ),
+                                    //           ),
+                                    //           itemBuilder: (context) {
+                                    //             return [
+                                    //               const PopupMenuItem<int>(
+                                    //                   value: 11,
+                                    //                   child: Row(
+                                    //                     children: [
+                                    //                       SizedBox(
+                                    //                         width: 20,
+                                    //                         height: 20,
+                                    //                         child: Icon(
+                                    //                           Icons
+                                    //                               .upload_outlined,
+                                    //                         ),
+                                    //                       ),
+                                    //                       SizedBox(
+                                    //                         width: 10,
+                                    //                       ),
+                                    //                       Text('Upload Logs'),
+                                    //                     ],
+                                    //                   )),
+                                    //               PopupMenuItem<int>(
+                                    //                   value: 9,
+                                    //                   child: Row(
+                                    //                     children: [
+                                    //                       SizedBox(
+                                    //                         width: 20,
+                                    //                         height: 20,
+                                    //                         child: Image.asset(
+                                    //                           "assets/icons/all_reports.png",
+                                    //                         ),
+                                    //                       ),
+                                    //                       const SizedBox(
+                                    //                         width: 10,
+                                    //                       ),
+                                    //                       const Text(
+                                    //                           'All Report'),
+                                    //                     ],
+                                    //                   )),
+                                    //               PopupMenuItem<int>(
+                                    //                   value: 2,
+                                    //                   child: Row(
+                                    //                     children: [
+                                    //                       SizedBox(
+                                    //                         width: 20,
+                                    //                         height: 20,
+                                    //                         child: Image.asset(
+                                    //                           "assets/icons/leadCategory.png",
+                                    //                         ),
+                                    //                       ),
+                                    //                       const SizedBox(
+                                    //                         width: 10,
+                                    //                       ),
+                                    //                       const Text(
+                                    //                           'Lead Category'),
+                                    //                     ],
+                                    //                   )),
+                                    //               PopupMenuItem<int>(
+                                    //                   value: 6,
+                                    //                   child: Row(
+                                    //                     children: [
+                                    //                       SizedBox(
+                                    //                         width: 20,
+                                    //                         height: 20,
+                                    //                         child: Image.asset(
+                                    //                           "assets/icons/callHistory.png",
+                                    //                         ),
+                                    //                       ),
+                                    //                       const SizedBox(
+                                    //                         width: 10,
+                                    //                       ),
+                                    //                       const Text(
+                                    //                           'Call History'),
+                                    //                     ],
+                                    //                   )),
 
-                                                  // PopupMenuItem<int>(
-                                                  //   // value: 6,
-                                                  //   // onTap: () {
-                                                  //   //   Future.delayed(
-                                                  //   //       Duration.zero, () {
-                                                  //   //     showAddWorkDialog(
-                                                  //   //         context);
-                                                  //   //   });
-                                                  //   // },
-                                                  //   onTap: () async {
-                                                  //     final workStatusModel =
-                                                  //         await HttpService
-                                                  //             .getWorkStatus();
+                                    //               // PopupMenuItem<int>(
+                                    //               //   // value: 6,
+                                    //               //   // onTap: () {
+                                    //               //   //   Future.delayed(
+                                    //               //   //       Duration.zero, () {
+                                    //               //   //     showAddWorkDialog(
+                                    //               //   //         context);
+                                    //               //   //   });
+                                    //               //   // },
+                                    //               //   onTap: () async {
+                                    //               //     final workStatusModel =
+                                    //               //         await HttpService
+                                    //               //             .getWorkStatus();
 
-                                                  //     WorkStatus? existingWork;
-                                                  //     if (workStatusModel !=
-                                                  //             null &&
-                                                  //         workStatusModel.data
-                                                  //             .isNotEmpty) {
-                                                  //       existingWork =
-                                                  //           workStatusModel
-                                                  //               .data.first;
-                                                  //     }
+                                    //               //     WorkStatus? existingWork;
+                                    //               //     if (workStatusModel !=
+                                    //               //             null &&
+                                    //               //         workStatusModel.data
+                                    //               //             .isNotEmpty) {
+                                    //               //       existingWork =
+                                    //               //           workStatusModel
+                                    //               //               .data.first;
+                                    //               //     }
 
-                                                  //     Navigator.push(
-                                                  //       context,
-                                                  //       MaterialPageRoute(
-                                                  //         builder: (context) =>
-                                                  //             AddWorkPage(
-                                                  //           existingWork:
-                                                  //               existingWork, // null if no work in progress
-                                                  //           onSuccess: () {
-                                                  //             setState(() {
-                                                  //               getData(
-                                                  //                   widget
-                                                  //                       .token,
-                                                  //                   fromdate,
-                                                  //                   todate);
-                                                  //             });
-                                                  //           },
-                                                  //         ),
-                                                  //       ),
-                                                  //     );
-                                                  //   },
+                                    //               //     Navigator.push(
+                                    //               //       context,
+                                    //               //       MaterialPageRoute(
+                                    //               //         builder: (context) =>
+                                    //               //             AddWorkPage(
+                                    //               //           existingWork:
+                                    //               //               existingWork, // null if no work in progress
+                                    //               //           onSuccess: () {
+                                    //               //             setState(() {
+                                    //               //               getData(
+                                    //               //                   widget
+                                    //               //                       .token,
+                                    //               //                   fromdate,
+                                    //               //                   todate);
+                                    //               //             });
+                                    //               //           },
+                                    //               //         ),
+                                    //               //       ),
+                                    //               //     );
+                                    //               //   },
 
-                                                  //   child: Row(
-                                                  //     children: const [
-                                                  //       Icon(
-                                                  //           Icons
-                                                  //               .call_made_outlined,
-                                                  //           size: 20),
-                                                  //       SizedBox(width: 10),
-                                                  //       Text('Add Work'),
-                                                  //     ],
-                                                  //   ),
-                                                  // ),
+                                    //               //   child: Row(
+                                    //               //     children: const [
+                                    //               //       Icon(
+                                    //               //           Icons
+                                    //               //               .call_made_outlined,
+                                    //               //           size: 20),
+                                    //               //       SizedBox(width: 10),
+                                    //               //       Text('Add Work'),
+                                    //               //     ],
+                                    //               //   ),
+                                    //               // ),
 
-                                                  (adminCheckPermission
-                                                                  .toString() ==
-                                                              "true" &&
-                                                          viewAllWorkPermission
-                                                                  .toString() ==
-                                                              "true")
-                                                      ? PopupMenuItem<int>(
-                                                          // value: 6,
-                                                          // onTap: () {
-                                                          //   Future.delayed(
-                                                          //       Duration.zero, () {
-                                                          //     showAddWorkDialog(
-                                                          //         context);
-                                                          //   });
-                                                          // },
-                                                          onTap: () async {
-                                                            final workStatusModel =
-                                                                await HttpService
-                                                                    .getWorkStatus();
+                                    //               (adminCheckPermission
+                                    //                               .toString() ==
+                                    //                           "true" &&
+                                    //                       viewAllWorkPermission
+                                    //                               .toString() ==
+                                    //                           "true")
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       // value: 6,
+                                    //                       // onTap: () {
+                                    //                       //   Future.delayed(
+                                    //                       //       Duration.zero, () {
+                                    //                       //     showAddWorkDialog(
+                                    //                       //         context);
+                                    //                       //   });
+                                    //                       // },
+                                    //                       onTap: () async {
+                                    //                         final workStatusModel =
+                                    //                             await HttpService
+                                    //                                 .getWorkStatus();
 
-                                                            WorkStatus?
-                                                                existingWork;
-                                                            if (workStatusModel !=
-                                                                    null &&
-                                                                workStatusModel
-                                                                    .data
-                                                                    .isNotEmpty) {
-                                                              existingWork =
-                                                                  workStatusModel
-                                                                      .data
-                                                                      .first;
-                                                            }
+                                    //                         WorkStatus?
+                                    //                             existingWork;
+                                    //                         if (workStatusModel !=
+                                    //                                 null &&
+                                    //                             workStatusModel
+                                    //                                 .data
+                                    //                                 .isNotEmpty) {
+                                    //                           existingWork =
+                                    //                               workStatusModel
+                                    //                                   .data
+                                    //                                   .first;
+                                    //                         }
 
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const ViewCompanyWorkPage(),
-                                                                settings:
-                                                                    const RouteSettings(
-                                                                  arguments: {
-                                                                    //  "staffId": staffId
-                                                                  },
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder:
+                                    //                                 (context) =>
+                                    //                                     const ViewCompanyWorkPage(),
+                                    //                             settings:
+                                    //                                 const RouteSettings(
+                                    //                               arguments: {
+                                    //                                 //  "staffId": staffId
+                                    //                               },
+                                    //                             ),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
 
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .view_agenda,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'View Works'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  viewAttendanceSection
-                                                              .toString() ==
-                                                          "true"
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const ViewCalendarPage(),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .calendar_month,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'View Attendance'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  approvePayroll == 'true'
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const SalaryReportPage(),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .attach_money,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'Salary Report'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  viewPendingWorks == 'true'
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const PendingWorkPage(),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .pending_actions,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'Pending Works'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  assignWork == 'true'
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    AssignReport(
-                                                                        workId:
-                                                                            "",
-                                                                        sectionId:
-                                                                            ""),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .assignment,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'Assigned Works'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  viewTargetReportPermission ==
-                                                          'true'
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    ViewAllTargetReportPage(
-                                                                        id: userId),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .track_changes,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'View Target Report'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                  
-                                                  //        PopupMenuItem<int>(
-                                                  //   onTap: () async {
-                                                  //     Navigator.push(
-                                                  //       context,
-                                                  //       MaterialPageRoute(
-                                                  //         builder: (context) =>
-                                                  //             SetDashboardPage(
-                                                  //                 id: userId),
-                                                  //       ),
-                                                  //     );
-                                                  //   },
-                                                  //   child: const Row(
-                                                  //     children: [
-                                                  //       Icon(
-                                                  //           Icons.dashboard_customize,
-                                                  //           size: 20),
-                                                  //       SizedBox(width: 10),
-                                                  //       Text(
-                                                  //           'Set Dashboard'),
-                                                  //     ],
-                                                  //   ),
-                                                  // ),
-                                                  // PopupMenuItem<int>(
-                                                  //   onTap: () async {
-                                                  //     Navigator.push(
-                                                  //       context,
-                                                  //       MaterialPageRoute(
-                                                  //         builder: (context) =>
-                                                  //             const PendingWorkPage(),
-                                                  //       ),
-                                                  //     );
-                                                  //   },
-                                                  //   child: const Row(
-                                                  //     children: [
-                                                  //       Icon(Icons.attach_money,
-                                                  //           size: 20),
-                                                  //       SizedBox(width: 10),
-                                                  //       Text('Pending Report'),
-                                                  //     ],
-                                                  //   ),
-                                                  // ),
-                                                  // adminCheckPermission ==
-                                                  //             "false" &&
-                                                  //         viewAllWorkPermission ==
-                                                  //             "true"
-                                                  (adminCheckPermission
-                                                                  .toString() ==
-                                                              "false" &&
-                                                          viewAllWorkPermission
-                                                                  .toString() ==
-                                                              "true")
-                                                      ? PopupMenuItem<int>(
-                                                          // onTap: () async {
-                                                          //   final workStatusModel =
-                                                          //       await HttpService
-                                                          //           .getWorkStatus();
-                                                          //   WorkStatus?
-                                                          //       existingWork;
-                                                          //   if (workStatusModel !=
-                                                          //           null &&
-                                                          //       workStatusModel
-                                                          //           .data
-                                                          //           .isNotEmpty) {
-                                                          //     existingWork =
-                                                          //         workStatusModel
-                                                          //             .data
-                                                          //             .first;
-                                                          //   }
-                                                          //   Navigator.push(
-                                                          //     context,
-                                                          //     MaterialPageRoute(
-                                                          //       builder:
-                                                          //           (context) =>
-                                                          //               const ViewWorkPage(
-                                                          //         staffId: '',
-                                                          //       ),
-                                                          //       settings:
-                                                          //           RouteSettings(
-                                                          //         arguments: {
-                                                          //           "staffId":
-                                                          //               staffId
-                                                          //         },
-                                                          //       ),
-                                                          //     ),
-                                                          //   );
-                                                          // },
-                                                          onTap: () async {
-                                                            final workStatusModel =
-                                                                await HttpService
-                                                                    .getWorkStatus();
-                                                            WorkStatus?
-                                                                existingWork;
-                                                            if (workStatusModel !=
-                                                                    null &&
-                                                                workStatusModel
-                                                                    .data
-                                                                    .isNotEmpty) {
-                                                              existingWork =
-                                                                  workStatusModel
-                                                                      .data
-                                                                      .first;
-                                                            }
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .view_agenda,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'View Works'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //               viewAttendanceSection
+                                    //                           .toString() ==
+                                    //                       "true"
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () async {
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder:
+                                    //                                 (context) =>
+                                    //                                     const ViewCalendarPage(),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .calendar_month,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'View Attendance'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //               approvePayroll == 'true'
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () async {
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder:
+                                    //                                 (context) =>
+                                    //                                     const SalaryReportPage(),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .attach_money,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'Salary Report'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //               viewPendingWorks == 'true'
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () async {
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder:
+                                    //                                 (context) =>
+                                    //                                     const PendingWorkPage(),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .pending_actions,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'Pending Works'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //               assignWork == 'true'
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () async {
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder: (context) =>
+                                    //                                 AssignReport(
+                                    //                                     workId:
+                                    //                                         "",
+                                    //                                     sectionId:
+                                    //                                         ""),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .assignment,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'Assigned Works'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //               viewTargetReportPermission ==
+                                    //                       'true'
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () async {
+                                    //                         Navigator.push(
+                                    //                           context,
+                                    //                           MaterialPageRoute(
+                                    //                             builder: (context) =>
+                                    //                                 ViewAllTargetReportPage(
+                                    //                                     id: userId),
+                                    //                           ),
+                                    //                         );
+                                    //                       },
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .track_changes,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'View Target Report'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
 
-                                                            if (multipleWorksCheck ==
-                                                                "true") {
-                                                              showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder:
-                                                                    (context) {
-                                                                  return AlertDialog(
-                                                                    title: const Text(
-                                                                        "Phone Call Log"),
-                                                                    content:
-                                                                        const Text(
-                                                                            "Choose an action below"),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                          Navigator
-                                                                              .push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                              builder: (_) => ViewWorkPage(staffId: staffId),
-                                                                            ),
-                                                                          );
-                                                                        },
-                                                                        child: const Text(
-                                                                            "Works"),
-                                                                      ),
-                                                                      TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                          Navigator
-                                                                              .push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                              builder: (_) => const TimelinePage(),
-                                                                              settings: RouteSettings(
-                                                                                arguments: {
-                                                                                  "staffId": userId
-                                                                                },
-                                                                              ),
-                                                                            ),
-                                                                          );
-                                                                        },
-                                                                        child: const Text(
-                                                                            "Call Log"),
-                                                                      ),
-                                                                    ],
-                                                                  );
-                                                                },
-                                                              );
-                                                            } else if (multipleWorksCheck ==
-                                                                "phone") {
-                                                              // case: "phone"
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                  builder: (_) =>
-                                                                      const TimelinePage(),
-                                                                  settings:
-                                                                      RouteSettings(
-                                                                          arguments: {
-                                                                        "staffId":
-                                                                            staffId
-                                                                      }),
-                                                                ),
-                                                              );
-                                                            } else {
-                                                              // case: "work"
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                  builder: (_) =>
-                                                                      ViewWorkPage(
-                                                                          staffId:
-                                                                              staffId),
-                                                                ),
-                                                              );
-                                                            }
-                                                          },
+                                    //               //      PopupMenuItem<int>(
+                                    //               //     onTap: () async {
+                                    //               //       Navigator.push(
+                                    //               //         context,
+                                    //               //         MaterialPageRoute(
+                                    //               //           builder: (context) =>
+                                    //               //               PrivilegePage(),
+                                    //               //         ),
+                                    //               //       );
+                                    //               //     },
+                                    //               //     child: const Row(
+                                    //               //       children: [
+                                    //               //         Icon(
+                                    //               //             Icons
+                                    //               //                 .track_changes,
+                                    //               //             size: 20),
+                                    //               //         SizedBox(
+                                    //               //             width: 10),
+                                    //               //         Text(
+                                    //               //             'Privilages design'),
+                                    //               //       ],
+                                    //               //     ),
+                                    //               //   )
+                                    //               // ,
 
-                                                          child: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                  Icons
-                                                                      .view_agenda,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text('View Work'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
+                                    //               //        PopupMenuItem<int>(
+                                    //               //   onTap: () async {
+                                    //               //     Navigator.push(
+                                    //               //       context,
+                                    //               //       MaterialPageRoute(
+                                    //               //         builder: (context) =>
+                                    //               //             SetDashboardPage(
+                                    //               //                 id: userId),
+                                    //               //       ),
+                                    //               //     );
+                                    //               //   },
+                                    //               //   child: const Row(
+                                    //               //     children: [
+                                    //               //       Icon(
+                                    //               //           Icons.dashboard_customize,
+                                    //               //           size: 20),
+                                    //               //       SizedBox(width: 10),
+                                    //               //       Text(
+                                    //               //           'Set Dashboard'),
+                                    //               //     ],
+                                    //               //   ),
+                                    //               // ),
+                                    //               // PopupMenuItem<int>(
+                                    //               //   onTap: () async {
+                                    //               //     Navigator.push(
+                                    //               //       context,
+                                    //               //       MaterialPageRoute(
+                                    //               //         builder: (context) =>
+                                    //               //             const PendingWorkPage(),
+                                    //               //       ),
+                                    //               //     );
+                                    //               //   },
+                                    //               //   child: const Row(
+                                    //               //     children: [
+                                    //               //       Icon(Icons.attach_money,
+                                    //               //           size: 20),
+                                    //               //       SizedBox(width: 10),
+                                    //               //       Text('Pending Report'),
+                                    //               //     ],
+                                    //               //   ),
+                                    //               // ),
+                                    //               // adminCheckPermission ==
+                                    //               //             "false" &&
+                                    //               //         viewAllWorkPermission ==
+                                    //               //             "true"
+                                    //               (adminCheckPermission
+                                    //                               .toString() ==
+                                    //                           "false" &&
+                                    //                       viewAllWorkPermission
+                                    //                               .toString() ==
+                                    //                           "true")
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       // onTap: () async {
+                                    //                       //   final workStatusModel =
+                                    //                       //       await HttpService
+                                    //                       //           .getWorkStatus();
+                                    //                       //   WorkStatus?
+                                    //                       //       existingWork;
+                                    //                       //   if (workStatusModel !=
+                                    //                       //           null &&
+                                    //                       //       workStatusModel
+                                    //                       //           .data
+                                    //                       //           .isNotEmpty) {
+                                    //                       //     existingWork =
+                                    //                       //         workStatusModel
+                                    //                       //             .data
+                                    //                       //             .first;
+                                    //                       //   }
+                                    //                       //   Navigator.push(
+                                    //                       //     context,
+                                    //                       //     MaterialPageRoute(
+                                    //                       //       builder:
+                                    //                       //           (context) =>
+                                    //                       //               const ViewWorkPage(
+                                    //                       //         staffId: '',
+                                    //                       //       ),
+                                    //                       //       settings:
+                                    //                       //           RouteSettings(
+                                    //                       //         arguments: {
+                                    //                       //           "staffId":
+                                    //                       //               staffId
+                                    //                       //         },
+                                    //                       //       ),
+                                    //                       //     ),
+                                    //                       //   );
+                                    //                       // },
+                                    //                       onTap: () async {
+                                    //                         final workStatusModel =
+                                    //                             await HttpService
+                                    //                                 .getWorkStatus();
+                                    //                         WorkStatus?
+                                    //                             existingWork;
+                                    //                         if (workStatusModel !=
+                                    //                                 null &&
+                                    //                             workStatusModel
+                                    //                                 .data
+                                    //                                 .isNotEmpty) {
+                                    //                           existingWork =
+                                    //                               workStatusModel
+                                    //                                   .data
+                                    //                                   .first;
+                                    //                         }
 
-                                                  viewWorkReportPermission ==
-                                                              "true" &&
-                                                          adminCheckPermission !=
-                                                              "true"
-                                                      ? PopupMenuItem<int>(
-                                                          onTap: () {
-                                                            Future.delayed(
-                                                                Duration.zero,
-                                                                () {
-                                                              print(
-                                                                  "Navigating with staffId: $userId");
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          const TimelinePage(),
-                                                                  settings:
-                                                                      RouteSettings(
-                                                                    arguments: {
-                                                                      "staffId":
-                                                                          userId,
-                                                                    },
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            });
-                                                          },
-                                                          child: Row(
-                                                            children: const [
-                                                              Icon(Icons.report,
-                                                                  size: 20),
-                                                              SizedBox(
-                                                                  width: 10),
-                                                              Text(
-                                                                  'View Work Report'),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : const PopupMenuItem<
-                                                          int>(
-                                                          enabled: false,
-                                                          height: 0,
-                                                          child:
-                                                              SizedBox.shrink(),
-                                                        ),
-                                                ];
-                                              },
-                                              onSelected: (value) async {
-                                                if (value == 11) {
-                                                  // todo : show loader
-                                                  // todo : upload call logs
-                                                  // todo : hide loader
+                                    //                         if (multipleWorksCheck ==
+                                    //                             "true") {
+                                    //                           showDialog(
+                                    //                             context:
+                                    //                                 context,
+                                    //                             builder:
+                                    //                                 (context) {
+                                    //                               return AlertDialog(
+                                    //                                 title: const Text(
+                                    //                                     "Phone Call Log"),
+                                    //                                 content:
+                                    //                                     const Text(
+                                    //                                         "Choose an action below"),
+                                    //                                 actions: [
+                                    //                                   TextButton(
+                                    //                                     onPressed:
+                                    //                                         () {
+                                    //                                       Navigator.pop(
+                                    //                                           context);
+                                    //                                       Navigator
+                                    //                                           .push(
+                                    //                                         context,
+                                    //                                         MaterialPageRoute(
+                                    //                                           builder: (_) => ViewWorkPage(staffId: staffId),
+                                    //                                         ),
+                                    //                                       );
+                                    //                                     },
+                                    //                                     child: const Text(
+                                    //                                         "Works"),
+                                    //                                   ),
+                                    //                                   TextButton(
+                                    //                                     onPressed:
+                                    //                                         () {
+                                    //                                       Navigator.pop(
+                                    //                                           context);
+                                    //                                       Navigator
+                                    //                                           .push(
+                                    //                                         context,
+                                    //                                         MaterialPageRoute(
+                                    //                                           builder: (_) => const TimelinePage(),
+                                    //                                           settings: RouteSettings(
+                                    //                                             arguments: {
+                                    //                                               "staffId": userId
+                                    //                                             },
+                                    //                                           ),
+                                    //                                         ),
+                                    //                                       );
+                                    //                                     },
+                                    //                                     child: const Text(
+                                    //                                         "Call Log"),
+                                    //                                   ),
+                                    //                                 ],
+                                    //                               );
+                                    //                             },
+                                    //                           );
+                                    //                         } else if (multipleWorksCheck ==
+                                    //                             "phone") {
+                                    //                           // case: "phone"
+                                    //                           Navigator.push(
+                                    //                             context,
+                                    //                             MaterialPageRoute(
+                                    //                               builder: (_) =>
+                                    //                                   const TimelinePage(),
+                                    //                               settings:
+                                    //                                   RouteSettings(
+                                    //                                       arguments: {
+                                    //                                     "staffId":
+                                    //                                         staffId
+                                    //                                   }),
+                                    //                             ),
+                                    //                           );
+                                    //                         } else {
+                                    //                           // case: "work"
+                                    //                           Navigator.push(
+                                    //                             context,
+                                    //                             MaterialPageRoute(
+                                    //                               builder: (_) =>
+                                    //                                   ViewWorkPage(
+                                    //                                       staffId:
+                                    //                                           staffId),
+                                    //                             ),
+                                    //                           );
+                                    //                         }
+                                    //                       },
 
-                                                  setState(() {
-                                                    isLoading = true;
-                                                  });
-                                                  await getSharedData();
-                                                  setState(() {
-                                                    isLoading = false;
-                                                  });
-                                                }
-                                                if (value == 1) {}
-                                                if (value == 2) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            ViewLeadCategory(
-                                                                widget.token!,
-                                                                createLeadCategory1,
-                                                                updateLeadCategory1,
-                                                                deleteLeadCategory1)),
-                                                  );
-                                                }
-                                                if (value == 3) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            WhatsappSettings(
-                                                                widget.token)),
-                                                  );
-                                                }
-                                                if (value == 4) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            const NotificationTemplateSettings()),
-                                                  );
-                                                }
-                                                if (value == 5) {
-                                                  Common.saveSharedPref(
-                                                      "statusWise", 'no');
-                                                  viewLeadPermission == 'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      ViewLeads(
-                                                                        widget
-                                                                            .token,
-                                                                        updateLeadPermission1,
-                                                                        deleteLeadPermission1,
-                                                                        cloudCallPermission1,
-                                                                        pageName:
-                                                                            'View Leads',
-                                                                        fromDate:
-                                                                            fromdate.toString(),
-                                                                        toDate:
-                                                                            todate.toString(),
-                                                                      )),
-                                                        ).then((r) {
-                                                          getData(widget.token,
-                                                              fromdate, todate);
-                                                          if (loadmore ==
-                                                              true) {
-                                                            getStaffwise();
-                                                          }
-                                                        })
-                                                      : _dialogue(context,
-                                                          'View Leads');
-                                                }
-                                                if (value == 6) {
-                                                  accessCallHistoryPermission ==
-                                                          'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  CallHistoryPage(
-                                                                      widget
-                                                                          .token!,
-                                                                      name,
-                                                                      userId,
-                                                                      accessCallRecordingPermission1)),
-                                                        )
-                                                      : _dialogue(context,
-                                                          'Call History');
-                                                }
-                                                if (value == 7) {
-                                                  Common.saveSharedPref(
-                                                      "statusWise", 'no');
-                                                  viewLeadPermission == 'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      ViewLeads(
-                                                                        widget
-                                                                            .token,
-                                                                        updateLeadPermission1,
-                                                                        deleteLeadPermission1,
-                                                                        cloudCallPermission1,
-                                                                        pageName:
-                                                                            'Missed Leads',
-                                                                        fromDate:
-                                                                            fromdate.toString(),
-                                                                        toDate:
-                                                                            todate.toString(),
-                                                                        leadType:
-                                                                            '1',
-                                                                        callStatus:
-                                                                            "-1",
-                                                                      )),
-                                                        ).then((r) {
-                                                          getData(widget.token,
-                                                              fromdate, todate);
-                                                          if (loadmore ==
-                                                              true) {
-                                                            getStaffwise();
-                                                          }
-                                                        })
-                                                      : _dialogue(context,
-                                                          'View Leads');
-                                                }
-                                                if (value == 8) {
-                                                  Common.saveSharedPref(
-                                                      "statusWise", 'no');
-                                                  viewLeadPermission == 'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder: (context) => ViewLeads(
-                                                                  widget.token,
-                                                                  updateLeadPermission1,
-                                                                  deleteLeadPermission1,
-                                                                  cloudCallPermission1,
-                                                                  pageName:
-                                                                      'Transfer Leads',
-                                                                  fromDate: fromdate
-                                                                      .toString(),
-                                                                  toDate: todate
-                                                                      .toString(),
-                                                                  leadType:
-                                                                      '2')),
-                                                        ).then((r) {
-                                                          getData(widget.token,
-                                                              fromdate, todate);
-                                                          if (loadmore ==
-                                                              true) {
-                                                            getStaffwise();
-                                                          }
-                                                        })
-                                                      : _dialogue(context,
-                                                          'View Leads');
-                                                }
-                                                if (value == 9) {
-                                                  Common.saveSharedPref(
-                                                      "statusWise", 'no');
-                                                  viewLeadPermission == 'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AllReport(
-                                                                        widget
-                                                                            .token!,
-                                                                        updateLeadPermission1,
-                                                                        deleteLeadPermission1,
-                                                                        cloudCallPermission1,
-                                                                        pageName:
-                                                                            'AllLeads',
-                                                                      )),
-                                                        )
-                                                      : _dialogue(context,
-                                                          'View Leads');
-                                                }
-                                                if (value == 10) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            CallLogs(
-                                                              widget.token,
-                                                              name,
-                                                              userId,
-                                                            )),
-                                                  ).then((r) {
-                                                    getData(widget.token,
-                                                        fromdate, todate);
-                                                    if (loadmore == true) {
-                                                      getStaffwise();
-                                                    }
-                                                  });
-                                                }
-                                              })
-                                          : const SizedBox()
+                                    //                       child: const Row(
+                                    //                         children: [
+                                    //                           Icon(
+                                    //                               Icons
+                                    //                                   .view_agenda,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text('View Work'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+
+                                    //               viewWorkReportPermission ==
+                                    //                           "true" &&
+                                    //                       adminCheckPermission !=
+                                    //                           "true"
+                                    //                   ? PopupMenuItem<int>(
+                                    //                       onTap: () {
+                                    //                         Future.delayed(
+                                    //                             Duration.zero,
+                                    //                             () {
+                                    //                           print(
+                                    //                               "Navigating with staffId: $userId");
+                                    //                           Navigator.push(
+                                    //                             context,
+                                    //                             MaterialPageRoute(
+                                    //                               builder:
+                                    //                                   (context) =>
+                                    //                                       const TimelinePage(),
+                                    //                               settings:
+                                    //                                   RouteSettings(
+                                    //                                 arguments: {
+                                    //                                   "staffId":
+                                    //                                       userId,
+                                    //                                 },
+                                    //                               ),
+                                    //                             ),
+                                    //                           );
+                                    //                         });
+                                    //                       },
+                                    //                       child: Row(
+                                    //                         children: const [
+                                    //                           Icon(Icons.report,
+                                    //                               size: 20),
+                                    //                           SizedBox(
+                                    //                               width: 10),
+                                    //                           Text(
+                                    //                               'View Work Report'),
+                                    //                         ],
+                                    //                       ),
+                                    //                     )
+                                    //                   : const PopupMenuItem<
+                                    //                       int>(
+                                    //                       enabled: false,
+                                    //                       height: 0,
+                                    //                       child:
+                                    //                           SizedBox.shrink(),
+                                    //                     ),
+                                    //             ];
+                                    //           },
+                                    //           onSelected: (value) async {
+                                    //             if (value == 11) {
+                                    //               // todo : show loader
+                                    //               // todo : upload call logs
+                                    //               // todo : hide loader
+
+                                    //               setState(() {
+                                    //                 isLoading = true;
+                                    //               });
+                                    //               await getSharedData();
+                                    //               setState(() {
+                                    //                 isLoading = false;
+                                    //               });
+                                    //             }
+                                    //             if (value == 1) {}
+                                    //             if (value == 2) {
+                                    //               Navigator.push(
+                                    //                 context,
+                                    //                 MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         ViewLeadCategory(
+                                    //                             widget.token!,
+                                    //                             createLeadCategory1,
+                                    //                             updateLeadCategory1,
+                                    //                             deleteLeadCategory1)),
+                                    //               );
+                                    //             }
+                                    //             if (value == 3) {
+                                    //               Navigator.push(
+                                    //                 context,
+                                    //                 MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         WhatsappSettings(
+                                    //                             widget.token)),
+                                    //               );
+                                    //             }
+                                    //             if (value == 4) {
+                                    //               Navigator.push(
+                                    //                 context,
+                                    //                 MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         const NotificationTemplateSettings()),
+                                    //               );
+                                    //             }
+                                    //             if (value == 5) {
+                                    //               Common.saveSharedPref(
+                                    //                   "statusWise", 'no');
+                                    //               viewLeadPermission == 'true'
+                                    //                   ? Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder:
+                                    //                               (context) =>
+                                    //                                   ViewLeads(
+                                    //                                     widget
+                                    //                                         .token,
+                                    //                                     updateLeadPermission1,
+                                    //                                     deleteLeadPermission1,
+                                    //                                     cloudCallPermission1,
+                                    //                                     pageName:
+                                    //                                         'View Leads',
+                                    //                                     fromDate:
+                                    //                                         fromdate.toString(),
+                                    //                                     toDate:
+                                    //                                         todate.toString(),
+                                    //                                   )),
+                                    //                     ).then((r) {
+                                    //                       getData(widget.token,
+                                    //                           fromdate, todate);
+                                    //                       if (loadmore ==
+                                    //                           true) {
+                                    //                         getStaffwise();
+                                    //                       }
+                                    //                     })
+                                    //                   : _dialogue(context,
+                                    //                       'View Leads');
+                                    //             }
+                                    //             if (value == 6) {
+                                    //               accessCallHistoryPermission ==
+                                    //                       'true'
+                                    //                   ? Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder: (context) =>
+                                    //                               CallHistoryPage(
+                                    //                                   widget
+                                    //                                       .token!,
+                                    //                                   name,
+                                    //                                   userId,
+                                    //                                   accessCallRecordingPermission1)),
+                                    //                     )
+                                    //                   : _dialogue(context,
+                                    //                       'Call History');
+                                    //             }
+                                    //             if (value == 7) {
+                                    //               Common.saveSharedPref(
+                                    //                   "statusWise", 'no');
+                                    //               viewLeadPermission == 'true'
+                                    //                   ? Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder:
+                                    //                               (context) =>
+                                    //                                   ViewLeads(
+                                    //                                     widget
+                                    //                                         .token,
+                                    //                                     updateLeadPermission1,
+                                    //                                     deleteLeadPermission1,
+                                    //                                     cloudCallPermission1,
+                                    //                                     pageName:
+                                    //                                         'Missed Leads',
+                                    //                                     fromDate:
+                                    //                                         fromdate.toString(),
+                                    //                                     toDate:
+                                    //                                         todate.toString(),
+                                    //                                     leadType:
+                                    //                                         '1',
+                                    //                                     callStatus:
+                                    //                                         "-1",
+                                    //                                   )),
+                                    //                     ).then((r) {
+                                    //                       getData(widget.token,
+                                    //                           fromdate, todate);
+                                    //                       if (loadmore ==
+                                    //                           true) {
+                                    //                         getStaffwise();
+                                    //                       }
+                                    //                     })
+                                    //                   : _dialogue(context,
+                                    //                       'View Leads');
+                                    //             }
+                                    //             if (value == 8) {
+                                    //               Common.saveSharedPref(
+                                    //                   "statusWise", 'no');
+                                    //               viewLeadPermission == 'true'
+                                    //                   ? Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder: (context) => ViewLeads(
+                                    //                               widget.token,
+                                    //                               updateLeadPermission1,
+                                    //                               deleteLeadPermission1,
+                                    //                               cloudCallPermission1,
+                                    //                               pageName:
+                                    //                                   'Transfer Leads',
+                                    //                               fromDate: fromdate
+                                    //                                   .toString(),
+                                    //                               toDate: todate
+                                    //                                   .toString(),
+                                    //                               leadType:
+                                    //                                   '2')),
+                                    //                     ).then((r) {
+                                    //                       getData(widget.token,
+                                    //                           fromdate, todate);
+                                    //                       if (loadmore ==
+                                    //                           true) {
+                                    //                         getStaffwise();
+                                    //                       }
+                                    //                     })
+                                    //                   : _dialogue(context,
+                                    //                       'View Leads');
+                                    //             }
+                                    //             if (value == 9) {
+                                    //               Common.saveSharedPref(
+                                    //                   "statusWise", 'no');
+                                    //               viewLeadPermission == 'true'
+                                    //                   ? Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder:
+                                    //                               (context) =>
+                                    //                                   AllReport(
+                                    //                                     widget
+                                    //                                         .token!,
+                                    //                                     updateLeadPermission1,
+                                    //                                     deleteLeadPermission1,
+                                    //                                     cloudCallPermission1,
+                                    //                                     pageName:
+                                    //                                         'AllLeads',
+                                    //                                   )),
+                                    //                     )
+                                    //                   : _dialogue(context,
+                                    //                       'View Leads');
+                                    //             }
+                                    //             if (value == 10) {
+                                    //               Navigator.push(
+                                    //                 context,
+                                    //                 MaterialPageRoute(
+                                    //                     builder: (context) =>
+                                    //                         CallLogs(
+                                    //                           widget.token,
+                                    //                           name,
+                                    //                           userId,
+                                    //                         )),
+                                    //               ).then((r) {
+                                    //                 getData(widget.token,
+                                    //                     fromdate, todate);
+                                    //                 if (loadmore == true) {
+                                    //                   getStaffwise();
+                                    //                 }
+                                    //               });
+                                    //             }
+                                    //           })
+                                    //       : const SizedBox()
                                   ],
                                 )
                               ],
@@ -5544,7 +5537,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -5778,7 +5771,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -6024,7 +6017,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -6257,7 +6250,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -6497,7 +6490,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -6731,7 +6724,7 @@ class _DashboardState extends State<Dashboard> {
                                           'Add Leads Permission Denied');
                                     } else if (startAndStopWorkPermission ==
                                         "true") {
-                                      if (loginOrNot?.status != true) {
+                                      if (workWithoutLogin != "true") {
                                         _dialoguelogin(context,
                                             'Please login to continue');
                                       } else {
@@ -7050,7 +7043,7 @@ class _DashboardState extends State<Dashboard> {
                     // updated button with small size code ends
 // needddddddddddddddddddddddddddddddddddssssssssssss     tooooooooooooooooo  unnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiiiidddddddddddddddddddddddddddddddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
                     Visibility(
-                      visible: true,
+                      visible: false,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: InkWell(
@@ -9997,14 +9990,34 @@ class _DashboardState extends State<Dashboard> {
                     ),
                   ),
                 ),
-                InkWell(
-                  onTap: () {
-                    _scaffoldKey.currentState!.openEndDrawer();
+                // InkWell(
+                //   onTap: () {
+                //     _scaffoldKey.currentState!.openEndDrawer();
+                //   },
+                //   child: Padding(
+                //     padding: const EdgeInsets.only(right: 20),
+                //     child: Image.asset("assets/icons/menu.png", width: 20),
+                //   ),
+                // ),
+                // In Dashboard page - simplified
+                SettingsMenuWidget(
+                  token: widget.token!,
+                  name: name,
+                  userId: userId,
+                  staffId: staffId,
+                  isExpired: isExpired,
+                  configure: configure,
+                  leadDashboard: leadDashboard,
+                  fromdate: fromdate.toString(),
+                  todate: todate.toString(),
+                  loadmore: loadmore,
+                  onDataRefresh: () {
+                    getData(widget.token, fromdate, todate);
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Image.asset("assets/icons/menu.png", width: 20),
-                  ),
+                  onStaffwiseRefresh: getStaffwise,
+                ),
+                SizedBox(
+                  width: 12,
                 ),
               ],
             ),

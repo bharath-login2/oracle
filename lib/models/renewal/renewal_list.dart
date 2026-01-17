@@ -72,6 +72,8 @@ class ListElement {
   bool isPaid;
   String renewalType;
   List<ProductId> productId;
+    String renewedDate;
+      String renewedBy;
 
   ListElement({
     required this.id,
@@ -89,6 +91,8 @@ class ListElement {
     required this.isPaid,
     required this.renewalType,
     required this.productId,
+    required this.renewedDate,
+    required this.renewedBy,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -108,6 +112,8 @@ class ListElement {
         renewalType: json["renewal_type"],
         productId: List<ProductId>.from(
             json["product_id"].map((x) => ProductId.fromJson(x))),
+        renewedDate: json["renewed_date"],
+        renewedBy: json["renewed_by"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -125,6 +131,8 @@ class ListElement {
         "is_paid": isPaid,
         "renewal_type": renewalType,
         "product_id": List<dynamic>.from(productId.map((x) => x.toJson())),
+        "renewed_date": renewedDate,
+        "renewed_by": renewedBy,
       };
 }
 

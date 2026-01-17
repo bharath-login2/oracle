@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/dashboardModel.dart';
 import 'package:login2/models/lead_management/quotation_dashboard_model.dart';
+import 'package:login2/models/loginCheckModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/authentication/login.dart';
@@ -17,9 +20,9 @@ import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/quotationRequestPage.dart';
 import 'package:login2/service/service.dart';
-import 'package:login2/widgets/togglebutton_start.dart'; // Add this import
-import 'package:shared_preferences/shared_preferences.dart'; // Add this import
-import 'package:firebase_messaging/firebase_messaging.dart'; // Add this import
+import 'package:login2/widgets/togglebutton_start.dart'; 
+import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:firebase_messaging/firebase_messaging.dart'; 
 
 class QuotationDashboard extends StatefulWidget {
   const QuotationDashboard({super.key});
@@ -53,6 +56,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
     String? adminCheckPermission;
+     String? firebaseToken;
   @override
   void initState() {
     super.initState();
@@ -75,11 +79,23 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     );
     _loadData();
     _loadDashboard();
-    _loadUserData(); // Load user data for bottom navigation
+    _loadUserData(); 
     loadPrefs();
   }
 
  Future<void> loadPrefs() async {
+  firebaseToken = await FirebaseMessaging.instance.getToken();
+      LoginCheckModel? loginCheck =
+          await HttpService.loginCheck(token, firebaseToken!);
+      log(firebaseToken.toString());
+      if (loginCheck!.data == false) {
+        Common.toastMessaage('Token Expired', Colors.red);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Login()),
+              (Route<dynamic> route) => false);
+        }
+      }
     final value = await Common.getSharedPref("multipleWorks");
     userId = await Common.getSharedPref("userId");
     token = await Common.getSharedPref("token");
@@ -109,8 +125,6 @@ class _QuotationDashboardState extends State<QuotationDashboard>
         await Common.getSharedPref("startAndStopWorkPermission");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
-    
-    // Load notification count and user dashboard data
     if (token != null) {
       await _loadNotificationCount();
       await _loadUserDashboard();
@@ -118,21 +132,14 @@ class _QuotationDashboardState extends State<QuotationDashboard>
   }
 
   Future<void> _loadNotificationCount() async {
-    // You might need to fetch this from your API
-    // For now, setting to 0
     setState(() {
       notificationCount = 0;
     });
   }
 
   Future<void> _loadUserDashboard() async {
-    // Load user dashboard data similar to ProjectDashboard
-    // You might need to call an API endpoint
     try {
       if (token != null) {
-        // Uncomment and adjust this if you have a similar API
-        // userDashboard = await HttpService.mainDashboard(token!);
-        // setState(() {});
       }
     } catch (e) {
       print("Error loading user dashboard: $e");
@@ -162,7 +169,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddQuotationPage(),
+        builder: (_) =>  AddQuotationPage(),
       ),
     ).then((_) => _loadData());
   }
@@ -747,27 +754,34 @@ class _QuotationDashboardState extends State<QuotationDashboard>
         ),
         _miniCard(
           Icons.pending,
-          'Pending',
+          'Pending Requests',
           dashboardData!.pendingRequest.toString(),
           Colors.orange,
           onTap: () => _navigateToRequests("7"),
         ),
         _miniCard(
           Icons.check_circle,
-          'Completed',
+          'Completed Requests',
           dashboardData!.completedRequest.toString(),
           Colors.green,
           onTap: () => _navigateToRequests("4"),
         ),
         _miniCard(
-          Icons.trending_up,
-          'Completion Rate',
-          dashboardData!.totalRequest == 0
-              ? '0%'
-              : '${((dashboardData!.completedRequest / dashboardData!.totalRequest) * 100).toStringAsFixed(1)}%',
-          Colors.purple,
-          onTap: () => _navigateToRequests("All"),
+          Icons.send,
+          'Sent',
+          dashboardData!.totalSent.toString(),
+          const Color.fromARGB(255, 48, 106, 153),
+          onTap: () => _navigateToRequests("2"),
         ),
+        // _miniCard(
+        //   Icons.trending_up,
+        //   'Completion Rate',
+        //   dashboardData!.totalRequest == 0
+        //       ? '0%'
+        //       : '${((dashboardData!.completedRequest / dashboardData!.totalRequest) * 100).toStringAsFixed(1)}%',
+        //   Colors.purple,
+        //   onTap: () => _navigateToRequests("All"),
+        // ),
       ],
     );
   }
@@ -817,22 +831,22 @@ class _QuotationDashboardState extends State<QuotationDashboard>
             _navigateToQuotationList(0);
           },
         ),
-        _miniCard(
-          Icons.pending,
-          'Pending',
-          dashboardData!.pendingRequest.toString(),
-          const Color.fromARGB(255, 218, 216, 144),
-          onTap: () {
-            _navigateToQuotationList(1);
-          },
-        ),
-        _miniCard(
-          Icons.send,
-          'Send',
-          dashboardData!.totalSent.toString(),
-          const Color.fromARGB(255, 48, 106, 153),
-          onTap: () => _navigateToRequests("2"),
-        ),
+        // _miniCard(
+        //   Icons.pending,
+        //   'Pending',
+        //   dashboardData!.pendingRequest.toString(),
+        //   const Color.fromARGB(255, 218, 216, 144),
+        //   onTap: () {
+        //     _navigateToQuotationList(1);
+        //   },
+        // ),
+        // _miniCard(
+        //   Icons.send,
+        //   'Send',
+        //   dashboardData!.totalSent.toString(),
+        //   const Color.fromARGB(255, 48, 106, 153),
+        //   onTap: () => _navigateToRequests("2"),
+        // ),
       ],
     );
   }

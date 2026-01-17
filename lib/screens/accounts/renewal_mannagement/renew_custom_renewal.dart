@@ -107,30 +107,30 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   );
 
   Widget buildFormRow(String label, Widget field) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6), // more breathing space
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.35, // label width
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.right,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6), // more breathing space
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.35, // label width
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                label,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.right,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(child: field),
-      ],
-    ),
-  );
-}
-
+          const SizedBox(width: 10),
+          Expanded(child: field),
+        ],
+      ),
+    );
+  }
 
   postRenewal() async {
     try {
@@ -214,20 +214,22 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
         double rate = double.parse(renewalDetails!.data.invoiceLists[i].rate);
         double qty = double.parse(renewalDetails!.data.invoiceLists[i].qty);
         double rateTotal = rate * qty;
-
-        productName.add(renewalDetails!.data.invoiceLists[i].productName);
-        products.add({
-          "product_id": renewalDetails!.data.invoiceLists[i].productId,
-          "product_name": renewalDetails!.data.invoiceLists[i].productName,
-          "product_rate": renewalDetails!.data.invoiceLists[i].rate,
-          "quantity": renewalDetails!.data.invoiceLists[i].qty,
-          "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
-          "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
-          "total_amount": renewalDetails!.data.invoiceLists[i].amount,
-          "rate_total": rateTotal.toString(),
-          "description":
-              renewalDetails!.data.invoiceLists[i].productDescription,
-        });
+        if (products.isEmpty) {
+          products.clear();
+          productName.add(renewalDetails!.data.invoiceLists[i].productName);
+          products.add({
+            "product_id": renewalDetails!.data.invoiceLists[i].productId,
+            "product_name": renewalDetails!.data.invoiceLists[i].productName,
+            "product_rate": renewalDetails!.data.invoiceLists[i].rate,
+            "quantity": renewalDetails!.data.invoiceLists[i].qty,
+            "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
+            "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+            "total_amount": renewalDetails!.data.invoiceLists[i].amount,
+            "rate_total": rateTotal.toString(),
+            "description":
+                renewalDetails!.data.invoiceLists[i].productDescription,
+          });
+        }
       }
 
       // Recalculate totals based on the new logic
@@ -1523,101 +1525,117 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
 
                     // Target Group
                     if (payStat == "partial" || payStat == "paid")
-  buildFormRow(
-    'Target Group :',
-    GestureDetector(
-      onTap: () => targetGroupDialog(context),
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: Colors.grey.shade400),
-        ),
-        child: targetGroups.isEmpty
-            ? const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Select Target Group',
-                  style: TextStyle(color: Colors.black54),
-                ),
-              )
-            : ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: targetGroupNames.length,
-                itemBuilder: (context, i) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 10),
-                          height: 28,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(6),
-                              bottomLeft: Radius.circular(6),
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(targetGroupNames[i]),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Please Confirm'),
-                                content: const Text(
-                                    'Are you sure to Remove this Number?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text('No'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        targetGroupNames.removeAt(i);
-                                        targetGroups.removeAt(i);
-                                      });
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Yes'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                      buildFormRow(
+                        'Target Group :',
+                        GestureDetector(
+                          onTap: () => targetGroupDialog(context),
                           child: Container(
-                            height: 28,
-                            width: 28,
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              color: Colors.grey.shade100,
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(6),
-                                bottomRight: Radius.circular(6),
-                              ),
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(color: Colors.grey.shade400),
                             ),
-                            child: const Icon(Icons.close,
-                                color: Colors.red, size: 18),
+                            child: targetGroups.isEmpty
+                                ? const Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Select Target Group',
+                                      style: TextStyle(color: Colors.black54),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: targetGroupNames.length,
+                                    itemBuilder: (context, i) {
+                                      return Container(
+                                        margin: const EdgeInsets.only(right: 6),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10),
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Colors.grey),
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    const BorderRadius.only(
+                                                  topLeft: Radius.circular(6),
+                                                  bottomLeft:
+                                                      Radius.circular(6),
+                                                ),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(targetGroupNames[i]),
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                        'Please Confirm'),
+                                                    content: const Text(
+                                                        'Are you sure to Remove this Number?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(),
+                                                        child: const Text('No'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            targetGroupNames
+                                                                .removeAt(i);
+                                                            targetGroups
+                                                                .removeAt(i);
+                                                          });
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                        child:
+                                                            const Text('Yes'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                height: 28,
+                                                width: 28,
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.grey),
+                                                  color: Colors.grey.shade100,
+                                                  borderRadius:
+                                                      const BorderRadius.only(
+                                                    topRight:
+                                                        Radius.circular(6),
+                                                    bottomRight:
+                                                        Radius.circular(6),
+                                                  ),
+                                                ),
+                                                child: const Icon(Icons.close,
+                                                    color: Colors.red,
+                                                    size: 18),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ),
-    ),
-  ),
-
+                      ),
                   ],
                 ),
 

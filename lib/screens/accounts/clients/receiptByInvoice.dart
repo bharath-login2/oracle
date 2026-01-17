@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/receiptByInvModel.dart';
@@ -28,7 +29,10 @@ class _ReceiptByInvoiceState extends State<ReceiptByInvoice> {
 
   ReceiptByInvModel? receiptList;
   bool result = true;
-
+  String? name = '';
+  String? role = '';
+  String? userId = '';
+  String? phoneCallLogPermission = '';
   bool isSearch = false;
   @override
   void initState() {
@@ -38,6 +42,11 @@ class _ReceiptByInvoiceState extends State<ReceiptByInvoice> {
   }
 
   getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -173,18 +182,37 @@ class _ReceiptByInvoiceState extends State<ReceiptByInvoice> {
                                                             0.6,
                                                         child: InkWell(
                                                           onTap: () {
+                                                            // Navigator.push(
+                                                            //   context,
+                                                            //   MaterialPageRoute(
+                                                            //       builder: (context) => ClientDetails(
+                                                            //           widget
+                                                            //               .token,
+                                                            //           receiptList!
+                                                            //               .data!
+                                                            //               .lists![
+                                                            //                   index]
+                                                            //               .clientId
+                                                            //               .toString())),
+                                                            // )
                                                             Navigator.push(
                                                               context,
                                                               MaterialPageRoute(
-                                                                  builder: (context) => ClientDetails(
-                                                                      widget
-                                                                          .token,
-                                                                      receiptList!
-                                                                          .data!
-                                                                          .lists![
-                                                                              index]
-                                                                          .clientId
-                                                                          .toString())),
+                                                                builder: (context) => CustomerDashboard(
+                                                                    name: name!,
+                                                                    token: widget
+                                                                        .token!,
+                                                                    userId:
+                                                                        userId!,
+                                                                    phoneCallLogPermission:
+                                                                        phoneCallLogPermission,
+                                                                    custId: receiptList!
+                                                                        .data!
+                                                                        .lists![
+                                                                            index]
+                                                                        .clientId
+                                                                        .toString()),
+                                                              ),
                                                             ).then((_) {
                                                               getData();
                                                             });

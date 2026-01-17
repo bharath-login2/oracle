@@ -69,16 +69,16 @@ class Data {
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        id: json["id"],
-        name: json["name"],
-        emailId: json["email_id"],
-        contactNo: json["contact_no"],
-        address: json["address"],
-        pincode: json["pincode"],
-        gstNum: json["gst_num"],
-        postOffice: json["post_office"],
-        totalInvoiceAmount: json["total_invoice_amount"],
-        totalReceiptAmount: json["total_receipt_amount"],
+        id: json["id"]??"",
+        name: json["name"]??"",
+        emailId: json["email_id"]??"",
+        contactNo: json["contact_no"]??"",
+        address: json["address"]??"",
+        pincode: json["pincode"]??"",
+        gstNum: json["gst_num"]??"",
+        postOffice: json["post_office"]??"",
+        totalInvoiceAmount: json["total_invoice_amount"]??"",
+        totalReceiptAmount: json["total_receipt_amount"]??"",
         invoice:
             List<Invoice>.from(json["invoice"].map((x) => Invoice.fromJson(x))),
         receipts: List<Receipt>.from(
@@ -132,14 +132,14 @@ class Invoice {
       required this.products});
 
   factory Invoice.fromJson(Map<String, dynamic> json) => Invoice(
-        invid: json["invid"],
-        invoiceNumber: json["invoiceNumber"],
-        invoiceDate: json["invoiceDate"],
-        status: json["status"],
-        totalAmount: json["totalAmount"],
-        paidAmount: json["paidAmount"],
-        balanceAmount: json["balanceAmount"],
-        paymentMethod: json["paymentMethod"],
+        invid: json["invid"]??"",
+        invoiceNumber: json["invoiceNumber"]??"",
+        invoiceDate: json["invoiceDate"]??"",
+        status: json["status"]??"",
+        totalAmount: json["totalAmount"]??"",
+        paidAmount: json["paidAmount"]??"",
+        balanceAmount: json["balanceAmount"]??"",
+        paymentMethod: json["paymentMethod"]??"",
         isPaid: json["isPaid"],
         products: List<Product>.from(
             json["products"].map((x) => Product.fromJson(x))),
@@ -180,14 +180,14 @@ class Receipt {
   });
 
   factory Receipt.fromJson(Map<String, dynamic> json) => Receipt(
-        receiptId: json["receiptId"],
-        receiptNumber: json["receiptNumber"],
-        invoiceNumber: json["invoiceNumber"],
-        receiptDate: json["receiptDate"],
-        paidAmount: json["paidAmount"],
-        paymentMethod: json["paymentMethod"],
-        collectedBy: json["collectedBy"],
-        uploadedFile: json["uploaded_file"],
+        receiptId: json["receiptId"]??"",
+        receiptNumber: json["receiptNumber"]??"",
+        invoiceNumber: json["invoiceNumber"]??"",
+        receiptDate: json["receiptDate"]??"",
+        paidAmount: json["paidAmount"]??"",
+        paymentMethod: json["paymentMethod"]??"",
+        collectedBy: json["collectedBy"]??"",
+        uploadedFile: json["uploaded_file"]??"",
       );
 
   Map<String, dynamic> toJson() => {
@@ -238,20 +238,20 @@ class RenewalList {
   });
 
   factory RenewalList.fromJson(Map<String, dynamic> json) => RenewalList(
-        id: json["id"],
-        invoiceId: json["invoice_id"],
-        clientId: json["client_id"],
-        clientName: json["client_name"],
-        contactNo: json["contact_no"],
-        startDate: json["start_date"],
-        endDate: json["end_date"],
-        remainingDays: json["remaining_days"],
-        products: json["products"],
-        cost: json["cost"],
-        isRenewed: json["is_renewed"],
-        isExpired: json["is_expired"],
-        isPaid: json["is_paid"],
-        renewalType: json["renewal_type"],
+        id: json["id"]??"",
+        invoiceId: json["invoice_id"]??"",
+        clientId: json["client_id"]??"",
+        clientName: json["client_name"]??"",
+        contactNo: json["contact_no"]??"",
+        startDate: json["start_date"]??"",
+        endDate: json["end_date"]??"",
+        remainingDays: json["remaining_days"]??"",
+        products: json["products"]??"",
+        cost: json["cost"]??"",
+        isRenewed: json["is_renewed"]??"",
+        isExpired: json["is_expired"]??"",
+        isPaid: json["is_paid"]??"",
+        renewalType: json["renewal_type"]??"",
         productId: List<ProductId>.from(
             json["product_id"].map((x) => ProductId.fromJson(x))),
       );
@@ -289,10 +289,10 @@ class ProductId {
   });
 
   factory ProductId.fromJson(Map<String, dynamic> json) => ProductId(
-        prdId: json["prd_id"],
-        prdName: json["prd_name"],
-        prdCost: json["prd_cost"],
-        prdQty: json["prd_qty"],
+        prdId: json["prd_id"]??"",
+        prdName: json["prd_name"]??"",
+        prdCost: json["prd_cost"]??"",
+        prdQty: json["prd_qty"]??"",
       );
 
   Map<String, dynamic> toJson() => {
@@ -317,10 +317,10 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-        productId: json["product_id"],
-        qty: json["qty"],
-        amount: json["amount"],
-        productName: json["product_name"],
+        productId: json["product_id"]??"",
+        qty: json["qty"]??"",
+        amount: json["amount"]??"",
+        productName: json["product_name"]??"",
       );
 
   Map<String, dynamic> toJson() => {
@@ -395,35 +395,35 @@ class LeadList {
   });
 
   factory LeadList.fromJson(Map<String, dynamic> json) => LeadList(
-        callDetailsId: json["call_details_id"],
-        callMasterId: json["call_master_id"],
-        calledDate: json["called_date"],
-        createdDate: json["created_date"],
+        callDetailsId: json["call_details_id"]??"",
+        callMasterId: json["call_master_id"]??"",
+        calledDate: json["called_date"]??"",
+        createdDate: json["created_date"]??"",
         lastCalledDate: DateTime.parse(json["last_called_date"]),
-        callResultId: json["call_result_id"],
-        callStatusId: json["call_status_id"],
-        isNewCall: json["is_new_call"],
-        followupDate: json["followup_date"],
-        scheduledDate: json["scheduled_date"],
-        clientName: json["client_name"],
-        contactNumber1: json["contact_number1"],
-        callResult: json["call_result"],
-        proPicThumb: json["pro_pic_thumb"],
-        staffName: json["staff_name"],
-        leadCategory: json["lead_category"],
-        priority: json["priority"],
-        priorityName: json["priority_name"],
-        categoryCount: json["category_count"],
-        leadCategoryId: json["lead_category_id"],
-        leadSubCategoryId: json["lead_sub_category_id"],
-        cost: json["cost"],
-        address: json["address"],
-        leadSubCategory: json["lead_sub_category"],
-        custId: json["cust_id"],
-        profilePic: json["profile_pic"],
-        isCalled: json["is_called"],
-        isSelected: json["is_selected"],
-        isCustomer: json["is_customer"],
+        callResultId: json["call_result_id"]??"",
+        callStatusId: json["call_status_id"]??"",
+        isNewCall: json["is_new_call"]??"",
+        followupDate: json["followup_date"]??"",
+        scheduledDate: json["scheduled_date"]??"",
+        clientName: json["client_name"]??"",
+        contactNumber1: json["contact_number1"]??"",
+        callResult: json["call_result"]??"",
+        proPicThumb: json["pro_pic_thumb"]??"",
+        staffName: json["staff_name"]??"",
+        leadCategory: json["lead_category"]??"",
+        priority: json["priority"]??"",
+        priorityName: json["priority_name"]??"",
+        categoryCount: json["category_count"]??"",
+        leadCategoryId: json["lead_category_id"]??"",
+        leadSubCategoryId: json["lead_sub_category_id"]??"",
+        cost: json["cost"]??"",
+        address: json["address"]??"",
+        leadSubCategory: json["lead_sub_category"]??"",
+        custId: json["cust_id"]??"",
+        profilePic: json["profile_pic"]??"",
+        isCalled: json["is_called"]??"",
+        isSelected: json["is_selected"]??"",
+        isCustomer: json["is_customer"]??"",
       );
 
   Map<String, dynamic> toJson() => {

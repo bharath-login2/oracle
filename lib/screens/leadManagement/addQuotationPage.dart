@@ -18,7 +18,8 @@ import 'package:login2/widgets/quick_add_customer_dialog.dart';
 
 class AddQuotationPage extends StatefulWidget {
   final String? requestId;
-  const AddQuotationPage({Key? key, this.requestId}) : super(key: key);
+  String? custId;
+  AddQuotationPage({Key? key, this.requestId, this.custId}) : super(key: key);
   @override
   State<AddQuotationPage> createState() => _AddQuotationPageState();
 }
@@ -51,26 +52,22 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   List<ProductRow> productRows = [];
   bool isLoadingMaterials = true;
   bool _isRefreshingCustomers = false;
-
-  // State and District related variables
   StateModel? stateModel;
   List<StateList> stateList = [];
   String? selectedStateId;
   String? selectedStateName;
-
   DistrictModel? districtModel;
   List<DistrictList> districtList = [];
   String? selectedDistrictId;
   String? selectedDistrictName;
-
   bool isLoadingState = true;
   bool isLoadingDistrict = false;
-
-  // To track if widget is disposed
   bool _isDisposed = false;
-
   @override
   void initState() {
+    if (widget.custId != null && widget.custId!.isNotEmpty) {
+      selectedCustomerId = widget.custId;
+    }
     super.initState();
     _initializeData();
   }
@@ -78,7 +75,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   @override
   void dispose() {
     _isDisposed = true;
-    // Dispose all controllers
     customerNameCtrl.dispose();
     templateCtrl.dispose();
     materialCtrl.dispose();
@@ -87,33 +83,60 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     districtController.dispose();
     stateController.dispose();
     nationalityController.dispose();
-    
-    // Dispose product row controllers
     for (var row in productRows) {
       row.quantityController.dispose();
       row.rateController.dispose();
       row.gstController.dispose();
       row.materialCtrl.dispose();
     }
-    
+
     super.dispose();
   }
 
+  // Future<void> _initializeData() async {
+  //   try {
+  //     await _loadToken();
+  //     await _getStates();
+  //     await Future.wait([
+  //       _loadCustomers(),
+  //       _loadMaterials(),
+  //       _loadTemplates(),
+  //     ]);
+
+  //     if (widget.requestId != null &&
+  //         widget.requestId!.isNotEmpty &&
+  //         !_isDisposed) {
+  //       await _fetchRequestData(widget.requestId!);
+  //     }
+  //   } catch (e) {
+  //     print('🔥 Error initializing data: $e');
+  //   }
+  // }
   Future<void> _initializeData() async {
     try {
-      // Load essential data first
       await _loadToken();
       await _getStates();
-      
-      // Load customers, materials, and templates
+      if (widget.custId != null && widget.custId!.isNotEmpty) {
+        await _loadCustomers();
+        if (_customerModel != null && _customerModel!.data.isNotEmpty) {
+          final customer = _customerModel!.data.firstWhere(
+            (c) => c.id == widget.custId,
+            orElse: () => CustomerDetails(
+                id: '', name: '', address: '', contactNo: '', emailId: ''),
+          );
+          if (customer.id.isNotEmpty) {
+            _selectCustomer(customer);
+          }
+        }
+      }
       await Future.wait([
-        _loadCustomers(),
+        if (widget.custId == null) _loadCustomers(),
         _loadMaterials(),
         _loadTemplates(),
       ]);
-      
-      // Now fetch request data if available
-      if (widget.requestId != null && widget.requestId!.isNotEmpty && !_isDisposed) {
+      if (widget.requestId != null &&
+          widget.requestId!.isNotEmpty &&
+          !_isDisposed) {
         await _fetchRequestData(widget.requestId!);
       }
     } catch (e) {
@@ -123,7 +146,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _fetchRequestData(String requestId) async {
     if (_isDisposed) return;
-    
+
     try {
       if (!_isDisposed) {
         setState(() => isLoadingRequestData = true);
@@ -133,11 +156,11 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
       if (result != null && result.data != null) {
         _requestResponse = result;
-        
+
         // Populate data without using context
         await _populateCustomerDetails(result.data!.customerData);
         await _populateProductDetails(result.data!.productDetails);
-        
+
         if (!_isDisposed) {
           setState(() {});
         }
@@ -158,29 +181,66 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   void _showSafeToast(String message, Color color) {
-    // Use a global key or other method to show toast without context
-    // For now, just print
     print('Toast: $message');
   }
 
-  Future<void> _populateProductDetails(List<ProductDetail>? productDetails) async {
+  _selectCustomerById(String customerId) async {
+    try {
+      // First, ensure customers are loaded
+      if (_customerModel == null || _customerModel!.data.isEmpty) {
+        await _loadCustomers();
+      }
+
+      if (_customerModel != null && _customerModel!.data.isNotEmpty) {
+        final customer = _customerModel!.data.firstWhere(
+          (c) => c.id == customerId,
+          orElse: () => CustomerDetails(
+              id: '', name: '', address: '', contactNo: '', emailId: ''),
+        );
+
+        if (customer.id.isNotEmpty) {
+          if (!_isDisposed) {
+            setState(() {
+              selectedCustomerId = customer.id;
+              customerNameCtrl.text = customer.name;
+            });
+          }
+
+          // Load work orders and customer details
+          _loadWorkOrderId(customer.id);
+          await _loadCustomerDetails(customer.id);
+
+          print('✅ Customer ${customer.name} selected automatically');
+        } else {
+          print('⚠️ Customer with ID $customerId not found');
+          _showSafeToast('Customer not found', Colors.orange);
+        }
+      }
+    } catch (e) {
+      print('🔥 Error selecting customer by ID: $e');
+    }
+  }
+
+  Future<void> _populateProductDetails(
+      List<ProductDetail>? productDetails) async {
     if (productDetails == null || productDetails.isEmpty) return;
 
     try {
       // Clear existing product rows
       productRows.clear();
-      
+
       // Add new product rows based on the response
       for (var product in productDetails) {
         MaterialData? matchedMaterial;
         if (materials.isNotEmpty) {
           matchedMaterial = materials.firstWhere(
-            (material) => (material.materialName ?? '').toLowerCase() ==
+            (material) =>
+                (material.materialName ?? '').toLowerCase() ==
                 (product.productname ?? '').toLowerCase(),
             orElse: () => MaterialData(),
           );
         }
-        
+
         final row = ProductRow(
           materialData: matchedMaterial,
           quantityController: TextEditingController(
@@ -212,72 +272,22 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _populateCustomerDetails(CustomerData? customerData) async {
     if (customerData == null || _isDisposed) return;
-
     try {
-      // Set address immediately
       if (!_isDisposed) {
         setState(() {
           addressController.text = customerData.address ?? '';
         });
       }
-      
-      // Try to find customer by ID from the request
-      if (customerData.customerName != null && customerData.customerName!.isNotEmpty) {
-        // First, wait for customers to load
-        if (_customerModel == null || _customerModel!.data.isEmpty) {
-          await _loadCustomers();
-        }
-        
-        // Try to find customer in the loaded list
-        if (_customerModel != null && _customerModel!.data.isNotEmpty) {
-          final matchedCustomer = _customerModel!.data.firstWhere(
-            (customer) => customer.id == customerData.customerName,
-            orElse: () => CustomerDetails(
-              id: '', 
-              name: '', 
-              address: '', 
-              contactNo: '', 
-              emailId: ''
-            ),
-          );
 
-          if (matchedCustomer.id.isNotEmpty) {
-            // Customer found - populate the field
-            if (!_isDisposed) {
-              setState(() {
-                selectedCustomerId = matchedCustomer.id;
-                customerNameCtrl.text = matchedCustomer.name;
-              });
-            }
-            
-            // Load work orders and customer details
-            _loadWorkOrderId(matchedCustomer.id);
-            await _loadCustomerDetails(matchedCustomer.id);
-          } else {
-            // Customer NOT found - leave field as "Select Customer"
-            print('⚠️ Customer ID ${customerData.customerName} not found in customer list');
-            
-            // Clear any previous customer selection
-            if (!_isDisposed) {
-              setState(() {
-                selectedCustomerId = null;
-                customerNameCtrl.text = "";
-                selectedWorkOrder = null;
-                workOrders = ["No Work Order ID"];
-                // Don't clear address, state, district as they come from request
-              });
-            }
-          }
-        }
-      }
-      
-      // Handle state (always set these from request data)
-      if (customerData.state != null && customerData.state!.isNotEmpty) {
-        // Check if states are loaded
+      if (customerData.customerName != null &&
+          customerData.customerName!.isNotEmpty) {}
+      if (customerData.state != null &&
+          customerData.state!.isNotEmpty &&
+          customerData.state != "0") {
         if (stateList.isEmpty) {
           await _getStates();
         }
-        
+
         if (stateList.isNotEmpty && !_isDisposed) {
           final matchedState = stateList.firstWhere(
             (state) => state.id == customerData.state,
@@ -292,18 +302,13 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                 stateController.text = matchedState.name;
               });
             }
-            
-            // Load districts for this state
             await _getDistricts(matchedState.id);
-            
-            // Now handle district
-            if (customerData.district != null && 
-                customerData.district!.isNotEmpty && 
+            if (customerData.district != null &&
+                customerData.district!.isNotEmpty &&
+                customerData.district != "0" &&
                 !_isDisposed) {
-              
-              // Wait for districts to load
               await Future.delayed(const Duration(milliseconds: 300));
-              
+
               if (!_isDisposed && districtList.isNotEmpty) {
                 final matchedDistrict = districtList.firstWhere(
                   (district) => district.id == customerData.district,
@@ -317,7 +322,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                     districtController.text = matchedDistrict.name;
                   });
                 } else {
-                  // District not found in list, use the ID as text
                   setState(() {
                     districtController.text = customerData.district!;
                   });
@@ -332,9 +336,108 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     }
   }
 
+  // Future<void> _populateCustomerDetails(CustomerData? customerData) async {
+  //   if (customerData == null || _isDisposed) return;
+  //   try {
+  //     if (!_isDisposed) {
+  //       setState(() {
+  //         addressController.text = customerData.address ?? '';
+  //       });
+  //     }
+  //     if (customerData.customerName != null &&
+  //         customerData.customerName!.isNotEmpty) {
+  //       bool shouldAutoSelect = widget.custId != null &&
+  //           widget.custId!.isNotEmpty &&
+  //           customerData.customerName == widget.custId;
+  //       if (_customerModel == null || _customerModel!.data.isEmpty) {
+  //         await _loadCustomers();
+  //       }
+  //       if (_customerModel != null && _customerModel!.data.isNotEmpty) {
+  //         final matchedCustomer = _customerModel!.data.firstWhere(
+  //           (customer) => customer.id == customerData.customerName,
+  //           orElse: () => CustomerDetails(
+  //               id: '', name: '', address: '', contactNo: '', emailId: ''),
+  //         );
+  //         if (matchedCustomer.id.isNotEmpty) {
+  //           if (!_isDisposed) {
+  //             setState(() {
+  //               selectedCustomerId = matchedCustomer.id;
+  //               customerNameCtrl.text = matchedCustomer.name;
+  //             });
+  //           }
+  //           _loadWorkOrderId(matchedCustomer.id);
+  //           await _loadCustomerDetails(matchedCustomer.id);
+  //         } else {
+  //           print(
+  //               '⚠️ Customer ID ${customerData.customerName} not found in customer list');
+
+  //           if (shouldAutoSelect && widget.custId != null) {
+  //             await _selectCustomerById(widget.custId!);
+  //           } else {
+  //             if (!_isDisposed) {
+  //               setState(() {
+  //                 selectedCustomerId = null;
+  //                 customerNameCtrl.text = "";
+  //                 selectedWorkOrder = null;
+  //                 workOrders = ["No Work Order ID"];
+  //               });
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     if (customerData.state != null && customerData.state!.isNotEmpty) {
+  //       if (stateList.isEmpty) {
+  //         await _getStates();
+  //       }
+
+  //       if (stateList.isNotEmpty && !_isDisposed) {
+  //         final matchedState = stateList.firstWhere(
+  //           (state) => state.id == customerData.state,
+  //           orElse: () => StateList(id: '', name: ''),
+  //         );
+  //         if (matchedState.id.isNotEmpty) {
+  //           if (!_isDisposed) {
+  //             setState(() {
+  //               selectedStateId = matchedState.id;
+  //               selectedStateName = matchedState.name;
+  //               stateController.text = matchedState.name;
+  //             });
+  //           }
+  //           await _getDistricts(matchedState.id);
+  //           if (customerData.district != null &&
+  //               customerData.district!.isNotEmpty &&
+  //               !_isDisposed) {
+  //             await Future.delayed(const Duration(milliseconds: 300));
+  //             if (!_isDisposed && districtList.isNotEmpty) {
+  //               final matchedDistrict = districtList.firstWhere(
+  //                 (district) => district.id == customerData.district,
+  //                 orElse: () => DistrictList(id: '', name: ''),
+  //               );
+  //               if (matchedDistrict.id.isNotEmpty) {
+  //                 setState(() {
+  //                   selectedDistrictId = matchedDistrict.id;
+  //                   selectedDistrictName = matchedDistrict.name;
+  //                   districtController.text = matchedDistrict.name;
+  //                 });
+  //               } else {
+  //                 setState(() {
+  //                   districtController.text = customerData.district!;
+  //                 });
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('🔥 Error populating customer details: $e');
+  //   }
+  // }
+
   Future<void> _loadMaterials() async {
     if (_isDisposed) return;
-    
     setState(() => isLoadingMaterials = true);
     final httpService = HttpService();
     final materialList = await httpService.getMaterials();
@@ -353,7 +456,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _loadCustomers({bool showLoading = true}) async {
     if (_isDisposed) return;
-    
+
     if (showLoading) {
       setState(() => isLoadingCustomers = true);
     }
@@ -378,7 +481,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _getStates() async {
     if (_isDisposed) return;
-    
+
     setState(() => isLoadingState = true);
     final response = await HttpService.getState();
     if (!_isDisposed) {
@@ -395,7 +498,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _getDistricts(String stateId) async {
     if (_isDisposed) return;
-    
+
     setState(() {
       isLoadingDistrict = true;
     });
@@ -413,92 +516,97 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     }
   }
 
+
+Map<String, double> _calculateGrandTotals() {
+  double totalGstAmount = 0;
+  double totalSubTotal = 0;
+  for (int i = 0; i < productRows.length; i++) {
+    final total = _calculateTotal(i);
+    double gstPercentage = double.tryParse(productRows[i].gstController.text) ?? 0.0;
+    double gstAmount = total * (gstPercentage / 100);
+    totalGstAmount += gstAmount;
+    totalSubTotal += _calculateSubTotal(i);
+  }
+  return {
+    'gstAmount': totalGstAmount,
+    'subTotal': totalSubTotal,
+  };
+}
+
+
   Future<void> _submitQuotation() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    try {
-      final httpService = HttpService();
-      final templateFields = _templateDetailsModel?.data?.fields
-              ?.map(
-                (field) => ({
-                  "field_name": field.fieldName ?? '',
-                  "field_value": field.fieldData ?? '',
-                }),
-              )
-              .toList() ??
-          [];
-      final productList = productRows.map((row) {
-        return {
-          "material_id": row.materialData?.materialId ?? '',
-          "material_name": row.materialData?.materialName ?? '',
-          "quantity": row.quantityController.text,
-          "rate": row.rateController.text,
-          "gst": row.gstController.text,
-          "total": _calculateSubTotal(
-            productRows.indexOf(row),
-          ).toStringAsFixed(2),
-          "unit": row.materialData?.unitName ?? '',
-        };
-      }).toList();
-      final formData = FormData.fromMap({
-        "customer_id": selectedCustomerId ?? '',
-        "work_order_id": selectedWorkOrder ?? '',
-        "quotation_id": quotationId,
-        "enquiry_date": enquiryDateController.text,
-        "rate_type": selectedRateType,
-        "address": addressController.text,
-        "district": selectedDistrictId ?? '',
-        "district_name": selectedDistrictName ?? districtController.text,
-        "state": selectedStateId ?? '',
-        "state_name": selectedStateName ?? stateController.text,
-        "nationality": nationalityController.text,
-        "template_id": selectedTemplateId ?? '',
-        "template_fields": jsonEncode(templateFields),
-        "products": jsonEncode(productList),
-      });
-
-      final response = await httpService.submitQuotation(formData);
-
-      if (response != null && response["status"] == "success") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              "Quotation submitted successfully!",
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              response?["message"] ?? "Submission failed",
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    } catch (e, stack) {
-      log("Quotation submission error: $e");
-      log(stack.toString());
+  if (!_formKey.currentState!.validate()) return;
+  try {
+    final httpService = HttpService();
+    final templateFields = _templateDetailsModel?.data?.fields
+            ?.map(
+              (field) => ({
+                "field_name": field.fieldName ?? '',
+                "field_value": field.fieldData ?? '',
+              }),
+            )
+            .toList() ??
+        [];
+    final productList = productRows.map((row) {
+      final total = double.tryParse(row.quantityController.text) ?? 0.0 * 
+                   (double.tryParse(row.rateController.text) ?? 0.0);
+      final gstPercentage = double.tryParse(row.gstController.text) ?? 0.0;
+      final gstAmount = total * (gstPercentage / 100);
+      return {
+        "material_id": row.materialData?.materialId ?? '',
+        "material_name": row.materialData?.materialName ?? '',
+        "quantity": row.quantityController.text,
+        "rate": row.rateController.text,
+        "gst": row.gstController.text,
+        "gst_amount": gstAmount.toStringAsFixed(2), 
+        "total": _calculateSubTotal(
+          productRows.indexOf(row),
+        ).toStringAsFixed(2),
+        "unit": row.materialData?.unitName ?? '',
+      };
+    }).toList();
+    final formData = FormData.fromMap({
+      "customer_id": selectedCustomerId ?? '',
+      "work_order_id": selectedWorkOrder ?? '',
+      "quotation_request_id": widget.requestId ?? '',
+      "quotation_id": quotationId,
+      "enquiry_date": enquiryDateController.text,
+      "rate_type": selectedRateType,
+      "address": addressController.text,
+      "district": selectedDistrictId ?? '',
+      "district_name": selectedDistrictName ?? districtController.text,
+      "state": selectedStateId ?? '',
+      "state_name": selectedStateName ?? stateController.text,
+      "nationality": nationalityController.text,
+      "template_id": selectedTemplateId ?? '',
+      "template_fields": jsonEncode(templateFields),
+      "products": jsonEncode(productList),
+      "total_gst_amount": _calculateGrandTotals()['gstAmount']?.toStringAsFixed(2) ?? '0.00',
+      "grand_total": _calculateGrandTotals()['subTotal']?.toStringAsFixed(2) ?? '0.00', 
+    });
+    final response = await httpService.submitQuotation(formData);
+    if (response != null && response["status"] == "success") {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            "An error occurred while submitting",
+            "Quotation submitted successfully!",
             style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response?["message"] ?? "Submission failed",
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
@@ -509,11 +617,129 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
         ),
       );
     }
+  } catch (e, stack) {
+    log("Quotation submission error: $e");
+    log(stack.toString());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          "An error occurred while submitting",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
+}
+
+  // Future<void> _submitQuotation() async {
+  //   if (!_formKey.currentState!.validate()) return;
+
+  //   try {
+  //     final httpService = HttpService();
+  //     final templateFields = _templateDetailsModel?.data?.fields
+  //             ?.map(
+  //               (field) => ({
+  //                 "field_name": field.fieldName ?? '',
+  //                 "field_value": field.fieldData ?? '',
+  //               }),
+  //             )
+  //             .toList() ??
+  //         [];
+  //     final productList = productRows.map((row) {
+  //       return {
+  //         "material_id": row.materialData?.materialId ?? '',
+  //         "material_name": row.materialData?.materialName ?? '',
+  //         "quantity": row.quantityController.text,
+  //         "rate": row.rateController.text,
+  //         "gst": row.gstController.text,
+  //         "gst_amount": row.gstController.text,
+  //         "total": _calculateSubTotal(
+  //           productRows.indexOf(row),
+  //         ).toStringAsFixed(2),
+  //         "unit": row.materialData?.unitName ?? '',
+  //       };
+  //     }).toList();
+  //     final formData = FormData.fromMap({
+  //       "customer_id": selectedCustomerId ?? '',
+  //       "work_order_id": selectedWorkOrder ?? '',
+  //       "quotation_request_id": widget.requestId ?? '',
+  //       "quotation_id": quotationId,
+  //       "enquiry_date": enquiryDateController.text,
+  //       "rate_type": selectedRateType,
+  //       "address": addressController.text,
+  //       "district": selectedDistrictId ?? '',
+  //       "district_name": selectedDistrictName ?? districtController.text,
+  //       "state": selectedStateId ?? '',
+  //       "state_name": selectedStateName ?? stateController.text,
+  //       "nationality": nationalityController.text,
+  //       "template_id": selectedTemplateId ?? '',
+  //       "template_fields": jsonEncode(templateFields),
+  //       "products": jsonEncode(productList),
+  //     });
+
+  //     final response = await httpService.submitQuotation(formData);
+
+  //     if (response != null && response["status"] == "success") {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: const Text(
+  //             "Quotation submitted successfully!",
+  //             style: TextStyle(color: Colors.white),
+  //           ),
+  //           backgroundColor: Colors.green,
+  //           behavior: SnackBarBehavior.floating,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(10),
+  //           ),
+  //           margin: const EdgeInsets.all(16),
+  //         ),
+  //       );
+  //       Navigator.pop(context);
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             response?["message"] ?? "Submission failed",
+  //             style: const TextStyle(color: Colors.white),
+  //           ),
+  //           backgroundColor: Colors.red,
+  //           behavior: SnackBarBehavior.floating,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(10),
+  //           ),
+  //           margin: const EdgeInsets.all(16),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e, stack) {
+  //     log("Quotation submission error: $e");
+  //     log(stack.toString());
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: const Text(
+  //           "An error occurred while submitting",
+  //           style: TextStyle(color: Colors.white),
+  //         ),
+  //         backgroundColor: Colors.red,
+  //         behavior: SnackBarBehavior.floating,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //         ),
+  //         margin: const EdgeInsets.all(16),
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> _loadTemplates() async {
     if (_isDisposed) return;
-    
+
     setState(() => isLoadingTemplates = true);
 
     final httpService = HttpService();
@@ -534,7 +760,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
 
   Future<void> _loadTemplateDetails(String templateId) async {
     if (_isDisposed) return;
-    
+
     setState(() => isLoadingTemplates = true);
     final httpService = HttpService();
     final templateDetails = await httpService.getTemplateDetails(templateId);
@@ -554,6 +780,82 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     }
   }
 
+  // Future<void> _loadCustomerDetails(String customerId) async {
+  //   if (customerId.isEmpty || _isDisposed) return;
+
+  //   try {
+  //     final httpService = HttpService();
+  //     final customerDetails = await httpService.getCustomerDetails(customerId);
+
+  //     if (!_isDisposed) {
+  //       if (customerDetails != null &&
+  //           customerDetails.data.isNotEmpty &&
+  //           customerDetails.status == "success") {
+  //         final customerData = customerDetails.data.first;
+
+  //         // The API returns IDs, not names
+  //         final stateIdFromApi = customerData.state;
+  //         final districtIdFromApi = customerData.district;
+
+  //         // Find state name from stateList using the ID
+  //         String? stateName;
+  //         if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
+  //           final matchedState = stateList.firstWhere(
+  //             (state) => state.id == stateIdFromApi,
+  //             orElse: () => StateList(id: '', name: ''),
+  //           );
+  //           stateName = matchedState.name;
+  //         }
+
+  //         // If state is found, load districts for that state
+  //         if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
+  //           await _getDistricts(stateIdFromApi);
+  //         }
+
+  //         // Find district name from districtList using the ID
+  //         String? districtName;
+  //         if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
+  //           final matchedDistrict = districtList.firstWhere(
+  //             (district) => district.id == districtIdFromApi,
+  //             orElse: () => DistrictList(id: '', name: ''),
+  //           );
+  //           districtName = matchedDistrict.name;
+  //         }
+
+  //         setState(() {
+  //           // Only update address if it's empty (don't overwrite request data)
+  //           if (addressController.text.isEmpty) {
+  //             addressController.text = customerData.address;
+  //           }
+
+  //           // Update other fields
+  //           nationalityController.text = customerData.nationality;
+
+  //           // Set state dropdown only if not already set from request
+  //           if (stateIdFromApi.isNotEmpty && selectedStateId == null) {
+  //             selectedStateId = stateIdFromApi;
+  //             selectedStateName = stateName ?? stateIdFromApi;
+  //             stateController.text = stateName ?? stateIdFromApi;
+  //           }
+
+  //           // Set district dropdown only if not already set from request
+  //           if (districtIdFromApi.isNotEmpty && selectedDistrictId == null) {
+  //             selectedDistrictId = districtIdFromApi;
+  //             selectedDistrictName = districtName ?? districtIdFromApi;
+  //             districtController.text = districtName ?? districtIdFromApi;
+  //           }
+  //         });
+
+  //         log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
+  //         log("State Name: $stateName, District Name: $districtName");
+  //       }
+  //     }
+  //   } catch (e, stack) {
+  //     log("Customer details loading error: $e");
+  //     log(stack.toString());
+  //   }
+  // }
+
   Future<void> _loadCustomerDetails(String customerId) async {
     if (customerId.isEmpty || _isDisposed) return;
 
@@ -567,72 +869,72 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             customerDetails.status == "success") {
           final customerData = customerDetails.data.first;
 
-          // The API returns IDs, not names
           final stateIdFromApi = customerData.state;
           final districtIdFromApi = customerData.district;
 
-          // Find state name from stateList using the ID
-          String? stateName;
-          if (stateIdFromApi.isNotEmpty && stateList.isNotEmpty) {
-            final matchedState = stateList.firstWhere(
-              (state) => state.id == stateIdFromApi,
-              orElse: () => StateList(id: '', name: ''),
-            );
-            stateName = matchedState.name;
-          }
-
-          // If state is found, load districts for that state
-          if (stateIdFromApi.isNotEmpty && stateIdFromApi != selectedStateId) {
-            await _getDistricts(stateIdFromApi);
-          }
-
-          // Find district name from districtList using the ID
-          String? districtName;
-          if (districtIdFromApi.isNotEmpty && districtList.isNotEmpty) {
-            final matchedDistrict = districtList.firstWhere(
-              (district) => district.id == districtIdFromApi,
-              orElse: () => DistrictList(id: '', name: ''),
-            );
-            districtName = matchedDistrict.name;
-          }
-
-          setState(() {
-            // Only update address if it's empty (don't overwrite request data)
-            if (addressController.text.isEmpty) {
-              addressController.text = customerData.address;
-            }
-            
-            // Update other fields
-            nationalityController.text = customerData.nationality;
-
-            // Set state dropdown only if not already set from request
-            if (stateIdFromApi.isNotEmpty && selectedStateId == null) {
-              selectedStateId = stateIdFromApi;
-              selectedStateName = stateName ?? stateIdFromApi;
-              stateController.text = stateName ?? stateIdFromApi;
+          // FIX: Check for "0" or empty values
+          if (stateIdFromApi.isNotEmpty && stateIdFromApi != "0") {
+            String? stateName;
+            if (stateList.isNotEmpty) {
+              final matchedState = stateList.firstWhere(
+                (state) => state.id == stateIdFromApi,
+                orElse: () => StateList(id: '', name: ''),
+              );
+              stateName = matchedState.name;
             }
 
-            // Set district dropdown only if not already set from request
-            if (districtIdFromApi.isNotEmpty && selectedDistrictId == null) {
-              selectedDistrictId = districtIdFromApi;
-              selectedDistrictName = districtName ?? districtIdFromApi;
-              districtController.text = districtName ?? districtIdFromApi;
+            if (stateIdFromApi != selectedStateId) {
+              await _getDistricts(stateIdFromApi);
             }
-          });
+
+            setState(() {
+              if (addressController.text.isEmpty) {
+                addressController.text = customerData.address;
+              }
+
+              nationalityController.text = customerData.nationality;
+
+              // FIX: Only set if not "0"
+              if (selectedStateId == null) {
+                selectedStateId = stateIdFromApi;
+                selectedStateName = stateName ?? stateIdFromApi;
+                stateController.text = stateName ?? stateIdFromApi;
+              }
+            });
+          }
+
+          // FIX: Check for "0" or empty values for district
+          if (districtIdFromApi.isNotEmpty && districtIdFromApi != "0") {
+            String? districtName;
+            if (districtList.isNotEmpty) {
+              final matchedDistrict = districtList.firstWhere(
+                (district) => district.id == districtIdFromApi,
+                orElse: () => DistrictList(id: '', name: ''),
+              );
+              districtName = matchedDistrict.name;
+            }
+
+            setState(() {
+              // FIX: Only set if not "0"
+              if (selectedDistrictId == null) {
+                selectedDistrictId = districtIdFromApi;
+                selectedDistrictName = districtName ?? districtIdFromApi;
+                districtController.text = districtName ?? districtIdFromApi;
+              }
+            });
+          }
 
           log("Customer Details: State ID: $stateIdFromApi, District ID: $districtIdFromApi");
-          log("State Name: $stateName, District Name: $districtName");
         }
       }
     } catch (e, stack) {
       log("Customer details loading error: $e");
-      log(stack.toString());
     }
   }
 
   Future<void> _loadWorkOrderId(String customerId) async {
     if (_isDisposed) return;
-    
+
     setState(() => isLoadingTemplates = true);
 
     final httpService = HttpService();
@@ -719,14 +1021,14 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
         ),
       );
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Add Quotation',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
+        //   centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 22, 145, 216),
         foregroundColor: Colors.white,
         actions: [
@@ -760,7 +1062,8 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: Colors.blue.shade700),
+                            Icon(Icons.info_outline,
+                                color: Colors.blue.shade700),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -782,7 +1085,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                           ],
                         ),
                       ),
-                    
+
                     _sectionTitle("Customer Details"),
                     const SizedBox(height: 12),
                     Row(
@@ -886,12 +1189,84 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                     // State Dropdown
                     Row(
                       children: [
+                        // Expanded(
+                        //   child: Column(
+                        //     crossAxisAlignment: CrossAxisAlignment.start,
+                        //     children: [
+                        //       const Text(
+                        //         "State ",
+                        //         style: TextStyle(
+                        //           fontSize: 14,
+                        //           fontWeight: FontWeight.w600,
+                        //           color: Colors.black87,
+                        //         ),
+                        //       ),
+                        //       const SizedBox(height: 6),
+                        //       isLoadingState
+                        //           ? const Center(
+                        //               child: CircularProgressIndicator())
+                        //           : DropdownButtonFormField<String>(
+                        //               value: selectedStateId,
+                        //               hint: const Text("Select State"),
+                        //               decoration: InputDecoration(
+                        //                 border: OutlineInputBorder(
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(12),
+                        //                 ),
+                        //                 contentPadding:
+                        //                     const EdgeInsets.symmetric(
+                        //                   horizontal: 12,
+                        //                   vertical: 10,
+                        //                 ),
+                        //               ),
+                        //               items: stateList.map((state) {
+                        //                 return DropdownMenuItem<String>(
+                        //                   value: state.id,
+                        //                   child: Text(state.name),
+                        //                   onTap: () {
+                        //                     setState(() {
+                        //                       selectedStateName = state.name;
+                        //                       stateController.text = state.name;
+                        //                     });
+                        //                   },
+                        //                 );
+                        //               }).toList(),
+                        //               onChanged: (value) {
+                        //                 setState(() {
+                        //                   selectedStateId = value;
+                        //                   if (value != null) {
+                        //                     final state = stateList.firstWhere(
+                        //                       (s) => s.id == value,
+                        //                       orElse: () =>
+                        //                           StateList(id: '', name: ''),
+                        //                     );
+                        //                     if (state.id.isNotEmpty) {
+                        //                       selectedStateName = state.name;
+                        //                       stateController.text = state.name;
+                        //                     }
+                        //                   } else {
+                        //                     selectedStateName = null;
+                        //                     stateController.clear();
+                        //                   }
+                        //                   // Clear district when state changes
+                        //                   selectedDistrictId = null;
+                        //                   selectedDistrictName = null;
+                        //                   districtController.clear();
+                        //                   districtList.clear();
+                        //                 });
+                        //                 if (value != null) _getDistricts(value);
+                        //               },
+                        //             ),
+                        //     ],
+                        //   ),
+                        // ),
+                        // State Dropdown - Add this fix
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "State *",
+                                "State ",
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -903,7 +1278,11 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                   ? const Center(
                                       child: CircularProgressIndicator())
                                   : DropdownButtonFormField<String>(
-                                      value: selectedStateId,
+                                      value: (selectedStateId == null ||
+                                              selectedStateId == "0" ||
+                                              selectedStateId!.isEmpty)
+                                          ? null
+                                          : selectedStateId,
                                       hint: const Text("Select State"),
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
@@ -916,19 +1295,18 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                           vertical: 10,
                                         ),
                                       ),
-                                  
-                                      items: stateList.map((state) {
-                                        return DropdownMenuItem<String>(
-                                          value: state.id,
-                                          child: Text(state.name),
-                                          onTap: () {
-                                            setState(() {
-                                              selectedStateName = state.name;
-                                              stateController.text = state.name;
-                                            });
-                                          },
-                                        );
-                                      }).toList(),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                          value: null,
+                                          child: Text("Select State"),
+                                        ),
+                                        ...stateList.map((state) {
+                                          return DropdownMenuItem<String>(
+                                            value: state.id,
+                                            child: Text(state.name),
+                                          );
+                                        }).toList(),
+                                      ],
                                       onChanged: (value) {
                                         setState(() {
                                           selectedStateId = value;
@@ -946,7 +1324,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                             selectedStateName = null;
                                             stateController.clear();
                                           }
-                                          // Clear district when state changes
                                           selectedDistrictId = null;
                                           selectedDistrictName = null;
                                           districtController.clear();
@@ -959,13 +1336,84 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // District Dropdown
+
+                        // Expanded(
+                        //   child: Column(
+                        //     crossAxisAlignment: CrossAxisAlignment.start,
+                        //     children: [
+                        //       const Text(
+                        //         "District ",
+                        //         style: TextStyle(
+                        //           fontSize: 14,
+                        //           fontWeight: FontWeight.w600,
+                        //           color: Colors.black87,
+                        //         ),
+                        //       ),
+                        //       const SizedBox(height: 6),
+                        //       isLoadingDistrict
+                        //           ? const Center(
+                        //               child: CircularProgressIndicator())
+                        //           : DropdownButtonFormField<String>(
+                        //               value: selectedDistrictId,
+                        //               hint: const Text("Select District"),
+                        //               decoration: InputDecoration(
+                        //                 border: OutlineInputBorder(
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(12),
+                        //                 ),
+                        //                 contentPadding:
+                        //                     const EdgeInsets.symmetric(
+                        //                   horizontal: 12,
+                        //                   vertical: 10,
+                        //                 ),
+                        //               ),
+                        //               items: districtList.map((district) {
+                        //                 return DropdownMenuItem<String>(
+                        //                   value: district.id,
+                        //                   child: Text(district.name),
+                        //                   onTap: () {
+                        //                     setState(() {
+                        //                       selectedDistrictName =
+                        //                           district.name;
+                        //                       districtController.text =
+                        //                           district.name;
+                        //                     });
+                        //                   },
+                        //                 );
+                        //               }).toList(),
+                        //               onChanged: (value) {
+                        //                 setState(() {
+                        //                   selectedDistrictId = value;
+                        //                   if (value != null) {
+                        //                     final district =
+                        //                         districtList.firstWhere(
+                        //                       (d) => d.id == value,
+                        //                       orElse: () => DistrictList(
+                        //                           id: '', name: ''),
+                        //                     );
+                        //                     if (district.id.isNotEmpty) {
+                        //                       selectedDistrictName =
+                        //                           district.name;
+                        //                       districtController.text =
+                        //                           district.name;
+                        //                     }
+                        //                   } else {
+                        //                     selectedDistrictName = null;
+                        //                     districtController.clear();
+                        //                   }
+                        //                 });
+                        //               },
+                        //             ),
+                        //     ],
+                        //   ),
+                        // ),
+                        // District Dropdown - Add this fix
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "District *",
+                                "District ",
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -977,7 +1425,11 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                   ? const Center(
                                       child: CircularProgressIndicator())
                                   : DropdownButtonFormField<String>(
-                                      value: selectedDistrictId,
+                                      value: (selectedDistrictId == null ||
+                                              selectedDistrictId == "0" ||
+                                              selectedDistrictId!.isEmpty)
+                                          ? null
+                                          : selectedDistrictId,
                                       hint: const Text("Select District"),
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
@@ -990,21 +1442,18 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                           vertical: 10,
                                         ),
                                       ),
-                                     
-                                      items: districtList.map((district) {
-                                        return DropdownMenuItem<String>(
-                                          value: district.id,
-                                          child: Text(district.name),
-                                          onTap: () {
-                                            setState(() {
-                                              selectedDistrictName =
-                                                  district.name;
-                                              districtController.text =
-                                                  district.name;
-                                            });
-                                          },
-                                        );
-                                      }).toList(),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                          value: null,
+                                          child: Text("Select District"),
+                                        ),
+                                        ...districtList.map((district) {
+                                          return DropdownMenuItem<String>(
+                                            value: district.id,
+                                            child: Text(district.name),
+                                          );
+                                        }).toList(),
+                                      ],
                                       onChanged: (value) {
                                         setState(() {
                                           selectedDistrictId = value;
@@ -1516,16 +1965,16 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             ),
           ),
         ),
-        Expanded(
-          flex: 1,
-          child: Text(
-            "Unit*",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
-            ),
-          ),
-        ),
+        // Expanded(
+        //   flex: 1,
+        //   child: Text(
+        //     "Unit*",
+        //     style: TextStyle(
+        //       fontWeight: FontWeight.bold,
+        //       color: Colors.teal.shade800,
+        //     ),
+        //   ),
+        // ),
         const SizedBox(width: 8),
         Expanded(
           flex: 2,
@@ -1540,7 +1989,17 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
         Expanded(
           flex: 2,
           child: Text(
-            "GST*",
+            "GST %*",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.teal.shade800,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Text(
+            "GST Amount",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.teal.shade800,
@@ -1572,6 +2031,13 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   }
 
   Widget _productRow(int index, ProductRow row) {
+    // Calculate GST Amount
+    double calculateGstAmount() {
+      final total = _calculateTotal(index);
+      double gstPercentage = double.tryParse(row.gstController.text) ?? 0.0;
+      return total * (gstPercentage / 100);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1701,14 +2167,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             ),
           ),
           Expanded(
-            flex: 1,
-            child: Text(
-              row.materialData?.unitName ?? 'Unit',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-          Expanded(
             flex: 2,
             child: Text(
               "₹${_calculateTotal(index).toStringAsFixed(2)}",
@@ -1737,6 +2195,18 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                 ),
               ),
               onChanged: (value) => setState(() {}),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "₹${calculateGstAmount().toStringAsFixed(2)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Colors.orange,
+              ),
             ),
           ),
           Expanded(
@@ -2153,9 +2623,8 @@ class __CustomerSearchDialogState extends State<_CustomerSearchDialog> {
               onChanged: (value) {
                 setState(() {
                   filteredList = widget.customers
-                      .where((c) => c.name
-                          .toLowerCase()
-                          .contains(value.toLowerCase()))
+                      .where((c) =>
+                          c.name.toLowerCase().contains(value.toLowerCase()))
                       .toList();
                 });
               },
@@ -2226,6 +2695,7 @@ class __MaterialSearchDialogState extends State<_MaterialSearchDialog> {
     super.initState();
     searchCtrl = TextEditingController();
     filteredList = List.from(widget.materials);
+    // _initializeData();
   }
 
   @override
