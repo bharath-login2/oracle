@@ -134,6 +134,8 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("View All Works"),
+           backgroundColor: const Color.fromARGB(255, 77, 155, 228),
+        foregroundColor: Colors.white,
         actions: [
           Row(
             children: [
@@ -410,6 +412,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (_) => ViewWorkPage(
+                                                     staffName: staff.name,
                                                     staffId: staff.staffId,
                                                     selectedDate: selectedDate,
                                                   ),
@@ -447,6 +450,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => ViewWorkPage(
+                                           staffName: staff.name,
                                         staffId: staff.staffId,
                                         selectedDate: selectedDate,
                                       ),

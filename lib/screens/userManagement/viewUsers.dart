@@ -104,11 +104,23 @@ class _ViewUsersState extends State<ViewUsers> {
         await Common.getSharedPref("NewleadDashboardPermission");
     viewAttendanceSection = await Common.getSharedPref("viewAttendanceSection");
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -1141,7 +1153,8 @@ class _ViewUsersState extends State<ViewUsers> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  MinimalDashboard(widget.token)),
+                                                  MinimalDashboard(
+                                                      widget.token)),
                                         )
                                       : Navigator.pushReplacement(
                                           context,

@@ -249,11 +249,23 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -607,8 +619,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 height: 5,
                               )
                             : const SizedBox(),
-                      //  const Divider(),
-                      SizedBox(
+                        //  const Divider(),
+                        SizedBox(
                           height: 10,
                         ),
                         Padding(
@@ -3866,7 +3878,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                         //         labelStyle: TextStyle(color: Colors.grey)),
                         //   ),
                         // ),
-                         SizedBox(
+                        SizedBox(
                           width: 110,
                           child: TextFormField(
                             controller: productTotalAmount,
@@ -4417,141 +4429,161 @@ class _AddInvoiceState extends State<AddInvoice> {
     );
   }
 
-Future<dynamic> productDialog(BuildContext context, String type) {
-  return showDialog(
-    context: context,
-    builder: (context) {
-      return Builder(builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          // Create a LOCAL list for this dialog
-          List<Product> localFilteredItems = [];
-          localFilteredItems.addAll(items); // Start with all items
-          
-          return AlertDialog(
-            scrollable: true,
-            title: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: TextField(
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        // Use local list, not class-level filteredItems
-                        localFilteredItems = items
-                            .where((item) => item.productName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(left: 8),
-                      labelStyle: TextStyle(
-                        color: Colors.grey,
-                      ),
-                      labelText: 'Search...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: SizedBox(
-              height: MediaQuery.of(context).size.height * .4,
-              width: MediaQuery.of(context).size.width * .8,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: localFilteredItems.length, // Use local list
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: const Color(0xFFFCFBFA),
-                      ),
-                      child: ListTile(
+  Future<dynamic> productDialog(BuildContext context, String type) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Builder(builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            // Create a LOCAL list for this dialog
+            List<Product> localFilteredItems = [];
+            localFilteredItems.addAll(items); // Start with all items
+
+            return AlertDialog(
+              scrollable: true,
+              title: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
                         onTap: () {
-                          if (type == "add") {
-                            if (productQty.text == "") {
-                              productQty.text = "1";
-                            }
-                            productName = localFilteredItems[index].productName; // Use local list
-                            productId = localFilteredItems[index].id; // Use local list
-                            productRate.text = localFilteredItems[index].sellingPrice; // Use local list
-                            productTaxPercent.text = localFilteredItems[index].taxPercent; // Use local list
-                            productTaxAmount.text = localFilteredItems[index].taxAmount; // Use local list
-                            productTotalAmount.text = ((double.parse(productRate.text) +
-                                        double.parse(productTaxAmount.text)) *
-                                    double.parse(productQty.text))
-                                .toString();
-                            productTotalAmount.text = double.parse(productTotalAmount.text)
-                                .toStringAsFixed(2);
-                            if (paymentStatus == "paid") {
-                              paidAmount.text = productTotalAmount.text;
-                            }
-                            typeDuration = localFilteredItems[index].noOfDays; // Use local list
-                          } else {
-                            if (renProductQty.text == "") {
-                              renProductQty.text = "1";
-                            }
-                            renProductName = localFilteredItems[index].productName; // Use local list
-                            renProductId = localFilteredItems[index].id; // Use local list
-                            renProductRate.text = localFilteredItems[index].sellingPrice; // Use local list
-                            renProductTaxPercent.text = localFilteredItems[index].taxPercent; // Use local list
-                            renProductTaxAmount.text = localFilteredItems[index].taxAmount; // Use local list
-                            renProductTotalAmount.text = ((double.parse(renProductRate.text) +
-                                        double.parse(renProductTaxAmount.text)) *
-                                    double.parse(renProductQty.text))
-                                .toString();
-                            renProductTotalAmount.text = double.parse(renProductTotalAmount.text)
-                                .toStringAsFixed(2);
-                          }
-                          setState(() {});
                           if (context.mounted) {
                             Navigator.pop(context);
                           }
                         },
-                        title: Text(localFilteredItems[index].productName), // Use local list
-                        leading: CircleAvatar(
-                          radius: 15,
-                          backgroundColor: Colors.white,
-                          child: Text(localFilteredItems[index].productName[0]), // Use local list
+                        child: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          // Use local list, not class-level filteredItems
+                          localFilteredItems = items
+                              .where((item) => item.productName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 8),
+                        labelStyle: TextStyle(
+                          color: Colors.grey,
+                        ),
+                        labelText: 'Search...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.all(Radius.circular(15.0)),
                         ),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          );
+              content: SizedBox(
+                height: MediaQuery.of(context).size.height * .4,
+                width: MediaQuery.of(context).size.width * .8,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: localFilteredItems.length, // Use local list
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: const Color(0xFFFCFBFA),
+                        ),
+                        child: ListTile(
+                          onTap: () {
+                            if (type == "add") {
+                              if (productQty.text == "") {
+                                productQty.text = "1";
+                              }
+                              productName = localFilteredItems[index]
+                                  .productName; // Use local list
+                              productId = localFilteredItems[index]
+                                  .id; // Use local list
+                              productRate.text = localFilteredItems[index]
+                                  .sellingPrice; // Use local list
+                              productTaxPercent.text = localFilteredItems[index]
+                                  .taxPercent; // Use local list
+                              productTaxAmount.text = localFilteredItems[index]
+                                  .taxAmount; // Use local list
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              if (paymentStatus == "paid") {
+                                paidAmount.text = productTotalAmount.text;
+                              }
+                              typeDuration = localFilteredItems[index]
+                                  .noOfDays; // Use local list
+                            } else {
+                              if (renProductQty.text == "") {
+                                renProductQty.text = "1";
+                              }
+                              renProductName = localFilteredItems[index]
+                                  .productName; // Use local list
+                              renProductId = localFilteredItems[index]
+                                  .id; // Use local list
+                              renProductRate.text = localFilteredItems[index]
+                                  .sellingPrice; // Use local list
+                              renProductTaxPercent.text =
+                                  localFilteredItems[index]
+                                      .taxPercent; // Use local list
+                              renProductTaxAmount.text =
+                                  localFilteredItems[index]
+                                      .taxAmount; // Use local list
+                              renProductTotalAmount.text =
+                                  ((double.parse(renProductRate.text) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(renProductQty.text))
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                            }
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(localFilteredItems[index]
+                              .productName), // Use local list
+                          leading: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.white,
+                            child: Text(localFilteredItems[index]
+                                .productName[0]), // Use local list
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          });
         });
-      });
-    },
-  );
-}
+      },
+    );
+  }
 
   Future<Object?> changeAmount(
       BuildContext context,

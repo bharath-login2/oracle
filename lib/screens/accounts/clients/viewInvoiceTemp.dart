@@ -42,21 +42,33 @@ class _ViewInvoiceTempState extends State<ViewInvoiceTemp> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
       });
     }
 
-    invDetails =
-        await HttpService.invoiceCommonDetailsTemp(widget.token, widget.clientId);
-    invoiceEditDetails =
-        await HttpService.invoiceEditDetailsTemp(widget.token, widget.invoiceId);
+    invDetails = await HttpService.invoiceCommonDetailsTemp(
+        widget.token, widget.clientId);
+    invoiceEditDetails = await HttpService.invoiceEditDetailsTemp(
+        widget.token, widget.invoiceId);
     if (invoiceEditDetails != null) {
       items = invDetails!.data.products;
       filteredItems.addAll(items);
@@ -88,10 +100,10 @@ class _ViewInvoiceTempState extends State<ViewInvoiceTemp> {
   }
 
   takeScreenshot() async {
-   // String? name = '${widget.invoiceNumber}.pdf';
-     String formattedDate =
+    // String? name = '${widget.invoiceNumber}.pdf';
+    String formattedDate =
         DateTime.now().toString().split(' ')[0].replaceAll('-', '_');
-          String name = 'perfoma_invoice_$formattedDate.pdf';
+    String name = 'perfoma_invoice_$formattedDate.pdf';
 
     // Take a screenshot
     Uint8List? screenshot = await screenshotController.capture();

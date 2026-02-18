@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/backgroundModel.dart';
 import 'package:login2/models/clients/addInvoiceGstModel.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/editInvoiceDetailsModelGST.dart';
@@ -36,6 +37,7 @@ import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
 import 'package:login2/models/expense/pending_expense.dart';
+import 'package:login2/models/expense/profit_and_loss_model.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/expense/targetGroupModel.dart';
 import 'package:login2/models/groupTargetModel.dart';
@@ -61,6 +63,7 @@ import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
+import 'package:login2/models/lead_management/invoiceListHistory.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
@@ -84,10 +87,15 @@ import 'package:login2/models/lead_management/staffReportModel.dart';
 import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
+import 'package:login2/models/lead_management/staffwiseCompletedUpdatedModel.dart';
+import 'package:login2/models/lead_management/staffwisePendingUpdatedModel.dart';
+import 'package:login2/models/lead_management/staffwiseWorkDataCountModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
+import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
 import 'package:login2/models/lead_management/updatePendingList.dart';
 import 'package:login2/models/lead_management/uploadedQuotationModel.dart';
+import 'package:login2/models/lead_management/workCountModel.dart';
 import 'package:login2/models/lead_management/workMessageModel.dart';
 import 'package:login2/models/lead_management/workOrderIdModel.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
@@ -147,6 +155,7 @@ import 'package:login2/models/serviceman/workCategoryGraphModel.dart';
 import 'package:login2/models/serviceman/workCategoryModel.dart';
 import 'package:login2/models/serviceman/workOrderIdModel.dart';
 import 'package:login2/models/serviceman/workTypeModel.dart';
+import 'package:login2/models/staff_report/AttendanceStaffwiseModel.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/staff_report/targetReportModel.dart';
@@ -332,17 +341,17 @@ class HttpService {
     }
   }
 
-  // static Future backgroundData(body) async {
-  //   try {
-  //     var result = await _dio.get("${await Config.getUrl()}getClientName",
-  //         queryParameters: body);
-  //     if (kDebugMode) {}
-  //     BackgroundModel model = BackgroundModel.fromJson(result.data);
-  //     return model;
-  //   } catch (e) {
-  //     log("error: $e");
-  //   }
-  // }
+  static Future backgroundData(body) async {
+    try {
+      var result = await _dio.get("${await Config.getUrl()}getClientName",
+          queryParameters: body);
+      if (kDebugMode) {}
+      BackgroundModel model = BackgroundModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
 
   static Future forceUpdate() async {
     try {
@@ -376,14 +385,22 @@ class HttpService {
     String username,
     String pass,
     String firebaseToken,
-    String? faceData,
-  ) async {
+    String? faceData, {
+    String? deviceName,
+    String? platform,
+    String? osVersion,
+    String? mobileName,
+  }) async {
     log("${await Config.getUrl()}login");
     var params = {
       "phoneNumber": username,
       "password": pass,
       "firebaseId": firebaseToken,
       "faceData": faceData ?? "",
+      "mobile_series": mobileName ?? "",
+      "platform": platform ?? "",
+      "platform_version": osVersion ?? "",
+      "mobile_name": deviceName ?? "",
     };
     log("Firebase Token: $firebaseToken");
     try {
@@ -1703,9 +1720,6 @@ class HttpService {
     }
   }
 
-/* Settings Ends Here */
-
-/* Main User Starts Here.. */
   static Future mainDashboard(token) async {
     var formData = FormData.fromMap({
       "token": token,
@@ -1728,7 +1742,6 @@ class HttpService {
     try {
       final formData =
           FormData.fromMap({"token": token, "id": id, "type": type});
-
       final response = await _dio.post(
         "${await Config.getUrl()}api_view_pdf",
         data: formData,
@@ -1765,8 +1778,6 @@ class HttpService {
     }
   }
 
-/* Main Users Ends Here..*/
-/* Contact Group Starts Here..*/
   static Future contactGroup(token) async {
     var formData = FormData.fromMap({
       "token": token,
@@ -6751,7 +6762,6 @@ class HttpService {
       FormData formData = FormData.fromMap({
         'token': token,
       });
-
       final response = await _dio.post(
         "${await Config.getUrl()}get_staffs",
         data: formData,
@@ -6874,6 +6884,7 @@ class HttpService {
   static Future<bool> saveLeave({
     required String staffId,
     required String date,
+    required String remarks,
     required String leaveType,
     required bool isHalfDay,
   }) async {
@@ -6883,6 +6894,7 @@ class HttpService {
         'token': token,
         'staff_id': staffId,
         'date': date,
+        'remarks': remarks,
         'leave_type': leaveType,
         'half_day': isHalfDay ? "1" : "0",
       });
@@ -7538,6 +7550,7 @@ class HttpService {
   static Future<List<AssignedWork>> getAssignedWorks({
     Map<String, dynamic>? filters,
     String? sectionId,
+    String? unassigned,
   }) async {
     final token = await Common.getSharedPref('token');
     final formData = FormData();
@@ -7545,6 +7558,9 @@ class HttpService {
 
     if (sectionId != null && sectionId.isNotEmpty) {
       formData.fields.add(MapEntry('section_id', sectionId));
+    }
+    if (unassigned != null && unassigned.isNotEmpty) {
+      formData.fields.add(MapEntry('is_unassigned', unassigned));
     }
 
     if (sectionId != null && sectionId.isNotEmpty) {
@@ -7957,16 +7973,22 @@ class HttpService {
         "${await Config.getUrl()}get_history",
         data: FormData.fromMap({
           'token': token,
-          'date': DateFormat("yyyy-MM-dd").format(date).toString(),
+          'date': DateFormat("dd-MM-yyyy").format(date).toString(),
           'staff_id': staffId,
         }),
         options: Options(contentType: 'multipart/form-data'),
       );
 
-      if (response.statusCode == 200 && response.data['status'] == true) {
-        return AttendanceHistoryModel.fromJson(response.data);
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true) {
+          return AttendanceHistoryModel.fromJson(data);
+        } else {
+          print("❌ API returned false status: ${data['message']}");
+          return null;
+        }
       } else {
-        print("❌ Error response: ${response.data}");
+        print("❌ HTTP error: ${response.statusCode}");
         return null;
       }
     } catch (e) {
@@ -8697,7 +8719,6 @@ class HttpService {
       String requestType) async {
     try {
       final token = await Common.getSharedPref("token") ?? '';
-
       final response = await _dio.post(
         "${await Config.getUrl()}dashboard_list_api",
         data: FormData.fromMap({
@@ -10476,9 +10497,7 @@ class HttpService {
     try {
       final token = await Common.getSharedPref("token");
       Map<String, dynamic> formDataMap = {"token": token};
-
       if (filters != null) formDataMap.addAll(filters);
-
       final response = await _dio.post(
         "${await Config.getUrl()}rent_return_list_api",
         data: FormData.fromMap(formDataMap),
@@ -10538,6 +10557,386 @@ class HttpService {
       }
     } catch (e) {
       log("getCustomerProductRental error: $e");
+    }
+    return null;
+  }
+
+  Future<WorksCountModel?> getCountsWorks() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_assigned_task_status_counts",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return WorksCountModel.fromJson(data);
+      }
+    } catch (e) {
+      log("getCountsWorks error: $e");
+    }
+    return null;
+  }
+
+  Future<CommonResponse?> deleteWork(String workId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "work_id": workId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_work",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return CommonResponse.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("deleteWork error: $e");
+    }
+    return null;
+  }
+
+  Future<AttendanceStaffwiseModel?> getStaffwiseWorkedDays() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_attendance_staff_wise",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return AttendanceStaffwiseModel.fromJson(data);
+        } else {
+          log("Unexpected response format: $data");
+          return null;
+        }
+      } else {
+        log("API returned status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      log("getStaffwiseWorkedDays error: $e");
+      log("Stack trace: $stackTrace");
+      return null;
+    }
+  }
+
+  Future<CommonResponse?> updateAssignedWork(Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        ...data,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_assigned_work",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData is Map<String, dynamic>) {
+          return CommonResponse.fromJson(responseData);
+        }
+      }
+    } catch (e) {
+      log("updateAssignedWork error: $e");
+    }
+    return null;
+  }
+
+  Future<UnverifiedTransactionModel?> getUnverifiedDetails() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getTransactiondiffer",
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return UnverifiedTransactionModel.fromJson(data);
+        } else {
+          log("Unexpected response format: Expected Map, got ${data.runtimeType}");
+          log("Response data: $data");
+          return null;
+        }
+      } else {
+        log("API returned status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+        return null;
+      }
+    } on DioException catch (e) {
+      log("Dio error in getUnverifiedDetails: $e");
+      if (e.response != null) {
+        log("Response data: ${e.response?.data}");
+        log("Response status: ${e.response?.statusCode}");
+      }
+      return null;
+    } catch (e, stackTrace) {
+      log("getUnverifiedDetails error: $e");
+      log("Stack trace: $stackTrace");
+      return null;
+    }
+  }
+
+  // Future<StaffwisePendingUpdatedModel?> getStaffwiseWorkPendingNew(
+  //     String staffId) async {
+  //   try {
+  //     final token = await Common.getSharedPref("token");
+  //     final formData = FormData.fromMap({"token": token, "staff_id": staffId});
+
+  //     final response = await _dio.post(
+  //       "${await Config.getUrl()}staffwisePendingWorks",
+  //       data: formData,
+  //       options: Options(
+  //         receiveTimeout: const Duration(seconds: 30),
+  //         sendTimeout: const Duration(seconds: 30),
+  //       ),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = response.data;
+  //       if (data is Map<String, dynamic>) {
+  //         return StaffwisePendingUpdatedModel.fromJson(data);
+  //       } else {
+  //         log("Unexpected response format: ${data.runtimeType}");
+  //         return null;
+  //       }
+  //     } else {
+  //       log("API returned status code: ${response.statusCode}");
+  //       log("Response data: ${response.data}");
+  //       return null;
+  //     }
+  //   } catch (e, stackTrace) {
+  //     log("getStaffwiseWorkedDays error: $e");
+  //     log("Stack trace: $stackTrace");
+  //     return null;
+  //   }
+  // }
+  Future<StaffwisePendingUpdatedModel?> getStaffwiseWorkPendingNew(
+    String staffId,
+    String isOverdue,
+    String isUnassigned, {
+    Map<String, dynamic>? filters,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "staff_id": staffId,
+        "is_overdue": isOverdue,
+        "is_unassigned": isUnassigned,
+      });
+      if (filters != null && filters.isNotEmpty) {
+        if (filters.containsKey('assigned_by_ids') &&
+            filters['assigned_by_ids'] is List) {
+          final assignedByIds = filters['assigned_by_ids'] as List;
+          if (assignedByIds.isNotEmpty) {
+            formData.fields
+                .add(MapEntry('assigned_by_ids[]', assignedByIds.join(',')));
+          }
+        }
+        if (filters.containsKey('assigned_to_ids') &&
+            filters['assigned_to_ids'] is List) {
+          final assignedToIds = filters['assigned_to_ids'] as List;
+          if (assignedToIds.isNotEmpty) {
+            formData.fields
+                .add(MapEntry('assigned_to_ids[]', assignedToIds.join(',')));
+          }
+        }
+        if (filters.containsKey('status_names') &&
+            filters['status_names'] is List) {
+          final statusNames = filters['status_names'] as List;
+          if (statusNames.isNotEmpty) {
+            formData.fields
+                .add(MapEntry('status_names[]', statusNames.join(',')));
+          }
+        }
+        if (filters.containsKey('from_date')) {
+          formData.fields
+              .add(MapEntry('from_date', filters['from_date'].toString()));
+        }
+        if (filters.containsKey('to_date')) {
+          formData.fields
+              .add(MapEntry('to_date', filters['to_date'].toString()));
+        }
+        filters.forEach((key, value) {
+          if (![
+            'assigned_by_ids',
+            'assigned_to_ids',
+            'status_names',
+            'from_date',
+            'to_date'
+          ].contains(key)) {
+            if (value != null) {
+              formData.fields.add(MapEntry(key, value.toString()));
+            }
+          }
+        });
+      }
+      log("Sending request with filters: ${formData.fields}");
+      final response = await _dio.post(
+        "${await Config.getUrl()}staffwisePendingWorks",
+        data: formData,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return StaffwisePendingUpdatedModel.fromJson(data);
+        } else {
+          log("Unexpected response format: ${data.runtimeType}");
+          return null;
+        }
+      } else {
+        log("API returned status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      log("getStaffwiseWorkPendingNew error: $e");
+      log("Stack trace: $stackTrace");
+      return null;
+    }
+  }
+
+  Future<StaffwiseCompletedUpdatedModel?> getStaffwiseWorkCompletedNew(
+      String staffId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({"token": token, "staff_id": staffId});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}staffwiseCompletedWorks",
+        data: formData,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return StaffwiseCompletedUpdatedModel.fromJson(data);
+        } else {
+          log("Unexpected response format: ${data.runtimeType}");
+          return null;
+        }
+      } else {
+        log("API returned status code: ${response.statusCode}");
+        log("Response data: ${response.data}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      log("getStaffwiseWorkedDays error: $e");
+      log("Stack trace: $stackTrace");
+      return null;
+    }
+  }
+
+  Future<StaffwiseWorkDataCountModel?> getStaffwiseWorkDataCounts(
+      String staffId, String yearMonth) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap(
+          {"token": token, "staff_id": staffId, "month_year": yearMonth});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_attendance_single_staff",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          try {
+            return StaffwiseWorkDataCountModel.fromJson(data);
+          } catch (e) {
+            log("Error parsing response: $e");
+            return null;
+          }
+        } else {
+          log("Unexpected response format: ${data.runtimeType}");
+          return null;
+        }
+      } else {
+        log("API returned status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      log("getStaffwiseWorkDataCounts error: $e");
+      log("Stack trace: $stackTrace");
+      return null;
+    }
+  }
+
+  Future<ProfitAndLossModel?> getProfitOrLose(String month, String year) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData =
+          FormData.fromMap({"token": token, "month": month, "year": year});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_profit_and_loss",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return ProfitAndLossModel.fromJson(data);
+      }
+    } catch (e) {
+      log("getCountsWorks error: $e");
+    }
+    return null;
+  }
+
+  static Future<InvoiceHistoryLogModel?> getInvoiceHistory(
+      String type, String invId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData =
+          FormData.fromMap({"token": token, "type": type, "inv_id": invId});
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getLogHistory",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return InvoiceHistoryLogModel.fromJson(data);
+      }
+    } catch (e) {
+      log("getCountsWorks error: $e");
     }
     return null;
   }

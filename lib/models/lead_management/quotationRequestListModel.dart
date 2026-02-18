@@ -41,6 +41,7 @@ class QuotationRequestData {
   final String createdDate;
  final String isSend;
  final String quotationCreated;
+  final String quotePk;
   QuotationRequestData({
        required this.Id,
     required this.customerName,
@@ -53,6 +54,7 @@ class QuotationRequestData {
     required this.createdDate,
       required this.isSend,
         required this.quotationCreated,
+        required this.quotePk,
   });
 
   factory QuotationRequestData.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class QuotationRequestData {
       createdDate: json['created_date']?.toString() ?? '',
        isSend: json['is_send']?.toString() ?? '',
         quotationCreated: json['quotation_created']?.toString() ?? '',
+         quotePk: json['quote_pk']?.toString() ?? '',
     );
   }
 
@@ -84,6 +87,7 @@ class QuotationRequestData {
       'created_date': createdDate,
        'is_send': isSend,
        'quotation_created': quotationCreated,
+        'quote_pk': quotePk,
     };
   }
 }

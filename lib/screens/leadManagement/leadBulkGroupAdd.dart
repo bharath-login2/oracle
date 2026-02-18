@@ -34,11 +34,23 @@ class _AddBulkContactGroupState extends State<AddBulkContactGroup> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -510,47 +522,54 @@ class _AddBulkContactGroupState extends State<AddBulkContactGroup> {
                         onTap: () async {
                           final connectivityResult =
                               await (Connectivity().checkConnectivity());
-                          if (connectivityResult == ConnectivityResult.mobile ||
-                              connectivityResult == ConnectivityResult.wifi) {
-                            if (groupName.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Type Group name', Colors.red);
-                            }
-                            if (message.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Type your content', Colors.red);
-                            } else {
-                              Map<String, dynamic> body = {
-                                "token": widget.token,
-                                "group_name": groupName.text,
-                                "min_delay": minDelay.text,
-                                "max_delay": maxDelay.text,
-                                "message": message.text,
-                                "scheduled_time": scheduledDate.text,
-                                'phoneNumbers': widget.phoneNumbers,
-                              };
-                              if (context.mounted) {
-                                Common.showProgressDialog(context, "Loading..");
+                          // if (connectivityResult == ConnectivityResult.mobile ||
+                          //     connectivityResult == ConnectivityResult.wifi) {
+                          if (connectivityResult is List<ConnectivityResult>) {
+                            if (connectivityResult
+                                    .contains(ConnectivityResult.mobile) ||
+                                connectivityResult
+                                    .contains(ConnectivityResult.wifi)) {
+                              if (groupName.text.isEmpty) {
+                                Common.toastMessaage(
+                                    'Type Group name', Colors.red);
                               }
-
-                              AddBulkContactGroupModel object1 =
-                                  await HttpService.addBulkContactGroup(body);
-                              if (object1.data == true) {
+                              if (message.text.isEmpty) {
                                 Common.toastMessaage(
-                                    object1.message, Colors.green);
-                                if (context.mounted) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            GroupList(widget.token)),
-                                  );
-                                }
+                                    'Type your content', Colors.red);
                               } else {
-                                Common.toastMessaage(
-                                    object1.message, Colors.red);
+                                Map<String, dynamic> body = {
+                                  "token": widget.token,
+                                  "group_name": groupName.text,
+                                  "min_delay": minDelay.text,
+                                  "max_delay": maxDelay.text,
+                                  "message": message.text,
+                                  "scheduled_time": scheduledDate.text,
+                                  'phoneNumbers': widget.phoneNumbers,
+                                };
                                 if (context.mounted) {
-                                  Navigator.pop(context);
+                                  Common.showProgressDialog(
+                                      context, "Loading..");
+                                }
+
+                                AddBulkContactGroupModel object1 =
+                                    await HttpService.addBulkContactGroup(body);
+                                if (object1.data == true) {
+                                  Common.toastMessaage(
+                                      object1.message, Colors.green);
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              GroupList(widget.token)),
+                                    );
+                                  }
+                                } else {
+                                  Common.toastMessaage(
+                                      object1.message, Colors.red);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               }
                             }

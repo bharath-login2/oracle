@@ -194,9 +194,13 @@ class _ExpenseListState extends State<ExpenseList> {
     categoryName = widget.catName ?? "Tap to select";
 
     final connectivityResult = await Connectivity().checkConnectivity();
+    // setState(() {
+    //   result = connectivityResult == ConnectivityResult.mobile ||
+    //       connectivityResult == ConnectivityResult.wifi;
+    // });
     setState(() {
-      result = connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi;
+      result = connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi);
     });
 
     if (result) {

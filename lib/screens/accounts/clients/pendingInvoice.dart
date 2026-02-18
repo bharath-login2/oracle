@@ -79,11 +79,23 @@ class _PendingInvoiceState extends State<PendingInvoice>
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -109,24 +121,23 @@ class _PendingInvoiceState extends State<PendingInvoice>
     }
   }
 
-
   void refreshInvoiceList() async {
-  setState(() {
-    filteredInvoices.clear();
-  });
-  
-  invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
-  if (invoiceResponse != null) {
-    invoices = invoiceResponse!.data.lists;
-    filteredInvoices.addAll(invoices);
-    
-    if (invSearch.text.isNotEmpty) {
-      filterInvoices(invSearch.text);
+    setState(() {
+      filteredInvoices.clear();
+    });
+
+    invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
+    if (invoiceResponse != null) {
+      invoices = invoiceResponse!.data.lists;
+      filteredInvoices.addAll(invoices);
+
+      if (invSearch.text.isNotEmpty) {
+        filterInvoices(invSearch.text);
+      }
+
+      setState(() {});
     }
-    
-    setState(() {});
   }
-}
 
   filterInvoices(String value) {
     setState(() {
@@ -1191,7 +1202,7 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                                                 Colors.green,
                                                                               );
 
-                                                                              Navigator.of(ctx).pop(); 
+                                                                              Navigator.of(ctx).pop();
                                                                               refreshInvoiceList();
                                                                             } else {
                                                                               Common.toastMessaage(

@@ -67,106 +67,105 @@ class _SplashScreenState extends State<SplashScreen> {
     _updateSelectedDashboard();
   }
 
-
-   Future<void> _updateSelectedDashboard() async {
-      try {
-        final token = await Common.getSharedPref("token");
-        if (token != null) {
-          final object1 = await HttpService.userPermissionCheck(token);
-          if (object1.status == true) {
-            Common.saveSharedPref("ProjectDashboardPermission",
-                object1.data!.ProjectDashboard.toString());
-            Common.saveSharedPref(
-                "LeadDashboard", object1.data!.LeadDashboard.toString());
-            Common.saveSharedPref("AccountsDashboardPermission",
-                object1.data!.AccountsDashboard.toString());
-            Common.saveSharedPref(
-                "MenuDashboard", object1.data!.MenuDashboard.toString());
-            Common.saveSharedPref("RenewalDashboardPermission",
-                object1.data!.RenewalDashboard.toString());
-            Common.saveSharedPref("NewleadDashboardPermission",
-                object1.data!.NewleadDashboard.toString());
-            Common.saveSharedPref("QuotationDashboardPermission",
-                object1.data!.QuotationDashboard.toString());
-                 Common.saveSharedPref("RoomDashboard",
-                object1.data!.RoomDashboard.toString());
-            if (object1.data!.ProjectDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const ProjectDashboard()),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.LeadDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
-                MaterialPageRoute(builder: (_) => Dashboard(token)),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.AccountsDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => AccountsDashboard(token: token)),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.RenewalDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const RenewalDashboard()),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.QuotationDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const QuotationDashboard()),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.MenuDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => HomePage(token)),
-                (route) => false,
-              );
-              return;
-            }
-            if (object1.data!.NewleadDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => MinimalDashboard(token)),
-                (route) => false,
-              );
-              return;
-            }   if (object1.data!.RoomDashboard == "true") {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => RoomDashboard()),
-                (route) => false,
-              );
-              return;
-            }  else {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => Dashboard(token)),
-                (route) => false,
-              );
-            }
+  Future<void> _updateSelectedDashboard() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token != null) {
+        final object1 = await HttpService.userPermissionCheck(token);
+        if (object1.status == true) {
+          Common.saveSharedPref("ProjectDashboardPermission",
+              object1.data!.ProjectDashboard.toString());
+          Common.saveSharedPref(
+              "LeadDashboard", object1.data!.LeadDashboard.toString());
+          Common.saveSharedPref("AccountsDashboardPermission",
+              object1.data!.AccountsDashboard.toString());
+          Common.saveSharedPref(
+              "MenuDashboard", object1.data!.MenuDashboard.toString());
+          Common.saveSharedPref("RenewalDashboardPermission",
+              object1.data!.RenewalDashboard.toString());
+          Common.saveSharedPref("NewleadDashboardPermission",
+              object1.data!.NewleadDashboard.toString());
+          Common.saveSharedPref("QuotationDashboardPermission",
+              object1.data!.QuotationDashboard.toString());
+          Common.saveSharedPref(
+              "RoomDashboard", object1.data!.RoomDashboard.toString());
+          if (object1.data!.ProjectDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const ProjectDashboard()),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.LeadDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
+              MaterialPageRoute(builder: (_) => Dashboard(token)),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.AccountsDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => AccountsDashboard(token: token)),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.RenewalDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const RenewalDashboard()),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.QuotationDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const QuotationDashboard()),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.MenuDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => HomePage(token)),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.NewleadDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => MinimalDashboard(token)),
+              (route) => false,
+            );
+            return;
+          }
+          if (object1.data!.RoomDashboard == "true") {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => RoomDashboard()),
+              (route) => false,
+            );
+            return;
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => Dashboard(token)),
+              (route) => false,
+            );
           }
         }
-      } catch (e) {
-        print("Error refreshing permissions after dashboard update: $e");
       }
-   
+    } catch (e) {
+      print("Error refreshing permissions after dashboard update: $e");
+    }
   }
   //!   deeplink init function
 
@@ -188,13 +187,12 @@ class _SplashScreenState extends State<SplashScreen> {
       String? MenuDashboard = await Common.getSharedPref("MenuDashboard");
       String? RenewalDashboardPermission =
           await Common.getSharedPref("RenewalDashboardPermission");
-           String? NewleadDashboardPermission =
+      String? NewleadDashboardPermission =
           await Common.getSharedPref("NewleadDashboardPermission");
-             String? QuotationDashboardPermission =
+      String? QuotationDashboardPermission =
           await Common.getSharedPref("QuotationDashboardPermission");
-           String? RoomDashboardPer =
-          await Common.getSharedPref("RoomDashboard");
-       String? savedUrl = await Common.getSharedPref("url");
+      String? RoomDashboardPer = await Common.getSharedPref("RoomDashboard");
+      String? savedUrl = await Common.getSharedPref("url");
       Widget dashboardToOpen;
       if (ProjectDashboardPermission == "true") {
         dashboardToOpen = ProjectDashboard();
@@ -210,14 +208,14 @@ class _SplashScreenState extends State<SplashScreen> {
         dashboardToOpen = HomePage(token);
       } else if (RenewalDashboardPermission == "true") {
         dashboardToOpen = RenewalDashboard();
-      }else if (NewleadDashboardPermission == "true") {
+      } else if (NewleadDashboardPermission == "true") {
         dashboardToOpen = MinimalDashboard(token);
       } else if (QuotationDashboardPermission == "true") {
         dashboardToOpen = QuotationDashboard();
       } else if (RoomDashboardPer == "true") {
         dashboardToOpen = RoomDashboard();
       } else {
-        dashboardToOpen = Dashboard(token); 
+        dashboardToOpen = Dashboard(token);
       }
       if (mounted) {
         // Navigator.of(context)
@@ -240,7 +238,7 @@ class _SplashScreenState extends State<SplashScreen> {
     String editLead = await Common.getSharedPref("updateLeadPermission");
     String deleteLead = await Common.getSharedPref("deleteLeadPermission");
     String cloudCall = await Common.getSharedPref("cloudCallPermission");
-   
+
     if (leadId == '0') {
       if (mounted) {
         Navigator.of(context).push(MaterialPageRoute(
@@ -267,15 +265,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   handleAsync() async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: true,
-        provisional: true,
-        sound: true,
-      );
+      // await FirebaseMessaging.instance.requestPermission(
+      //   alert: true,
+      //   announcement: false,
+      //   badge: true,
+      //   carPlay: false,
+      //   criticalAlert: true,
+      //   provisional: true,
+      //   sound: true,
+      // );
       firebaseToken = await FirebaseMessaging.instance.getToken();
       await LoggerService.log("Firebase token received: $firebaseToken");
       if (kDebugMode) {
@@ -359,7 +357,7 @@ class _SplashScreenState extends State<SplashScreen> {
   //           LoggerService.log(
   //               "Server URL saved: ${updatedata!.data!.server![0].url}");
   //         }
-        
+
   //       });
 
   //       final info = await PackageInfo.fromPlatform();
@@ -454,68 +452,81 @@ class _SplashScreenState extends State<SplashScreen> {
 //   }
 // }
 
-getData() async {
-  setState(() {
-    timeOut = false;
-  });
+  getData() async {
+    setState(() {
+      timeOut = false;
+    });
 
-  try {
-    await LoggerService.log("Checking network connectivity...");
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    await LoggerService.log("Connectivity: $connectivityResult");
+    try {
+      await LoggerService.log("Checking network connectivity...");
+      // final connectivityResult = await (Connectivity().checkConnectivity());
+      // await LoggerService.log("Connectivity: $connectivityResult");
 
-    bool hasNetwork = connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi;
-    result = hasNetwork;
+      // bool hasNetwork = connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi;
+      // result = hasNetwork;
+      final connectivityResult = await Connectivity().checkConnectivity();
 
-    await LoggerService.log("Fetching forceUpdate data...");
-    updatedata = await HttpService.forceUpdate();
-    await LoggerService.log(
-        "forceUpdate data received: ${updatedata?.data?.minVersion}");
+      // Check connectivity
+      if (connectivityResult is List<ConnectivityResult>) {
+        result = connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi);
+      } else if (connectivityResult is ConnectivityResult) {
+        result = connectivityResult == ConnectivityResult.mobile ||
+            connectivityResult == ConnectivityResult.wifi;
+      }
 
-    if (updatedata!.data!.server!.isNotEmpty) {
-      String? savedUrl = await Common.getSharedPref("url");
+      if (!result!) {
+        setState(() {});
+        return;
+      }
 
-      if (savedUrl == null || savedUrl.isEmpty) {
-        await Common.saveSharedPref("url", "");
-        await LoggerService.log("Cleared saved URL (was null/empty).");
+      await LoggerService.log("Fetching forceUpdate data...");
+      updatedata = await HttpService.forceUpdate();
+      await LoggerService.log(
+          "forceUpdate data received: ${updatedata?.data?.minVersion}");
+
+      if (updatedata!.data!.server!.isNotEmpty) {
+        String? savedUrl = await Common.getSharedPref("url");
+
+        if (savedUrl == null || savedUrl.isEmpty) {
+          await Common.saveSharedPref("url", "");
+          await LoggerService.log("Cleared saved URL (was null/empty).");
+        } else {
+          await LoggerService.log("Keeping already saved URL: $savedUrl");
+        }
+      }
+
+      final info = await PackageInfo.fromPlatform();
+
+      if (mounted) {
+        setState(() {
+          _packageInfo = info;
+        });
+      }
+
+      await LoggerService.log("App version: ${_packageInfo.version}");
+
+      int versionCompare = _packageInfo.version
+          .compareTo(updatedata!.data!.minVersion.toString());
+      await LoggerService.log("Version compare result: $versionCompare");
+
+      if (versionCompare < 0) {
+        await LoggerService.log("Version outdated, navigating to ForceUpdate");
+        _checkVersion();
       } else {
-        await LoggerService.log("Keeping already saved URL: $savedUrl");
+        await LoggerService.log("Version OK, proceeding to loadWidget");
+        _loadWidget();
+      }
+    } catch (e) {
+      await LoggerService.log("Error in getData: $e");
+      if (mounted) {
+        setState(() {
+          timeOut = true;
+        });
       }
     }
-
-    final info = await PackageInfo.fromPlatform();
-
-    if (mounted) {
-      setState(() {
-        _packageInfo = info;
-      });
-    }
-
-    await LoggerService.log("App version: ${_packageInfo.version}");
-
-    int versionCompare = _packageInfo.version
-        .compareTo(updatedata!.data!.minVersion.toString());
-    await LoggerService.log("Version compare result: $versionCompare");
-
-    if (versionCompare < 0) {
-      await LoggerService.log("Version outdated, navigating to ForceUpdate");
-      _checkVersion();
-    } else {
-      await LoggerService.log("Version OK, proceeding to loadWidget");
-      _loadWidget();
-    }
-  } catch (e) {
-    await LoggerService.log("Error in getData: $e");
-    if (mounted) {
-      setState(() {
-        timeOut = true;
-      });
-    }
   }
-}
-
-
 
   void _checkVersion() async {
     Navigator.of(context).pushAndRemoveUntil(

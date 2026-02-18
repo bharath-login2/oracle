@@ -65,6 +65,7 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
 
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
+  double subTotalWithout = 0.00;
   double totalTaxAmount = 00;
   double allTotal = 0.00;
   // bool isPaying = false;
@@ -517,9 +518,10 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                                   double.parse(productTaxAmount.text);
                               double totalAmount =
                                   double.parse(productTotalAmount.text);
-                              double totalTaxForProduct = taxPerUnit * qty;
+                              double totalAmountRate =
+                                  double.parse(productRate.text);
+                              double totalTaxForProduct = taxPerUnit;
 
-                              // Update the product
                               products[editingIndex] = {
                                 "product_name": productName,
                                 "product_id": productId,
@@ -535,6 +537,8 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
 
                               // Add new values to totals
                               subTotal = subTotal + totalAmount;
+                              subTotalWithout =
+                                  subTotal + (totalAmountRate * qty);
                               totalTaxAmount =
                                   totalTaxAmount + totalTaxForProduct;
 
@@ -602,81 +606,127 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
   }
 
   getData() async {
-    if (_initialDataLoaded && products.isNotEmpty) {
+    // Only load initial data once - completely prevent re-fetching
+    if (_initialDataLoaded) {
       return;
     }
+
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    //   return;
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
       });
+      return;
     }
 
-    invDetails = await HttpService.invoiceCommonDetailsTemp(
-        widget.token, widget.clientId);
-    invoiceEditDetails = await HttpService.invoiceEditDetailsTemp(
-        widget.token, widget.invoiceId);
-    if (invoiceEditDetails != null) {
-      billingName.text =
-          invoiceEditDetails!.data!.billingAddress!.billingName.toString();
-      billingAddress.text =
-          invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
-      billingPhone.text =
-          invoiceEditDetails!.data!.billingAddress!.billingContactNo.toString();
-      billingGstNo.text =
-          invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
-      billingPinCode.text =
-          invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
-      billingPostOffice.text = invoiceEditDetails!
-          .data!.billingAddress!.billingPostOffice
-          .toString();
-      if (billingPinCode.text != '') {
-        billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
-      }
-      if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
-              .toString() !=
-          '') {
-        code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      invDetails = await HttpService.invoiceCommonDetailsTemp(
+          widget.token, widget.clientId);
+      invoiceEditDetails = await HttpService.invoiceEditDetailsTemp(
+          widget.token, widget.invoiceId);
+
+      if (invoiceEditDetails != null) {
+        billingName.text =
+            invoiceEditDetails!.data!.billingAddress!.billingName.toString();
+        billingAddress.text =
+            invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+        billingPhone.text = invoiceEditDetails!
+            .data!.billingAddress!.billingContactNo
             .toString();
-      }
+        billingGstNo.text =
+            invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
+        billingPinCode.text =
+            invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
+        billingPostOffice.text = invoiceEditDetails!
+            .data!.billingAddress!.billingPostOffice
+            .toString();
 
-      shippingName.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
-      shippingAddress.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingAddress.toString();
-      shippingPhone.text = invoiceEditDetails!
-          .data!.shippingAddress!.shippingContactNo
-          .toString();
-      shippingGstNo.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
-      shippingPinCode.text =
-          invoiceEditDetails!.data!.shippingAddress!.shippingPincode.toString();
-      shippingPostOffice.text = invoiceEditDetails!
-          .data!.shippingAddress!.shippingPostOffice
-          .toString();
-      if (shippingPinCode.text != '') {
-        shippingPostal =
-            await HttpService.fetchPostOffice(shippingPinCode.text);
-      }
+        if (billingPinCode.text.isNotEmpty) {
+          billingPostal =
+              await HttpService.fetchPostOffice(billingPinCode.text);
+        }
 
-      invoiceNumber.text = invoiceEditDetails!.data!.displayInvoice.toString();
-      fromdate =
-          DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+        if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+                .toString() !=
+            '') {
+          code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+              .toString();
+        }
 
-      items = invDetails!.data.products;
-      filteredItems.addAll(items);
+        shippingName.text =
+            invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
+        shippingAddress.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingAddress
+            .toString();
+        shippingPhone.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingContactNo
+            .toString();
+        shippingGstNo.text =
+            invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
+        shippingPinCode.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingPincode
+            .toString();
+        shippingPostOffice.text = invoiceEditDetails!
+            .data!.shippingAddress!.shippingPostOffice
+            .toString();
 
-      if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-        if (products.isEmpty) {
+        if (shippingPinCode.text.isNotEmpty) {
+          shippingPostal =
+              await HttpService.fetchPostOffice(shippingPinCode.text);
+        }
+
+        invoiceNumber.text =
+            invoiceEditDetails!.data!.displayInvoice.toString();
+        fromdate =
+            DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+
+        items.clear();
+        filteredItems.clear();
+
+        if (invDetails != null) {
+          items = invDetails!.data.products;
+          filteredItems.addAll(items);
+        }
+        if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
           products.clear();
+
           for (int i = 0;
               i < invoiceEditDetails!.data!.productDetails!.length;
               i++) {
+            double rate = double.parse(
+                invoiceEditDetails!.data!.productDetails![i].rate.toString());
+            double qty = double.parse(
+                invoiceEditDetails!.data!.productDetails![i].qty.toString());
+            double taxPercent = double.parse(invoiceEditDetails!
+                .data!.productDetails![i].taxPercentage
+                .toString());
+            double taxPerUnit = (rate * taxPercent) / 100;
+            double amountExcludingTax = rate * qty;
+            double totalTaxForProduct = taxPerUnit * qty;
+            double totalAmountWithTax = amountExcludingTax + totalTaxForProduct;
+
             products.add({
               "product_name":
                   invoiceEditDetails!.data!.productDetails![i].productName,
@@ -684,17 +734,19 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                   invoiceEditDetails!.data!.productDetails![i].productId,
               "description": invoiceEditDetails!
                   .data!.productDetails![i].productDescription,
-              "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
-              "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
-              "tax_percent":
-                  invoiceEditDetails!.data!.productDetails![i].taxPercentage,
-              "total_tax_amount":
-                  invoiceEditDetails!.data!.productDetails![i].taxAmount,
-              "total_amount":
-                  invoiceEditDetails!.data!.productDetails![i].amount,
+              "product_rate": rate.toStringAsFixed(2),
+              "quantity": qty.toStringAsFixed(2),
+              "tax_percent": taxPercent.toStringAsFixed(2),
+              "tax_per_unit": taxPerUnit.toStringAsFixed(2),
+              "total_tax_amount": totalTaxForProduct.toStringAsFixed(2),
+              "total_amount": totalAmountWithTax.toStringAsFixed(2),
             });
           }
+
+          // Update totals from server
           subTotal =
+              double.parse(invoiceEditDetails!.data!.subTotal.toString());
+          subTotalWithout =
               double.parse(invoiceEditDetails!.data!.subTotal.toString());
           totalTaxAmount =
               double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
@@ -705,15 +757,137 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
               invoiceEditDetails!.data!.totalInvoiceAmount.toString());
           remarks.text = invoiceEditDetails!.data!.remarks.toString();
         }
-      }
-      isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
 
+        isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
+      }
+    } catch (e) {
+      print('Error in getData: $e');
+    } finally {
       setState(() {
         isLoading = false;
         _initialDataLoaded = true;
       });
     }
   }
+
+  // getData() async {
+  //   if (_initialDataLoaded && products.isNotEmpty) {
+  //     return;
+  //   }
+  //   final connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi) {
+  //     setState(() {
+  //       result = true;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       result = false;
+  //     });
+  //   }
+
+  //   invDetails = await HttpService.invoiceCommonDetailsTemp(
+  //       widget.token, widget.clientId);
+  //   invoiceEditDetails = await HttpService.invoiceEditDetailsTemp(
+  //       widget.token, widget.invoiceId);
+  //   if (invoiceEditDetails != null) {
+  //     billingName.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingName.toString();
+  //     billingAddress.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+  //     billingPhone.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingContactNo.toString();
+  //     billingGstNo.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
+  //     billingPinCode.text =
+  //         invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
+  //     billingPostOffice.text = invoiceEditDetails!
+  //         .data!.billingAddress!.billingPostOffice
+  //         .toString();
+  //     if (billingPinCode.text != '') {
+  //       billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
+  //     }
+  //     if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //             .toString() !=
+  //         '') {
+  //       code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //           .toString();
+  //     }
+
+  //     shippingName.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
+  //     shippingAddress.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingAddress.toString();
+  //     shippingPhone.text = invoiceEditDetails!
+  //         .data!.shippingAddress!.shippingContactNo
+  //         .toString();
+  //     shippingGstNo.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
+  //     shippingPinCode.text =
+  //         invoiceEditDetails!.data!.shippingAddress!.shippingPincode.toString();
+  //     shippingPostOffice.text = invoiceEditDetails!
+  //         .data!.shippingAddress!.shippingPostOffice
+  //         .toString();
+  //     if (shippingPinCode.text != '') {
+  //       shippingPostal =
+  //           await HttpService.fetchPostOffice(shippingPinCode.text);
+  //     }
+
+  //     invoiceNumber.text = invoiceEditDetails!.data!.displayInvoice.toString();
+  //     fromdate =
+  //         DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+
+  //     // items = invDetails!.data.products;
+  //     // filteredItems.addAll(items);
+  //     items.clear();
+  //     filteredItems.clear();
+
+  //     items = invDetails!.data.products;
+  //     filteredItems.addAll(items);
+
+  //     if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
+  //       if (products.isEmpty) {
+  //         products.clear();
+  //         for (int i = 0;
+  //             i < invoiceEditDetails!.data!.productDetails!.length;
+  //             i++) {
+  //           products.add({
+  //             "product_name":
+  //                 invoiceEditDetails!.data!.productDetails![i].productName,
+  //             "product_id":
+  //                 invoiceEditDetails!.data!.productDetails![i].productId,
+  //             "description": invoiceEditDetails!
+  //                 .data!.productDetails![i].productDescription,
+  //             "product_rate": invoiceEditDetails!.data!.productDetails![i].rate,
+  //             "quantity": invoiceEditDetails!.data!.productDetails![i].qty,
+  //             "tax_percent":
+  //                 invoiceEditDetails!.data!.productDetails![i].taxPercentage,
+  //             "total_tax_amount":
+  //                 invoiceEditDetails!.data!.productDetails![i].taxAmount,
+  //             "total_amount":
+  //                 invoiceEditDetails!.data!.productDetails![i].amount,
+  //           });
+  //         }
+  //         subTotal =
+  //             double.parse(invoiceEditDetails!.data!.subTotal.toString());
+  //         totalTaxAmount =
+  //             double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
+  //         discount.text = invoiceEditDetails!.data!.discountAmount.toString();
+  //         shippingCharge.text =
+  //             invoiceEditDetails!.data!.shippingAmount.toString();
+  //         allTotal = double.parse(
+  //             invoiceEditDetails!.data!.totalInvoiceAmount.toString());
+  //         remarks.text = invoiceEditDetails!.data!.remarks.toString();
+  //       }
+  //     }
+  //     isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
+
+  //     setState(() {
+  //       isLoading = false;
+  //       _initialDataLoaded = true;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -3600,6 +3774,9 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                                           // ),
                                           GestureDetector(
                                             onTap: () {
+                                              final deletedProduct =
+                                                  Map<String, dynamic>.from(
+                                                      products[index]);
                                               double productAmount =
                                                   double.parse(products[index]
                                                       ['total_amount']);
@@ -3626,12 +3803,27 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                                               paidAmount.text =
                                                   allTotal.toString();
                                               products.removeAt(index);
+
                                               if (products.isEmpty) {
                                                 discount.clear();
                                                 shippingCharge.clear();
                                                 allTotal = 0.00;
                                                 paidAmount.text =
                                                     allTotal.toString();
+                                              }
+                                              Common.toastMessaage(
+                                                  'Product deleted successfully',
+                                                  Colors.green);
+                                              if (productId.isNotEmpty) {
+                                                items.removeWhere((item) =>
+                                                    item.id ==
+                                                    deletedProduct[
+                                                        'product_id']);
+                                                filteredItems.removeWhere(
+                                                    (item) =>
+                                                        item.id ==
+                                                        deletedProduct[
+                                                            'product_id']);
                                               }
 
                                               setState(() {});
@@ -3644,6 +3836,52 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                                               ),
                                             ),
                                           ),
+                                          // GestureDetector(
+                                          //   onTap: () {
+                                          //     double productAmount =
+                                          //         double.parse(products[index]
+                                          //             ['total_amount']);
+                                          //     double productTax = double.parse(
+                                          //             products[index][
+                                          //                 'total_tax_amount']) *
+                                          //         double.parse(products[index]
+                                          //             ['quantity']);
+                                          //     subTotal =
+                                          //         subTotal - productAmount;
+                                          //     totalTaxAmount =
+                                          //         totalTaxAmount - productTax;
+
+                                          //     allTotal = subTotal +
+                                          //         double.parse(
+                                          //             shippingCharge.text == ''
+                                          //                 ? '0'
+                                          //                 : shippingCharge
+                                          //                     .text) -
+                                          //         double.parse(
+                                          //             discount.text == ''
+                                          //                 ? '0'
+                                          //                 : discount.text);
+                                          //     paidAmount.text =
+                                          //         allTotal.toString();
+                                          //     products.removeAt(index);
+                                          //     if (products.isEmpty) {
+                                          //       discount.clear();
+                                          //       shippingCharge.clear();
+                                          //       allTotal = 0.00;
+                                          //       paidAmount.text =
+                                          //           allTotal.toString();
+                                          //     }
+
+                                          //     setState(() {});
+                                          //   },
+                                          //   child: const Padding(
+                                          //     padding: EdgeInsets.all(7.0),
+                                          //     child: Icon(
+                                          //       Icons.delete_outline,
+                                          //       color: Colors.red,
+                                          //     ),
+                                          //   ),
+                                          // ),
                                         ],
                                       ),
                                     ],
@@ -3758,6 +3996,34 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                             const SizedBox(
                               height: 5,
                             ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(right: 10),
+                            //   child: Row(
+                            //     mainAxisAlignment: MainAxisAlignment.end,
+                            //     children: [
+                            //       const Text('Tax:'),
+                            //       const SizedBox(
+                            //         width: 10,
+                            //       ),
+                            //       Container(
+                            //           width: MediaQuery.of(context).size.width *
+                            //               0.3,
+                            //           height: 35,
+                            //           decoration: BoxDecoration(
+                            //               color: Colors.grey.shade300,
+                            //               borderRadius:
+                            //                   BorderRadius.circular(5)),
+                            //           child: Padding(
+                            //             padding: const EdgeInsets.only(
+                            //                 left: 10,
+                            //                 right: 10,
+                            //                 top: 5,
+                            //                 bottom: 5),
+                            //             child: Text(totalTaxAmount.toString()),
+                            //           ))
+                            //     ],
+                            //   ),
+                            // ),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
@@ -3768,21 +4034,34 @@ class _EditInvoiceTempState extends State<EditInvoiceTemp> {
                                     width: 10,
                                   ),
                                   Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child: Text(totalTaxAmount.toString()),
-                                      ))
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 10,
+                                        right: 10,
+                                        top: 5,
+                                        bottom: 5,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (totalTaxAmount < 0
+                                                  ? 0.0
+                                                  : totalTaxAmount)
+                                              .toStringAsFixed(2),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/commonConfigureModel.dart';
@@ -26,6 +27,7 @@ import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart'
 //     as renewal_widget;
 
@@ -134,9 +136,44 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     );
   }
 
+  void _makePhoneCall(String countryCode, String phoneNumber) async {
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final url = Uri.parse('tel:$countryCode$cleanPhone');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot make call to $countryCode$cleanPhone'),
+        ),
+      );
+    }
+  }
+
+  void _openWhatsApp(String countryCode, String phoneNumber) async {
+    String cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    final countryCodeDigits = countryCode.replaceAll(RegExp(r'[^\d]'), '');
+    final whatsappNumber = '$countryCodeDigits$cleanPhone';
+
+    final url = Uri.parse('https://wa.me/$whatsappNumber');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cannot open WhatsApp'),
+        ),
+      );
+    }
+  }
+
   void _handleAddReceipt() {
     print('Add Receipt tapped');
-
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -770,11 +807,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // Profile section
                         Column(
                           children: [
-                            // Profile image
                             Container(
                               width: 80,
                               height: 80,
@@ -873,11 +907,9 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Contact Information Section
                         _buildSectionTitle('Contact Information'),
                         const SizedBox(height: 16),
 
-                        // Email
                         _buildContactItem(
                           icon: Icons.email_outlined,
                           label: 'Email',
@@ -888,7 +920,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Phone
                         _buildContactItem(
                           icon: Icons.phone_outlined,
                           label: 'Phone',
@@ -896,15 +927,27 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                               ? '${customer!.countryCode} ${customer.contactNo}'
                               : 'Not Available',
                           color: Colors.green,
+                          onTap: customer?.contactNo.isNotEmpty == true
+                              ? () => _makePhoneCall(
+                                  customer!.countryCode, customer.contactNo)
+                              : null,
+                          onWhatsAppTap: customer?.contactNo.isNotEmpty == true
+                              ? () => _openWhatsApp(
+                                  customer!.countryCode, customer.contactNo)
+                              : null,
                         ),
                         const SizedBox(height: 12),
-
-                        _buildContactItem(
-                          icon: Icons.chat_bubble,
-                          label: 'WhatsApp',
-                          value: customer!.whatsappNumber,
-                          color: Colors.green,
-                        ),
+                        customer!.whatsappNumber != ""
+                            ? _buildContactItem(
+                                icon: FontAwesomeIcons.whatsapp,
+                                label: 'WhatsApp',
+                                value: customer!.whatsappNumber!,
+                                color: Colors.green,
+                                onTap: () => _openWhatsApp(
+                                    customer!.countryCode,
+                                    customer!.whatsappNumber!),
+                              )
+                            : SizedBox(),
 
                         // Address Section
                         const SizedBox(height: 32),
@@ -1226,52 +1269,84 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
     required String label,
     required String value,
     required Color color,
+    VoidCallback? onTap,
+    VoidCallback? onWhatsAppTap, // Add this parameter
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // WhatsApp icon on the right
+            if (onWhatsAppTap != null)
+              InkWell(
+                onTap: onWhatsAppTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    FontAwesomeIcons.whatsapp,
+                    color: Colors.green,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            // Original arrow icon (only show if no WhatsApp icon)
+            if (onTap != null && onWhatsAppTap == null)
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.grey[400],
+              ),
+          ],
+        ),
       ),
     );
   }

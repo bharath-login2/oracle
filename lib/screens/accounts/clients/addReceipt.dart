@@ -48,11 +48,23 @@ class _ReceiptAddState extends State<ReceiptAdd> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -1131,98 +1143,100 @@ class _ReceiptAddState extends State<ReceiptAdd> {
   }
 
   Future<dynamic> targetGroupDialog(BuildContext context) {
-  return showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(builder: (context, setState) {
-        return AlertDialog(
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredTargets = targets
-                            .where((item) => item.groupName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search),
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTargets = targets
+                              .where((item) => item.groupName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .32,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
-                    // Remove NeverScrollableScrollPhysics to enable scrolling
-                    shrinkWrap: true,
-                    itemCount: filteredTargets.length,
-                    itemBuilder: (context, ind) {
-                      return CheckboxListTile(
-                        title: SizedBox(
-                          width: 200,
-                          child: Text(
-                            filteredTargets[ind].groupName.toString(),
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .32,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      // Remove NeverScrollableScrollPhysics to enable scrolling
+                      shrinkWrap: true,
+                      itemCount: filteredTargets.length,
+                      itemBuilder: (context, ind) {
+                        return CheckboxListTile(
+                          title: SizedBox(
+                            width: 200,
+                            child: Text(
+                              filteredTargets[ind].groupName.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14),
+                            ),
                           ),
-                        ),
-                        value: targetGroups
-                                .contains(filteredTargets[ind].id.toString())
-                            ? true
-                            : false,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              targetGroups.add(filteredTargets[ind].id.toString());
-                              targetGroupNames.add(
-                                  filteredTargets[ind].groupName.toString());
-                            } else {
-                              targetGroups.remove(filteredTargets[ind].id.toString());
-                              targetGroupNames.remove(
-                                  filteredTargets[ind].groupName.toString());
-                            }
-                          });
-                        },
-                        controlAffinity: ListTileControlAffinity.leading,
-                      );
-                    },
+                          value: targetGroups
+                                  .contains(filteredTargets[ind].id.toString())
+                              ? true
+                              : false,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                targetGroups
+                                    .add(filteredTargets[ind].id.toString());
+                                targetGroupNames.add(
+                                    filteredTargets[ind].groupName.toString());
+                              } else {
+                                targetGroups
+                                    .remove(filteredTargets[ind].id.toString());
+                                targetGroupNames.remove(
+                                    filteredTargets[ind].groupName.toString());
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                filteredTargets.clear();
-                filteredTargets.addAll(targets);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text("Done"),
-            ),
-          ],
-        );
-      });
-    },
-  );
-}
+            actions: [
+              TextButton(
+                onPressed: () {
+                  filteredTargets.clear();
+                  filteredTargets.addAll(targets);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Done"),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
 
   pickTemplateImage(context, source) async {
     try {

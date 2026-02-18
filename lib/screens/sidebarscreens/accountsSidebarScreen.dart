@@ -11,6 +11,7 @@ import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/accounts/expense/expense_categories.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/pendingExpenseHistory.dart';
+import 'package:login2/screens/accounts/expense/unverifiedReponsePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/callLogs/callLogs.dart';
@@ -328,9 +329,9 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
   List<Widget> _buildMenuItemsList(BuildContext context) {
     final menuItems = <Widget>[];
     menuItems.addAll([
-     // _buildSectionHeader('Quick  Links'),
+      // _buildSectionHeader('Quick  Links'),
       _buildMenuItemTitle(
-       // icon: Icons.pending_actions_rounded,
+        // icon: Icons.pending_actions_rounded,
         title: 'Quick  Links',
         onTap: () {
           // Navigator.pop(context);
@@ -389,8 +390,8 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         icon: Icons.transform_rounded,
         title: 'Transfer',
         onTap: () {
-         // Navigator.pop(context);
-        //  _handleMenuItemTap(context, 8);
+          // Navigator.pop(context);
+          //  _handleMenuItemTap(context, 8);
         },
       )
     ]);
@@ -416,13 +417,11 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         },
       ));
     }
-      
-    
 
     menuItems.addAll([
-     // _buildSectionHeader('Expense'),
-     _buildMenuItemTitle(
-       // icon: Icons.pending_actions_rounded,
+      // _buildSectionHeader('Expense'),
+      _buildMenuItemTitle(
+        // icon: Icons.pending_actions_rounded,
         title: 'Expense',
         onTap: () {
           // Navigator.pop(context);
@@ -441,7 +440,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         icon: Icons.expand_circle_down_sharp,
         title: 'Expense Category',
         onTap: () {
-           Navigator.pop(context);
+          Navigator.pop(context);
           _handleMenuItemTap(context, 33);
         },
       ),
@@ -450,15 +449,15 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         title: 'Pending Expense',
         onTap: () {
           Navigator.pop(context);
-           _handleMenuItemTap(context, 44);
+          _handleMenuItemTap(context, 44);
         },
       ),
     ]);
 
-     menuItems.addAll([
+    menuItems.addAll([
       //_buildSectionHeader('Other'),
       _buildMenuItemTitle(
-       // icon: Icons.pending_actions_rounded,
+        // icon: Icons.pending_actions_rounded,
         title: 'Other',
         onTap: () {
           // Navigator.pop(context);
@@ -474,11 +473,11 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         },
       ),
       _buildMenuItem(
-        icon: Icons.expand_circle_down_sharp,
+        icon: Icons.verified_outlined,
         title: 'Unverified Transactions',
         onTap: () {
-          //  Navigator.pop(context);
-          //_handleMenuItemTap(context, 9);
+          Navigator.pop(context);
+          _handleMenuItemTap(context, 55); // Add new case
         },
       ),
       _buildMenuItem(
@@ -519,43 +518,42 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
     );
   }
 
-
-    Widget _buildMenuItemTitle({
-  required String title,
-  required VoidCallback onTap,
-}) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          children: [
-            const SizedBox(width: 16),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft, 
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    decoration: TextDecoration.underline, // Add underline
-                    decorationColor: Colors.blue, // Blue underline color
-                    decorationThickness: 2.0, // Thickness of underline
-                    decorationStyle: TextDecorationStyle.solid, // Solid line
+  Widget _buildMenuItemTitle({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      decoration: TextDecoration.underline, // Add underline
+                      decorationColor: Colors.blue, // Blue underline color
+                      decorationThickness: 2.0, // Thickness of underline
+                      decorationStyle: TextDecorationStyle.solid, // Solid line
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildMenuItem({
     IconData? icon,
@@ -653,7 +651,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ClientList(widget.token,_scaffoldKey),
+            builder: (context) => ClientList(widget.token, _scaffoldKey),
           ),
         );
         break;
@@ -667,22 +665,30 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           ),
         );
         break;
-         case 33:
+      case 33:
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                ExpenseCategories(),
+            builder: (context) => ExpenseCategories(),
           ),
         );
         break;
 
-          case 44:
+      case 44:
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                PendingExpenseHistoryPage(),
+            builder: (context) => PendingExpenseHistoryPage(),
+          ),
+        );
+        break;
+      case 55:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UnverifiedTransactionsPage(
+              token: widget.token,
+            ),
           ),
         );
         break;
@@ -693,7 +699,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  ProformaInvoiceList(widget.token.toString(), "", "", "",""),
+                  ProformaInvoiceList(widget.token.toString(), "", "", "", ""),
             ),
           );
         }

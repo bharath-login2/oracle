@@ -114,11 +114,23 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
     });
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   setState(() {
+      //     result = true;
+      //   });
+      // } else {
+      //   setState(() {
+      //     result = false;
+      //   });
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          setState(() {
+            result = true;
+          });
+        }
       } else {
         setState(() {
           result = false;
@@ -412,7 +424,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                           );
                                         }
                                       }
-                                                                        },
+                                    },
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),
@@ -2210,126 +2222,135 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             onTap: () async {
                               final connectivityResult =
                                   await (Connectivity().checkConnectivity());
-                              if (connectivityResult ==
-                                      ConnectivityResult.mobile ||
-                                  connectivityResult ==
-                                      ConnectivityResult.wifi) {
-                                if (leadStatusId == '') {
-                                  Common.toastMessaage(
-                                      'Choose any Status', Colors.red);
-                                } else if (leadStatusId == '2' &&
-                                    nextFollowupDate1.text.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Choose next followup date', Colors.red);
-                                } else if (renew == true && products.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Please add a product to continue',
-                                      Colors.red);
-                                } else if (renew == true &&
-                                    paymentStatus == null) {
-                                  Common.toastMessaage(
-                                      'Payment Status is required to add invoice',
-                                      Colors.red);
-                                } else if (renew == true &&
-                                    paidAmount.text.isEmpty &&
-                                    paymentStatus != "unpaid") {
-                                  Common.toastMessaage(
-                                      'Paid Amount is required to add invoice',
-                                      Colors.red);
-                                } else if (renew == true &&
-                                    paymentStatus != "unpaid" &&
-                                    paymentMethod == null) {
-                                  Common.toastMessaage(
-                                      'Payment Method is required to add invoice',
-                                      Colors.red);
-                                } else if (renew == true &&
-                                    paymentStatus != "unpaid" &&
-                                    staffId == "") {
-                                  Common.toastMessaage(
-                                      'Collected Staff is required to add invoice',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
-                                    startDate.text == "") {
-                                  Common.toastMessaage(
-                                      'Start date is required to add renewal',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
-                                    endDate.text == "") {
-                                  Common.toastMessaage(
-                                      'End date is required to add renewal',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
-                                    double.parse(discount.text == ""
-                                            ? "0.0"
-                                            : discount.text) >
-                                        subTotal) {
-                                  Common.toastMessaage(
-                                      'The discount should not exceed the total amount',
-                                      Colors.red);
-                                } else if (double.parse(discount.text == ""
-                                        ? "0.0"
-                                        : discount.text) <
-                                    0) {
-                                  Common.toastMessaage(
-                                      'Please enter valid discount amount',
-                                      Colors.red);
-                                } else if (double.parse(
-                                        shippingCharge.text == ""
-                                            ? "0.0"
-                                            : shippingCharge.text) <
-                                    0) {
-                                  Common.toastMessaage(
-                                      'Please enter valid shipping charge',
-                                      Colors.red);
-                                } else {
-                                  if (context.mounted) {
-                                    Common.showProgressDialog(
-                                        context, "Loading..");
-                                  }
-                                  AddLeadFollowupModel object1 =
-                                      await HttpService.postRenewalFollowup(
-                                          token,
-                                          leadStatusId,
-                                          nextFollowupDate1.text,
-                                          productCost.text,
-                                          detailsResponse!.data.leadId,
-                                          remarks.text,
-                                          widget.renewalId,
-                                          calledDate1.text,
-                                          detailsResponse!.data.clientId,
-                                          checked,
-                                          timeBefore.text,
-                                          callResponseId,
-                                          callResultReasonId,
-                                          invoiceDate,
-                                          leadStatusId == '2'
-                                              ? followupProducts
-                                              : products,
-                                          reminderTemplate.text,
-                                          allTotal,
-                                          startDate.text,
-                                          endDate.text,
-                                          paymentStatus,
-                                          subTotal,
-                                          totalTaxAmount,
-                                          discount.text,
-                                          shippingCharge.text,
-                                          paymentMethod,
-                                          paidAmount.text,
-                                          staffId,
-                                          targetGroups);
-                                  if (object1.status == true) {
+                              // if (connectivityResult ==
+                              //         ConnectivityResult.mobile ||
+                              //     connectivityResult ==
+                              //         ConnectivityResult.wifi) {
+                              if (connectivityResult
+                                  is List<ConnectivityResult>) {
+                                if (connectivityResult
+                                        .contains(ConnectivityResult.mobile) ||
+                                    connectivityResult
+                                        .contains(ConnectivityResult.wifi)) {
+                                  if (leadStatusId == '') {
                                     Common.toastMessaage(
-                                        object1.message, Colors.green);
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                      Navigator.pop(context);
-                                    }
+                                        'Choose any Status', Colors.red);
+                                  } else if (leadStatusId == '2' &&
+                                      nextFollowupDate1.text.isEmpty) {
+                                    Common.toastMessaage(
+                                        'Choose next followup date',
+                                        Colors.red);
+                                  } else if (renew == true &&
+                                      products.isEmpty) {
+                                    Common.toastMessaage(
+                                        'Please add a product to continue',
+                                        Colors.red);
+                                  } else if (renew == true &&
+                                      paymentStatus == null) {
+                                    Common.toastMessaage(
+                                        'Payment Status is required to add invoice',
+                                        Colors.red);
+                                  } else if (renew == true &&
+                                      paidAmount.text.isEmpty &&
+                                      paymentStatus != "unpaid") {
+                                    Common.toastMessaage(
+                                        'Paid Amount is required to add invoice',
+                                        Colors.red);
+                                  } else if (renew == true &&
+                                      paymentStatus != "unpaid" &&
+                                      paymentMethod == null) {
+                                    Common.toastMessaage(
+                                        'Payment Method is required to add invoice',
+                                        Colors.red);
+                                  } else if (renew == true &&
+                                      paymentStatus != "unpaid" &&
+                                      staffId == "") {
+                                    Common.toastMessaage(
+                                        'Collected Staff is required to add invoice',
+                                        Colors.red);
+                                  } else if (createRenewal == true &&
+                                      startDate.text == "") {
+                                    Common.toastMessaage(
+                                        'Start date is required to add renewal',
+                                        Colors.red);
+                                  } else if (createRenewal == true &&
+                                      endDate.text == "") {
+                                    Common.toastMessaage(
+                                        'End date is required to add renewal',
+                                        Colors.red);
+                                  } else if (createRenewal == true &&
+                                      double.parse(discount.text == ""
+                                              ? "0.0"
+                                              : discount.text) >
+                                          subTotal) {
+                                    Common.toastMessaage(
+                                        'The discount should not exceed the total amount',
+                                        Colors.red);
+                                  } else if (double.parse(discount.text == ""
+                                          ? "0.0"
+                                          : discount.text) <
+                                      0) {
+                                    Common.toastMessaage(
+                                        'Please enter valid discount amount',
+                                        Colors.red);
+                                  } else if (double.parse(
+                                          shippingCharge.text == ""
+                                              ? "0.0"
+                                              : shippingCharge.text) <
+                                      0) {
+                                    Common.toastMessaage(
+                                        'Please enter valid shipping charge',
+                                        Colors.red);
                                   } else {
-                                    Common.toastMessaage(
-                                        object1.message, Colors.red);
                                     if (context.mounted) {
-                                      Navigator.pop(context);
+                                      Common.showProgressDialog(
+                                          context, "Loading..");
+                                    }
+                                    AddLeadFollowupModel object1 =
+                                        await HttpService.postRenewalFollowup(
+                                            token,
+                                            leadStatusId,
+                                            nextFollowupDate1.text,
+                                            productCost.text,
+                                            detailsResponse!.data.leadId,
+                                            remarks.text,
+                                            widget.renewalId,
+                                            calledDate1.text,
+                                            detailsResponse!.data.clientId,
+                                            checked,
+                                            timeBefore.text,
+                                            callResponseId,
+                                            callResultReasonId,
+                                            invoiceDate,
+                                            leadStatusId == '2'
+                                                ? followupProducts
+                                                : products,
+                                            reminderTemplate.text,
+                                            allTotal,
+                                            startDate.text,
+                                            endDate.text,
+                                            paymentStatus,
+                                            subTotal,
+                                            totalTaxAmount,
+                                            discount.text,
+                                            shippingCharge.text,
+                                            paymentMethod,
+                                            paidAmount.text,
+                                            staffId,
+                                            targetGroups);
+                                    if (object1.status == true) {
+                                      Common.toastMessaage(
+                                          object1.message, Colors.green);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        Navigator.pop(context);
+                                      }
+                                    } else {
+                                      Common.toastMessaage(
+                                          object1.message, Colors.red);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
                                     }
                                   }
                                 }

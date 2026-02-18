@@ -1,12 +1,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
-import 'package:login2/screens/leadManagement/dashboard.dart';
-
 import '../../core/common.dart';
 import '../../models/lead_management/projectList_model.dart';
 import '../../models/lead_management/titleListModel.dart';
@@ -15,15 +14,15 @@ import '../../service/service.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 
 class TaskForm {
-  TextEditingController controller; // Task Title
-  TextEditingController descriptionController; // Task Description (NEW)
+  TextEditingController controller;
+  TextEditingController descriptionController;
   String? status;
   String? taskId;
   List<TextEditingController> remarksControllers;
 
   TaskForm({
     required this.controller,
-    required this.descriptionController, // NEW
+    required this.descriptionController,
     this.status,
     this.taskId,
     List<TextEditingController>? remarks,
@@ -66,7 +65,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   String category = "New Work";
   final List<String> taskTypes = ["Task", "Complaint"];
   final List<String> categories = ["New Work", "Re Work"];
-
   bool isLoading = true;
   final TextEditingController search = TextEditingController();
   final TextEditingController selectedProjectController =
@@ -113,13 +111,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     super.initState();
     debugPrint('Work is paused? ${widget.isPaused == 1 ? "Yes" : "No"}');
     debugPrint('Work is restarted? ${widget.Restart == 1 ? "Yes" : "No"}');
-
     titleController = TextEditingController(
       text: widget.existingWork?.title_name ?? '',
     );
-
     _searchController.addListener(_filterProjects);
-
     tasks = widget.existingWork != null
         ? widget.existingWork!.tasks
             .map((task) => TaskForm(
@@ -153,7 +148,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         selectedProjectId = null;
       }
     }
-
     if (widget.existingWork != null &&
         widget.existingWork!.assignedTo != null) {
       if (widget.existingWork!.assignedTo != null) {
@@ -164,13 +158,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     } else if (assignedTo != null) {
       selectedStaffIds = [assignedTo!];
     }
-
     whatsappNotification = false;
     pushNotification = false;
     notifyOnStart = false;
     notifyOnComplete = false;
     selectedStaffIds = [];
-
     _initAsync();
     _loadStaffs();
     _loadTaskState();
@@ -181,12 +173,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     token = await Common.getSharedPref("token") ?? "";
     userId = await Common.getSharedPref("userId");
     await _loadProjects();
-
-    if (assignedTo == null) {
-      setState(() {
-        assignedTo = userId;
-      });
-    }
+    // if (assignedTo == null) {
+    //   setState(() {
+    //     assignedTo = userId;
+    //   });
+    // }
   }
 
   Future<void> _loadProjects() async {
@@ -201,7 +192,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         }
         projectList = uniqueProjects.values.toList();
         filteredProjects = List.from(projectList);
-
         if (selectedProjectId != null) {
           final exists = projectList.any((p) => p.id == selectedProjectId);
           if (!exists) {
@@ -209,15 +199,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           }
           _loadTitle();
         }
-
         if (widget.existingWork != null && selectedProjectId != null) {
           final selectedProject =
               projectList.firstWhere((p) => p.id == selectedProjectId);
-
           selectedProjectName = selectedProject.name;
           selectedProjectController.text = selectedProject.name;
         }
-
         isLoading = false;
       });
     } catch (e) {
@@ -262,11 +249,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     if (response != null && response.status == true) {
       setState(() {
         staffList = response.data;
-        if (assignedTo == null) {
-          if (staffList.any((staff) => staff.userIdStaff == userId)) {
-            assignedTo = userId;
-          }
-        }
+        // if (assignedTo == null) {
+        //   if (staffList.any((staff) => staff.userIdStaff == userId)) {
+        //     assignedTo = userId;
+        //   }
+        // }
         notifyToAssignedStaff = true;
         notifyOnStatusChange = false;
         notifyOtherPeople = false;
@@ -439,7 +426,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           builder: (ctx) => AlertDialog(
             title: const Text('Confirm Assignment'),
             content: const Text(
-              'Are you sure you want to assign this work to another staff?',
+              'Are you sure you want to assign this work?',
             ),
             actions: [
               TextButton(
@@ -490,9 +477,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           'notify_on_status_change': notifyOnStatusChange,
           'notify_other_people': notifyOtherPeople,
           'staff_ids': [
-            if (notifyToAssignedStaff && assignedTo != null) assignedTo!,
+            if (notifyToAssignedStaff &&
+                assignedTo != null &&
+                assignedTo != "0")
+              assignedTo!,
             if (notifyOtherPeople)
-              ...selectedStaffIds.where((id) => id != assignedTo),
+              ...selectedStaffIds.where((id) => id != assignedTo && id != "0"),
           ].join(','),
           'on_start': notifyOnStart,
           'on_complete': notifyOnComplete,
@@ -518,7 +508,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           ? await HttpService.updateWorkData(workData)
           : await HttpService.assignWorkData(workData);
 
-      Navigator.of(context).pop(); // Dismiss loading dialog
+      Navigator.of(context).pop();
 
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -530,13 +520,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Dashboard(token),
-          ),
-          (route) => false,
-        );
+        if (context.mounted) {
+          Navigator.pop(context, true);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -546,7 +532,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         );
       }
     } catch (e) {
-      Navigator.of(context).pop(); // Dismiss loading dialog in case of error
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -560,18 +546,65 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isEditing = widget.existingWork != null;
+    final isPausing = widget.isPaused == 1;
+    final isRestarting = widget.Restart == 1;
+
     return AbsorbPointer(
       absorbing: _isAssigning,
       child: Scaffold(
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: widget.isPaused != 1 && widget.Restart != 1
-              ? Text(widget.existingWork != null ? 'Stop Work' : 'Assign Work')
-              : widget.Restart != 1
-                  ? const Text('Pause Work')
-                  : const Text('Restart Work'),
+          backgroundColor: isEditing
+              ? isPausing
+                  ? Colors.orange[800]
+                  : isRestarting
+                      ? Colors.green[800]
+                      : Colors.red[800]
+              : Colors.blue,
+          elevation: 2,
+          shadowColor: Colors.black12,
+          title: Row(
+            children: [
+              Icon(
+                isEditing
+                    ? isPausing
+                        ? Icons.pause_circle_outline
+                        : isRestarting
+                            ? Icons.play_circle_outline
+                            : FontAwesomeIcons.stop
+                    : Icons.assignment_add,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                isEditing
+                    ? isPausing
+                        ? 'Pause Work'
+                        : isRestarting
+                            ? 'Restart Work'
+                            : 'Stop Work'
+                    : 'Assign New Work',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          centerTitle: false,
           actions: [
             IconButton(
-              icon: const Icon(Icons.close),
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(60, 255, 255, 255),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.close, size: 22),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -582,168 +615,840 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    //padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: selectedProjectController,
-                                readOnly: true,
-                                onTap: () async {
-                                  final selected = await dropDialogExisting(
-                                      context, "Projects");
-                                  if (selected != null) {
-                                    setState(() {
-                                      selectedProjectId = selected['id'];
-                                      selectedProjectController.text =
-                                          selected['name'] ?? '';
-                                    });
-                                    await _loadTitle();
-                                  }
-                                },
-                                decoration: const InputDecoration(
-                                  labelText: 'Project',
-                                  border: OutlineInputBorder(),
-                                  prefixIcon: Icon(Icons.work_outline),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please select a project';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              width: 180,
-                              child: TextFormField(
-                                controller: titleController,
-                                readOnly: true,
-                                onTap: () async {
-                                  final selected =
-                                      await dropTitleDialog(context, titleList);
-                                  if (selected != null) {
-                                    setState(() {
-                                      selectedTitleId = selected['id'];
-                                      titleController.text = selected['name']!;
-                                    });
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  labelText: 'Module',
-                                  border: const OutlineInputBorder(),
-                                  prefixIcon: IconButton(
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () async {
-                                      final newTitle =
-                                          await showProjectTitleDialog(context);
-                                      if (newTitle != null) {
-                                        setState(() {
-                                          titleList.add(newTitle);
-                                          selectedTitleId = newTitle.id;
-                                          titleController.text = newTitle.name;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please select a Module';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
+                        // Container(
+                        //   padding: const EdgeInsets.all(16),
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.blue.withOpacity(0.05),
+                        //     borderRadius: BorderRadius.circular(12),
+                        //     border: Border.all(
+                        //       color: Colors.blue.withOpacity(0.1),
+                        //     ),
+                        //   ),
+                        //   child: Row(
+                        //     children: [
+                        //       Icon(
+                        //         Icons.info_outline_rounded,
+                        //         color: Colors.blue,
+                        //         size: 24,
+                        //       ),
+                        //       const SizedBox(width: 12),
+                        //       Expanded(
+                        //         child: Text(
+                        //           isEditing
+                        //               ? 'You are ${isPausing ? 'pausing' : isRestarting ? 'restarting' : 'stopping'} an existing work assignment'
+                        //               : 'Fill in the details below to assign new work',
+                        //           style: TextStyle(
+                        //             fontSize: 14,
+                        //             color: Colors.grey[700],
+                        //             fontWeight: FontWeight.w500,
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 24),
+                        // Card(
+                        //   elevation: 1,
+                        //   shape: RoundedRectangleBorder(
+                        //     borderRadius: BorderRadius.circular(12),
+                        //   ),
+                        //   child: Padding(
+                        //     padding: const EdgeInsets.all(20),
+                        //     child: Column(
+                        //       children: [
+                        //         Row(
+                        //           children: [
+                        //             Icon(
+                        //               Icons.folder_special_rounded,
+                        //               color: Colors.blue,
+                        //               size: 20,
+                        //             ),
+                        //             const SizedBox(width: 8),
+                        //             Text(
+                        //               'Project Details',
+                        //               style: TextStyle(
+                        //                 fontSize: 16,
+                        //                 fontWeight: FontWeight.w600,
+                        //                 color: Colors.grey[800],
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //         const SizedBox(height: 16),
+                        //         Row(
+                        //           crossAxisAlignment: CrossAxisAlignment.start,
+                        //           children: [
+                        //             Expanded(
+                        //               child: Column(
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.start,
+                        //                 children: [
+                        //                   Text(
+                        //                     'Project *',
+                        //                     style: TextStyle(
+                        //                       fontSize: 14,
+                        //                       fontWeight: FontWeight.w500,
+                        //                       color: Colors.grey[700],
+                        //                     ),
+                        //                   ),
+                        //                   const SizedBox(height: 6),
+                        //                   Container(
+                        //                     decoration: BoxDecoration(
+                        //                       border: Border.all(
+                        //                         color: Colors.grey.shade300,
+                        //                       ),
+                        //                       borderRadius:
+                        //                           BorderRadius.circular(8),
+                        //                     ),
+                        //                     child: ListTile(
+                        //                       onTap: () async {
+                        //                         final selected =
+                        //                             await dropDialogExisting(
+                        //                                 context, "Projects");
+                        //                         if (selected != null) {
+                        //                           setState(() {
+                        //                             selectedProjectId =
+                        //                                 selected['id'];
+                        //                             selectedProjectController
+                        //                                     .text =
+                        //                                 selected['name'] ?? '';
+                        //                           });
+                        //                           await _loadTitle();
+                        //                         }
+                        //                       },
+                        //                       title: Text(
+                        //                         selectedProjectController
+                        //                                 .text.isEmpty
+                        //                             ? 'Select Project'
+                        //                             : selectedProjectController
+                        //                                 .text,
+                        //                         style: TextStyle(
+                        //                           color:
+                        //                               selectedProjectController
+                        //                                       .text.isEmpty
+                        //                                   ? Colors.grey[500]
+                        //                                   : Colors.grey[800],
+                        //                         ),
+                        //                       ),
+                        //                       trailing: const Icon(
+                        //                         Icons.arrow_drop_down,
+                        //                         color: Colors.grey,
+                        //                       ),
+                        //                       dense: true,
+                        //                       contentPadding:
+                        //                           const EdgeInsets.symmetric(
+                        //                               horizontal: 12),
+                        //                       shape: RoundedRectangleBorder(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(8),
+                        //                       ),
+                        //                     ),
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ),
+
+                        //           ],
+                        //         ),
+                        //         const SizedBox(height: 16),
+                        //         Row(
+                        //           crossAxisAlignment: CrossAxisAlignment.start,
+                        //           children: [
+
+                        //             Expanded(
+                        //               child: Column(
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.start,
+                        //                 children: [
+                        //                   Text(
+                        //                     'Module *',
+                        //                     style: TextStyle(
+                        //                       fontSize: 14,
+                        //                       fontWeight: FontWeight.w500,
+                        //                       color: Colors.grey[700],
+                        //                     ),
+                        //                   ),
+                        //                   const SizedBox(height: 6),
+                        //                   Container(
+                        //                     decoration: BoxDecoration(
+                        //                       border: Border.all(
+                        //                         color: Colors.grey.shade300,
+                        //                       ),
+                        //                       borderRadius:
+                        //                           BorderRadius.circular(8),
+                        //                     ),
+                        //                     child: ListTile(
+                        //                       onTap: () async {
+                        //                         final selected =
+                        //                             await dropTitleDialog(
+                        //                                 context, titleList);
+                        //                         if (selected != null) {
+                        //                           setState(() {
+                        //                             selectedTitleId =
+                        //                                 selected['id'];
+                        //                             titleController.text =
+                        //                                 selected['name']!;
+                        //                           });
+                        //                         }
+                        //                       },
+                        //                       title: Text(
+                        //                         titleController.text.isEmpty
+                        //                             ? 'Select Module'
+                        //                             : titleController.text,
+                        //                         style: TextStyle(
+                        //                           color: titleController
+                        //                                   .text.isEmpty
+                        //                               ? Colors.grey[500]
+                        //                               : Colors.grey[800],
+                        //                         ),
+                        //                       ),
+                        //                       trailing: Row(
+                        //                         mainAxisSize: MainAxisSize.min,
+                        //                         children: [
+                        //                           IconButton(
+                        //                             icon: const Icon(
+                        //                               Icons.add,
+                        //                               size: 18,
+                        //                             ),
+                        //                             onPressed: () async {
+                        //                               final newTitle =
+                        //                                   await showProjectTitleDialog(
+                        //                                       context);
+                        //                               if (newTitle != null) {
+                        //                                 setState(() {
+                        //                                   titleList
+                        //                                       .add(newTitle);
+                        //                                   selectedTitleId =
+                        //                                       newTitle.id;
+                        //                                   titleController.text =
+                        //                                       newTitle.name;
+                        //                                 });
+                        //                               }
+                        //                             },
+                        //                           ),
+                        //                           const Icon(
+                        //                             Icons.arrow_drop_down,
+                        //                             color: Colors.grey,
+                        //                           ),
+                        //                         ],
+                        //                       ),
+                        //                       dense: true,
+                        //                       contentPadding:
+                        //                           const EdgeInsets.symmetric(
+                        //                               horizontal: 8),
+                        //                       shape: RoundedRectangleBorder(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(8),
+                        //                       ),
+                        //                     ),
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: TextEditingController(
-                                        text: dueDate != null
-                                            ? DateFormat('dd-MM-yyyy')
-                                                .format(dueDate!)
-                                            : '',
-                                      ),
-                                      readOnly: true,
-                                      onTap: () async {
-                                        final picked = await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime(2022),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if (picked != null) {
-                                          setState(() {
-                                            dueDate = picked;
-                                          });
-                                        }
-                                      },
-                                      decoration: const InputDecoration(
-                                        labelText: 'Due Date',
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(Icons.calendar_month),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.folder_special_rounded,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Project Details',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      isExpanded: true,
-                                      value: priority,
-                                      items: allPriorities.isNotEmpty
-                                          ? allPriorities.map((prio) {
-                                              return DropdownMenuItem(
-                                                value: prio.id,
-                                                child: Text(
-                                                  prio.priority,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Project *',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: ListTile(
+                                              onTap: () async {
+                                                final selected =
+                                                    await dropDialogExisting(
+                                                        context, "Projects");
+                                                if (selected != null) {
+                                                  setState(() {
+                                                    selectedProjectId =
+                                                        selected['id'];
+                                                    selectedProjectController
+                                                            .text =
+                                                        selected['name'] ?? '';
+                                                  });
+                                                  await _loadTitle();
+                                                }
+                                              },
+                                              title: Text(
+                                                selectedProjectController
+                                                        .text.isEmpty
+                                                    ? 'Project'
+                                                    : selectedProjectController
+                                                        .text,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color:
+                                                      selectedProjectController
+                                                              .text.isEmpty
+                                                          ? Colors.grey[500]
+                                                          : Colors.grey[800],
                                                 ),
-                                              );
-                                            }).toList()
-                                          : [],
-                                      onChanged: (value) => setState(() {
-                                        priority = value;
-                                      }),
-                                      decoration: const InputDecoration(
-                                        labelText: 'Priority',
-                                        border: OutlineInputBorder(),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              trailing: const Icon(
+                                                Icons.arrow_drop_down,
+                                                color: Colors.grey,
+                                                size: 20,
+                                              ),
+                                              dense: true,
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 4,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              minVerticalPadding: 0,
+                                              minLeadingWidth: 0,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Assigned To:',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+
+                                    const SizedBox(width: 12),
+
+                                    // Module field
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Module *',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: ListTile(
+                                              onTap: () async {
+                                                final selected =
+                                                    await dropTitleDialog(
+                                                        context, titleList);
+                                                if (selected != null) {
+                                                  setState(() {
+                                                    selectedTitleId =
+                                                        selected['id'];
+                                                    titleController.text =
+                                                        selected['name']!;
+                                                  });
+                                                }
+                                              },
+                                              title: Text(
+                                                titleController.text.isEmpty
+                                                    ? 'Module'
+                                                    : titleController.text,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: titleController
+                                                          .text.isEmpty
+                                                      ? Colors.grey[500]
+                                                      : Colors.grey[800],
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              trailing: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.add,
+                                                      size: 16,
+                                                    ),
+                                                    onPressed: () async {
+                                                      final newTitle =
+                                                          await showProjectTitleDialog(
+                                                              context);
+                                                      if (newTitle != null) {
+                                                        setState(() {
+                                                          titleList
+                                                              .add(newTitle);
+                                                          selectedTitleId =
+                                                              newTitle.id;
+                                                          titleController.text =
+                                                              newTitle.name;
+                                                        });
+                                                      }
+                                                    },
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                      minWidth: 24,
+                                                      minHeight: 24,
+                                                    ),
+                                                  ),
+                                                  const Icon(
+                                                    Icons.arrow_drop_down,
+                                                    color: Colors.grey,
+                                                    size: 20,
+                                                  ),
+                                                ],
+                                              ),
+                                              dense: true,
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              minVerticalPadding: 0,
+                                              minLeadingWidth: 0,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: InkWell(
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule_rounded,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Work Details',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Due Date',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          GestureDetector(
+                                            onTap: () async {
+                                              final picked =
+                                                  await showDatePicker(
+                                                context: context,
+                                                initialDate: DateTime.now(),
+                                                firstDate: DateTime(2022),
+                                                lastDate: DateTime(2100),
+                                              );
+                                              if (picked != null) {
+                                                setState(() {
+                                                  dueDate = picked;
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(14),
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade300),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.calendar_today,
+                                                    size: 20,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      dueDate != null
+                                                          ? DateFormat(
+                                                                  'dd-MM-yyyy')
+                                                              .format(dueDate!)
+                                                          : 'Select',
+                                                      style: TextStyle(
+                                                        color: dueDate != null
+                                                            ? Colors.grey[800]
+                                                            : Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Priority',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Colors.grey.shade300),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                isExpanded: true,
+                                                value: priority,
+                                                items:
+                                                    allPriorities.map((prio) {
+                                                  Color priorityColor;
+                                                  switch (prio.priority
+                                                      .toLowerCase()) {
+                                                    case 'high':
+                                                      priorityColor =
+                                                          const Color.fromARGB(
+                                                              255,
+                                                              244,
+                                                              155,
+                                                              54);
+                                                      break;
+                                                    case 'medium':
+                                                      priorityColor =
+                                                          Colors.orange;
+                                                      break;
+                                                    case 'normal':
+                                                      priorityColor =
+                                                          const Color.fromARGB(
+                                                              255, 43, 233, 75);
+                                                      break;
+                                                    case 'critical':
+                                                      priorityColor =
+                                                          const Color.fromARGB(
+                                                              255, 255, 29, 29);
+                                                      break;
+                                                    case 'low':
+                                                      priorityColor =
+                                                          Colors.green;
+                                                      break;
+                                                    default:
+                                                      priorityColor =
+                                                          Colors.grey;
+                                                  }
+                                                  return DropdownMenuItem(
+                                                    value: prio.id,
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 12,
+                                                          height: 12,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color:
+                                                                priorityColor,
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            prio.priority,
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (value) =>
+                                                    setState(() {
+                                                  priority = value;
+                                                }),
+                                                decoration:
+                                                    const InputDecoration(
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                          horizontal: 12),
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Task Type',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Colors.grey.shade300),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                value: taskType,
+                                                items: taskTypes.map((type) {
+                                                  return DropdownMenuItem(
+                                                    value: type,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 12),
+                                                      child: Text(type),
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    taskType = value!;
+                                                  });
+                                                },
+                                                decoration:
+                                                    const InputDecoration(
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                          horizontal: 12),
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Category',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Colors.grey.shade300),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButtonFormField<
+                                                  String>(
+                                                value: category,
+                                                items: categories.map((cat) {
+                                                  return DropdownMenuItem(
+                                                    value: cat,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 12),
+                                                      child: Text(cat),
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    category = value!;
+                                                  });
+                                                },
+                                                decoration:
+                                                    const InputDecoration(
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                          horizontal: 12),
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        //  const SizedBox(height: 10),
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person_rounded,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Assignment',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Assigned To',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    GestureDetector(
                                       onTap: () async {
                                         final selected =
                                             await _showStaffSearchDialog(
@@ -760,451 +1465,621 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                           });
                                         }
                                       },
-                                      child: InputDecorator(
-                                        decoration: const InputDecoration(
-                                          hintText: 'Select Staff',
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 10),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.white,
                                         ),
                                         child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              assignedTo != null &&
-                                                      staffList.isNotEmpty
-                                                  ? staffList
-                                                      .firstWhere(
-                                                        (s) =>
-                                                            s.userIdStaff ==
-                                                            assignedTo,
-                                                        orElse: () => Staff(
-                                                            id: '',
-                                                            name: 'Not found',
-                                                            userIdStaff: ''),
-                                                      )
-                                                      .name
-                                                  : 'Select Staff',
-                                              style:
-                                                  const TextStyle(fontSize: 16),
+                                            Icon(
+                                              Icons.person_outline_rounded,
+                                              color: Colors.grey[600],
+                                              size: 22,
                                             ),
-                                            const Icon(Icons.arrow_drop_down),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                assignedTo == "0"
+                                                    ? 'Unassigned'
+                                                    : assignedTo != null &&
+                                                            staffList.isNotEmpty
+                                                        ? staffList
+                                                            .firstWhere(
+                                                              (s) =>
+                                                                  s.userIdStaff ==
+                                                                  assignedTo,
+                                                              orElse: () => Staff(
+                                                                  id: '',
+                                                                  name:
+                                                                      'Select Staff',
+                                                                  userIdStaff:
+                                                                      ''),
+                                                            )
+                                                            .name
+                                                        : 'Select Staff',
+                                                style: TextStyle(
+                                                  color: assignedTo != null
+                                                      ? Colors.grey[800]
+                                                      : Colors.grey[500],
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_drop_down,
+                                              color: Colors.grey[600],
+                                              size: 24,
+                                            ),
                                           ],
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      value: taskType,
-                                      items: taskTypes.map((type) {
-                                        return DropdownMenuItem(
-                                          value: type,
-                                          child: Text(type),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          taskType = value!;
-                                        });
-                                      },
-                                      decoration: const InputDecoration(
-                                        labelText: 'Task Type *',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please select Task Type';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      value: category,
-                                      items: categories.map((cat) {
-                                        return DropdownMenuItem(
-                                          value: cat,
-                                          child: Text(cat),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          category = value!;
-                                        });
-                                      },
-                                      decoration: const InputDecoration(
-                                        labelText: 'Category *',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please select Category';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        ...List.generate(tasks.length, (taskIndex) {
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Expanded(
-                                      flex: 5,
-                                      child: TextField(
-                                        controller: tasks[taskIndex].controller,
-                                        minLines: 1,
-                                        maxLines: null,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Task Title',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      flex: 2,
-                                      child: DropdownButtonFormField<String>(
-                                        isExpanded: true,
-                                        value: tasks[taskIndex].status ??
-                                            (allTaskStates.isNotEmpty
-                                                ? allTaskStates.first.id
-                                                : null),
-                                        items: allTaskStates.isNotEmpty
-                                            ? allTaskStates
-                                                .map((status) =>
-                                                    DropdownMenuItem(
-                                                      value: status.id,
-                                                      child: Text(
-                                                        status.status,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        maxLines: 1,
-                                                      ),
-                                                    ))
-                                                .toList()
-                                            : [],
-                                        onChanged: (value) => setState(() {
-                                          tasks[taskIndex].status = value;
-                                        }),
-                                        decoration: const InputDecoration(
-                                          labelText: 'Status',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        icon: const SizedBox.shrink(),
-                                      ),
+                                    Icon(
+                                      Icons.checklist_rounded,
+                                      color: Colors.blue,
+                                      size: 20,
                                     ),
                                     const SizedBox(width: 8),
-                                    if (taskIndex > 0)
-                                      IconButton(
-                                        icon: const Icon(Icons.close,
-                                            color: Colors.red),
-                                        onPressed: () {
-                                          setState(() {
-                                            tasks.removeAt(taskIndex);
-                                          });
-                                        },
+                                    Text(
+                                      'Tasks',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
                                       ),
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                TextField(
-                                  controller:
-                                      tasks[taskIndex].descriptionController,
-                                  minLines: 2,
-                                  maxLines: 4,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Task Description',
-                                    border: OutlineInputBorder(),
-                                    alignLabelWithHint: true,
-                                  ),
-                                ),
-                                if (taskIndex == tasks.length - 1)
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      icon: const Icon(Icons.add_circle_outline,
-                                          color: Colors.green),
-                                      label: const Text(
-                                        "Add Task",
-                                        style: TextStyle(color: Colors.green),
+                                const SizedBox(height: 16),
+                                ...List.generate(tasks.length, (taskIndex) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.grey.shade200),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.white,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Task ${taskIndex + 1}',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.grey[700],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  TextField(
+                                                    controller: tasks[taskIndex]
+                                                        .controller,
+                                                    minLines: 1,
+                                                    maxLines: 2,
+                                                    decoration: InputDecoration(
+                                                      hintText: 'Task',
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                      ),
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              12),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Container(
+                                              width: 120,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Status',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.grey[700],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .grey.shade300),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child:
+                                                        DropdownButtonHideUnderline(
+                                                      child:
+                                                          DropdownButtonFormField<
+                                                              String>(
+                                                        isExpanded: true,
+                                                        value: tasks[taskIndex]
+                                                                .status ??
+                                                            (allTaskStates
+                                                                    .isNotEmpty
+                                                                ? allTaskStates
+                                                                    .first.id
+                                                                : null),
+                                                        items: allTaskStates
+                                                                .isNotEmpty
+                                                            ? allTaskStates
+                                                                .map((status) {
+                                                                return DropdownMenuItem(
+                                                                  value:
+                                                                      status.id,
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        horizontal:
+                                                                            12),
+                                                                    child: Text(
+                                                                      status
+                                                                          .status,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      maxLines:
+                                                                          1,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              }).toList()
+                                                            : [],
+                                                        onChanged: (value) =>
+                                                            setState(() {
+                                                          tasks[taskIndex]
+                                                              .status = value;
+                                                        }),
+                                                        decoration:
+                                                            const InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          4),
+                                                          border:
+                                                              InputBorder.none,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (taskIndex > 0)
+                                              IconButton(
+                                                icon: Container(
+                                                  padding:
+                                                      const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.red[50],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 18,
+                                                    color: Colors.red[700],
+                                                  ),
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    tasks.removeAt(taskIndex);
+                                                  });
+                                                },
+                                              ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        TextField(
+                                          controller: tasks[taskIndex]
+                                              .descriptionController,
+                                          minLines: 2,
+                                          maxLines: 4,
+                                          decoration: InputDecoration(
+                                            hintText: 'Task description',
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.all(12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        tasks.add(TaskForm(
+                                          controller: TextEditingController(),
+                                          descriptionController:
+                                              TextEditingController(),
+                                          status: allTaskStates.isNotEmpty
+                                              ? allTaskStates.first.id
+                                              : null,
+                                          taskId: null,
+                                          remarks: [TextEditingController()],
+                                        ));
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add,
+                                        size: 18, color: Colors.white),
+                                    label: const Text('Add Task'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      onPressed: () {
-                                        setState(() {
-                                          tasks.add(TaskForm(
-                                            controller: TextEditingController(),
-                                            descriptionController:
-                                                TextEditingController(),
-                                            status: allTaskStates.isNotEmpty
-                                                ? allTaskStates.first.id
-                                                : null,
-                                            taskId: null,
-                                            remarks: [TextEditingController()],
-                                          ));
-                                        });
-                                      },
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 10),
                                     ),
                                   ),
+                                ),
                               ],
                             ),
-                          );
-                        }),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Notification Settings',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    whatsappNotification =
-                                        !whatsappNotification;
-                                  });
-                                },
-                                child: Row(
+                        ),
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Checkbox(
-                                      value: whatsappNotification,
-                                      onChanged: (value) => setState(() =>
-                                          whatsappNotification =
-                                              value ?? false),
+                                    Icon(
+                                      Icons.notifications_rounded,
+                                      color: Colors.blue,
+                                      size: 20,
                                     ),
-                                    const Text('WhatsApp Notification'),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Notification Settings',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () => setState(
-                                    () => pushNotification = !pushNotification),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: pushNotification,
-                                      onChanged: (value) => setState(() =>
-                                          pushNotification = value ?? false),
-                                    ),
-                                    const Text('Push Notification'),
-                                  ],
+                                const SizedBox(height: 16),
+
+                                _buildNotificationOption(
+                                  icon: FontAwesomeIcons.whatsapp,
+                                  iconColor: Colors.green,
+                                  title: 'WhatsApp Notification',
+                                  value: whatsappNotification,
+                                  onChanged: (value) => setState(() {
+                                    whatsappNotification = value;
+                                  }),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () => setState(() =>
-                                    notifyToAssignedStaff =
-                                        !notifyToAssignedStaff),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: notifyToAssignedStaff,
-                                      onChanged: (value) => setState(() =>
-                                          notifyToAssignedStaff =
-                                              value ?? false),
-                                    ),
-                                    const Text('Notify to Assigned Staff'),
-                                  ],
+                                const SizedBox(height: 12),
+                                _buildNotificationOption(
+                                  icon: Icons.notifications_active_rounded,
+                                  iconColor: Colors.blue,
+                                  title: 'Push Notification',
+                                  value: pushNotification,
+                                  onChanged: (value) => setState(() {
+                                    pushNotification = value;
+                                  }),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () => setState(() =>
-                                    notifyOnStatusChange =
-                                        !notifyOnStatusChange),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: notifyOnStatusChange,
-                                      onChanged: (value) => setState(() =>
-                                          notifyOnStatusChange =
-                                              value ?? false),
-                                    ),
-                                    const Text('Notify on status change'),
-                                  ],
+                                const SizedBox(height: 12),
+
+                                // Notify to Assigned Staff
+                                _buildNotificationOption(
+                                  icon: Icons.person_rounded,
+                                  iconColor: Colors.orange,
+                                  title: 'Notify to Assigned Staff',
+                                  value: notifyToAssignedStaff,
+                                  onChanged: (value) => setState(() {
+                                    notifyToAssignedStaff = value;
+                                  }),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () => setState(
-                                    () => notifyOnStart = !notifyOnStart),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: notifyOnStart,
-                                      onChanged: (value) => setState(
-                                          () => notifyOnStart = value ?? false),
-                                    ),
-                                    const Text('Notify when work starts'),
-                                  ],
+                                const SizedBox(height: 12),
+
+                                // Notify on Status Change
+                                _buildNotificationOption(
+                                  icon: Icons.change_circle_rounded,
+                                  iconColor: Colors.purple,
+                                  title: 'Notify on Status Change',
+                                  value: notifyOnStatusChange,
+                                  onChanged: (value) => setState(() {
+                                    notifyOnStatusChange = value;
+                                  }),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () => setState(
-                                    () => notifyOnComplete = !notifyOnComplete),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: notifyOnComplete,
-                                      onChanged: (value) => setState(() =>
-                                          notifyOnComplete = value ?? false),
-                                    ),
-                                    const Text('Notify when work completes'),
-                                  ],
+                                const SizedBox(height: 12),
+
+                                // Notify When Work Starts
+                                _buildNotificationOption(
+                                  icon: Icons.play_arrow_rounded,
+                                  iconColor: Colors.teal,
+                                  title: 'Notify When Work Starts',
+                                  value: notifyOnStart,
+                                  onChanged: (value) => setState(() {
+                                    notifyOnStart = value;
+                                  }),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  notifyOtherPeople = !notifyOtherPeople;
-                                  if (!notifyOtherPeople)
-                                    selectedStaffIds.clear();
-                                }),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: notifyOtherPeople,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          notifyOtherPeople = value ?? false;
-                                          if (!notifyOtherPeople) {
-                                            selectedStaffIds.clear();
-                                          }
-                                        });
-                                      },
-                                    ),
-                                    const Text('Notify other people'),
-                                  ],
+                                const SizedBox(height: 12),
+
+                                // Notify When Work Completes
+                                _buildNotificationOption(
+                                  icon: Icons.check_circle_rounded,
+                                  iconColor: Colors.green,
+                                  title: 'Notify When Work Completes',
+                                  value: notifyOnComplete,
+                                  onChanged: (value) => setState(() {
+                                    notifyOnComplete = value;
+                                  }),
                                 ),
-                              ),
-                              if (notifyOtherPeople) ...[
+                                const SizedBox(height: 12),
+
+                                // Notify Other People
+                                _buildNotificationOption(
+                                  icon: Icons.group_rounded,
+                                  iconColor: Colors.indigo,
+                                  title: 'Notify Other People',
+                                  value: notifyOtherPeople,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      notifyOtherPeople = value;
+                                      if (!notifyOtherPeople) {
+                                        selectedStaffIds.clear();
+                                      }
+                                    });
+                                  },
+                                ),
+
+                                if (notifyOtherPeople) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Select Staff to Notify:',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () => _showMultiStaffSelectionDialog(
+                                        context, false),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.group_add_rounded,
+                                                color: Colors.grey[600],
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                selectedStaffIds.isEmpty
+                                                    ? 'Select Staff to Notify'
+                                                    : '${selectedStaffIds.length} staff selected',
+                                                style: TextStyle(
+                                                  color:
+                                                      selectedStaffIds.isEmpty
+                                                          ? Colors.grey[500]
+                                                          : Colors.grey[800],
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Colors.grey[600],
+                                            size: 24,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Participants in Chat',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
-                                const Text('Select Staff to Notify:'),
-                                const SizedBox(height: 4),
-                                InkWell(
+                                GestureDetector(
                                   onTap: () => _showMultiStaffSelectionDialog(
-                                      context, false),
-                                  child: InputDecorator(
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 10),
+                                      context, true),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.white,
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          selectedStaffIds.isEmpty
-                                              ? 'Select Staff to Notify'
-                                              : '${selectedStaffIds.length} staff selected',
-                                          style: const TextStyle(fontSize: 16),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.chat_bubble_outline_rounded,
+                                              color: Colors.grey[600],
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              participantIds.isEmpty
+                                                  ? 'Select Chat Participants'
+                                                  : '${participantIds.length} participants selected',
+                                              style: TextStyle(
+                                                color: participantIds.isEmpty
+                                                    ? Colors.grey[500]
+                                                    : Colors.grey[800],
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const Icon(Icons.arrow_drop_down),
+                                        Icon(
+                                          Icons.arrow_drop_down,
+                                          color: Colors.grey[600],
+                                          size: 24,
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Participants in Chat',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              InkWell(
-                                onTap: () => _showMultiStaffSelectionDialog(
-                                    context, true),
-                                child: InputDecorator(
-                                  decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 10),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        participantIds.isEmpty
-                                            ? 'Select Chat Participants'
-                                            : '${participantIds.length} participants selected',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      const Icon(Icons.arrow_drop_down),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
+                // Action Button
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          widget.existingWork != null && widget.Restart != 1
-                              ? Colors.red
-                              : Colors.green,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
                     onPressed: _isAssigning ? null : _submitWork,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isEditing
+                          ? isPausing
+                              ? Colors.orange[800]
+                              : isRestarting
+                                  ? Colors.green[800]
+                                  : Colors.red[800]
+                          : Colors.blue,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
                     child: _isAssigning
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: 24,
+                            height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : Text(
-                            widget.existingWork != null
-                                ? 'STOP WORK'
-                                : 'ASSIGN WORK',
-                            style: const TextStyle(fontSize: 16),
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isEditing
+                                    ? isPausing
+                                        ? Icons.pause_rounded
+                                        : isRestarting
+                                            ? Icons.play_arrow_rounded
+                                            : Icons.stop_rounded
+                                    : Icons.assignment_turned_in_rounded,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                isEditing
+                                    ? isPausing
+                                        ? 'PAUSE WORK'
+                                        : isRestarting
+                                            ? 'RESTART WORK'
+                                            : 'STOP WORK'
+                                    : 'ASSIGN WORK',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                   ),
                 ),
@@ -1223,6 +2098,49 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     );
   }
 
+  // Helper widget for notification options
+  Widget _buildNotificationOption({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[50],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Transform.scale(
+            scale: 0.9,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: iconColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // All existing methods remain the same from original code
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
     return showDialog(
       context: context,
@@ -1463,84 +2381,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     );
   }
 
-  Future<void> _showMultiStaffSelectionDialog(
-      BuildContext context, bool isForParticipants) async {
-    final currentSelection =
-        isForParticipants ? participantIds : selectedStaffIds;
-    final selected = await showDialog<List<String>>(
-      context: context,
-      builder: (context) {
-        final tempSelected = List<String>.from(currentSelection);
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(isForParticipants
-                  ? 'Select Chat Participants'
-                  : 'Select Staff to Notify'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Search Staff',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {},
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: staffList.length,
-                        itemBuilder: (context, index) {
-                          final staff = staffList[index];
-                          return CheckboxListTile(
-                            title: Text(staff.name),
-                            value: tempSelected.contains(staff.userIdStaff),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  tempSelected.add(staff.userIdStaff);
-                                } else {
-                                  tempSelected.remove(staff.userIdStaff);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, tempSelected),
-                  child: const Text('Confirm'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    if (selected != null) {
-      setState(() {
-        if (isForParticipants) {
-          participantIds = selected;
-        } else {
-          selectedStaffIds = selected;
-        }
-      });
-    }
-  }
-
   Future<TitleListDet?> showProjectTitleDialog(BuildContext context) async {
     TextEditingController titleController = TextEditingController();
     TextEditingController projectController = TextEditingController();
@@ -1662,9 +2502,20 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                     Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: filteredStaff.length,
+                        itemCount: filteredStaff.length + 1,
                         itemBuilder: (context, index) {
-                          final staff = filteredStaff[index];
+                          if (index == 0) {
+                            return ListTile(
+                              title: const Text('Unassigned'),
+                              onTap: () {
+                                Navigator.pop(context, {
+                                  'id': '0',
+                                  'name': 'Unassigned',
+                                });
+                              },
+                            );
+                          }
+                          final staff = filteredStaff[index - 1];
                           return ListTile(
                             title: Text(staff.name),
                             onTap: () {
@@ -1685,5 +2536,83 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         );
       },
     );
+  }
+
+  Future<void> _showMultiStaffSelectionDialog(
+      BuildContext context, bool isForParticipants) async {
+    final currentSelection =
+        isForParticipants ? participantIds : selectedStaffIds;
+    final selected = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        final tempSelected = List<String>.from(currentSelection);
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(isForParticipants
+                  ? 'Select Chat Participants'
+                  : 'Select Staff to Notify'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Search Staff',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {},
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: staffList.length,
+                        itemBuilder: (context, index) {
+                          final staff = staffList[index];
+                          return CheckboxListTile(
+                            title: Text(staff.name),
+                            value: tempSelected.contains(staff.userIdStaff),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value == true) {
+                                  tempSelected.add(staff.userIdStaff);
+                                } else {
+                                  tempSelected.remove(staff.userIdStaff);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, tempSelected),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (selected != null) {
+      setState(() {
+        if (isForParticipants) {
+          participantIds = selected;
+        } else {
+          selectedStaffIds = selected;
+        }
+      });
+    }
   }
 }

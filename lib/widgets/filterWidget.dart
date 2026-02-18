@@ -10,11 +10,14 @@ class FilterWidget extends StatefulWidget {
   final int pageId;
   final Map<String, dynamic>? initialFilters;
 
+  final bool showUnassigned;
+
   const FilterWidget({
     super.key,
     required this.onApplyFilters,
     required this.pageId,
     this.initialFilters,
+    this.showUnassigned = false,
   });
 
   @override
@@ -52,11 +55,12 @@ class _FilterWidgetState extends State<FilterWidget> {
     final prio = await HttpService.getPrioState();
     final task = await HttpService.getTaskState();
     final staff = await HttpService.getStaffs();
-
     if (mounted) {
       setState(() {
         if (prio?.data != null) prioList = prio!.data;
-        if (task?.data != null) statusList = task!.data;
+        if (task?.data != null) {
+          statusList = List<TaskState>.from(task!.data);
+        }
         if (staff?.data != null) staffList = staff!.data;
       });
     }
@@ -64,15 +68,170 @@ class _FilterWidgetState extends State<FilterWidget> {
 
   void _initializeFilters() {
     if (widget.initialFilters != null) {
+      print('DEBUG: Initial filters: ${widget.initialFilters}');
+      print(
+          'DEBUG: statusList: ${statusList.map((s) => '${s.id}: ${s.status}').toList()}');
       setState(() {
         selectedPriorityIds =
             Set.from(widget.initialFilters?['priority_ids'] ?? []);
-        selectedStatusIds =
-            Set.from(widget.initialFilters?['status_ids'] ?? []);
         selectedAssignedByIds =
             Set.from(widget.initialFilters?['assigned_by_ids'] ?? []);
         selectedAssignedToIds =
             Set.from(widget.initialFilters?['assigned_to_ids'] ?? []);
+        selectedStatusIds.clear();
+
+        // First check for status_names from the filters
+        if (widget.initialFilters?['status_names'] != null) {
+          dynamic statusNamesValue = widget.initialFilters!['status_names'];
+          List<String> statusNames = [];
+
+          if (statusNamesValue is List) {
+            for (var item in statusNamesValue) {
+              if (item is String && item.contains(',')) {
+                statusNames.addAll(item.split(',').map((s) => s.trim()));
+              } else {
+                statusNames.add(item.toString().trim());
+              }
+            }
+          } else if (statusNamesValue is String) {
+            statusNames
+                .addAll(statusNamesValue.split(',').map((s) => s.trim()));
+          }
+
+          print('DEBUG: Found status_names: $statusNames');
+
+          for (String statusName in statusNames) {
+            String normalizedName = statusName.toLowerCase();
+            print('DEBUG: Looking for status: $normalizedName');
+
+            for (var status in statusList) {
+              String statusText = status.status.toLowerCase();
+
+              // Handle "to do" variations
+              if ((normalizedName == 'todo' || normalizedName == 'to do') &&
+                  (statusText.contains('todo') ||
+                      statusText.contains('to do'))) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "To Do" status: ${status.id} - ${status.status}');
+                break;
+              }
+              // Handle other statuses
+              else if (normalizedName == 'completed' &&
+                  statusText.contains('completed')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Completed" status: ${status.id} - ${status.status}');
+                break;
+              } else if (normalizedName == 'pending' &&
+                  statusText.contains('pending')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Pending" status: ${status.id} - ${status.status}');
+                break;
+              } else if (normalizedName == 'overdue' &&
+                  statusText.contains('overdue')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Overdue" status: ${status.id} - ${status.status}');
+                break;
+              }
+              // Handle in-progress
+              else if (normalizedName == 'in-progress' ||
+                  normalizedName == 'in progress') {
+                if (statusText.contains('in-progress') ||
+                    statusText.contains('in progress')) {
+                  selectedStatusIds.add(status.id);
+                  print(
+                      'DEBUG: Found "In-Progress" status: ${status.id} - ${status.status}');
+                  break;
+                }
+              }
+              // Generic match for other status names
+              else if (statusText == normalizedName) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found exact match: ${status.id} - ${status.status}');
+                break;
+              }
+            }
+            if (normalizedName == 'unassigned') {
+              selectedAssignedToIds.add('0');
+              print('DEBUG: Found "Unassigned" for Assigned To');
+            }
+          }
+        }
+        // Fallback to status_name (singular) for backward compatibility (may contain commas)
+        else if (widget.initialFilters?['status_name'] != null) {
+          String statusNameField =
+              widget.initialFilters!['status_name'].toString();
+          List<String> statusNames =
+              statusNameField.split(',').map((s) => s.trim()).toList();
+
+          print(
+              'DEBUG: Looking for statuses from status_name field: $statusNames');
+
+          for (String statusName in statusNames) {
+            String normalizedName = statusName.toLowerCase();
+            bool found = false;
+
+            for (var status in statusList) {
+              String statusText = status.status.toLowerCase();
+
+              if ((normalizedName == 'todo' || normalizedName == 'to do') &&
+                  (statusText.contains('todo') ||
+                      statusText.contains('to do'))) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "To Do" status: ${status.id} - ${status.status}');
+                found = true;
+                break;
+              } else if (normalizedName == 'completed' &&
+                  statusText.contains('completed')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Completed" status: ${status.id} - ${status.status}');
+                found = true;
+                break;
+              } else if (normalizedName == 'pending' &&
+                  statusText.contains('pending')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Pending" status: ${status.id} - ${status.status}');
+                found = true;
+                break;
+              } else if (normalizedName == 'overdue' &&
+                  statusText.contains('overdue')) {
+                selectedStatusIds.add(status.id);
+                print(
+                    'DEBUG: Found "Overdue" status: ${status.id} - ${status.status}');
+                found = true;
+                break;
+              } else if (normalizedName == 'in-progress' ||
+                  normalizedName == 'in progress') {
+                if (statusText.contains('in-progress') ||
+                    statusText.contains('in progress')) {
+                  selectedStatusIds.add(status.id);
+                  print(
+                      'DEBUG: Found "In-Progress" status: ${status.id} - ${status.status}');
+                  found = true;
+                  break;
+                }
+              }
+            }
+
+            if (!found) {
+              for (var status in statusList) {
+                if (status.status.toLowerCase().contains(normalizedName)) {
+                  selectedStatusIds.add(status.id);
+                  print(
+                      'DEBUG: Found matching status (contains): ${status.id} - ${status.status}');
+                  break;
+                }
+              }
+            }
+          }
+        }
 
         if (widget.initialFilters?['due_from'] != null) {
           dueDateFrom = DateTime.parse(widget.initialFilters?['due_from']);
@@ -86,10 +245,106 @@ class _FilterWidgetState extends State<FilterWidget> {
         if (widget.initialFilters?['created_to'] != null) {
           createdTo = DateTime.parse(widget.initialFilters?['created_to']);
         }
-        shouldSortSelectedFirst = true; // Only for initial load with filters
+        shouldSortSelectedFirst = true;
+
+        print('DEBUG: Final selectedStatusIds: $selectedStatusIds');
       });
     }
   }
+
+  // void _initializeFilters() {
+  //   if (widget.initialFilters != null) {
+  //     print('DEBUG: Initial filters: ${widget.initialFilters}');
+  //     print(
+  //         'DEBUG: statusList: ${statusList.map((s) => '${s.id}: ${s.status}').toList()}');
+  //     setState(() {
+  //       selectedPriorityIds =
+  //           Set.from(widget.initialFilters?['priority_ids'] ?? []);
+  //       selectedAssignedByIds =
+  //           Set.from(widget.initialFilters?['assigned_by_ids'] ?? []);
+  //       selectedAssignedToIds =
+  //           Set.from(widget.initialFilters?['assigned_to_ids'] ?? []);
+  //       selectedStatusIds.clear();
+  //       if (widget.initialFilters?['status_ids'] != null) {
+  //         List<dynamic> statusIds = widget.initialFilters!['status_ids'];
+  //         if (statusIds is List) {
+  //           for (var id in statusIds) {
+  //             if (id != null && id.toString().isNotEmpty) {
+  //               selectedStatusIds.add(id.toString());
+  //             }
+  //           }
+  //         }
+  //         print(
+  //             'DEBUG: Set status_ids from initial filters: $selectedStatusIds');
+  //       } else if (widget.initialFilters?['status_name'] != null) {
+  //         String statusName =
+  //             widget.initialFilters!['status_name'].toLowerCase();
+  //         print('DEBUG: Looking for status with name: $statusName');
+  //         bool found = false;
+  //         for (var status in statusList) {
+  //           String statusText = status.status.toLowerCase();
+  //           if ((statusName == 'todo' || statusName == 'to do') &&
+  //               (statusText.contains('todo') || statusText.contains('to do'))) {
+  //             selectedStatusIds.add(status.id);
+  //             print(
+  //                 'DEBUG: Found "To Do" status: ${status.id} - ${status.status}');
+  //             found = true;
+  //             break;
+  //           } else if (statusName == 'completed' &&
+  //               statusText.contains('completed')) {
+  //             selectedStatusIds.add(status.id);
+  //             print(
+  //                 'DEBUG: Found "Completed" status: ${status.id} - ${status.status}');
+  //             found = true;
+  //             break;
+  //           } else if (statusName == 'pending' &&
+  //               statusText.contains('pending')) {
+  //             selectedStatusIds.add(status.id);
+  //             print(
+  //                 'DEBUG: Found "Pending" status: ${status.id} - ${status.status}');
+  //             found = true;
+  //             break;
+  //           } else if (statusName == 'overdue' &&
+  //               statusText.contains('overdue')) {
+  //             selectedStatusIds.add(status.id);
+  //             print(
+  //                 'DEBUG: Found "Overdue" status: ${status.id} - ${status.status}');
+  //             found = true;
+  //             break;
+  //           }
+  //         }
+  //         if (!found) {
+  //           for (var status in statusList) {
+  //             if (status.status.toLowerCase().contains(statusName)) {
+  //               selectedStatusIds.add(status.id);
+  //               print(
+  //                   'DEBUG: Found matching status (contains): ${status.id} - ${status.status}');
+  //               break;
+  //             }
+  //           }
+  //         }
+  //         if (selectedStatusIds.isEmpty) {
+  //           print('DEBUG: Could not find any status for name: $statusName');
+  //         }
+  //       }
+  //       if (widget.initialFilters?['due_from'] != null) {
+  //         dueDateFrom = DateTime.parse(widget.initialFilters?['due_from']);
+  //       }
+  //       if (widget.initialFilters?['due_to'] != null) {
+  //         dueDateTo = DateTime.parse(widget.initialFilters?['due_to']);
+  //       }
+  //       if (widget.initialFilters?['created_from'] != null) {
+  //         createdFrom = DateTime.parse(widget.initialFilters?['created_from']);
+  //       }
+  //       if (widget.initialFilters?['created_to'] != null) {
+  //         createdTo = DateTime.parse(widget.initialFilters?['created_to']);
+  //       }
+  //       shouldSortSelectedFirst = true;
+
+  //       print('DEBUG: Final selectedStatusIds: $selectedStatusIds');
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +579,23 @@ class _FilterWidgetState extends State<FilterWidget> {
               dueDateTo,
               (d) => setState(() => dueDateTo = d),
             ),
+            const SizedBox(height: 10),
+            _buildQuickDateFilters(
+              onToday: () {
+                final now = DateTime.now();
+                setState(() {
+                  dueDateFrom = now;
+                  dueDateTo = now;
+                });
+              },
+              onThisMonth: () {
+                final now = DateTime.now();
+                setState(() {
+                  dueDateFrom = DateTime(now.year, now.month, 1);
+                  dueDateTo = DateTime(now.year, now.month + 1, 0);
+                });
+              },
+            ),
           ],
         );
 
@@ -339,6 +611,23 @@ class _FilterWidgetState extends State<FilterWidget> {
               "To",
               createdTo,
               (d) => setState(() => createdTo = d),
+            ),
+            const SizedBox(height: 10),
+            _buildQuickDateFilters(
+              onToday: () {
+                final now = DateTime.now();
+                setState(() {
+                  createdFrom = now;
+                  createdTo = now;
+                });
+              },
+              onThisMonth: () {
+                final now = DateTime.now();
+                setState(() {
+                  createdFrom = DateTime(now.year, now.month, 1);
+                  createdTo = DateTime(now.year, now.month + 1, 0);
+                });
+              },
             ),
           ],
         );
@@ -478,6 +767,13 @@ class _FilterWidgetState extends State<FilterWidget> {
       return staff.name.toLowerCase().contains(searchTerm);
     }).toList();
 
+    if (widget.showUnassigned && selectedCategory == 'Assigned to') {
+      if ('unassigned'.contains(searchTerm)) {
+        filteredStaff.insert(
+            0, Staff(id: '0', name: 'Unassigned', userIdStaff: '0'));
+      }
+    }
+
     if (shouldSortSelectedFirst) {
       filteredStaff.sort((a, b) {
         final aSelected = selectedIds.contains(a.userIdStaff);
@@ -615,17 +911,122 @@ class _FilterWidgetState extends State<FilterWidget> {
     );
   }
 
+  Widget _buildQuickDateFilters({
+    required VoidCallback onToday,
+    required VoidCallback onThisMonth,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onToday,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE3F2FD),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: Color(0xFF3366FF)),
+              ),
+              minimumSize: const Size(0, 32),
+            ),
+            child: const Text(
+              "Today",
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF3366FF),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onThisMonth,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE3F2FD),
+              elevation: 0,
+              padding:
+                  const EdgeInsets.symmetric(vertical: 4), // Reduced from 8
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6), // Smaller radius
+                side: const BorderSide(color: Color(0xFF3366FF)),
+              ),
+              minimumSize: const Size(0, 32), // Set minimum height
+            ),
+            child: const Text(
+              "This Month",
+              style: TextStyle(
+                fontSize: 10, // Reduced font size
+                color: Color(0xFF3366FF),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  // void _applyFilters() {
+  //   widget.onApplyFilters({
+  //     'priority_ids': selectedPriorityIds.toList(),
+  //     'status_ids': selectedStatusIds.toList(),
+  //     'assigned_by_ids': selectedAssignedByIds.toList(),
+  //     'assigned_to_ids': selectedAssignedToIds.toList(),
+  //     'due_from': dueDateFrom?.toIso8601String(),
+  //     'due_to': dueDateTo?.toIso8601String(),
+  //     'created_from': createdFrom?.toIso8601String(),
+  //     'created_to': createdTo?.toIso8601String(),
+  //   });
+  //   setState(() {
+  //     lastAppliedCategory = selectedCategory;
+  //   });
+  //   Navigator.pop(context);
+  // }
   void _applyFilters() {
-    widget.onApplyFilters({
-      'priority_ids': selectedPriorityIds.toList(),
-      'status_ids': selectedStatusIds.toList(),
-      'assigned_by_ids': selectedAssignedByIds.toList(),
-      'assigned_to_ids': selectedAssignedToIds.toList(),
-      'due_from': dueDateFrom?.toIso8601String(),
-      'due_to': dueDateTo?.toIso8601String(),
-      'created_from': createdFrom?.toIso8601String(),
-      'created_to': createdTo?.toIso8601String(),
-    });
+    Map<String, dynamic> appliedFilters = {};
+    if (selectedPriorityIds.isNotEmpty) {
+      appliedFilters['priority_ids'] = selectedPriorityIds.toList();
+    }
+    if (selectedStatusIds.isNotEmpty) {
+      appliedFilters['status_ids'] = selectedStatusIds.toList();
+      // Also return names for UI sync
+      appliedFilters['status_names'] = statusList
+          .where((s) => selectedStatusIds.contains(s.id))
+          .map((s) => s.status.toLowerCase())
+          .toList();
+    } else {
+      appliedFilters['status_ids'] = [];
+      appliedFilters['status_names'] = [];
+    }
+    if (selectedAssignedByIds.isNotEmpty) {
+      appliedFilters['assigned_by_ids'] = selectedAssignedByIds.toList();
+    }
+    if (selectedAssignedToIds.isNotEmpty) {
+      appliedFilters['assigned_to_ids'] = selectedAssignedToIds.toList();
+      if (selectedAssignedToIds.contains('0')) {
+        List<String> names =
+            List<String>.from(appliedFilters['status_names'] ?? []);
+        if (!names.contains('unassigned')) names.add('unassigned');
+        appliedFilters['status_names'] = names;
+      }
+    }
+    if (dueDateFrom != null) {
+      appliedFilters['due_from'] = dueDateFrom!.toIso8601String();
+    }
+    if (dueDateTo != null) {
+      appliedFilters['due_to'] = dueDateTo!.toIso8601String();
+    }
+    if (createdFrom != null) {
+      appliedFilters['created_from'] = createdFrom!.toIso8601String();
+    }
+    if (createdTo != null) {
+      appliedFilters['created_to'] = createdTo!.toIso8601String();
+    }
+
+    widget.onApplyFilters(appliedFilters);
     setState(() {
       lastAppliedCategory = selectedCategory;
     });

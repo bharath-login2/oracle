@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/models/clients/hideInvoiceModel.dart';
 import 'package:login2/screens/accounts/clients/gstInvoice.dart';
+import 'package:login2/screens/accounts/clients/invoiceHistoryPage.dart';
 import 'package:login2/screens/accounts/clients/print_invoice_view.dart';
 import 'package:login2/screens/accounts/clients/receiptByInvoice.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
@@ -101,28 +102,28 @@ class _InvoiceListState extends State<InvoiceList> {
   }
 
   String _calculateFilteredTotal(List<dynamic> filteredList) {
-  double total = 0;
-  for (var invoice in filteredList) {
-    total += double.tryParse(invoice.totalAmount) ?? 0;
+    double total = 0;
+    for (var invoice in filteredList) {
+      total += double.tryParse(invoice.totalAmount) ?? 0;
+    }
+    return total.toStringAsFixed(2);
   }
-  return total.toStringAsFixed(2);
-}
 
-String _calculateFilteredPaid(List<dynamic> filteredList) {
-  double total = 0;
-  for (var invoice in filteredList) {
-    total += double.tryParse(invoice.totalPaid) ?? 0;
+  String _calculateFilteredPaid(List<dynamic> filteredList) {
+    double total = 0;
+    for (var invoice in filteredList) {
+      total += double.tryParse(invoice.totalPaid) ?? 0;
+    }
+    return total.toStringAsFixed(2);
   }
-  return total.toStringAsFixed(2);
-}
 
-String _calculateFilteredBalance(List<dynamic> filteredList) {
-  double total = 0;
-  for (var invoice in filteredList) {
-    total += double.tryParse(invoice.balance) ?? 0;
+  String _calculateFilteredBalance(List<dynamic> filteredList) {
+    double total = 0;
+    for (var invoice in filteredList) {
+      total += double.tryParse(invoice.balance) ?? 0;
+    }
+    return total.toStringAsFixed(2);
   }
-  return total.toStringAsFixed(2);
-}
 
   void filterInvoices(String value) {
     setState(() {
@@ -206,11 +207,23 @@ String _calculateFilteredBalance(List<dynamic> filteredList) {
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -485,814 +498,859 @@ String _calculateFilteredBalance(List<dynamic> filteredList) {
                       ),
                     ),
                   ),
-             body: (invoiceList != null && searchData != null)
-              ? Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 16),
-                            child: TextField(
-                              controller: invSearch,
-                              autocorrect: false,
-                              keyboardType: TextInputType.visiblePassword,
-                              onChanged: (value) {
-                                filterInvoices(value);
-                              },
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(8),
-                                hintText: 'Search ',
-                                prefixIcon: const Icon(Icons.search),
-                                fillColor: Colors.white,
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius: BorderRadius.circular(10.0),
+            body: (invoiceList != null && searchData != null)
+                ? Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 16),
+                              child: TextField(
+                                controller: invSearch,
+                                autocorrect: false,
+                                keyboardType: TextInputType.visiblePassword,
+                                onChanged: (value) {
+                                  filterInvoices(value);
+                                },
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.all(8),
+                                  hintText: 'Search ',
+                                  prefixIcon: const Icon(Icons.search),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide.none,
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                  suffixIcon: invSearch.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: () {
+                                            invSearch.clear();
+                                            filterInvoices('');
+                                          },
+                                        )
+                                      : null,
                                 ),
-                                suffixIcon: invSearch.text.isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () {
-                                          invSearch.clear();
-                                          filterInvoices('');
-                                        },
-                                      )
-                                    : null,
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 12, right: 12, top: 12, bottom: 80),
-                            child: filteredInvoices.isNotEmpty
-                                ? ListView.builder(
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    shrinkWrap: true,
-                                    itemCount: filteredInvoices.length, // Use filteredInvoices here
-                                    itemBuilder: (context, index) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 10),
-                                        child: InkWell(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) => ReceiptByInvoice(
-                                                      widget.token,
-                                                      filteredInvoices[index].id.toString())), // Use filteredInvoices
-                                            ).then((_) {
-                                              getData();
-                                            });
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.grey
-                                                        .withOpacity(0.2),
-                                                    spreadRadius: 1,
-                                                    blurRadius: 1,
-                                                    offset: const Offset(1, 1),
-                                                  )
-                                                ],
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                color: filteredInvoices[
-                                                            index] // Use filteredInvoices
-                                                        .gstinvoiceCreated
-                                                        .toString() ==
-                                                    "1"
-                                                    ? const Color.fromARGB(
-                                                        255, 228, 248, 216)
-                                                    : Colors.white),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(14.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.6,
-                                                        child: InkWell(
-                                                          onTap: () {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) => CustomerDashboard(
-                                                                    name: name!,
-                                                                    token: widget
-                                                                        .token!,
-                                                                    userId:
-                                                                        userId!,
-                                                                    phoneCallLogPermission:
-                                                                        phoneCallLogPermission,
-                                                                    custId: filteredInvoices[
-                                                                            index] // Use filteredInvoices
-                                                                        .clientId
-                                                                        .toString()),
-                                                              ),
-                                                            );
-                                                          },
-                                                          child: Text(
-                                                              filteredInvoices[
-                                                                      index] // Use filteredInvoices
-                                                                  .customerName
-                                                                  .toString(),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              )),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        decoration: BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(2),
-                                                            color: filteredInvoices[
-                                                                        index] // Use filteredInvoices
-                                                                        .status
-                                                                        .toString() ==
-                                                                    'Paid'
-                                                                ? const Color(
-                                                                    0xffe6fbec)
-                                                                : const Color(
-                                                                    0xfffcbcbc)),
-                                                        child: Center(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 12,
-                                                                    right: 12,
-                                                                    top: 6,
-                                                                    bottom: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 12, right: 12, top: 12, bottom: 80),
+                              child: filteredInvoices.isNotEmpty
+                                  ? ListView.builder(
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      shrinkWrap: true,
+                                      itemCount: filteredInvoices
+                                          .length, // Use filteredInvoices here
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 10),
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ReceiptByInvoice(
+                                                            widget.token,
+                                                            filteredInvoices[
+                                                                    index]
+                                                                .id
+                                                                .toString())), // Use filteredInvoices
+                                              ).then((_) {
+                                                getData();
+                                              });
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey
+                                                          .withOpacity(0.2),
+                                                      spreadRadius: 1,
+                                                      blurRadius: 1,
+                                                      offset:
+                                                          const Offset(1, 1),
+                                                    )
+                                                  ],
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
+                                                  color: filteredInvoices[
+                                                                  index] // Use filteredInvoices
+                                                              .gstinvoiceCreated
+                                                              .toString() ==
+                                                          "1"
+                                                      ? const Color.fromARGB(
+                                                          255, 228, 248, 216)
+                                                      : Colors.white),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(14.0),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) => CustomerDashboard(
+                                                                      name: name!,
+                                                                      token: widget.token!,
+                                                                      userId: userId!,
+                                                                      phoneCallLogPermission: phoneCallLogPermission,
+                                                                      custId: filteredInvoices[index] // Use filteredInvoices
+                                                                          .clientId
+                                                                          .toString()),
+                                                                ),
+                                                              );
+                                                            },
                                                             child: Text(
                                                                 filteredInvoices[
                                                                         index] // Use filteredInvoices
-                                                                    .status
+                                                                    .customerName
                                                                     .toString(),
-                                                                style: TextStyle(
-                                                                  color: filteredInvoices[index].status.toString() ==
-                                                                          'Paid'
-                                                                      ? Colors
-                                                                          .green
-                                                                      : filteredInvoices[index].status.toString() ==
-                                                                              'Renewed'
-                                                                          ? Colors.green
-                                                                          : Colors.red,
-                                                                  fontSize: 14,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 16,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w600,
                                                                 )),
                                                           ),
                                                         ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width: MediaQuery.of(context)
-                                                            .size.width *
-                                                        0.6,
-                                                    child: Text(
-                                                      "Invoice No : ${filteredInvoices[index].invoiceNumber}", // Use filteredInvoices
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width: MediaQuery.of(context)
-                                                            .size.width *
-                                                        0.8,
-                                                    child: Text(
-                                                      filteredInvoices[index] // Use filteredInvoices
-                                                                  .products
-                                                                  .length !=
-                                                              1
-                                                          ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
-                                                          : "Products : ${filteredInvoices[index].products[0].productName}",
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width: MediaQuery.of(context)
-                                                            .size.width *
-                                                        0.6,
-                                                    child: Text(
-                                                      "Total Amount : ₹ ${filteredInvoices[index].totalAmount}", // Use filteredInvoices
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width: MediaQuery.of(context)
-                                                            .size.width *
-                                                        0.6,
-                                                    child: Text(
-                                                      "Paid Amount : ₹ ${filteredInvoices[index].totalPaid}", // Use filteredInvoices
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  filteredInvoices[index] // Use filteredInvoices
-                                                              .balance !=
-                                                          '0.00'
-                                                      ? Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 5.0),
-                                                          child: SizedBox(
-                                                            width:
-                                                                MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    0.6,
-                                                            child: Text(
-                                                              "Balance Amount : ₹ ${filteredInvoices[index].balance}", // Use filteredInvoices
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style:
-                                                                  const TextStyle(
-                                                                color: Colors
-                                                                    .red,
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        )
-                                                      : const SizedBox(),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.6,
-                                                        child: Text(
-                                                          "Pay Mode : ${filteredInvoices[index].paymentMode}", // Use filteredInvoices
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              Row(
-                                                                children: [
-                                                                  const Icon(
-                                                                    Icons
-                                                                        .calendar_month,
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    size: 20,
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 8,
-                                                                  ),
-                                                                  Text(
-                                                                      filteredInvoices[
-                                                                              index] // Use filteredInvoices
-                                                                          .invoiceDate
-                                                                          .toString(),
-                                                                      maxLines:
-                                                                          2,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        fontSize:
-                                                                            14,
-                                                                        fontWeight:
-                                                                            FontWeight.w400,
-                                                                      )),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          InkWell(
-                                                            onTap: () async {
-                                                              final pdfPath =
-                                                                  await HttpService
-                                                                      .printInvoice(
-                                                                widget.token,
-                                                                filteredInvoices[
-                                                                        index] // Use filteredInvoices
-                                                                    .id
-                                                                    .toString(),
-                                                              );
-
-                                                              if (pdfPath !=
-                                                                  null) {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                    builder: (_) =>
-                                                                        PrintInvoiceView(
-                                                                            pdfPath: pdfPath),
-                                                                  ),
-                                                                );
-                                                              } else {
-                                                                ScaffoldMessenger.of(
-                                                                        context)
-                                                                    .showSnackBar(const SnackBar(
-                                                                        content:
-                                                                            Text("Failed to load invoice")));
-                                                              }
-                                                            },
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
+                                                        Container(
+                                                          decoration:
+                                                              BoxDecoration(
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
                                                                               2),
+                                                                  color: filteredInvoices[
+                                                                                  index] // Use filteredInvoices
+                                                                              .status
+                                                                              .toString() ==
+                                                                          'Paid'
+                                                                      ? const Color(
+                                                                          0xffe6fbec)
+                                                                      : const Color(
+                                                                          0xfffcbcbc)),
+                                                          child: Center(
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      left: 12,
+                                                                      right: 12,
+                                                                      top: 6,
+                                                                      bottom:
+                                                                          6),
+                                                              child: Text(
+                                                                  filteredInvoices[
+                                                                          index] // Use filteredInvoices
+                                                                      .status
+                                                                      .toString(),
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: filteredInvoices[index].status.toString() ==
+                                                                            'Paid'
+                                                                        ? Colors
+                                                                            .green
+                                                                        : filteredInvoices[index].status.toString() ==
+                                                                                'Renewed'
+                                                                            ? Colors.green
+                                                                            : Colors.red,
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                  )),
+                                                            ),
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                      child: Text(
+                                                        "Invoice No : ${filteredInvoices[index].invoiceNumber}", // Use filteredInvoices
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.8,
+                                                      child: Text(
+                                                        filteredInvoices[
+                                                                        index] // Use filteredInvoices
+                                                                    .products
+                                                                    .length !=
+                                                                1
+                                                            ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
+                                                            : "Products : ${filteredInvoices[index].products[0].productName}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                      child: Text(
+                                                        "Total Amount : ₹ ${filteredInvoices[index].totalAmount}", // Use filteredInvoices
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                      child: Text(
+                                                        "Paid Amount : ₹ ${filteredInvoices[index].totalPaid}", // Use filteredInvoices
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    filteredInvoices[
+                                                                    index] // Use filteredInvoices
+                                                                .balance !=
+                                                            '0.00'
+                                                        ? Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 5.0),
+                                                            child: SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.6,
+                                                              child: Text(
+                                                                "Balance Amount : ₹ ${filteredInvoices[index].balance}", // Use filteredInvoices
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
                                                                   color: Colors
-                                                                      .green
-                                                                      .shade100),
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        8.0),
-                                                                child:
-                                                                    Container(
-                                                                  height: 20,
-                                                                  width: 20,
-                                                                  decoration: const BoxDecoration(
-                                                                      image: DecorationImage(
-                                                                          image: AssetImage(
-                                                                              'assets/icons/pdf.png'))),
+                                                                      .red,
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
                                                                 ),
                                                               ),
                                                             ),
+                                                          )
+                                                        : const SizedBox(),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                          child: Text(
+                                                            "Pay Mode : ${filteredInvoices[index].paymentMode}", // Use filteredInvoices
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w400,
+                                                            ),
                                                           ),
-                                                          Visibility(
-                                                            visible: filteredInvoices[
-                                                                            index] // Use filteredInvoices
-                                                                        .invType ==
-                                                                    "1" ||
-                                                                filteredInvoices[
-                                                                            index] // Use filteredInvoices
-                                                                        .invType ==
-                                                                    "2",
-                                                            child: Row(
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
                                                               children: [
                                                                 const SizedBox(
-                                                                  width: 10,
+                                                                  height: 5,
                                                                 ),
-                                                                filteredInvoices[
-                                                                            index] // Use filteredInvoices
-                                                                        .isPaid ==
-                                                                    false
-                                                                    ? InkWell(
-                                                                        onTap:
-                                                                            () {
+                                                                Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .calendar_month,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      size: 20,
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      width: 8,
+                                                                    ),
+                                                                    Text(
+                                                                        filteredInvoices[
+                                                                                index] // Use filteredInvoices
+                                                                            .invoiceDate
+                                                                            .toString(),
+                                                                        maxLines:
+                                                                            2,
+                                                                        overflow:
+                                                                            TextOverflow
+                                                                                .ellipsis,
+                                                                        style:
+                                                                            const TextStyle(
+                                                                          fontSize:
+                                                                              14,
+                                                                          fontWeight:
+                                                                              FontWeight.w400,
+                                                                        )),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          children: [
+                                                            InkWell(
+                                                              onTap: () async {
+                                                                final pdfPath =
+                                                                    await HttpService
+                                                                        .printInvoice(
+                                                                  widget.token,
+                                                                  filteredInvoices[
+                                                                          index] // Use filteredInvoices
+                                                                      .id
+                                                                      .toString(),
+                                                                );
+
+                                                                if (pdfPath !=
+                                                                    null) {
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder: (_) =>
+                                                                          PrintInvoiceView(
+                                                                              pdfPath: pdfPath),
+                                                                    ),
+                                                                  );
+                                                                } else {
+                                                                  ScaffoldMessenger.of(
+                                                                          context)
+                                                                      .showSnackBar(const SnackBar(
+                                                                          content:
+                                                                              Text("Failed to load invoice")));
+                                                                }
+                                                              },
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(
+                                                                                2),
+                                                                    color: Colors
+                                                                        .green
+                                                                        .shade100),
+                                                                child: Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          8.0),
+                                                                  child:
+                                                                      Container(
+                                                                    height: 20,
+                                                                    width: 20,
+                                                                    decoration:
+                                                                        const BoxDecoration(
+                                                                            image:
+                                                                                DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Visibility(
+                                                              visible: filteredInvoices[
+                                                                              index] // Use filteredInvoices
+                                                                          .invType ==
+                                                                      "1" ||
+                                                                  filteredInvoices[
+                                                                              index] // Use filteredInvoices
+                                                                          .invType ==
+                                                                      "2",
+                                                              child: Row(
+                                                                children: [
+                                                                  const SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  filteredInvoices[index] // Use filteredInvoices
+                                                                              .isPaid ==
+                                                                          false
+                                                                      ? InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, filteredInvoices[index].clientId.toString(), filteredInvoices[index].id.toString())),
+                                                                            ).then((_) {
+                                                                              getData();
+                                                                            });
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            decoration:
+                                                                                BoxDecoration(borderRadius: BorderRadius.circular(2), color: const Color(0xffe9d9fd)),
+                                                                            child:
+                                                                                const Padding(
+                                                                              padding: EdgeInsets.all(8.0),
+                                                                              child: Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                      : const SizedBox(),
+                                                                  const SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  InkWell(
+                                                                    onTap: () {
+                                                                      if (filteredInvoices[index] // Use filteredInvoices
+                                                                              .invType ==
+                                                                          "2") {
+                                                                        if (filteredInvoices[index].renewalType ==
+                                                                            "quick") {
                                                                           Navigator.push(
-                                                                            context,
-                                                                            MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, filteredInvoices[index].clientId.toString(), filteredInvoices[index].id.toString())),
-                                                                          ).then((_) {
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                  builder: (context) => EditQuickRenewalScreen(
+                                                                                        id: filteredInvoices[index].renewalId,
+                                                                                      ))).then((_) {
                                                                             getData();
                                                                           });
-                                                                        },
-                                                                        child:
-                                                                            Container(
-                                                                          decoration: BoxDecoration(
-                                                                              borderRadius: BorderRadius.circular(2),
-                                                                              color: const Color(0xffe9d9fd)),
-                                                                          child:
-                                                                              const Padding(
-                                                                            padding: EdgeInsets.all(8.0),
-                                                                            child: Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
-                                                                          ),
-                                                                        ),
-                                                                      )
-                                                                    : const SizedBox(),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    if (filteredInvoices[
-                                                                                index] // Use filteredInvoices
-                                                                            .invType ==
-                                                                        "2") {
-                                                                      if (filteredInvoices[index].renewalType ==
-                                                                          "quick") {
-                                                                        Navigator.push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => EditQuickRenewalScreen(
-                                                                                      id: filteredInvoices[index].renewalId,
-                                                                                    ))).then((_) {
-                                                                          getData();
-                                                                        });
+                                                                        } else {
+                                                                          Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                  builder: (context) => EditCustomRenewal(
+                                                                                        renId: filteredInvoices[index].renewalId,
+                                                                                        renewalType: filteredInvoices[index].renewalType,
+                                                                                      ))).then((_) {
+                                                                            getData();
+                                                                          });
+                                                                        }
                                                                       } else {
-                                                                        Navigator.push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => EditCustomRenewal(
-                                                                                      renId: filteredInvoices[index].renewalId,
-                                                                                      renewalType: filteredInvoices[index].renewalType,
-                                                                                    ))).then((_) {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => EditInvoice(widget.token, filteredInvoices[index].id.toString(), filteredInvoices[index].clientId.toString())),
+                                                                        ).then(
+                                                                            (_) {
                                                                           getData();
                                                                         });
                                                                       }
-                                                                    } else {
-                                                                      Navigator.push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) => EditInvoice(widget.token, filteredInvoices[index].id.toString(), filteredInvoices[index].clientId.toString())),
-                                                                      ).then((_) {
-                                                                        getData();
-                                                                      });
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    decoration: BoxDecoration(
-                                                                        borderRadius: BorderRadius.circular(
-                                                                            2),
-                                                                        color: const Color(
-                                                                            0xffaedcf4)),
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(
+                                                                              2),
+                                                                          color:
+                                                                              const Color(0xffaedcf4)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(8.0),
+                                                                        child: Icon(
+                                                                            Icons
+                                                                                .mode_edit_outlined,
+                                                                            color:
+                                                                                Colors.blue),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  InkWell(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(6),
+                                                                    onTapDown:
+                                                                        (TapDownDetails
+                                                                            details) {
+                                                                      _tapPosition =
+                                                                          details
+                                                                              .globalPosition;
+                                                                    },
+                                                                    onTap:
+                                                                        () async {
+                                                                      final Offset
+                                                                          pos =
+                                                                          _tapPosition ??
+                                                                              Offset(MediaQuery.of(context).size.width / 2, MediaQuery.of(context).size.height / 2);
+
+                                                                      final RenderBox
+                                                                          overlay =
+                                                                          Overlay.of(context)
+                                                                              .context
+                                                                              .findRenderObject() as RenderBox;
+
+                                                                      final RelativeRect
+                                                                          position =
+                                                                          RelativeRect
+                                                                              .fromRect(
+                                                                        Rect.fromLTWH(
+                                                                          pos.dx,
+                                                                          pos.dy,
+                                                                          0,
+                                                                          0,
+                                                                        ),
+                                                                        Offset.zero &
+                                                                            overlay.size,
+                                                                      );
+
+                                                                      final value =
+                                                                          await showMenu<
+                                                                              String>(
+                                                                        context:
+                                                                            context,
+                                                                        position:
+                                                                            position,
+                                                                        shape: RoundedRectangleBorder(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(8)),
+                                                                        elevation:
+                                                                            8,
+                                                                        items: [
+                                                                          if (filteredInvoices[index].gstinvoiceCreated == "0" && // Use filteredInvoices
+                                                                              filteredInvoices[index].status != "Unpaid") // Use filteredInvoices
+                                                                            const PopupMenuItem(
+                                                                              value: 'view',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.auto_graph_outlined, color: Colors.purple),
+                                                                                  SizedBox(width: 8),
+                                                                                  Text("Create GST Invoice"),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          const PopupMenuItem(
+                                                                            value:
+                                                                                'delete',
+                                                                            child:
+                                                                                Row(
+                                                                              children: [
+                                                                                Icon(Icons.delete_outline, color: Colors.red),
+                                                                                SizedBox(width: 8),
+                                                                                Text("Delete"),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          if (filteredInvoices[index].isHidden == // Use filteredInvoices
+                                                                              "0")
+                                                                            const PopupMenuItem(
+                                                                              value: 'hide',
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  Icon(Icons.hide_source_outlined, color: Colors.blue),
+                                                                                  SizedBox(width: 8),
+                                                                                  Text("Hide Invoice"),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          const PopupMenuItem(
+                                                                            value:
+                                                                                'invoice_history',
+                                                                            child:
+                                                                                Row(
+                                                                              children: [
+                                                                                Icon(Icons.history, color: Colors.blue),
+                                                                                SizedBox(width: 8),
+                                                                                Text("Invoice History"),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      );
+
+                                                                      if (value ==
+                                                                          'view') {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => GstInvoice(widget.token, filteredInvoices[index].id.toString(), filteredInvoices[index].clientId.toString())),
+                                                                        ).then(
+                                                                            (_) {
+                                                                          getData();
+                                                                        });
+                                                                      } else if (value ==
+                                                                          'hide') {
+                                                                        // ... hide logic with filteredInvoices[index]
+                                                                      } else if (value ==
+                                                                          'invoice_history') {
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => InvoiceHistoryTimelinePage(type: filteredInvoices[index].invType, invId: filteredInvoices[index].id)),
+                                                                        );
+                                                                      } else if (value ==
+                                                                          'delete') {
+                                                                        // ... delete logic with filteredInvoices[index]
+                                                                      }
+                                                                    },
                                                                     child:
                                                                         const Padding(
                                                                       padding:
                                                                           EdgeInsets.all(
-                                                                              8.0),
-                                                                      child: Icon(
-                                                                          Icons
-                                                                              .mode_edit_outlined,
-                                                                          color:
-                                                                              Colors.blue),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                InkWell(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              6),
-                                                                  onTapDown:
-                                                                      (TapDownDetails
-                                                                          details) {
-                                                                    _tapPosition =
-                                                                        details
-                                                                            .globalPosition;
-                                                                  },
-                                                                  onTap:
-                                                                      () async {
-                                                                    final Offset
-                                                                        pos =
-                                                                        _tapPosition ??
-                                                                            Offset(MediaQuery.of(context).size.width / 2, MediaQuery.of(context).size.height / 2);
-
-                                                                    final RenderBox
-                                                                        overlay =
-                                                                        Overlay.of(context)
-                                                                            .context
-                                                                            .findRenderObject() as RenderBox;
-
-                                                                    final RelativeRect
-                                                                        position =
-                                                                        RelativeRect
-                                                                            .fromRect(
-                                                                      Rect.fromLTWH(
-                                                                        pos.dx,
-                                                                        pos.dy,
-                                                                        0,
-                                                                        0,
+                                                                              6.0),
+                                                                      child:
+                                                                          Icon(
+                                                                        Icons
+                                                                            .more_horiz_outlined,
+                                                                        color: Colors
+                                                                            .black54,
+                                                                        size:
+                                                                            26,
                                                                       ),
-                                                                      Offset.zero &
-                                                                          overlay
-                                                                              .size,
-                                                                    );
-
-                                                                    final value =
-                                                                        await showMenu<
-                                                                            String>(
-                                                                      context:
-                                                                          context,
-                                                                      position:
-                                                                          position,
-                                                                      shape: RoundedRectangleBorder(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                              8)),
-                                                                      elevation:
-                                                                          8,
-                                                                      items: [
-                                                                        if (filteredInvoices[index].gstinvoiceCreated == "0" && // Use filteredInvoices
-                                                                            filteredInvoices[index].status != "Unpaid") // Use filteredInvoices
-                                                                          const PopupMenuItem(
-                                                                            value:
-                                                                                'view',
-                                                                            child:
-                                                                                Row(
-                                                                              children: [
-                                                                                Icon(Icons.auto_graph_outlined, color: Colors.purple),
-                                                                                SizedBox(width: 8),
-                                                                                Text("Create GST Invoice"),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        const PopupMenuItem(
-                                                                          value:
-                                                                              'delete',
-                                                                          child:
-                                                                              Row(
-                                                                            children: [
-                                                                              Icon(Icons.delete_outline, color: Colors.red),
-                                                                              SizedBox(width: 8),
-                                                                              Text("Delete"),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        if (filteredInvoices[index].isHidden == // Use filteredInvoices
-                                                                            "0")
-                                                                          const PopupMenuItem(
-                                                                            value:
-                                                                                'hide',
-                                                                            child:
-                                                                                Row(
-                                                                              children: [
-                                                                                Icon(Icons.hide_source_outlined, color: Colors.blue),
-                                                                                SizedBox(width: 8),
-                                                                                Text("Hide Invoice"),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                      ],
-                                                                    );
-
-                                                                    if (value ==
-                                                                        'view') {
-                                                                      Navigator.push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) => GstInvoice(widget.token, filteredInvoices[index].id.toString(), filteredInvoices[index].clientId.toString())),
-                                                                      ).then((_) {
-                                                                        getData();
-                                                                      });
-                                                                    } else if (value ==
-                                                                        'hide') {
-                                                                      // ... hide logic with filteredInvoices[index]
-                                                                    } else if (value ==
-                                                                        'delete') {
-                                                                      // ... delete logic with filteredInvoices[index]
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding:
-                                                                        EdgeInsets.all(
-                                                                            6.0),
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .more_horiz_outlined,
-                                                                      color: Colors
-                                                                          .black54,
-                                                                      size: 26,
                                                                     ),
                                                                   ),
-                                                                ),
-                                                              ],
+                                                                ],
+                                                              ),
                                                             ),
-                                                          ),
-                                                        ],
-                                                      )
-                                                    ],
-                                                  )
-                                                ],
+                                                          ],
+                                                        )
+                                                      ],
+                                                    )
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                        );
+                                      },
+                                    )
+                                  : Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: 180,
+                                            height: 180,
+                                            child: Image.asset(
+                                              "assets/icons/nodatafound.png",
+                                            ),
+                                          ),
+                                          Text(
+                                            invSearch.text.isNotEmpty
+                                                ? 'No matching invoices found'
+                                                : 'No Data Found',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          if (invSearch.text.isNotEmpty)
+                                            TextButton(
+                                              onPressed: () {
+                                                invSearch.clear();
+                                                filterInvoices('');
+                                              },
+                                              child: const Text('Clear search'),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                            )
+                          ],
+                        ),
+                      ),
+                      filteredInvoices.isNotEmpty // Use filteredInvoices
+                          ? Container(
+                              height: 80.0,
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                  child: Padding(
+                                padding: const EdgeInsets.only(left: 40),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
                                         SizedBox(
-                                          width: 180,
-                                          height: 180,
-                                          child: Image.asset(
-                                            "assets/icons/nodatafound.png",
-                                          ),
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.5,
+                                            child: const Text(
+                                              'Total Invoice Amount ',
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold),
+                                            )),
+                                        Text(
+                                          ': ${_calculateFilteredTotal(filteredInvoices)}', // Calculate filtered total
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
                                         ),
-                                         Text(
-                                          invSearch.text.isNotEmpty
-                                              ? 'No matching invoices found'
-                                              : 'No Data Found',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                        if (invSearch.text.isNotEmpty)
-                                          TextButton(
-                                            onPressed: () {
-                                              invSearch.clear();
-                                              filterInvoices('');
-                                            },
-                                            child: const Text('Clear search'),
-                                          ),
                                       ],
                                     ),
-                                  ),
-                          )
-                        ],
-                      ),
-                    ),
-                    filteredInvoices.isNotEmpty // Use filteredInvoices
-                        ? Container(
-                            height: 80.0,
-                            color: Colors.grey.shade200,
-                            child: Center(
-                                child: Padding(
-                              padding: const EdgeInsets.only(left: 40),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: const Text(
-                                            'Total Invoice Amount ',
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold),
-                                          )),
-                                      Text(
-                                        ': ${_calculateFilteredTotal(filteredInvoices)}', // Calculate filtered total
-                                        style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: const Text(
-                                            'Total Paid Amount ',
-                                            style: TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold),
-                                          )),
-                                      Text(
-                                        ': ${_calculateFilteredPaid(filteredInvoices)}', // Calculate filtered paid
-                                        style: const TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: const Text(
-                                            'Total Balance Amount ',
-                                            style: TextStyle(
-                                                color: Colors.red,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold),
-                                          )),
-                                      Text(
-                                        ': ${_calculateFilteredBalance(filteredInvoices)}', // Calculate filtered balance
-                                        style: const TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            )),
-                          )
-                        : const SizedBox()
-                  ],
-                )
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.5,
+                                            child: const Text(
+                                              'Total Paid Amount ',
+                                              style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold),
+                                            )),
+                                        Text(
+                                          ': ${_calculateFilteredPaid(filteredInvoices)}', // Calculate filtered paid
+                                          style: const TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.5,
+                                            child: const Text(
+                                              'Total Balance Amount ',
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold),
+                                            )),
+                                        Text(
+                                          ': ${_calculateFilteredBalance(filteredInvoices)}', // Calculate filtered balance
+                                          style: const TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                            )
+                          : const SizedBox()
+                    ],
+                  )
                 : Center(
                     child: Lottie.asset('assets/main/loading.json',
                         fit: BoxFit.fill),

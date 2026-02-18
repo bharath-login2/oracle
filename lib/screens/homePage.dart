@@ -5,14 +5,20 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/models/lead_management/leadDashboardModel.dart';
+import 'package:login2/models/lead_management/projectList_model.dart';
+import 'package:login2/models/lead_management/workstatus_model.dart';
+import 'package:login2/models/loginCheckModel.dart';
+import 'package:login2/screens/accounts/dashboard/accountsDashboardNew.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/authentication/face_detection_camera.dart';
+import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
@@ -45,6 +51,8 @@ import '../../screens/settings/whatsappSettings.dart';
 import '../../screens/userManagement/viewUsers.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_settings/app_settings.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:step_progress_indicator/step_progress_indicator.dart';
 import 'package:text_scroll/text_scroll.dart';
@@ -108,8 +116,13 @@ class _HomePageState extends State<HomePage> {
   bool updateLeadPermission1 = false;
   bool deleteLeadPermission1 = false;
   bool cloudCallPermission1 = false;
+  String? firebaseToken;
   CommonResponse? loginOrNot;
   bool isWorkStarted = false;
+  bool isExpired = false;
+  ProjectList? projectList;
+  WorkStatusModel? workStatus;
+  DateTime? createdAt;
   @override
   void initState() {
     // TODO: implement initState
@@ -169,16 +182,28 @@ class _HomePageState extends State<HomePage> {
     }
 
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
       });
     }
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
 
     userDashboard = await HttpService.mainDashboard(widget.token);
     Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
@@ -201,15 +226,51 @@ class _HomePageState extends State<HomePage> {
         });
       });
     }
-    configure = await HttpService.configure(widget.token);
-    if (configure != null) {
-      setState(() {});
+    firebaseToken = await FirebaseMessaging.instance.getToken();
+    LoginCheckModel? loginCheck =
+        await HttpService.loginCheck(token, firebaseToken!);
+
+    if (loginCheck!.data == false) {
+      Common.toastMessaage('Token Expired', Colors.red);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const Login()),
+            (Route<dynamic> route) => false);
+      }
+    } else {
+      configure = await HttpService.configure(token);
+      if (configure != null) {
+        isExpired = configure!.data!.isExpired!;
+        setState(() {});
+      }
+
+      projectList = await HttpService.getProjectList();
+      workStatus = await HttpService.getWorkStatus();
+      if (workStatus!.data.isNotEmpty) {
+        createdAt = DateTime.parse(workStatus!.data.first.createdAt);
+      }
+
+      userDashboard = await HttpService.mainDashboard(token);
+      Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+
+      Common.saveSharedPref(
+          "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
+      leadDashboard = await HttpService.leadDashboard(
+          token, fromdate, todate, fromdate1, todate1);
+      setState(() {
+        notificationCount = leadDashboard!.data.unreadNotification;
+      });
+      await Permission.notification.request();
     }
-    leadDashboard = await HttpService.leadDashboard(
-        token, fromdate, todate, fromdate1, todate1);
-    setState(() {
-      notificationCount = leadDashboard!.data.unreadNotification;
-    });
+    // configure = await HttpService.configure(widget.token);
+    // if (configure != null) {
+    //   setState(() {});
+    // }
+    // leadDashboard = await HttpService.leadDashboard(
+    //     token, fromdate, todate, fromdate1, todate1);
+    // setState(() {
+    //   notificationCount = leadDashboard!.data.unreadNotification;
+    // });
     final prefs = await SharedPreferences.getInstance();
     final dismissedDate = prefs.getString('loginPromptDismissedDate');
     final today = DateTime.now().toIso8601String().substring(0, 10);
@@ -390,7 +451,38 @@ class _HomePageState extends State<HomePage> {
                                   : const SizedBox(),
                               const SizedBox(width: 20),
                               InkWell(
-                                onTap: () {
+                                onTap: () async {
+                                  var status =
+                                      await Permission.notification.status;
+                                  if (status.isPermanentlyDenied) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title:
+                                            const Text('Permission Required'),
+                                        content: const Text(
+                                            'Notification permission is permanently denied. Please enable it in settings to receive updates.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              AppSettings.openAppSettings(
+                                                  type: AppSettingsType
+                                                      .notification);
+                                            },
+                                            child: const Text('Open Settings'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  } else {
+                                    await Permission.notification.request();
+                                  }
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -1091,16 +1183,26 @@ class _HomePageState extends State<HomePage> {
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         ClientList(
-                                                            widget.token!,_scaffoldKey)),
+                                                            widget.token!,
+                                                            _scaffoldKey)),
                                               );
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'invoices') {
+                                              // Navigator.push(
+                                              //     context,
+                                              //     MaterialPageRoute(
+                                              //       builder: (context) =>
+                                              //           AccountsDashboard(
+                                              //         token: widget.token
+                                              //             .toString(),
+                                              //       ),
+                                              //     ));
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
-                                                        AccountsDashboard(
+                                                        AccountsDashboardNew(
                                                       token: widget.token
                                                           .toString(),
                                                     ),
@@ -1939,7 +2041,8 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green,foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();

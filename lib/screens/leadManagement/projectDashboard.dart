@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_settings/app_settings.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
@@ -17,26 +18,28 @@ import 'package:login2/models/lead_management/projectList_model.dart';
 import 'package:login2/models/lead_management/workstatus_model.dart';
 import 'package:login2/models/loginCheckModel.dart';
 import 'package:login2/models/projectCountModel.dart';
+import 'package:login2/models/staff_report/AttendanceStaffwiseModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
-import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
+import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
+import 'package:login2/screens/leadManagement/assignWorkPage.dart';
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
+import 'package:login2/screens/leadManagement/completedWorkPageNew.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
+import 'package:login2/screens/leadManagement/pendingWorkPageNew.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
-import 'package:login2/screens/leadManagement/viewwork_page.dart';
-import 'package:login2/screens/staff_reports/timeline_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
@@ -64,11 +67,12 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
-
+  String? assignWork;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   LeadDashboardModel? leadDashboard;
   CommonConfigureModel? configure;
   DashboardModel? userDashboard;
+  WorkStatus? existingWork;
   ProjectList? projectList;
   WorkStatusModel? workStatus;
   CommonResponse? loginOrNot;
@@ -130,7 +134,13 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   int notificationCount = 0;
 
   bool isLoading = false;
-
+  Map<String, dynamic> assignedStaffData = {
+    'pending': [],
+    'completed': [],
+    'totalPending': 0,
+    'totalCompleted': 0,
+  };
+  bool isAssignedDataLoading = false;
   @override
   void initState() {
     super.initState();
@@ -139,6 +149,104 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     dashboardCounts();
 
     _loadWorkStatus();
+    loadAssignedData();
+  }
+
+  // Refresh method for pull-to-refresh
+  Future<void> _refreshDashboard() async {
+    await loginorNot();
+    await dashboardCounts();
+    await checkExistingWorkStatus();
+    await loadAssignedData();
+    _loadWorkStatus();
+  }
+
+  Future<void> loadAssignedData() async {
+    if (mounted) {
+      setState(() {
+        isAssignedDataLoading = true;
+      });
+    }
+
+    try {
+      final httpService = HttpService();
+      final worksCountModel = await httpService.getCountsWorks();
+
+      if (worksCountModel != null && worksCountModel.status) {
+        if (mounted) {
+          setState(() {
+            assignedStaffData = {
+              'pending': worksCountModel.data.pending.staffList.map((staff) {
+                return {
+                  'staff_id': staff.staffId,
+                  'staff_name': staff.staffName,
+                  'task_count': staff.taskCount,
+                  'work_count': staff.workCount,
+                  'name': staff.staffName,
+                  'count': int.tryParse(staff.taskCount) ?? 0,
+                };
+              }).toList(),
+              'completed':
+                  worksCountModel.data.completedToday.staffList.map((staff) {
+                return {
+                  'staff_id': staff.staffId,
+                  'staff_name': staff.staffName,
+                  'task_count': staff.taskCount,
+                  'work_count': staff.workCount,
+                  'name': staff.staffName,
+                  'count': int.tryParse(staff.taskCount) ?? 0,
+                };
+              }).toList(),
+              'totalPending': worksCountModel.data.pending.taskCount,
+              'totalCompleted': worksCountModel.data.completedToday.taskCount,
+              'pendingWorks': worksCountModel.data.pending.workCount,
+              'completedWorks': worksCountModel.data.completedToday.workCount,
+            };
+            isAssignedDataLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            assignedStaffData = {
+              'pending': [],
+              'completed': [],
+              'totalPending': 0,
+              'totalCompleted': 0,
+              'pendingWorks': 0,
+              'completedWorks': 0,
+            };
+            isAssignedDataLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      log("Error fetching assigned staff data: $e");
+      if (mounted) {
+        setState(() {
+          assignedStaffData = {
+            'pending': [],
+            'completed': [],
+            'totalPending': 0,
+            'totalCompleted': 0,
+            'pendingWorks': 0,
+            'completedWorks': 0,
+          };
+          isAssignedDataLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> checkExistingWorkStatus() async {
+    final workStatusModel = await HttpService.getWorkStatus();
+    setState(() {
+      if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
+        existingWork = workStatusModel.data.first;
+      } else {
+        existingWork = null;
+      }
+    });
   }
 
   Future<void> loadPrefs() async {
@@ -161,8 +269,40 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     getData(token, fromdate, todate);
   }
 
+  Future<Map<String, dynamic>> getAssignedStaffData() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      return {
+        'pending': [
+          {'name': 'Sarath', 'count': 3, 'staffId': '101'},
+          {'name': 'aNJU', 'count': 5, 'staffId': '102'},
+          {'name': 'sKAYY', 'count': 2, 'staffId': '103'},
+          {'name': 'sKAYY', 'count': 2, 'staffId': '103'},
+          {'name': 'sKAYY', 'count': 2, 'staffId': '103'},
+          {'name': 'sKAYY', 'count': 2, 'staffId': '103'},
+        ],
+        'completed': [
+          {'name': 'Sarath', 'count': 8, 'staffId': '101'},
+          {'name': 'aNJU', 'count': 12, 'staffId': '102'},
+          {'name': 'Skayy', 'count': 6, 'staffId': '104'},
+        ],
+        'totalPending': 10,
+        'totalCompleted': 26,
+      };
+    } catch (e) {
+      log("Error fetching assigned staff data: $e");
+      return {
+        'pending': [],
+        'completed': [],
+        'totalPending': 0,
+        'totalCompleted': 0,
+      };
+    }
+  }
+
   void _loadWorkStatus() async {
     String? status = await Common.getSharedPref("is_work_started");
+    assignWork = await Common.getSharedPref("assignWork");
     setState(() {
       isWorkStarted = status == "true";
     });
@@ -337,6 +477,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
         setState(() {
           notificationCount = leadDashboard!.data.unreadNotification;
         });
+        await Permission.notification.request();
       }
 
       setState(() {
@@ -528,7 +669,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green,foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -747,459 +889,465 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
           appBar: appBarWidget(context, "lead"),
           body: TabBarView(
             children: [
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              if (isLoggedIn == true) {
-                                final workStatusModel =
-                                    await HttpService.getWorkStatus();
-                                WorkStatus? newExistingWork;
+              RefreshIndicator(
+                onRefresh: _refreshDashboard,
+                color: Colors.blue,
+                backgroundColor: Colors.white,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                if (isLoggedIn == true) {
+                                  final workStatusModel =
+                                      await HttpService.getWorkStatus();
+                                  WorkStatus? newExistingWork;
 
-                                if (workStatusModel != null &&
-                                    workStatusModel.data.isNotEmpty) {
-                                  newExistingWork = workStatusModel.data.first;
-                                }
+                                  if (workStatusModel != null &&
+                                      workStatusModel.data.isNotEmpty) {
+                                    newExistingWork =
+                                        workStatusModel.data.first;
+                                  }
 
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddWorkPage(
-                                      workId: "",
-                                      existingWork: newExistingWork,
-                                      onSuccess: () {},
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text('Login Required'),
-                                      content: const Text(
-                                          'Please login to add work.'),
-                                      actions: [
-                                        TextButton(
-                                          child: const Text('OK'),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text("Add Work"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              shadowColor: Colors.black26,
-                              elevation: 4,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 8,
-                          ),
-                          Row(
-                            children: [
-                              workStatus != null && workStatus!.data.isNotEmpty
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(
-                                            30), // Makes it oval
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.grey.withOpacity(0.3),
-                                            blurRadius: 5,
-                                            spreadRadius: 1,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ],
-                                        border: Border.all(
-                                          color: Colors.red.shade100,
-                                          width: 1.5,
-                                        ),
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddWorkPage(
+                                        workId: "",
+                                        existingWork: newExistingWork,
+                                        onSuccess: () {},
                                       ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.timer,
-                                            size: 15,
-                                            color: Colors.red.shade400,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          StreamBuilder<DateTime>(
-                                            stream: Stream.periodic(
-                                                const Duration(seconds: 1),
-                                                (_) => DateTime.now()),
-                                            builder: (context, snapshot) {
-                                              if (!snapshot.hasData ||
-                                                  createdAt == null) {
-                                                return const SizedBox();
-                                              }
-
-                                              final now = snapshot.data!;
-                                              final diff =
-                                                  now.difference(createdAt!);
-
-                                              String timeSince =
-                                                  "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
-
-                                              return GestureDetector(
-                                                onTap: () async {
-                                                  final workStatusModel =
-                                                      await HttpService
-                                                          .getWorkStatus();
-
-                                                  WorkStatus? existingWork;
-                                                  if (workStatusModel != null &&
-                                                      workStatusModel
-                                                          .data.isNotEmpty) {
-                                                    existingWork =
-                                                        workStatusModel
-                                                            .data.first;
-                                                  }
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          AddWorkPage(
-                                                        workId: "",
-                                                        existingWork:
-                                                            existingWork,
-                                                        onSuccess: () {
-                                                          setState(() {
-                                                            getData(
-                                                                token,
-                                                                fromdate,
-                                                                todate);
-                                                          });
-                                                        },
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Text(
-                                                  timeSince,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.red.shade700,
-                                                  ),
-                                                ),
-                                              );
+                                    ),
+                                  );
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Login Required'),
+                                        content: const Text(
+                                            'Please login to add work.'),
+                                        actions: [
+                                          TextButton(
+                                            child: const Text('OK'),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
                                             },
                                           ),
                                         ],
-                                      ),
-                                    )
-                                  : const SizedBox(),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 29,
-                        runSpacing: 12,
-                        children: projectCounts.map((countData) {
-                          Color bgColor;
-                          switch (countData.label.toLowerCase()) {
-                            case 'to do':
-                              bgColor = Colors.purple.shade100;
-                              break;
-                            case 'pending':
-                              bgColor = Colors.orange.shade100;
-                              break;
-                            case 'completed':
-                              bgColor = Colors.green.shade100;
-                              break;
-                            case 'overdue':
-                              bgColor = Colors.pink.shade100;
-                              break;
-                            default:
-                              bgColor = Colors.grey.shade200;
-                          }
-
-                          return GestureDetector(
-                            // onTap: () {
-                            //   Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //       builder: (_) => AssignReport(
-                            //         workId: "",
-                            //         sectionId: countData.id.toString(),
-                            //       ),
-                            //     ),
-                            //   );
-                            // },
-                            onTap: () {
-                              Widget targetPage;
-
-                              switch (countData.label.toLowerCase()) {
-                                case 'to do':
-                                  targetPage = AssignReport(
-                                    workId: "",
-                                    sectionId: countData.id.toString(),
+                                      );
+                                    },
                                   );
-                                  break;
-                                case 'pending':
-                                  targetPage = PendingWorkPage();
-                                  break;
-                                case 'completed':
-                                  targetPage = AssignReport(
-                                    workId: "",
-                                    sectionId: countData.id.toString(),
-                                  );
-                                  break;
-                                case 'overdue':
-                                  targetPage = PendingWorkPage();
-                                  break;
-                                default:
-                                  targetPage = AssignReport(
-                                    workId: "",
-                                    sectionId: countData.id.toString(),
-                                  );
-                              }
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => targetPage),
-                              );
-                            },
-
-                            child: _buildStatusCard(
-                              countData.label,
-                              countData.count.toString(),
-                              bgColor,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 12),
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade400,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                "Quick Links",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                }
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text("Add"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                shadowColor: Colors.black26,
+                                elevation: 4,
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            GridView.count(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              childAspectRatio: 2.8,
-                              children: [
-                                _buildQuickLinkCard(
-                                  "Total work summery",
-                                  Colors.cyan.shade100,
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const TotalSummeryPage(),
+                            //  const SizedBox(width: 2),
+                            assignWork == "true"
+                                ? ElevatedButton.icon(
+                                    onPressed: () async {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AssignWorkPage(
+                                            onSuccess: () {
+                                              setState(() {
+                                                checkExistingWorkStatus();
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.add),
+                                    label: const Text("Assign"),
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.white,
+                                      shadowColor: Colors.black26,
+                                      elevation: 4,
+                                      minimumSize: const Size(40, 40),
                                     ),
+                                  )
+                                : const SizedBox(width: 0),
+                            const SizedBox(width: 10),
+                            Visibility(
+                              visible: workStatus != null &&
+                                  workStatus!.data.isNotEmpty,
+                              maintainSize: true,
+                              maintainAnimation: true,
+                              maintainState: true,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      blurRadius: 5,
+                                      spreadRadius: 1,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                                  border: Border.all(
+                                    color: Colors.red.shade100,
+                                    width: 1.5,
                                   ),
                                 ),
-                                _buildQuickLinkCard(
-                                  "Assign work",
-                                  Colors.red.shade100,
-                                  () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) => AssignReport(
-                                              workId: "", sectionId: ""))),
-                                ),
-                                _buildQuickLinkCard(
-                                  "View work",
-                                  Colors.amber.shade100,
-                                  adminCheckPermission == "false"
-                                      ? () async {
-                                          final workStatusModel =
-                                              await HttpService.getWorkStatus();
-                                          WorkStatus? existingWork;
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.timer,
+                                      size: 15,
+                                      color: Colors.red.shade400,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    StreamBuilder<DateTime>(
+                                      stream: Stream.periodic(
+                                          const Duration(seconds: 1),
+                                          (_) => DateTime.now()),
+                                      builder: (context, snapshot) {
+                                        if (!snapshot.hasData ||
+                                            createdAt == null) {
+                                          return const SizedBox();
+                                        }
 
-                                          if (workStatusModel != null &&
-                                              workStatusModel.data.isNotEmpty) {
-                                            existingWork =
-                                                workStatusModel.data.first;
-                                          }
+                                        final now = snapshot.data!;
+                                        final diff = now.difference(createdAt!);
 
-                                          if (multipleWorksCheck == "true") {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                      "Phone Call Log"),
-                                                  content: const Text(
-                                                      "Choose an action below"),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                ViewWorkPage(
-                                                                    staffId:
-                                                                        staffId),
-                                                          ),
-                                                        );
-                                                      },
-                                                      child:
-                                                          const Text("Works"),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                const TimelinePage(),
-                                                            settings:
-                                                                RouteSettings(
-                                                              arguments: {
-                                                                "staffId":
-                                                                    userId
-                                                              },
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                      child: const Text(
-                                                          "Call Log"),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          } else if (multipleWorksCheck ==
-                                              "phone") {
+                                        String timeSince =
+                                            "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
+
+                                        return GestureDetector(
+                                          onTap: () async {
+                                            final workStatusModel =
+                                                await HttpService
+                                                    .getWorkStatus();
+
+                                            WorkStatus? existingWork;
+                                            if (workStatusModel != null &&
+                                                workStatusModel
+                                                    .data.isNotEmpty) {
+                                              existingWork =
+                                                  workStatusModel.data.first;
+                                            }
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const TimelinePage(),
-                                                settings: RouteSettings(
-                                                  arguments: {
-                                                    "staffId": staffId
+                                                builder: (context) =>
+                                                    AddWorkPage(
+                                                  workId: "",
+                                                  existingWork: existingWork,
+                                                  onSuccess: () {
+                                                    setState(() {
+                                                      getData(token, fromdate,
+                                                          todate);
+                                                    });
                                                   },
                                                 ),
                                               ),
                                             );
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => ViewWorkPage(
-                                                    staffId: staffId),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      : () async {
-                                          final workStatusModel =
-                                              await HttpService.getWorkStatus();
-                                          WorkStatus? existingWork;
-
-                                          if (workStatusModel != null &&
-                                              workStatusModel.data.isNotEmpty) {
-                                            existingWork =
-                                                workStatusModel.data.first;
-                                          }
-
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const ViewCompanyWorkPage(),
-                                              settings: const RouteSettings(
-                                                  arguments: {
-                                                    // "staffId": staffId
-                                                  }),
+                                          },
+                                          child: Text(
+                                            timeSince,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.red.shade700,
                                             ),
-                                          );
-                                        },
-                                ),
-                                _buildQuickLinkCard(
-                                  "Add attendance",
-                                  Colors.purple.shade100,
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ViewCalendarPage(),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  ),
+                                  ],
                                 ),
-                                _buildQuickLinkCard(
-                                  "Add project",
-                                  Colors.blue.shade100,
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddProjectPage(),
-                                    ),
-                                  ),
-                                ),
-                                _buildQuickLinkCard(
-                                  "Payroll",
-                                  Colors.green.shade100,
-                                  () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SalaryReportPage(),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 29,
+                          runSpacing: 12,
+                          children: projectCounts.map((countData) {
+                            Color bgColor;
+                            switch (countData.label.toLowerCase()) {
+                              case 'to do':
+                                bgColor = Colors.purple.shade100;
+                                break;
+                              case 'pending':
+                                bgColor = Colors.orange.shade100;
+                                break;
+                              case 'unassigned':
+                                bgColor = Colors.green.shade100;
+                                break;
+                              case 'overdue':
+                                bgColor = Colors.pink.shade100;
+                                break;
+                              default:
+                                bgColor = Colors.grey.shade200;
+                            }
+
+                            return GestureDetector(
+                              onTap: () {
+                                if (countData.staffWiseCounts.isNotEmpty) {
+                                  _showStaffCountPopup(countData);
+                                } else {
+                                  _navigateToStatusPage(
+                                      countData.label, countData.id.toString());
+                                }
+                              },
+                              child: _buildStatusCard(
+                                countData.label,
+                                countData.count.toString(),
+                                bgColor,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        // Wrap(
+                        //   spacing: 29,
+                        //   runSpacing: 12,
+                        //   children: projectCounts.map((countData) {
+                        //     Color bgColor;
+                        //     switch (countData.label.toLowerCase()) {
+                        //       case 'to do':
+                        //         bgColor = Colors.purple.shade100;
+                        //         break;
+                        //       case 'pending':
+                        //         bgColor = Colors.orange.shade100;
+                        //         break;
+                        //       case 'Unassigned':
+                        //         bgColor = Colors.green.shade100;
+                        //         break;
+                        //       case 'overdue':
+                        //         bgColor = Colors.pink.shade100;
+                        //         break;
+                        //       default:
+                        //         bgColor = Colors.grey.shade200;
+                        //     }
+
+                        //     return GestureDetector(
+                        //       // onTap: () {
+                        //       //   Navigator.push(
+                        //       //     context,
+                        //       //     MaterialPageRoute(
+                        //       //       builder: (_) => AssignReport(
+                        //       //         workId: "",
+                        //       //         sectionId: countData.id.toString(),
+                        //       //       ),
+                        //       //     ),
+                        //       //   );
+                        //       // },
+                        //       onTap: () {
+                        //         Widget targetPage;
+
+                        //         switch (countData.label.toLowerCase()) {
+                        //           case 'to do':
+                        //             targetPage = AssignReport(
+                        //               workId: "",
+                        //               sectionId: countData.id.toString(),
+                        //               selectedStatus: 'todo',
+                        //             );
+                        //             break;
+                        //           case 'pending':
+                        //             targetPage = PendingWorkPage();
+                        //             break;
+                        //           case 'unassigned':
+                        //             targetPage = AssignReport(
+                        //               workId: "",
+                        //               sectionId: countData.id.toString(),
+                        //               selectedStatus: 'unassigned',
+                        //             );
+                        //             break;
+                        //           case 'overdue':
+                        //             targetPage = PendingWorkPage();
+                        //             break;
+                        //           default:
+                        //             targetPage = AssignReport(
+                        //               workId: "",
+                        //               sectionId: countData.id.toString(),
+                        //             );
+                        //         }
+
+                        //         Navigator.push(
+                        //           context,
+                        //           MaterialPageRoute(builder: (_) => targetPage),
+                        //         );
+                        //       },
+
+                        //       child: _buildStatusCard(
+                        //         countData.label,
+                        //         countData.count.toString(),
+                        //         bgColor,
+                        //       ),
+                        //     );
+                        //   }).toList(),
+                        // ),
+                        const SizedBox(height: 24),
+                        _buildAssignedByMeSection(),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 6, horizontal: 12),
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade400,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  "Quick Links",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              GridView.count(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                childAspectRatio: 2.8,
+                                children: [
+                                  _buildQuickLinkCard(
+                                    "Assigned Works",
+                                    const Color.fromARGB(255, 204, 169, 236),
+                                    () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => AssignReport(
+                                                workId: "", sectionId: ""))),
+                                  ),
+                                  // _buildQuickLinkCard(
+                                  //   "Pending Works",
+                                  //   const Color.fromARGB(255, 241, 186, 223),
+                                  //   () => Navigator.push(
+                                  //       context,
+                                  //       MaterialPageRoute(
+                                  //           builder: (_) => AssignReport(
+                                  //               workId: "",
+                                  //               sectionId: "",
+                                  //               selectedStatus: "pending"))),
+                                  // ),
+                                  _buildQuickLinkCard(
+                                    "Pending Works",
+                                    const Color.fromARGB(255, 241, 186, 223),
+                                    () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => PendingWorkPageNew(
+                                                workId: "",
+                                                sectionId: "",
+                                                selectedStatus: "pending",
+                                                staffId: ""))),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              GridView.count(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                childAspectRatio: 2.8,
+                                children: [
+                                  _buildQuickLinkCard(
+                                    "Work Summery All",
+                                    Colors.cyan.shade100,
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const TotalSummeryPage(),
+                                      ),
+                                    ),
+                                  ),
+                                  _buildQuickLinkCard(
+                                    "Staffwise Work",
+                                    Colors.red.shade100,
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ViewCompanyWorkPage(),
+                                      ),
+                                    ),
+                                  ),
+                                  _buildQuickLinkCard(
+                                    "Attendance All",
+                                    Colors.purple.shade100,
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ViewCalendarPage(),
+                                      ),
+                                    ),
+                                  ),
+                                  _buildQuickLinkCard("Attendance Staffwise",
+                                      Colors.amber.shade100, () async {
+                                    _showStaffSelectionPopup(context);
+                                  }),
+                                  _buildQuickLinkCard(
+                                    "Project",
+                                    Colors.blue.shade100,
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddProjectPage(),
+                                      ),
+                                    ),
+                                  ),
+                                  _buildQuickLinkCard(
+                                    "Payroll",
+                                    Colors.green.shade100,
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SalaryReportPage(),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1299,6 +1447,776 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildAssignedByMeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section title OUTSIDE the container
+        const Padding(
+          padding: EdgeInsets.only(left: 8, bottom: 8),
+          child: Text(
+            "Assigned By Me",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+
+        // White container
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isAssignedDataLoading)
+                const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child:
+                          //  _buildStaffColumn(
+                          //   title: "Pending Tasks",
+                          //   count: assignedStaffData['totalPending']?.toString() ??
+                          //       '0',
+                          //   subtitles: "3 Works",
+                          //   color: Colors.orange.shade100,
+                          //   textColor: Colors.orange.shade800,
+                          //   icon: Icons.pending_actions,
+                          //   onTap: () => _showStaffDetailsDialog(
+                          //     "Pending Tasks",
+                          //     List<Map<String, dynamic>>.from(
+                          //         assignedStaffData['pending'] ?? []),
+                          //     const Color.fromARGB(255, 93, 185, 228),
+                          //   ),
+                          // ),
+                          _buildStaffColumn(
+                        title: "Pending Tasks",
+                        count: assignedStaffData['totalPending']?.toString() ??
+                            '0',
+                        subtitles:
+                            "${assignedStaffData['pendingWorks']?.toString() ?? '0'} Works",
+                        color: Colors.orange.shade100,
+                        textColor: Colors.orange.shade800,
+                        icon: Icons.pending_actions,
+                        onTap: () => _showStaffDetailsDialog(
+                          "Pending Tasks",
+                          List<Map<String, dynamic>>.from(
+                              assignedStaffData['pending'] ?? []),
+                          const Color.fromARGB(255, 93, 185, 228),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 100,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      color: Colors.grey.shade300,
+                    ),
+                    Expanded(
+                      child:
+                          // _buildStaffColumn(
+                          //   title: "Completed Today",
+                          //   count:
+                          //       assignedStaffData['totalCompleted']?.toString() ??
+                          //           '0',
+                          //   subtitles: "3 Works",
+                          //   color: Colors.green.shade100,
+                          //   textColor: Colors.green.shade800,
+                          //   icon: Icons.check_circle_outline,
+                          //   onTap: () => _showStaffDetailsDialog(
+                          //     "Completed Tasks",
+                          //     List<Map<String, dynamic>>.from(
+                          //         assignedStaffData['completed'] ?? []),
+                          //     Colors.green,
+                          //   ),
+                          // ),
+                          _buildStaffColumn(
+                        title: "Completed Today",
+                        count:
+                            assignedStaffData['totalCompleted']?.toString() ??
+                                '0',
+                        subtitles:
+                            "${assignedStaffData['completedWorks']?.toString() ?? '0'} Works",
+                        color: Colors.green.shade100,
+                        textColor: Colors.green.shade800,
+                        icon: Icons.check_circle_outline,
+                        onTap: () => _showStaffDetailsDialog(
+                          "Completed Tasks",
+                          List<Map<String, dynamic>>.from(
+                              assignedStaffData['completed'] ?? []),
+                          Colors.green,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStaffColumn({
+    required String title,
+    required String count,
+    required String subtitles,
+    required Color color,
+    required Color textColor,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 18, color: textColor),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Task Count
+            Text(
+              count,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  subtitles,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStaffSelectionPopup(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return const StaffSelectionSheet();
+      },
+    );
+  }
+
+  void _showStaffCountPopup(ProCount countData) {
+    Color getStatusColor() {
+      switch (countData.label.toLowerCase()) {
+        case 'to do':
+          return Colors.blue;
+        case 'pending':
+          return Colors.orange;
+        case 'unassigned':
+          return Colors.green;
+        case 'overdue':
+          return const Color.fromARGB(255, 248, 16, 16);
+        default:
+          return Colors.blue;
+      }
+    }
+
+    final primaryColor = getStatusColor();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      countData.label,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (countData.staffWiseCounts.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    alignment: Alignment.center,
+                    child: Text(
+                      "No staff found",
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: countData.staffWiseCounts.length,
+                      itemBuilder: (context, index) {
+                        final staff = countData.staffWiseCounts[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            _navigateToStatusPageWithStaff(
+                              countData.label,
+                              countData.id.toString(),
+                              staff.staffId,
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: primaryColor.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        staff.staffName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    staff.count.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToStatusPage(
+                      countData.label,
+                      countData.id.toString(),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Total ${countData.label} Tasks",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            countData.count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToStatusPage(String status, String sectionId) {
+    switch (status.toLowerCase()) {
+      case 'to do':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'todo',
+              assignedToMyself: '1',
+            ),
+          ),
+        );
+        break;
+      case 'pending':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PendingWorkPageNew(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'pending',
+              staffId: '',
+              assignedByMyself: "1",
+            ),
+          ),
+        );
+        break;
+      case 'unassigned':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'unassigned',
+              assignedToMyself: '1',
+              isUnassigned: '1',
+            ),
+          ),
+        );
+        break;
+      case 'overdue':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PendingWorkPageNew(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'pending',
+              staffId: '',
+              assignedByMyself: "1",
+            ),
+          ),
+        );
+        break;
+      default:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              assignedToMyself: '1',
+            ),
+          ),
+        );
+    }
+  }
+
+  void _navigateToStatusPageWithStaff(
+      String status, String sectionId, String staffId) {
+    switch (status.toLowerCase()) {
+      case 'to do':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'todo',
+              staffId: staffId,
+              assignedToMyself: '1',
+            ),
+          ),
+        );
+        break;
+      case 'pending':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PendingWorkPageNew(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'todo,pending',
+              staffId: staffId,
+              assignedToMyself: '1',
+            ),
+          ),
+        );
+        break;
+      case 'unassigned':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'unassigned',
+              staffId: staffId,
+              assignedToMyself: '1',
+              isUnassigned: '1',
+            ),
+          ),
+        );
+        break;
+      case 'overdue':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PendingWorkPageNew(
+              workId: "",
+              sectionId: sectionId,
+              selectedStatus: 'todo,pending',
+              staffId: staffId,
+              assignedToMyself: '1',
+              isOverdue: '1',
+            ),
+          ),
+        );
+        break;
+      default:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: "",
+              sectionId: sectionId,
+              staffId: staffId,
+              assignedToMyself: '1',
+            ),
+          ),
+        );
+    }
+  }
+
+  void _showStaffDetailsDialog(
+    String title,
+    List<Map<String, dynamic>> staffList,
+    Color primaryColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: GestureDetector(
+            onTap: () {
+              title == "Pending Tasks"
+                  ? Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PendingWorkPageNew(
+                          workId: "",
+                          sectionId: "",
+                          staffId: "",
+                          assignedByMyself: "1",
+                        ),
+                      ),
+                    )
+                  : Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CompletedWorkPageNew(
+                          workId: "",
+                          sectionId: "",
+                          staffId: "",
+                          assignedByMyself: "1",
+                        ),
+                      ),
+                    );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (staffList.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      alignment: Alignment.center,
+                      child: Text(
+                        "No staff found",
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: staffList.length,
+                        itemBuilder: (context, index) {
+                          final staff = staffList[index];
+                          return GestureDetector(
+                            onTap: () {
+                              title == "Completed Tasks"
+                                  ? Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CompletedWorkPageNew(
+                                          workId: "",
+                                          sectionId: "",
+                                          staffId: staff['staff_id'],
+                                          assignedToMyself: "",
+                                          assignedByMyself: "1",
+                                        ),
+                                      ),
+                                    )
+                                  : Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PendingWorkPageNew(
+                                          workId: "",
+                                          sectionId: "",
+                                          staffId: staff['staff_id'],
+                                          assignedToMyself: "",
+                                          assignedByMyself: "1",
+                                        ),
+                                      ),
+                                    );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: primaryColor.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          staff['name']?.toString() ?? 'N/A',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        if (staff['role'] != null)
+                                          Text(
+                                            staff['role'].toString(),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      staff['count']?.toString() ?? '0',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Total ${title.split(' ').first} Tasks",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                        Text(
+                          staffList
+                              .fold<int>(
+                                  0,
+                                  (sum, staff) =>
+                                      sum +
+                                      ((staff['count'] as num?)?.toInt() ?? 0))
+                              .toString(),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1423,7 +2341,34 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                       : const SizedBox(),
                   const SizedBox(width: 20),
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
+                      var status = await Permission.notification.status;
+                      if (status.isPermanentlyDenied) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Permission Required'),
+                            content: const Text(
+                                'Notification permission is permanently denied. Please enable it in settings to receive updates.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  AppSettings.openAppSettings(
+                                      type: AppSettingsType.notification);
+                                },
+                                child: const Text('Open Settings'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        await Permission.notification.request();
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1481,6 +2426,51 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   }
 
   Widget _buildQuickLinkCard(String title, Color color, VoidCallback onTap) {
+    IconData getIcon() {
+      switch (title) {
+        case 'Assigned Works':
+          return Icons.assignment_turned_in_outlined;
+        case 'Pending Works':
+          return Icons.pending_actions;
+        case 'Work Summery All':
+          return Icons.work;
+        case 'Staffwise Work':
+          return Icons.work_history;
+        case 'Attendance All':
+          return Icons.present_to_all;
+        case 'Attendance Staffwise':
+          return Icons.present_to_all_sharp;
+        case 'Project':
+          return Icons.analytics_outlined;
+        case 'Payroll':
+          return Icons.payment_rounded;
+        case 'Settings':
+          return Icons.settings_outlined;
+        case 'Chat':
+          return Icons.chat_bubble_outline;
+        case 'Notifications':
+          return Icons.notifications_outlined;
+        case 'Calendar':
+          return Icons.calendar_today_outlined;
+        case 'Tasks':
+          return Icons.task_outlined;
+        case 'Projects':
+          return Icons.work_outline;
+        case 'Team':
+          return Icons.groups_outlined;
+        case 'Files':
+          return Icons.folder_open_outlined;
+        case 'Profile':
+          return Icons.person_outline;
+        case 'Logout':
+          return Icons.logout_outlined;
+        case 'Help':
+          return Icons.help_outline;
+        default:
+          return Icons.description_outlined; // Default icon
+      }
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1493,7 +2483,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            const Icon(Icons.description_outlined),
+            Icon(getIcon()),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1504,6 +2494,345 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
             const Icon(Icons.arrow_forward_ios, size: 14),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class StaffSelectionSheet extends StatefulWidget {
+  const StaffSelectionSheet({super.key});
+
+  @override
+  State<StaffSelectionSheet> createState() => _StaffSelectionSheetState();
+}
+
+class _StaffSelectionSheetState extends State<StaffSelectionSheet> {
+  late Future<AttendanceStaffwiseModel?> _staffFuture;
+  final TextEditingController _searchController = TextEditingController();
+  List<Staff> _allStaff = [];
+  List<Staff> _filteredStaff = [];
+  int _totalWorkingDays = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _staffFuture = HttpService().getStaffwiseWorkedDays();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterStaff(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredStaff = List.from(_allStaff);
+      });
+    } else {
+      final filtered = _allStaff.where((staff) {
+        final staffName = staff.staffName?.toLowerCase() ?? '';
+        final searchQuery = query.toLowerCase();
+        return staffName.contains(searchQuery);
+      }).toList();
+
+      setState(() {
+        _filteredStaff = filtered;
+      });
+    }
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _filterStaff('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: FutureBuilder<AttendanceStaffwiseModel?>(
+        future: _staffFuture,
+        builder: (context, snapshot) {
+          // Handle loading state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Handle error state
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Handle empty data state
+          if (!snapshot.hasData ||
+              snapshot.data!.data.isEmpty ||
+              snapshot.data!.data.first.staffList.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.people_outline,
+                      color: Colors.grey, size: 48),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No attendance data available',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Data loaded successfully - Initialize lists if not already
+          if (_allStaff.isEmpty) {
+            final attendanceData = snapshot.data!;
+            _totalWorkingDays = attendanceData.data.first.totalWorkingDays ?? 0;
+            _allStaff = attendanceData.data.first.staffList;
+            _filteredStaff = List.from(_allStaff);
+          }
+
+          return Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.people, color: Colors.white, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Attendance",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            "Total Work Days ($_totalWorkingDays)",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: false,
+                  decoration: InputDecoration(
+                    hintText: 'Search staff by name...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: _clearSearch,
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    _filterStaff(value);
+                  },
+                ),
+              ),
+
+              // Staff count indicator
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Staff List',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    Text(
+                      '${_filteredStaff.length} staff found',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Staff List
+              Expanded(
+                child: _filteredStaff.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.search_off,
+                                color: Colors.grey, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'No staff available'
+                                  : 'No staff found for "${_searchController.text}"',
+                              style: const TextStyle(color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        itemCount: _filteredStaff.length,
+                        itemBuilder: (context, index) {
+                          final staff = _filteredStaff[index];
+                          final staffName = staff.staffName ?? 'Unknown';
+                          final workedDays = staff.workedDays ?? 0;
+
+                          Color textColor = Colors.green;
+                          String workedDaysText = workedDays.toString();
+
+                          if (workedDays >= (_totalWorkingDays * 0.8)) {
+                            textColor = Colors.green;
+                          } else if (workedDays >= (_totalWorkingDays * 0.5)) {
+                            textColor = Colors.orange;
+                          } else {
+                            textColor = Colors.red;
+                          }
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blue.shade100,
+                              child: Text(
+                                staffName.isNotEmpty
+                                    ? staffName[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              staffName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: textColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: textColor.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    workedDaysText,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.chevron_right,
+                                    color: Colors.grey),
+                              ],
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StaffCalendarPage(
+                                    staffId: staff.staffId ?? '',
+                                    selectedDate: DateTime.now(),
+                                    staffName: staffName,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

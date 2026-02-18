@@ -38,21 +38,25 @@ class RenewalListModel {
 class Data {
   List<ListElement> lists;
   int recordCount;
+  List<Count> count;
 
   Data({
     required this.lists,
     required this.recordCount,
+    required this.count,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
         lists: List<ListElement>.from(
             json["lists"].map((x) => ListElement.fromJson(x))),
         recordCount: json["record_count"],
+        count: List<Count>.from(json["count"].map((x) => Count.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
         "lists": List<dynamic>.from(lists.map((x) => x.toJson())),
         "record_count": recordCount,
+        "count": List<dynamic>.from(count.map((x) => x.toJson())),
       };
 }
 
@@ -72,8 +76,8 @@ class ListElement {
   bool isPaid;
   String renewalType;
   List<ProductId> productId;
-    String renewedDate;
-      String renewedBy;
+  String renewedDate;
+  String renewedBy;
 
   ListElement({
     required this.id,
@@ -161,5 +165,97 @@ class ProductId {
         "prd_name": prdName,
         "prd_cost": prdCost,
         "prd_qty": prdQty,
+      };
+}
+
+class Count {
+  String totalCount;
+  String totalAmount;
+  Renewed renewed;
+  Expired expired;
+  Pending pending;
+
+  Count({
+    required this.totalCount,
+    required this.totalAmount,
+    required this.renewed,
+    required this.expired,
+    required this.pending,
+  });
+
+  factory Count.fromJson(Map<String, dynamic> json) => Count(
+        totalCount: json["total_count"],
+        totalAmount: json["total_amount"],
+        renewed: Renewed.fromJson(json["renewed"]),
+        expired: Expired.fromJson(json["expired"]),
+        pending: Pending.fromJson(json["pending"]),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "total_count": totalCount,
+        "total_amount": totalAmount,
+        "renewed": renewed.toJson(),
+        "expired": expired.toJson(),
+        "pending": pending.toJson(),
+      };
+}
+
+class Renewed {
+  String total;
+  String amount;
+
+  Renewed({
+    required this.total,
+    required this.amount,
+  });
+
+  factory Renewed.fromJson(Map<String, dynamic> json) => Renewed(
+        total: json["total"],
+        amount: json["amount"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "total": total,
+        "amount": amount,
+      };
+}
+
+class Expired {
+  String total;
+  String amount;
+
+  Expired({
+    required this.total,
+    required this.amount,
+  });
+
+  factory Expired.fromJson(Map<String, dynamic> json) => Expired(
+        total: json["total"],
+        amount: json["amount"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "total": total,
+        "amount": amount,
+      };
+}
+
+class Pending {
+  String total;
+  String amount;
+
+  Pending({
+    required this.total,
+    required this.amount,
+  });
+
+  factory Pending.fromJson(Map<String, dynamic> json) => Pending(
+        total: json["total"],
+        amount: json["amount"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "total": total,
+        "amount": amount,
       };
 }

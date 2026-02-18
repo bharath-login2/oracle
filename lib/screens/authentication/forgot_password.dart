@@ -26,8 +26,11 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
   sendOtp() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
       VerifyPhoneModel verify = await HttpService.verifyPhone(phoneNumber.text);
       if (verify.data == true) {
         int min = 1000;
@@ -54,7 +57,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       setState(() {
         result = true;
       });
-    } else {
+    }} else {
       setState(() {
         result = false;
       });

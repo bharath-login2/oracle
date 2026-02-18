@@ -48,63 +48,90 @@ void callbackDispatcher() {
   });
 }
 //! n1
- class PhoneStateNotifier extends StateNotifier<PhoneState> {
+//  class PhoneStateNotifier extends StateNotifier<PhoneState> {
+//   StreamSubscription<PhoneState>? _subscription;
+
+//   PhoneStateNotifier() : super(PhoneState.nothing()) {
+//     _listenToStream();
+//   }
+
+//   void _listenToStream() {
+//     _subscription = PhoneState.stream.listen((event) {
+//       state = event;
+//       log("Updated status: ${state.status}");
+//     });
+
+//   }
+
+//   @override
+//   void dispose() {
+//     _subscription?.cancel();
+//     super.dispose();
+//   }
+
+// }
+
+class PhoneStateNotifier extends StateNotifier<PhoneState> {
   StreamSubscription<PhoneState>? _subscription;
+  bool _isFirstEmission = true;
 
   PhoneStateNotifier() : super(PhoneState.nothing()) {
     _listenToStream();
   }
 
-
-
   void _listenToStream() {
     _subscription = PhoneState.stream.listen((event) {
-      state = event; 
-      log("Updated status: ${state.status}");
-    });
+      // Skip the first emission which is just the initial state
+      if (_isFirstEmission) {
+        _isFirstEmission = false;
+        log("Skipping initial phone state emission");
+        return;
+      }
 
+      state = event;
+      log("Updated status: ${state.status}");
+      // if (state.status == PhoneStateStatus.RINGING ||
+      //     state.status == PhoneStateStatus.OFF_HOOK) {
+      //   _showOverlay(state.number?.toString() ?? "");
+      // }
+    });
   }
 
-
+  void _showOverlay(String number) {
+    log("Should show overlay for number: $number");
+  }
 
   @override
   void dispose() {
     _subscription?.cancel();
     super.dispose();
   }
-
 }
 
-
-
 final phoneStateProvider =
-
     StateNotifierProvider<PhoneStateNotifier, PhoneState>(
-
   (ref) => PhoneStateNotifier(),
-
 );
-
 
 //!
 PhoneState status1 = PhoneState.nothing();
-String number ="";
+String number = "";
 
 void setStream1() {
   PhoneState.stream.listen((event) {
     status1 = event;
-    if(status1.number != null){
+    if (status1.number != null) {
       number = status1.number.toString();
     }
-    });
+  });
 }
 
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
   // setStream1();
-   final container = ProviderContainer();
-  final phoneNumber= container.read(phoneStateProvider); 
+  final container = ProviderContainer();
+  final phoneNumber = container.read(phoneStateProvider);
   runApp(
     ProviderScope(
       child: MaterialApp(
@@ -120,49 +147,48 @@ void overlayMain() {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
-    debug: true, // Set to false in production
-    ignoreSsl: true // If your server uses SSL
-  );
+      debug: true, // Set to false in production
+      ignoreSsl: true // If your server uses SSL
+      );
   if (Platform.isAndroid) {
-   final service = FlutterBackgroundService();
-  bool isRunning = await service.isRunning();
-  if (isRunning) {
-    service.invoke('stopService');
+    try {
+      final service = FlutterBackgroundService();
+      bool isRunning = await service.isRunning();
+      if (!isRunning) {
+        await initService();
+        service.invoke('setAsForeground');
+      }
+    } catch (e) {
+      log("Error starting background service: $e");
+    }
   }
-  await initService();
-  service.invoke('setAsForeground');
-  }
- // await Hive.initFlutter();
+  // await Hive.initFlutter();
   // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
   // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
   try {
-     await HiveUtil.init();
-  await HiveUtil.safeOpenBox<HiveCaallHistoryModel>(HiveUtil.CALL_HISTORY_BOX);
-
+    await HiveUtil.init();
+    await HiveUtil.safeOpenBox<HiveCaallHistoryModel>(
+        HiveUtil.CALL_HISTORY_BOX);
   } catch (e) {
     log('error on initializing hive: $e');
   }
-   // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
+  // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
   // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
-  
+
   // await Firebase.initializeApp();
-   await Firebase.initializeApp(
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MyApp());
   if (Platform.isAndroid) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'setAsBackgroundService') {
-             final service = FlutterBackgroundService();
-  
-              bool isRunning = await service.isRunning();
-              
-              if (isRunning) {
-                service.invoke('stopService');
-              }
-
-              await initService();
-              service.invoke('setAsBackground');
+        final service = FlutterBackgroundService();
+        bool isRunning = await service.isRunning();
+        if (!isRunning) {
+          await initService();
+        }
+        service.invoke('setAsBackground');
         log("============== called : setAsBackgroundService  ===========================");
       }
     });

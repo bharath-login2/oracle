@@ -19,7 +19,7 @@ import 'log_screen.dart';
 
 class ClientList extends StatefulWidget {
   String token;
- GlobalKey<ScaffoldState>? scaffoldKey;
+  GlobalKey<ScaffoldState>? scaffoldKey;
   ClientList(this.token, this.scaffoldKey, {super.key});
 
   @override
@@ -37,10 +37,10 @@ class _ClientListState extends State<ClientList> {
   int page = 1;
   int add = 1;
   int pageSize = 15;
-   String name = '';
+  String name = '';
   String role = '';
   String userId = '';
-    String phoneCallLogPermission = '';
+  String phoneCallLogPermission = '';
   List<ClientLists> items = [];
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
@@ -83,17 +83,29 @@ class _ClientListState extends State<ClientList> {
   //   }
   // }
   getData() async {
-     name = await Common.getSharedPref("name");
-      role = await Common.getSharedPref("role");
-      userId = await Common.getSharedPref("userId");
-       phoneCallLogPermission =
-          await Common.getSharedPref("phoneCallLogPermission");
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -177,7 +189,8 @@ class _ClientListState extends State<ClientList> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => AddClients(widget.token, createOrder: true)),
+                                builder: (context) => AddClients(widget.token,
+                                    createOrder: true)),
                           ).then((_) {
                             items.clear();
                             page = 1;
@@ -378,13 +391,11 @@ class _ClientListState extends State<ClientList> {
                             ],
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: mainClients!.data.isNotEmpty
-                              ? SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * .86,
-                                  child: ScrollablePositionedList.builder(
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: mainClients!.data.isNotEmpty
+                                ? ScrollablePositionedList.builder(
                                     shrinkWrap: true,
                                     itemScrollController: itemScrollController,
                                     itemPositionsListener:
@@ -404,7 +415,6 @@ class _ClientListState extends State<ClientList> {
                                           padding:
                                               const EdgeInsets.only(bottom: 10),
                                           child: InkWell(
-                                         
                                             // onTap: () {
                                             //   _lastScrollIndex = index;
                                             //   _shouldRestoreScroll = true;
@@ -427,16 +437,24 @@ class _ClientListState extends State<ClientList> {
                                             //     getData();
                                             //   });
                                             // },
-                                             onTap: () {
-                                               Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    CustomerDashboard(name:name ,token:widget.token!,userId:userId ,phoneCallLogPermission:phoneCallLogPermission,custId: items[index]
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      CustomerDashboard(
+                                                          name: name,
+                                                          token: widget.token!,
+                                                          userId: userId,
+                                                          phoneCallLogPermission:
+                                                              phoneCallLogPermission,
+                                                          custId: items[index]
                                                               .id
-                                                              .toString(),key:widget.scaffoldKey),
-                                                              ),
-                                                            );
+                                                              .toString(),
+                                                          key: widget
+                                                              .scaffoldKey),
+                                                ),
+                                              );
                                             },
                                             child: Container(
                                               decoration: BoxDecoration(
@@ -970,30 +988,31 @@ class _ClientListState extends State<ClientList> {
                                         );
                                       }
                                     },
-                                  ),
-                                )
-                              : Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 180,
-                                        height: 180,
-                                        child: Image.asset(
-                                          "assets/icons/nodatafound.png",
+                                  )
+                                : Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 180,
+                                          height: 180,
+                                          child: Image.asset(
+                                            "assets/icons/nodatafound.png",
+                                          ),
                                         ),
-                                      ),
-                                      const Text(
-                                        'No Data Found',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
+                                        const Text(
+                                          'No Data Found',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                          ),
                         )
                       ],
                     ),

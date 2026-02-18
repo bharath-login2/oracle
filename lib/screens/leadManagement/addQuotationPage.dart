@@ -516,97 +516,116 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     }
   }
 
-
-Map<String, double> _calculateGrandTotals() {
-  double totalGstAmount = 0;
-  double totalSubTotal = 0;
-  for (int i = 0; i < productRows.length; i++) {
-    final total = _calculateTotal(i);
-    double gstPercentage = double.tryParse(productRows[i].gstController.text) ?? 0.0;
-    double gstAmount = total * (gstPercentage / 100);
-    totalGstAmount += gstAmount;
-    totalSubTotal += _calculateSubTotal(i);
+  Map<String, double> _calculateGrandTotals() {
+    double totalGstAmount = 0;
+    double totalSubTotal = 0;
+    for (int i = 0; i < productRows.length; i++) {
+      final total = _calculateTotal(i);
+      double gstPercentage =
+          double.tryParse(productRows[i].gstController.text) ?? 0.0;
+      double gstAmount = total * (gstPercentage / 100);
+      totalGstAmount += gstAmount;
+      totalSubTotal += _calculateSubTotal(i);
+    }
+    return {
+      'gstAmount': totalGstAmount,
+      'subTotal': totalSubTotal,
+    };
   }
-  return {
-    'gstAmount': totalGstAmount,
-    'subTotal': totalSubTotal,
-  };
-}
-
 
   Future<void> _submitQuotation() async {
-  if (!_formKey.currentState!.validate()) return;
-  try {
-    final httpService = HttpService();
-    final templateFields = _templateDetailsModel?.data?.fields
-            ?.map(
-              (field) => ({
-                "field_name": field.fieldName ?? '',
-                "field_value": field.fieldData ?? '',
-              }),
-            )
-            .toList() ??
-        [];
-    final productList = productRows.map((row) {
-      final total = double.tryParse(row.quantityController.text) ?? 0.0 * 
-                   (double.tryParse(row.rateController.text) ?? 0.0);
-      final gstPercentage = double.tryParse(row.gstController.text) ?? 0.0;
-      final gstAmount = total * (gstPercentage / 100);
-      return {
-        "material_id": row.materialData?.materialId ?? '',
-        "material_name": row.materialData?.materialName ?? '',
-        "quantity": row.quantityController.text,
-        "rate": row.rateController.text,
-        "gst": row.gstController.text,
-        "gst_amount": gstAmount.toStringAsFixed(2), 
-        "total": _calculateSubTotal(
-          productRows.indexOf(row),
-        ).toStringAsFixed(2),
-        "unit": row.materialData?.unitName ?? '',
-      };
-    }).toList();
-    final formData = FormData.fromMap({
-      "customer_id": selectedCustomerId ?? '',
-      "work_order_id": selectedWorkOrder ?? '',
-      "quotation_request_id": widget.requestId ?? '',
-      "quotation_id": quotationId,
-      "enquiry_date": enquiryDateController.text,
-      "rate_type": selectedRateType,
-      "address": addressController.text,
-      "district": selectedDistrictId ?? '',
-      "district_name": selectedDistrictName ?? districtController.text,
-      "state": selectedStateId ?? '',
-      "state_name": selectedStateName ?? stateController.text,
-      "nationality": nationalityController.text,
-      "template_id": selectedTemplateId ?? '',
-      "template_fields": jsonEncode(templateFields),
-      "products": jsonEncode(productList),
-      "total_gst_amount": _calculateGrandTotals()['gstAmount']?.toStringAsFixed(2) ?? '0.00',
-      "grand_total": _calculateGrandTotals()['subTotal']?.toStringAsFixed(2) ?? '0.00', 
-    });
-    final response = await httpService.submitQuotation(formData);
-    if (response != null && response["status"] == "success") {
+    if (!_formKey.currentState!.validate()) return;
+    try {
+      final httpService = HttpService();
+      final templateFields = _templateDetailsModel?.data?.fields
+              ?.map(
+                (field) => ({
+                  "field_name": field.fieldName ?? '',
+                  "field_value": field.fieldData ?? '',
+                }),
+              )
+              .toList() ??
+          [];
+      final productList = productRows.map((row) {
+        final total = double.tryParse(row.quantityController.text) ??
+            0.0 * (double.tryParse(row.rateController.text) ?? 0.0);
+        final gstPercentage = double.tryParse(row.gstController.text) ?? 0.0;
+        final gstAmount = total * (gstPercentage / 100);
+        return {
+          "material_id": row.materialData?.materialId ?? '',
+          "material_name": row.materialData?.materialName ?? '',
+          "quantity": row.quantityController.text,
+          "rate": row.rateController.text,
+          "gst": row.gstController.text,
+          "gst_amount": gstAmount.toStringAsFixed(2),
+          "total": _calculateSubTotal(
+            productRows.indexOf(row),
+          ).toStringAsFixed(2),
+          "unit": row.materialData?.unitName ?? '',
+        };
+      }).toList();
+      final formData = FormData.fromMap({
+        "customer_id": selectedCustomerId ?? '',
+        "work_order_id": selectedWorkOrder ?? '',
+        "quotation_request_id": widget.requestId ?? '',
+        "quotation_id": quotationId,
+        "enquiry_date": enquiryDateController.text,
+        "rate_type": selectedRateType,
+        "address": addressController.text,
+        "district": selectedDistrictId ?? '',
+        "district_name": selectedDistrictName ?? districtController.text,
+        "state": selectedStateId ?? '',
+        "state_name": selectedStateName ?? stateController.text,
+        "nationality": nationalityController.text,
+        "template_id": selectedTemplateId ?? '',
+        "template_fields": jsonEncode(templateFields),
+        "products": jsonEncode(productList),
+        "total_gst_amount":
+            _calculateGrandTotals()['gstAmount']?.toStringAsFixed(2) ?? '0.00',
+        "grand_total":
+            _calculateGrandTotals()['subTotal']?.toStringAsFixed(2) ?? '0.00',
+      });
+      final response = await httpService.submitQuotation(formData);
+      if (response != null && response["status"] == "success") {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              "Quotation submitted successfully!",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response?["message"] ?? "Submission failed",
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e, stack) {
+      log("Quotation submission error: $e");
+      log(stack.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            "Quotation submitted successfully!",
+            "An error occurred while submitting",
             style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            response?["message"] ?? "Submission failed",
-            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
@@ -617,25 +636,7 @@ Map<String, double> _calculateGrandTotals() {
         ),
       );
     }
-  } catch (e, stack) {
-    log("Quotation submission error: $e");
-    log(stack.toString());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          "An error occurred while submitting",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
-}
 
   // Future<void> _submitQuotation() async {
   //   if (!_formKey.currentState!.validate()) return;
@@ -1861,8 +1862,8 @@ Map<String, double> _calculateGrandTotals() {
             borderRadius: BorderRadius.circular(12),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
+            horizontal: 14,
+            vertical: 16,
           ),
           suffixIcon: const Padding(
             padding: EdgeInsets.only(right: 12),
@@ -2480,10 +2481,11 @@ class __TemplateSearchDialogState extends State<_TemplateSearchDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: const Text("Select Template"),
+      title: const Text("Select Templates"),
       content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.8,
-        height: MediaQuery.of(context).size.height * 0.55,
+        // Reduce height to account for keyboard
+        height: MediaQuery.of(context).size.height * 0.45,
         child: Column(
           children: [
             TextField(
@@ -2516,6 +2518,8 @@ class __TemplateSearchDialogState extends State<_TemplateSearchDialog> {
               child: filteredList.isEmpty
                   ? const Center(child: Text("No templates found"))
                   : ListView.builder(
+                      // Add bottom padding for keyboard
+                      padding: const EdgeInsets.only(bottom: 20),
                       itemCount: filteredList.length,
                       itemBuilder: (context, index) {
                         final template = filteredList[index];

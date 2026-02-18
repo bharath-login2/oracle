@@ -471,8 +471,10 @@ class _AllReportState extends State<AllReport> {
       });
 
       final connectivityResult = await Connectivity().checkConnectivity();
-      result = connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi;
+      // result = connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi;
+      result = connectivityResult == connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult == connectivityResult.contains(ConnectivityResult.wifi);
 
       roleId = await Common.getSharedPref("roleId");
       multiBranch = await Common.getSharedPref("multiBranch");

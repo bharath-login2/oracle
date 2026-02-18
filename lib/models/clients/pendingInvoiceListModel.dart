@@ -45,7 +45,7 @@ class Data {
         required this.balanceAmount,
     });
 
-    factory Data.fromJson(Map<String, dynamic> json) => Data(
+    factory Data.fromJson(Map<String, dynamic> json) => Data(   
         lists: List<ListElement>.from(json["lists"].map((x) => ListElement.fromJson(x))),
         totalInvoiceAmount: json["total_invoice_amount"],
         totalInvoicePaid: json["total_invoice_paid"],

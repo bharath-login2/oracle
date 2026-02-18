@@ -489,8 +489,9 @@ class _ViewLeadsState extends State<ViewLeads>
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult != ConnectivityResult.mobile &&
-          connectivityResult != ConnectivityResult.wifi) {
+      
+        if (connectivityResult.contains(ConnectivityResult.mobile) &&
+          connectivityResult.contains(ConnectivityResult.wifi)) {
         setState(() {
           result = false;
           isLoading = false;

@@ -71,12 +71,14 @@ class StaffWork {
 
 class Project {
   String projectName;
+    String projectId;
   String customerName;
   String moduleName;
   List<Task> tasks;
 
   Project({
     required this.projectName,
+     required this.projectId,
     required this.customerName,
     required this.moduleName,
     required this.tasks,
@@ -84,6 +86,7 @@ class Project {
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
         projectName: json["project_name"] ?? "",
+           projectId: json["project_id"] ?? "",
         customerName: json["customer_name"] ?? "",
         moduleName: json["module"] ?? "",
         tasks: json["tasks"] != null
@@ -94,6 +97,7 @@ class Project {
 
   Map<String, dynamic> toJson() => {
         "project_name": projectName,
+          "project_id": projectId,
         "customer_name": customerName,
         "module": moduleName,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
@@ -102,39 +106,51 @@ class Project {
 
 class Task {
   String taskName;
+   String taskId;
+    String workId;
   String status;
   String isCompleted;
   String startTime;
   String endTime;
+  String moduleName;
   List<String> remarks;
 
   Task({
     required this.taskName,
+     required this.taskId,
+      required this.workId,
     required this.status,
     required this.isCompleted,
     required this.startTime,
     required this.endTime,
+      required this.moduleName,
     required this.remarks,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
         taskName: json["task_name"] ?? "",
+         taskId: json["task_id"] ?? "",
+          workId: json["work_id"] ?? "",
         status: json["status"] ?? "",
         isCompleted: json["is_completed"] != null
             ? json["is_completed"].toString()
             : "0",
         startTime: json["start_time"] ?? "",
         endTime: json["end_time"] ?? "",
+         moduleName: json["module"] ?? "",
         remarks:
             json["remarks"] != null ? List<String>.from(json["remarks"]) : [],
       );
 
   Map<String, dynamic> toJson() => {
         "task_name": taskName,
+         "task_id": taskId,
+          "work_id": workId,
         "status": status,
         "is_completed": isCompleted,
         "start_time": startTime,
         "end_time": endTime,
+          "module": moduleName,
         "remarks": remarks,
       };
 }

@@ -10,7 +10,7 @@ import 'package:login2/screens/leadManagement/pdfViewPageQuotation.dart';
 class CustomerQuotationPage extends StatefulWidget {
   final String customerId;
   final String customerName;
-  
+
   const CustomerQuotationPage({
     Key? key,
     required this.customerId,
@@ -26,12 +26,12 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
   bool isDeleting = false;
   bool _isUpdatingStatus = false;
   bool _isSendingQuotation = false;
-  
+
   List<QuotationData> quotations = [];
   List<QuotationData> _filteredQuotations = [];
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'All';
-  
+
   List<String> _statusFilters = [
     'All',
     'Pending',
@@ -47,9 +47,9 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
 
   Future<void> fetchCustomerQuotations() async {
     setState(() => isLoading = true);
-    
+
     final result = await HttpService.getCustomerQuotations(widget.customerId);
-    
+
     if (result != null && result.status && result.data.isNotEmpty) {
       setState(() {
         quotations = result.data;
@@ -70,8 +70,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
       tempList = tempList.where((quote) {
         final quoteId = quote.quoteId?.toLowerCase() ?? '';
         final createdBy = quote.createdby?.toLowerCase() ?? '';
-        return quoteId.contains(lowerCaseQuery) || 
-               createdBy.contains(lowerCaseQuery);
+        return quoteId.contains(lowerCaseQuery) ||
+            createdBy.contains(lowerCaseQuery);
       }).toList();
     }
 
@@ -91,8 +91,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
         _filteredQuotations = _getBaseFilteredList().where((quote) {
           final quoteId = quote.quoteId?.toLowerCase() ?? '';
           final createdBy = quote.createdby?.toLowerCase() ?? '';
-          return quoteId.contains(lowerCaseQuery) || 
-                 createdBy.contains(lowerCaseQuery);
+          return quoteId.contains(lowerCaseQuery) ||
+              createdBy.contains(lowerCaseQuery);
         }).toList();
       });
     }
@@ -110,14 +110,20 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
 
   List<QuotationData> _getBaseFilteredList() {
     if (_selectedFilter == 'All') return quotations;
-    
+
     switch (_selectedFilter) {
       case 'Pending':
-        return quotations.where((quote) => quote.approvalStatus == "1").toList();
+        return quotations
+            .where((quote) => quote.approvalStatus == "1")
+            .toList();
       case 'Approved':
-        return quotations.where((quote) => quote.approvalStatus == "2").toList();
+        return quotations
+            .where((quote) => quote.approvalStatus == "2")
+            .toList();
       case 'Rejected':
-        return quotations.where((quote) => quote.approvalStatus == "0").toList();
+        return quotations
+            .where((quote) => quote.approvalStatus == "0")
+            .toList();
       default:
         return quotations;
     }
@@ -165,7 +171,7 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
   Future<void> _showStatusChangeDialog(QuotationData item) async {
     final currentStatus = item.approvalStatus ?? "1";
     String? selectedStatus = currentStatus;
-    
+
     await showDialog(
       context: context,
       builder: (context) {
@@ -200,7 +206,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _getStatusColor(currentStatus).withOpacity(0.1),
+                            color:
+                                _getStatusColor(currentStatus).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -257,7 +264,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(currentStatus).withOpacity(0.1),
+                              color: _getStatusColor(currentStatus)
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -504,7 +512,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
     );
   }
 
-  Future<void> _updateQuotationStatus(String quotationId, String newStatus) async {
+  Future<void> _updateQuotationStatus(
+      String quotationId, String newStatus) async {
     setState(() => _isUpdatingStatus = true);
 
     try {
@@ -793,7 +802,7 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
       body: Column(
         children: [
           const SizedBox(height: 12),
-          
+
           // Search Bar
           if (!isLoading)
             Padding(
@@ -921,7 +930,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                     ),
                   ),
                   const Spacer(),
-                  if (_searchController.text.isNotEmpty || _selectedFilter != 'All')
+                  if (_searchController.text.isNotEmpty ||
+                      _selectedFilter != 'All')
                     TextButton(
                       onPressed: () {
                         _searchController.clear();
@@ -958,8 +968,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => PdfViewPage(
-                                      quotationId: item.workorderId,
-                                      type: item.type,
+                                      quotationId: item.id ?? '',
+                                      type: item.type ?? '',
                                     ),
                                   ),
                                 );
@@ -983,11 +993,13 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                   child: Column(
                                     children: [
                                       Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           CircleAvatar(
                                             backgroundColor:
-                                                const Color(0xFF1C1A79).withOpacity(0.15),
+                                                const Color(0xFF1C1A79)
+                                                    .withOpacity(0.15),
                                             radius: 26,
                                             child: const Icon(
                                               Icons.description_outlined,
@@ -998,7 +1010,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   item.quoteId,
@@ -1006,7 +1019,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                     fontSize: 16.5,
                                                     fontWeight: FontWeight.bold,
                                                   ),
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
@@ -1036,72 +1050,107 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                     item.type == "Created"
                                                         ? Row(
                                                             children: const [
-                                                              Icon(Icons.check_circle,
-                                                                  size: 16, color: Colors.green),
-                                                              SizedBox(width: 5),
+                                                              Icon(
+                                                                  Icons
+                                                                      .check_circle,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .green),
+                                                              SizedBox(
+                                                                  width: 5),
                                                               Text(
                                                                 'Created',
-                                                                style: TextStyle(
-                                                                  fontSize: 13.5,
-                                                                  color: Colors.black87,
-                                                                  overflow: TextOverflow.ellipsis,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      13.5,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                 ),
                                                               ),
                                                             ],
                                                           )
                                                         : Row(
                                                             children: const [
-                                                              Icon(Icons.cloud_upload,
-                                                                  size: 16, color: Colors.blue),
-                                                              SizedBox(width: 5),
+                                                              Icon(
+                                                                  Icons
+                                                                      .cloud_upload,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .blue),
+                                                              SizedBox(
+                                                                  width: 5),
                                                               Text(
                                                                 'Uploaded',
-                                                                style: TextStyle(
-                                                                  fontSize: 13.5,
-                                                                  color: Colors.black87,
-                                                                  overflow: TextOverflow.ellipsis,
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize:
+                                                                      13.5,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
                                                   ],
                                                 ),
-                                                if (item.isSend == "1" || item.isSend == "Y")
+                                                if (item.isSend == "1" ||
+                                                    item.isSend == "Y")
                                                   Container(
-                                                    margin: const EdgeInsets.only(top: 4),
-                                                    padding: const EdgeInsets.symmetric(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            top: 4),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
                                                       horizontal: 8,
                                                       vertical: 2,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.green.shade50,
-                                                      borderRadius: BorderRadius.circular(12),
+                                                      color:
+                                                          Colors.green.shade50,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
                                                       border: Border.all(
-                                                        color: Colors.green.shade200,
+                                                        color: Colors
+                                                            .green.shade200,
                                                       ),
                                                     ),
                                                     child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
                                                       children: [
                                                         Icon(
                                                           Icons.check_circle,
                                                           size: 12,
-                                                          color: Colors.green.shade700,
+                                                          color: Colors
+                                                              .green.shade700,
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Text(
                                                           'Sent',
                                                           style: TextStyle(
                                                             fontSize: 11,
-                                                            color: Colors.green.shade700,
-                                                            fontWeight: FontWeight.w600,
+                                                            color: Colors
+                                                                .green.shade700,
+                                                            fontWeight:
+                                                                FontWeight.w600,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Icon(
                                                           Icons.send,
                                                           size: 10,
-                                                          color: Colors.green.shade700,
+                                                          color: Colors
+                                                              .green.shade700,
                                                         ),
                                                       ],
                                                     ),
@@ -1110,7 +1159,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                             ),
                                           ),
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
                                             children: [
                                               Text(
                                                 "₹${double.tryParse(item.totalAmount)?.toStringAsFixed(2) ?? '0.00'}",
@@ -1124,41 +1174,56 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                 onTap: () {
                                                   _showStatusChangeDialog(item);
                                                 },
-                                                borderRadius: BorderRadius.circular(20),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
                                                 child: Container(
-                                                  padding: const EdgeInsets.symmetric(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                     horizontal: 10,
                                                     vertical: 4,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: _getStatusColor(item.approvalStatus).withOpacity(0.15),
-                                                    borderRadius: BorderRadius.circular(20),
+                                                    color: _getStatusColor(
+                                                            item.approvalStatus)
+                                                        .withOpacity(0.15),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
                                                     border: Border.all(
-                                                      color: _getStatusColor(item.approvalStatus).withOpacity(0.3),
+                                                      color: _getStatusColor(item
+                                                              .approvalStatus)
+                                                          .withOpacity(0.3),
                                                       width: 1,
                                                     ),
                                                   ),
                                                   child: Row(
-                                                    mainAxisSize: MainAxisSize.min,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
                                                     children: [
                                                       Text(
-                                                        _getStatusIcon(item.approvalStatus),
-                                                        style: const TextStyle(fontSize: 12),
+                                                        _getStatusIcon(item
+                                                            .approvalStatus),
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
                                                       ),
                                                       const SizedBox(width: 4),
                                                       Text(
-                                                        _getStatusText(item.approvalStatus),
+                                                        _getStatusText(item
+                                                            .approvalStatus),
                                                         style: TextStyle(
                                                           fontSize: 12.5,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: _getStatusColor(item.approvalStatus),
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: _getStatusColor(
+                                                              item.approvalStatus),
                                                         ),
                                                       ),
                                                       if (_isUpdatingStatus)
                                                         const SizedBox(
                                                           width: 16,
                                                           height: 16,
-                                                          child: CircularProgressIndicator(
+                                                          child:
+                                                              CircularProgressIndicator(
                                                             strokeWidth: 2,
                                                           ),
                                                         ),
@@ -1171,9 +1236,12 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 10),
-                                      const Divider(thickness: 0.6, color: Colors.black12),
+                                      const Divider(
+                                          thickness: 0.6,
+                                          color: Colors.black12),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           const SizedBox(width: 10),
                                           // View PDF Button (Same as original)
@@ -1185,38 +1253,44 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) => PdfViewPage(
-                                                       quotationId:
-                                                          item.id ??
-                                                              '',
+                                                      quotationId:
+                                                          item.id ?? '',
                                                       type: item.type ?? '',
                                                     ),
                                                   ),
                                                 );
                                               },
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                               child: Container(
                                                 width: 100,
                                                 height: 38,
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                     colors: [
-                                                      const Color.fromARGB(255, 50, 151, 218),
-                                                      const Color.fromARGB(255, 50, 151, 218),
+                                                      const Color.fromARGB(
+                                                          255, 50, 151, 218),
+                                                      const Color.fromARGB(
+                                                          255, 50, 151, 218),
                                                     ],
                                                     begin: Alignment.centerLeft,
                                                     end: Alignment.centerRight,
                                                   ),
-                                                  borderRadius: BorderRadius.circular(10),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: Colors.blue.withOpacity(0.3),
+                                                      color: Colors.blue
+                                                          .withOpacity(0.3),
                                                       blurRadius: 6,
-                                                      offset: const Offset(0, 3),
+                                                      offset:
+                                                          const Offset(0, 3),
                                                     ),
                                                   ],
                                                 ),
                                                 child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.picture_as_pdf,
@@ -1228,7 +1302,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                       'View',
                                                       style: TextStyle(
                                                         color: Colors.white,
-                                                        fontWeight: FontWeight.w600,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                         fontSize: 13,
                                                       ),
                                                     ),
@@ -1240,7 +1315,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                           const SizedBox(width: 10),
                                           // Edit Button
                                           _actionButton(
-                                            color: const Color.fromARGB(255, 50, 151, 218),
+                                            color: const Color.fromARGB(
+                                                255, 50, 151, 218),
                                             icon: Icons.edit_outlined,
                                             tooltip: 'Edit',
                                             onTap: () {
@@ -1248,19 +1324,23 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                   ? Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (_) => EditUploadedQuotationPage(
+                                                        builder: (_) =>
+                                                            EditUploadedQuotationPage(
                                                           quotationId: item.id,
                                                         ),
                                                       ),
-                                                    ).then((_) => fetchCustomerQuotations())
+                                                    ).then((_) =>
+                                                      fetchCustomerQuotations())
                                                   : Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (_) => EditQuotationPage(
+                                                        builder: (_) =>
+                                                            EditQuotationPage(
                                                           item: item.id,
                                                         ),
                                                       ),
-                                                    ).then((_) => fetchCustomerQuotations());
+                                                    ).then((_) =>
+                                                      fetchCustomerQuotations());
                                             },
                                           ),
                                           const SizedBox(width: 10),
@@ -1271,13 +1351,19 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                   height: 38,
                                                   decoration: BoxDecoration(
                                                     color: Colors.grey[300],
-                                                    borderRadius: BorderRadius.circular(8),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
                                                   ),
                                                   child: const Padding(
-                                                    padding: EdgeInsets.all(8.0),
-                                                    child: CircularProgressIndicator(
+                                                    padding:
+                                                        EdgeInsets.all(8.0),
+                                                    child:
+                                                        CircularProgressIndicator(
                                                       strokeWidth: 2,
-                                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                              Color>(
                                                         Colors.redAccent,
                                                       ),
                                                     ),
@@ -1287,7 +1373,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                   color: Colors.redAccent,
                                                   icon: Icons.delete_outline,
                                                   tooltip: 'Delete',
-                                                  onTap: () => _deleteQuotation(item.id, index),
+                                                  onTap: () => _deleteQuotation(
+                                                      item.id, index),
                                                 ),
                                           const SizedBox(width: 10),
                                           // Send Button
@@ -1297,28 +1384,40 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                                                   height: 38,
                                                   decoration: BoxDecoration(
                                                     color: Colors.grey[300],
-                                                    borderRadius: BorderRadius.circular(8),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
                                                   ),
                                                   child: const Padding(
-                                                    padding: EdgeInsets.all(8.0),
-                                                    child: CircularProgressIndicator(
+                                                    padding:
+                                                        EdgeInsets.all(8.0),
+                                                    child:
+                                                        CircularProgressIndicator(
                                                       strokeWidth: 2,
-                                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                                        Color.fromARGB(255, 74, 235, 227),
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                              Color>(
+                                                        Color.fromARGB(
+                                                            255, 74, 235, 227),
                                                       ),
                                                     ),
                                                   ))
                                               : _actionButton(
-                                                  color: const Color.fromARGB(255, 74, 235, 227),
-                                                  icon: item.isSend == "1" || item.isSend == "Y"
+                                                  color: const Color.fromARGB(
+                                                      255, 74, 235, 227),
+                                                  icon: item.isSend == "1" ||
+                                                          item.isSend == "Y"
                                                       ? Icons.check
                                                       : Icons.send,
-                                                  tooltip: item.isSend == "1" || item.isSend == "Y"
+                                                  tooltip: item.isSend == "1" ||
+                                                          item.isSend == "Y"
                                                       ? 'Already Sent'
                                                       : 'Send Quotation',
-                                                  onTap: item.isSend == "1" || item.isSend == "Y"
+                                                  onTap: item.isSend == "1" ||
+                                                          item.isSend == "Y"
                                                       ? null
-                                                      : () => _sendQuotation(item.id, index),
+                                                      : () => _sendQuotation(
+                                                          item.id, index),
                                                 ),
                                         ],
                                       ),
@@ -1347,7 +1446,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (_searchController.text.isNotEmpty || _selectedFilter != 'All')
+                if (_searchController.text.isNotEmpty ||
+                    _selectedFilter != 'All')
                   Icon(
                     Icons.search_off,
                     size: 80,
@@ -1382,7 +1482,8 @@ class _CustomerQuotationPageState extends State<CustomerQuotationPage> {
                     color: Colors.grey[600],
                   ),
                 ),
-                if (_searchController.text.isNotEmpty || _selectedFilter != 'All')
+                if (_searchController.text.isNotEmpty ||
+                    _selectedFilter != 'All')
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: ElevatedButton.icon(

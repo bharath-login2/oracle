@@ -45,6 +45,7 @@ import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
@@ -770,10 +771,9 @@ class _DashboardState extends State<Dashboard> {
       final prefs = await SharedPreferences.getInstance();
       final dismissedDate = prefs.getString('loginPromptDismissedDate');
       final today = DateTime.now().toIso8601String().substring(0, 10);
-      await Permission.notification.request();
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
         setState(() {
           result = true;
         });
@@ -922,6 +922,7 @@ class _DashboardState extends State<Dashboard> {
         getLeadDash();
         getRenewalDashboard();
         getCustomerList();
+        await Permission.notification.request();
       }
       setState(() {
         timeOut = false;
@@ -2597,7 +2598,8 @@ class _DashboardState extends State<Dashboard> {
                                                                     .toString(),
                                                                 "",
                                                                 "",
-                                                                "","")),
+                                                                "",
+                                                                "")),
                                                   );
                                                 } else if (list[i] ==
                                                         "GST Invoices" &&
@@ -2651,7 +2653,8 @@ class _DashboardState extends State<Dashboard> {
                                                     MaterialPageRoute(
                                                         builder: (context) =>
                                                             ClientList(
-                                                                widget.token!,_scaffoldKey)),
+                                                                widget.token!,
+                                                                _scaffoldKey)),
                                                   );
                                                 }
                                               },
@@ -3693,8 +3696,8 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ClientList(widget.token!,_scaffoldKey)),
+                                              builder: (context) => ClientList(
+                                                  widget.token!, _scaffoldKey)),
                                         );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
@@ -5564,6 +5567,20 @@ class _DashboardState extends State<Dashboard> {
                                         });
                                       }
                                     } else {
+                                      // Navigator.push(
+                                      //   context,
+                                      //   MaterialPageRoute(
+                                      //       builder: (context) => ViewLeads(
+                                      //             widget.token,
+                                      //             updateLeadPermission1,
+                                      //             deleteLeadPermission1,
+                                      //             cloudCallPermission1,
+                                      //             pageName: 'New Leads',
+                                      //             fromDate: fromdate.toString(),
+                                      //             toDate: todate.toString(),
+                                      //             status: '1',
+                                      //           )),
+                                      // )
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -5572,7 +5589,7 @@ class _DashboardState extends State<Dashboard> {
                                                   updateLeadPermission1,
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
-                                                  pageName: 'New Leads',
+                                                  pageName: 'New Leadsss',
                                                   fromDate: fromdate.toString(),
                                                   toDate: todate.toString(),
                                                   status: '1',

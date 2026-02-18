@@ -35,11 +35,23 @@ class _PendingExpenseState extends State<PendingExpense> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -270,7 +282,10 @@ class _PendingExpenseState extends State<PendingExpense> {
                                               fontWeight: FontWeight.bold),
                                         ),
                                         subtitle: Text(
-                                          "Balance: ${filteredExpenses[index].balanceAmount}",
+                                          widget.status == "2"
+                                              ? "Pending: ${filteredExpenses[index].balanceAmount}"
+                                              : "Advance: ${filteredExpenses[index].balanceAmount}",
+                                          //"Balance: ${filteredExpenses[index].balanceAmount}",
                                           style: const TextStyle(
                                               color: Colors.teal,
                                               fontWeight: FontWeight.normal),

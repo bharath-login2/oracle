@@ -42,11 +42,23 @@ class _AddExpenseState extends State<AddExpense> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -64,11 +76,11 @@ class _AddExpenseState extends State<AddExpense> {
         accountHeads = expenseMasterData!.data.accountHead;
         filteredAccounts = List.from(accountHeads);
       });
-      
+
       // Get shared preferences and update state
       final sharedAccountId = await Common.getSharedPref("accountId");
       final sharedAccountName = await Common.getSharedPref("accountName");
-      
+
       setState(() {
         fromAcId = sharedAccountId;
         fromAcName = sharedAccountName;
@@ -589,7 +601,6 @@ class _AddExpenseState extends State<AddExpense> {
   }
 }
 
-
 class _AccountsDialog extends StatefulWidget {
   final List<AccountHead> accounts;
   final TextEditingController searchController;
@@ -615,7 +626,7 @@ class __AccountsDialogState extends State<_AccountsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-       title: Row(
+      title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
@@ -687,7 +698,6 @@ class __AccountsDialogState extends State<_AccountsDialog> {
           )
         ],
       ),
-     
     );
   }
 }
@@ -717,7 +727,7 @@ class __CategoryDialogState extends State<_CategoryDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-     title: Row(
+      title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
@@ -789,7 +799,6 @@ class __CategoryDialogState extends State<_CategoryDialog> {
           )
         ],
       ),
-     
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/login_summary_page.dart';
 import 'package:login2/widgets/blinkngTime.dart';
@@ -12,9 +13,11 @@ import 'package:login2/models/lead_management/workstatus_model.dart'
 import '../../service/service.dart';
 
 class ViewWorkPage extends StatefulWidget {
+  final String? staffName;
   final String staffId;
   final DateTime? selectedDate;
-  const ViewWorkPage({super.key, this.selectedDate, required this.staffId});
+  const ViewWorkPage(
+      {super.key, this.selectedDate, required this.staffId, this.staffName});
 
   @override
   State<ViewWorkPage> createState() => _ViewWorkPageState();
@@ -199,26 +202,47 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Work Timeline"),
+        title: widget.staffName != null && widget.staffName!.isNotEmpty
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.staffName != null && widget.staffName!.isNotEmpty)
+                    Text(
+                      widget.staffName!,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color.fromARGB(255, 255, 255, 255),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const Text(
+                    "Work Timeline",
+                    style: TextStyle(
+                      fontSize: 14,
+                      // fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Work Timeline",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+        backgroundColor: const Color.fromARGB(255, 77, 155, 228),
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
-            // onPressed: () async {
-            //   final DateTime? picked = await showDatePicker(
-            //     context: context,
-            //    initialDate: selectedDate,
-            //     firstDate: DateTime(2020),
-            //     lastDate: DateTime(2100),
-            //   );
-            //   if (picked != null) {
-            //     setState(() {
-            //       currentDate = DateFormat('yyyy-MM-dd').format(picked);
-            //       isLoading = true;
-            //     });
-            //     await getWorkDuration(currentDate);
-            //   }
-            // },
-         
             onPressed: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,
@@ -250,7 +274,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                   ),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return const SizedBox();
-
                     final now = snapshot.data!;
                     final createdAt = DateTime.parse(existingWork!.createdAt);
                     final diff = now.difference(createdAt);
@@ -258,18 +281,15 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                         "${diff.inHours.toString().padLeft(2, '0')}:"
                         "${(diff.inMinutes % 60).toString().padLeft(2, '0')}:"
                         "${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
-
                     return FloatingActionButton.extended(
                       onPressed: () async {
                         final workStatusModel =
                             await HttpService.getWorkStatus();
                         workStatus.WorkStatus? newExistingWork;
-
                         if (workStatusModel != null &&
                             workStatusModel.data.isNotEmpty) {
                           newExistingWork = workStatusModel.data.first;
                         }
-
                         final paused = await showDialog(
                           context: context,
                           builder: (context) => AddWorkPage(
@@ -491,8 +511,8 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                           final item = workStatusDetails!.data[index];
                           final hasAssignment = item.assigns
                               .any((assign) => assign.assignedBy.isNotEmpty);
-                          List<bool> expandedTasks = List.generate(
-                              item.tasks.length, (index) => false);
+                          List<bool> expandedTasks =
+                              List.generate(item.tasks.length, (index) => true);
 
                           final isInProgress = item.endTime == "00:00:00" ||
                               item.endTime.isEmpty;
@@ -605,14 +625,30 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Flexible(
-                                                      child: Text(
-                                                        '${item.customerName ?? "No title"} [${item.projectId}]',
-                                                        style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold,
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  AssignReport(
+                                                                      workId: item
+                                                                          .id,
+                                                                      sectionId:
+                                                                          ""),
+                                                            ),
+                                                          );
+                                                        },
+                                                        child: Text(
+                                                          '${item.customerName ?? "No title"} [${item.projectName}]',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                          softWrap: true,
                                                         ),
-                                                        softWrap: true,
                                                       ),
                                                     ),
                                                     const SizedBox(width: 8),
@@ -1264,7 +1300,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                 //   Icons.timer,
                 //   Colors.purple,
                 // ),
-                
 
                 _buildTimeSummaryItem(
                   "Ideal",
@@ -1424,11 +1459,11 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   String _getPriorityText(String priority) {
     switch (priority) {
       case "1":
-        return "Low";
+        return "Normal";
       case "2":
-        return "Medium";
-      case "3":
         return "High";
+      case "3":
+        return "Critical";
       default:
         return priority;
     }

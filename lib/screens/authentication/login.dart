@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:device_marketing_names/device_marketing_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -18,6 +20,7 @@ import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
+// import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../core/common.dart';
 import '../../models/loginModel.dart';
@@ -53,18 +56,115 @@ class _LoginState extends State<Login> {
   final GlobalKey popupMenuKey = GlobalKey();
   File? _faceImageFile;
   String? _faceBase64;
+  bool _notificationAsked = false;
+
+  Future<void> askNotificationPermissionSafe() async {
+    // if (!Platform.isAndroid) return;
+
+    // final androidInfo = await DeviceInfoPlugin().androidInfo;
+    // if (androidInfo.version.sdkInt < 33) return; // Android 13+
+
+    // final status = await Permission.notification.status;
+
+    // if (!status.isGranted) {
+    //   final result = await Permission.notification.request();
+
+    //   if (result.isPermanentlyDenied) {
+    //     openAppSettings();
+    //   }
+    // }
+  }
+
+  Future<Map<String, String>> getDeviceInfo() async {
+    String deviceName = '';
+    String platform = '';
+    String osVersion = '';
+    String modelCode = '';
+
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final marketingNames = DeviceMarketingNames();
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceName = await marketingNames.getSingleName();
+        if (deviceName.isEmpty || deviceName == androidInfo.model) {
+          deviceName =
+              androidInfo.manufacturer != null && androidInfo.model != null
+                  ? '${androidInfo.manufacturer} ${androidInfo.model}'
+                  : androidInfo.model ?? 'Unknown Android Device';
+        }
+
+        platform = 'Android';
+        osVersion = androidInfo.version.release ?? 'Unknown';
+        modelCode = androidInfo.model ?? '';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceName = await marketingNames.getSingleName();
+        if (deviceName.isEmpty) {
+          deviceName =
+              iosInfo.utsname.machine ?? iosInfo.model ?? 'Unknown iOS Device';
+        }
+
+        platform = 'iOS';
+        osVersion = iosInfo.systemVersion ?? 'Unknown';
+        modelCode = iosInfo.utsname.machine ?? '';
+      }
+
+      log('Device detected: $deviceName ($platform $osVersion)');
+    } catch (e) {
+      log('Error getting device info: $e');
+      deviceName = 'Unknown Device';
+      platform = Platform.isAndroid ? 'Android' : 'iOS';
+      osVersion = 'Unknown';
+    }
+
+    return {
+      'deviceName': deviceName,
+      'platform': platform,
+      'osVersion': osVersion,
+      'mobileName': modelCode,
+    };
+  }
+
+  // Future<Map<String, String>> getDeviceInfo() async {
+  //   String deviceName = '';
+  //   String platform = '';
+  //   String osVersion = '';
+
+  //   try {
+  //     if (Platform.isAndroid) {
+  //       final androidInfo = await DeviceInfoPlugin().androidInfo;
+  //       deviceName = androidInfo.model ?? 'Unknown';
+  //       platform = 'Android';
+  //       osVersion = androidInfo.version.release ?? 'Unknown';
+  //     } else if (Platform.isIOS) {
+  //       final iosInfo = await DeviceInfoPlugin().iosInfo;
+  //       deviceName = iosInfo.utsname.machine ?? iosInfo.model ?? 'Unknown';
+  //       platform = 'iOS';
+  //       osVersion = iosInfo.systemVersion ?? 'Unknown';
+  //     }
+  //   } catch (e) {
+  //     log('Error getting device info: $e');
+  //   }
+
+  //   return {
+  //     'deviceName': deviceName,
+  //     'platform': platform,
+  //     'osVersion': osVersion,
+  //   };
+  // }
 
   handleAsync() async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
+      // await FirebaseMessaging.instance.requestPermission(
+      //   alert: true,
+      //   announcement: false,
+      //   badge: true,
+      //   carPlay: false,
+      //   criticalAlert: false,
+      //   provisional: false,
+      //   sound: true,
+      // );
       firebaseToken = await FirebaseMessaging.instance.getToken();
       if (kDebugMode) {
         print("Firebase token : $firebaseToken");
@@ -108,11 +208,21 @@ class _LoginState extends State<Login> {
     });
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        result = true;
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   result = true;
+      // } else {
+      //   result = false;
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          result = true;
+        }
       } else {
-        result = false;
+        setState(() {
+          result = false;
+        });
       }
       updatedata = await HttpService.forceUpdate();
       String? savedUrl = await Common.getSharedPref("url");
@@ -243,25 +353,24 @@ class _LoginState extends State<Login> {
   login() async {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
         if (username.text.isEmpty) {
           Common.toastMessaage('Username cannot be empty', Colors.red);
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
-        } 
-        else if (serverChoose == false) {
+        } else if (serverChoose == false) {
           Common.toastMessaage('Choose a Server', Colors.red);
           openPopupMenu();
           if (updatedata!.data!.server!.length > 1) {
             Common.toastMessaage('Choose a Server', Colors.red);
             openPopupMenu();
-          } 
-          else {
+          } else {
             Common.toastMessaage('Server configuration error', Colors.red);
           }
-        }
-         else {
+        } else {
           setState(() {
             _loading = true;
           });
@@ -271,12 +380,16 @@ class _LoginState extends State<Login> {
           //   Common.toastMessaage('Face capture required for login', Colors.red);
           //   return;
           // }
-
+          final deviceInfo = await getDeviceInfo();
           LoginModel? object = await HttpService.login(
             username.text,
             password.text,
             firebaseToken!,
             _faceBase64,
+            deviceName: deviceInfo['deviceName'],
+            platform: deviceInfo['platform'],
+            osVersion: deviceInfo['osVersion'],
+            mobileName: deviceInfo['mobileName'],
           );
           if (object!.status == true) {
             Common.saveSharedPref(
@@ -384,57 +497,56 @@ class _LoginState extends State<Login> {
                 "LeadDashboard", object1.data!.LeadDashboard.toString());
             Common.saveSharedPref("AccountsDashboardPermission",
                 object1.data!.AccountsDashboard.toString());
-                  Common.saveSharedPref("QuotationDashboardPermission",
+            Common.saveSharedPref("QuotationDashboardPermission",
                 object1.data!.QuotationDashboard.toString());
-                     Common.saveSharedPref("RoomDashboard",
-                object1.data!.RoomDashboard.toString());
-                  Common.saveSharedPref("JobCard",
-                object1.data!.JobCard.toString());
-                //////////////Modules permissions /////////////////////////////////////////
-               Common.saveSharedPref("RoomModule",
-                object1.data!.roomModule.toString());
-                Common.saveSharedPref("workWithoutLogin",
-                object1.data!.workWithoutLogin.toString());
-                Common.saveSharedPref("quotationModule",
-                object1.data!.quotationModule.toString());
-                  Common.saveSharedPref("workModule",
-                object1.data!.workModule.toString());
-                    Common.saveSharedPref("renewalModule",
-                object1.data!.renewalModule.toString());
-                     Common.saveSharedPref("accountsModule",
-                object1.data!.accountsModule.toString());
-                      Common.saveSharedPref("leadModule",
-                object1.data!.leadModule.toString());
+            Common.saveSharedPref(
+                "RoomDashboard", object1.data!.RoomDashboard.toString());
+            Common.saveSharedPref("JobCard", object1.data!.JobCard.toString());
+            //////////////Modules permissions /////////////////////////////////////////
+            Common.saveSharedPref(
+                "RoomModule", object1.data!.roomModule.toString());
+            Common.saveSharedPref(
+                "workWithoutLogin", object1.data!.workWithoutLogin.toString());
+            Common.saveSharedPref(
+                "quotationModule", object1.data!.quotationModule.toString());
+            Common.saveSharedPref(
+                "workModule", object1.data!.workModule.toString());
+            Common.saveSharedPref(
+                "renewalModule", object1.data!.renewalModule.toString());
+            Common.saveSharedPref(
+                "accountsModule", object1.data!.accountsModule.toString());
+            Common.saveSharedPref(
+                "leadModule", object1.data!.leadModule.toString());
 
-                ///      Modulessss eNDSSSS ///////////////////////////////////////
+            ///      Modulessss eNDSSSS ///////////////////////////////////////
             Common.saveSharedPref(
                 "MenuDashboard", object1.data!.MenuDashboard.toString());
             Common.saveSharedPref("RenewalDashboardPermission",
                 object1.data!.RenewalDashboard.toString());
-                  Common.saveSharedPref("NewleadDashboardPermission",
+            Common.saveSharedPref("NewleadDashboardPermission",
                 object1.data!.NewleadDashboard.toString());
-                  Common.saveSharedPref(
-                  "addWorkModule", object1.data!.addWorkModule.toString());
-                   Common.saveSharedPref(
-                  "viewAttendanceSection", object1.data!.viewAttendanceSection.toString());
-                    Common.saveSharedPref(
-                  "approvePayroll", object1.data!.approvePayroll.toString());
-                    Common.saveSharedPref(
-                  "proformaInvoiceMenu", object1.data!.proformaInvoiceMenu.toString());
-                    Common.saveSharedPref(
-                  "gstInvoiceMenu", object1.data!.gstInvoiceMenu.toString());
-                    Common.saveSharedPref(
-                  "receiptMenu", object1.data!.receiptMenu.toString());
-                    Common.saveSharedPref(
-                  "pendingInvoiceMenu", object1.data!.pendingInvoiceMenu.toString());
-                   Common.saveSharedPref(
-                  "createLeadCategory", object1.data!.createLeadCategory.toString());
-                   Common.saveSharedPref(
-                  "addLeadSource", object1.data!.addLeadSource.toString());
-                    Common.saveSharedPref(
-                  "updateDashboard", object1.data!.updateDashboard.toString());
-                    Common.saveSharedPref(
-                  "viewPendingWorks", object1.data!.viewPendingWorks.toString());
+            Common.saveSharedPref(
+                "addWorkModule", object1.data!.addWorkModule.toString());
+            Common.saveSharedPref("viewAttendanceSection",
+                object1.data!.viewAttendanceSection.toString());
+            Common.saveSharedPref(
+                "approvePayroll", object1.data!.approvePayroll.toString());
+            Common.saveSharedPref("proformaInvoiceMenu",
+                object1.data!.proformaInvoiceMenu.toString());
+            Common.saveSharedPref(
+                "gstInvoiceMenu", object1.data!.gstInvoiceMenu.toString());
+            Common.saveSharedPref(
+                "receiptMenu", object1.data!.receiptMenu.toString());
+            Common.saveSharedPref("pendingInvoiceMenu",
+                object1.data!.pendingInvoiceMenu.toString());
+            Common.saveSharedPref("createLeadCategory",
+                object1.data!.createLeadCategory.toString());
+            Common.saveSharedPref(
+                "addLeadSource", object1.data!.addLeadSource.toString());
+            Common.saveSharedPref(
+                "updateDashboard", object1.data!.updateDashboard.toString());
+            Common.saveSharedPref(
+                "viewPendingWorks", object1.data!.viewPendingWorks.toString());
             // Common.saveSharedPref("callLogPermission", 'false');
             //  Common.saveSharedPref(
             //  "callLogPermission", 'true');
@@ -443,7 +555,7 @@ class _LoginState extends State<Login> {
             String? accountsDash = object1.data!.AccountsDashboard.toString();
             String? menuDash = object1.data!.MenuDashboard.toString();
             String? renewalDash = object1.data!.RenewalDashboard.toString();
-              String? quotationDash = object1.data!.QuotationDashboard.toString();
+            String? quotationDash = object1.data!.QuotationDashboard.toString();
             Widget dashboardToOpen;
             if (projectDash == "true") {
               dashboardToOpen = ProjectDashboard();
@@ -674,7 +786,7 @@ class _LoginState extends State<Login> {
                                   const SizedBox(
                                     height: 25,
                                   ),
-                                 
+
                                   Container(
                                     child: Align(
                                       child: updatedata!.data!.server!.length >
@@ -760,13 +872,13 @@ class _LoginState extends State<Login> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                     // if (serverChoose == true) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const ForgotPassword()),
-                                        );
+                                      // if (serverChoose == true) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ForgotPassword()),
+                                      );
                                       // } else {
                                       //   Common.toastMessaage(
                                       //       'Choose a server', Colors.red);

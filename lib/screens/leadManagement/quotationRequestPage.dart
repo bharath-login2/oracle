@@ -6,6 +6,7 @@ import 'package:login2/models/lead_management/requestDetailsModel.dart';
 import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/add_quotation_request_sheet.dart';
 import 'package:login2/screens/leadManagement/editQuotationSheetRequest.dart';
+import 'package:login2/screens/leadManagement/pdfViewPageQuotation.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/requestStatusChange.dart';
 
@@ -360,6 +361,26 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      if (request.assignedToId == userId &&
+                          request.isSend == "0" &&
+                          request.quotationCreated != "1")
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _actionButton(
+                            color: const Color.fromARGB(255, 166, 124, 221),
+                            icon: Icons.upload_outlined,
+                            label: 'Create',
+                            tooltip: 'Upload Quotation',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AddQuotationPage(requestId: request.Id),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -412,24 +433,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                   ),
                   Row(
                     children: [
-                      if (request.assignedToId == userId &&
-                          request.isSend == "0" &&
-                          request.quotationCreated != "1")
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _actionButton(
-                            color: const Color.fromARGB(255, 166, 124, 221),
-                            icon: Icons.upload_outlined,
-                            tooltip: 'Upload Quotation',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AddQuotationPage(requestId: request.Id),
-                              ),
-                            ),
-                          ),
-                        ),
                       // _actionButton(
                       //   color: const Color.fromARGB(255, 50, 151, 218),
                       //   icon: Icons.remove_red_eye,
@@ -589,6 +592,7 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
   Widget _actionButton({
     required Color color,
     required IconData icon,
+    String? label,
     required String tooltip,
     required VoidCallback onTap,
   }) {
@@ -598,13 +602,28 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 38,
-          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: color,
+            color: color.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: Colors.white, size: 18),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 20),
+              if (label != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1420,22 +1439,15 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
         if (userId == listData.assignedToId.toString())
           const SizedBox(height: 12),
 
-        // Create Quotation Button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AddQuotationPage(requestId: listData.Id),
-                ),
-              );
+              _editRequest(listData);
             },
-            icon: const Icon(Icons.add_chart, size: 18),
-            label: const Text('Create Quotation'),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Edit'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 166, 124, 221),
               foregroundColor: Colors.white,
@@ -1446,6 +1458,66 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
             ),
           ),
         ),
+
+        const SizedBox(height: 12),
+        if (listData.quotationCreated == "1")
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PdfViewPage(
+                      quotationId: listData.quotePk ?? '',
+                      type: "",
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.download, size: 18),
+              label: const Text('Download'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 124, 177, 221),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+        // if (userId == listData.assignedToId.toString())
+        //   const SizedBox(height: 12),
+
+        // // Create Quotation Button
+        // SizedBox(
+        //   width: double.infinity,
+        //   child: ElevatedButton.icon(
+        //     onPressed: () {
+        //       Navigator.pop(context);
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) =>
+        //               AddQuotationPage(requestId: listData.Id),
+        //         ),
+        //       );
+        //     },
+        //     icon: const Icon(Icons.add_chart, size: 18),
+        //     label: const Text('Create Quotation'),
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: const Color.fromARGB(255, 166, 124, 221),
+        //       foregroundColor: Colors.white,
+        //       padding: const EdgeInsets.symmetric(vertical: 16),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(12),
+        //       ),
+        //     ),
+        //   ),
+        // ),
 
         const SizedBox(height: 12),
 
@@ -1674,7 +1746,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Search Bar
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Container(

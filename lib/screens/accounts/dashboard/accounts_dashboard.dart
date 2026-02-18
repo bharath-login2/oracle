@@ -54,9 +54,9 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   String token = '';
   String name = '';
   String userId = '';
-    String staffId = '';
-      bool isExpired = false;
-        bool loadmore = false;
+  String staffId = '';
+  bool isExpired = false;
+  bool loadmore = false;
   String startAndStopWorkPermission = '';
   Offset _floatingButtonPosition = Offset.zero;
   bool _showFloatingOptions = false;
@@ -86,7 +86,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   DashboardModel? userDashboard;
   CommonConfigureModel? configure;
   AccountDashboardModel? dashboard;
-   String? firebaseToken;
+  String? firebaseToken;
   bool createLeadCategory1 = false;
   bool updateLeadCategory1 = false;
   bool deleteLeadCategory1 = false;
@@ -110,19 +110,18 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
         if (gstInvoiceMenu == "true") "GST Invoices",
         //  "Updated Invoice",
       ];
- List<dynamic> get tabColors => [
-  Colors.green,
-  Colors.orange,
-  Colors.blue,
-  Colors.red,
-  Colors.teal,
-  Colors.purple,
-  if (proformaInvoiceMenu == "true")
-    const Color.fromARGB(255, 111, 27, 207),
-  if (gstInvoiceMenu == "true") 
-    const Color.fromARGB(255, 228, 43, 235),
-  // const Color.fromARGB(255, 95, 133, 26),
-];
+  List<dynamic> get tabColors => [
+        Colors.green,
+        Colors.orange,
+        Colors.blue,
+        Colors.red,
+        Colors.teal,
+        Colors.purple,
+        if (proformaInvoiceMenu == "true")
+          const Color.fromARGB(255, 111, 27, 207),
+        if (gstInvoiceMenu == "true") const Color.fromARGB(255, 228, 43, 235),
+        // const Color.fromARGB(255, 95, 133, 26),
+      ];
   List colorList = [
     const Color(0xFFddd8f5),
     const Color(0xFFf0ebef),
@@ -139,11 +138,23 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   getData() async {
     token = await Common.getSharedPref("token") ?? "";
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -159,17 +170,17 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     getList();
     getCustomerList();
     firebaseToken = await FirebaseMessaging.instance.getToken();
-      LoginCheckModel? loginCheck =
-          await HttpService.loginCheck(token, firebaseToken!);
-      log(firebaseToken.toString());
-      if (loginCheck!.data == false) {
-        Common.toastMessaage('Token Expired', Colors.red);
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const Login()),
-              (Route<dynamic> route) => false);
-        }
-      } 
+    LoginCheckModel? loginCheck =
+        await HttpService.loginCheck(token, firebaseToken!);
+    log(firebaseToken.toString());
+    if (loginCheck!.data == false) {
+      Common.toastMessaage('Token Expired', Colors.red);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const Login()),
+            (Route<dynamic> route) => false);
+      }
+    }
     configure = await HttpService.configure(token);
 
     startAndStopWorkPermission =
@@ -199,10 +210,10 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       notificationCount = leadDashboard!.data.unreadNotification;
     });
     configure = await HttpService.configure(token);
-        if (configure != null) {
-          isExpired = configure!.data!.isExpired!;
-          setState(() {});
-        }
+    if (configure != null) {
+      isExpired = configure!.data!.isExpired!;
+      setState(() {});
+    }
   }
 
   getList() async {
@@ -222,32 +233,33 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   }
 
   double _calculateGridViewHeight(int itemCount) {
-  // Constants for calculation
-  const double padding = 16.0; // Top and bottom padding
-  const double itemHeight = 50.0; // Approximate height of each item (adjust as needed)
-  const double spacing = 15.0; // Main axis spacing between rows
-  
-  // Calculate number of rows (2 items per row)
-  int rows = (itemCount / 2).ceil();
-  
-  // Calculate total height
-  double totalHeight = (padding * 2) + // Top and bottom padding
-                      (itemHeight * rows) + // Height of all rows
-                      (spacing * (rows - 1)); // Spacing between rows
-  
-  // Add some extra buffer
-  totalHeight += 20;
-  
-  // Ensure minimum height
-  if (totalHeight < 100) totalHeight = 100;
-  
-  // Ensure maximum height (you can adjust this)
-  if (totalHeight > MediaQuery.of(context).size.height * 0.6) {
-    totalHeight = MediaQuery.of(context).size.height * 0.6;
+    // Constants for calculation
+    const double padding = 16.0; // Top and bottom padding
+    const double itemHeight =
+        50.0; // Approximate height of each item (adjust as needed)
+    const double spacing = 15.0; // Main axis spacing between rows
+
+    // Calculate number of rows (2 items per row)
+    int rows = (itemCount / 2).ceil();
+
+    // Calculate total height
+    double totalHeight = (padding * 2) + // Top and bottom padding
+        (itemHeight * rows) + // Height of all rows
+        (spacing * (rows - 1)); // Spacing between rows
+
+    // Add some extra buffer
+    totalHeight += 20;
+
+    // Ensure minimum height
+    if (totalHeight < 100) totalHeight = 100;
+
+    // Ensure maximum height (you can adjust this)
+    if (totalHeight > MediaQuery.of(context).size.height * 0.6) {
+      totalHeight = MediaQuery.of(context).size.height * 0.6;
+    }
+
+    return totalHeight;
   }
-  
-  return totalHeight;
-}
 
   getCustomerList() async {
     try {
@@ -602,242 +614,255 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                           child: SingleChildScrollView(
                             child: Column(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 20.0, horizontal: 8),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        toggle = !toggle;
-                                      });
-                                      Common.saveSharedPref(
-                                          "acc_toggle", toggle.toString());
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        gradient: const LinearGradient(colors: [
-                                          Color(0xFF2a86c9),
-                                          Color(0xFF406dbe)
-                                        ]),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          // Container(
-                                          //   height: MediaQuery.of(context).size.height * .2,
-                                          //   decoration: BoxDecoration(
-                                          //       borderRadius: BorderRadius.circular(12),
-                                          //       image: DecorationImage(
-                                          //           image: AssetImage("assets/main/logo.png"))),
-                                          // ),
-                                          const SizedBox(
-                                            height: 20,
-                                          ),
-                                          const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              SizedBox(
-                                                width: 20,
-                                              ),
-                                              Text(
-                                                "Account Management",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 25,
-                                                    shadows: [
-                                                      Shadow(
-                                                        offset:
-                                                            Offset(2.0, 2.0),
-                                                        blurRadius: 5.0,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ]),
-                                              ),
-                                              Icon(
-                                                Icons
-                                                    .arrow_drop_down_circle_outlined,
-                                                color: Colors.white,
-                                                size: 25,
-                                              )
-                                            ],
-                                          ),
-                                          toggle
-                                              ? SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .95,
-                                                  height:
-                                                      _calculateGridViewHeight(
-                                                          list.length),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            16.0),
-                                                    child: GridView.builder(
-                                                      physics:
-                                                          const NeverScrollableScrollPhysics(),
-                                                      itemCount: list.length,
-                                                      gridDelegate:
-                                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                                              crossAxisCount: 2,
-                                                              mainAxisSpacing:
-                                                                  15,
-                                                              crossAxisSpacing:
-                                                                  15,
-                                                              childAspectRatio:
-                                                                  3),
-                                                      itemBuilder:
-                                                          (context, i) {
-                                                        return InkWell(
-                                                          onTap: () {
-                                                            if (list[i] ==
-                                                                "Expense") {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            ExpenseList(),
-                                                                  ));
-                                                            } else if (list[
-                                                                    i] ==
-                                                                "Invoices") {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        InvoiceList(widget
-                                                                            .token
-                                                                            .toString(),"","","")),
-                                                              );
-                                                            } else if (list[
-                                                                        i] ==
-                                                                    "Proforma Invoices" &&
-                                                                proformaInvoiceMenu ==
-                                                                    "true") {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        ProformaInvoiceList(widget
-                                                                            .token
-                                                                            .toString(),"","","","")),
-                                                              );
-                                                            } else if (list[
-                                                                        i] ==
-                                                                    "GST Invoices" &&
-                                                                gstInvoiceMenu ==
-                                                                    "true") {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        GSTInvoiceList(widget
-                                                                            .token
-                                                                            .toString())),
-                                                              );
-                                                            }
-                                                            //  else if (list[i] ==
-                                                            //     "Updated Invoice") {
-                                                            //   Navigator.push(
-                                                            //     context,
-                                                            //     MaterialPageRoute(
-                                                            //         builder: (context) =>
-                                                            //             UpdatedInvoiceList(widget
-                                                            //                 .token
-                                                            //                 .toString())),
-                                                            //   );
-                                                            // }
-                                                            else if (list[i] ==
-                                                                "Pending Invoices") {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        PendingInvoice(widget
-                                                                            .token
-                                                                            .toString())),
-                                                              );
-                                                            } else if (list[
-                                                                    i] ==
-                                                                "Receipts") {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        ReceiptList(widget
-                                                                            .token
-                                                                            .toString())),
-                                                              );
-                                                            } else if (list[
-                                                                    i] ==
-                                                                "Account Head") {
-                                                              if (dashboard!
-                                                                      .data
-                                                                      .isViewAccHead ==
-                                                                  true) {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const AccountHead()),
-                                                                );
-                                                              } else {
-                                                                Common.toastMessaage(
-                                                                    "No permission",
-                                                                    Colors.red);
-                                                              }
-                                                            } else {
-                                                              Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        ClientList(
-                                                                            widget.token,_scaffoldKey,)),
-                                                              );
-                                                            }
-                                                          },
-                                                          child: Container(
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: const Color(
-                                                                  0xFFf0ebef),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          12),
-                                                            ),
-                                                            child: Center(
-                                                              child: Text(
-                                                                list[i],
-                                                                style: TextStyle(
-                                                                    color:
-                                                                        tabColors[
-                                                                            i],
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        15),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox(
-                                                  height: 20,
-                                                ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                // Padding(
+                                //   padding: const EdgeInsets.symmetric(
+                                //       vertical: 20.0, horizontal: 8),
+                                //   child: GestureDetector(
+                                //     onTap: () {
+                                //       setState(() {
+                                //         toggle = !toggle;
+                                //       });
+                                //       Common.saveSharedPref(
+                                //           "acc_toggle", toggle.toString());
+                                //     },
+                                //     child: Container(
+                                //       decoration: BoxDecoration(
+                                //         borderRadius: BorderRadius.circular(12),
+                                //         gradient: const LinearGradient(colors: [
+                                //           Color(0xFF2a86c9),
+                                //           Color(0xFF406dbe)
+                                //         ]),
+                                //       ),
+                                //       child: Column(
+                                //         children: [
+                                //           // Container(
+                                //           //   height: MediaQuery.of(context).size.height * .2,
+                                //           //   decoration: BoxDecoration(
+                                //           //       borderRadius: BorderRadius.circular(12),
+                                //           //       image: DecorationImage(
+                                //           //           image: AssetImage("assets/main/logo.png"))),
+                                //           // ),
+                                //           const SizedBox(
+                                //             height: 20,
+                                //           ),
+                                //           const Row(
+                                //             mainAxisAlignment:
+                                //                 MainAxisAlignment.spaceEvenly,
+                                //             children: [
+                                //               SizedBox(
+                                //                 width: 20,
+                                //               ),
+                                //               Text(
+                                //                 "Account Management",
+                                //                 style: TextStyle(
+                                //                     color: Colors.white,
+                                //                     fontWeight: FontWeight.bold,
+                                //                     fontSize: 25,
+                                //                     shadows: [
+                                //                       Shadow(
+                                //                         offset:
+                                //                             Offset(2.0, 2.0),
+                                //                         blurRadius: 5.0,
+                                //                         color: Colors.grey,
+                                //                       ),
+                                //                     ]),
+                                //               ),
+                                //               Icon(
+                                //                 Icons
+                                //                     .arrow_drop_down_circle_outlined,
+                                //                 color: Colors.white,
+                                //                 size: 25,
+                                //               )
+                                //             ],
+                                //           ),
+                                //           toggle
+                                //               ? SizedBox(
+                                //                   width: MediaQuery.of(context)
+                                //                           .size
+                                //                           .width *
+                                //                       .95,
+                                //                   height:
+                                //                       _calculateGridViewHeight(
+                                //                           list.length),
+                                //                   child: Padding(
+                                //                     padding:
+                                //                         const EdgeInsets.all(
+                                //                             16.0),
+                                //                     child: GridView.builder(
+                                //                       physics:
+                                //                           const NeverScrollableScrollPhysics(),
+                                //                       itemCount: list.length,
+                                //                       gridDelegate:
+                                //                           const SliverGridDelegateWithFixedCrossAxisCount(
+                                //                               crossAxisCount: 2,
+                                //                               mainAxisSpacing:
+                                //                                   15,
+                                //                               crossAxisSpacing:
+                                //                                   15,
+                                //                               childAspectRatio:
+                                //                                   3),
+                                //                       itemBuilder:
+                                //                           (context, i) {
+                                //                         return InkWell(
+                                //                           onTap: () {
+                                //                             if (list[i] ==
+                                //                                 "Expense") {
+                                //                               Navigator.push(
+                                //                                   context,
+                                //                                   MaterialPageRoute(
+                                //                                     builder:
+                                //                                         (context) =>
+                                //                                             ExpenseList(),
+                                //                                   ));
+                                //                             } else if (list[
+                                //                                     i] ==
+                                //                                 "Invoices") {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder: (context) => InvoiceList(
+                                //                                         widget
+                                //                                             .token
+                                //                                             .toString(),
+                                //                                         "",
+                                //                                         "",
+                                //                                         "")),
+                                //                               );
+                                //                             } else if (list[
+                                //                                         i] ==
+                                //                                     "Proforma Invoices" &&
+                                //                                 proformaInvoiceMenu ==
+                                //                                     "true") {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder: (context) => ProformaInvoiceList(
+                                //                                         widget
+                                //                                             .token
+                                //                                             .toString(),
+                                //                                         "",
+                                //                                         "",
+                                //                                         "",
+                                //                                         "")),
+                                //                               );
+                                //                             } else if (list[
+                                //                                         i] ==
+                                //                                     "GST Invoices" &&
+                                //                                 gstInvoiceMenu ==
+                                //                                     "true") {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder: (context) =>
+                                //                                         GSTInvoiceList(widget
+                                //                                             .token
+                                //                                             .toString())),
+                                //                               );
+                                //                             }
+                                //                             //  else if (list[i] ==
+                                //                             //     "Updated Invoice") {
+                                //                             //   Navigator.push(
+                                //                             //     context,
+                                //                             //     MaterialPageRoute(
+                                //                             //         builder: (context) =>
+                                //                             //             UpdatedInvoiceList(widget
+                                //                             //                 .token
+                                //                             //                 .toString())),
+                                //                             //   );
+                                //                             // }
+                                //                             else if (list[i] ==
+                                //                                 "Pending Invoices") {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder: (context) =>
+                                //                                         PendingInvoice(widget
+                                //                                             .token
+                                //                                             .toString())),
+                                //                               );
+                                //                             } else if (list[
+                                //                                     i] ==
+                                //                                 "Receipts") {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder: (context) =>
+                                //                                         ReceiptList(widget
+                                //                                             .token
+                                //                                             .toString())),
+                                //                               );
+                                //                             } else if (list[
+                                //                                     i] ==
+                                //                                 "Account Head") {
+                                //                               if (dashboard!
+                                //                                       .data
+                                //                                       .isViewAccHead ==
+                                //                                   true) {
+                                //                                 Navigator.push(
+                                //                                   context,
+                                //                                   MaterialPageRoute(
+                                //                                       builder:
+                                //                                           (context) =>
+                                //                                               const AccountHead()),
+                                //                                 );
+                                //                               } else {
+                                //                                 Common.toastMessaage(
+                                //                                     "No permission",
+                                //                                     Colors.red);
+                                //                               }
+                                //                             } else {
+                                //                               Navigator.push(
+                                //                                 context,
+                                //                                 MaterialPageRoute(
+                                //                                     builder:
+                                //                                         (context) =>
+                                //                                             ClientList(
+                                //                                               widget.token,
+                                //                                               _scaffoldKey,
+                                //                                             )),
+                                //                               );
+                                //                             }
+                                //                           },
+                                //                           child: Container(
+                                //                             decoration:
+                                //                                 BoxDecoration(
+                                //                               color: const Color(
+                                //                                   0xFFf0ebef),
+                                //                               borderRadius:
+                                //                                   BorderRadius
+                                //                                       .circular(
+                                //                                           12),
+                                //                             ),
+                                //                             child: Center(
+                                //                               child: Text(
+                                //                                 list[i],
+                                //                                 style: TextStyle(
+                                //                                     color:
+                                //                                         tabColors[
+                                //                                             i],
+                                //                                     fontWeight:
+                                //                                         FontWeight
+                                //                                             .bold,
+                                //                                     fontSize:
+                                //                                         15),
+                                //                               ),
+                                //                             ),
+                                //                           ),
+                                //                         );
+                                //                       },
+                                //                     ),
+                                //                   ),
+                                //                 )
+                                //               : const SizedBox(
+                                //                   height: 20,
+                                //                 ),
+                                //         ],
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
+                                SizedBox(
+                                  height: 20,
                                 ),
                                 SizedBox(
                                   width: MediaQuery.of(context).size.width * .9,
@@ -1366,8 +1391,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     .expenseGraph[
                                                                         i]
                                                                     .expCatName,
-                                                                fdate: fDate,
-                                                                tdate: tDate,
+                                                                // fdate: fDate,
+                                                                // tdate: tDate,
+                                                                fdate:
+                                                                    convertDate(
+                                                                        fDate),
+                                                                tdate:
+                                                                    convertDate(
+                                                                        tDate),
                                                               ),
                                                             ));
                                                       },
@@ -1642,6 +1673,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
             ));
   }
 
+  String convertDate(String date) {
+    final inputFormat = DateFormat('dd-MM-yyyy');
+    final outputFormat = DateFormat('yyyy-MM-dd');
+
+    final parsedDate = inputFormat.parse(date);
+    return outputFormat.format(parsedDate);
+  }
+
   Container progressItem(String name, String amount, double value) {
     return Container(
       color: const Color(0xFFf0ebef),
@@ -1888,24 +1927,24 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                   //   ),
                   // ),
                   AccountsMenuWidget(
-                  token: widget.token!,
-                  name: name,
-                  userId: userId,
-                  staffId: staffId,
-                  isExpired: isExpired,
-                  configure: configure,
-                  leadDashboard: leadDashboard,
-                  fromdate: fromdate.toString(),
-                  todate: todate.toString(),
-                  loadmore: loadmore,
-                  onDataRefresh: () {
-                    getData();
-                  },
-                  onStaffwiseRefresh: getList,
-                ),
-                SizedBox(
-                  width: 12,
-                ),
+                    token: widget.token!,
+                    name: name,
+                    userId: userId,
+                    staffId: staffId,
+                    isExpired: isExpired,
+                    configure: configure,
+                    leadDashboard: leadDashboard,
+                    fromdate: fromdate.toString(),
+                    todate: todate.toString(),
+                    loadmore: loadmore,
+                    onDataRefresh: () {
+                      getData();
+                    },
+                    onStaffwiseRefresh: getList,
+                  ),
+                  SizedBox(
+                    width: 12,
+                  ),
                 ],
               ),
             ],

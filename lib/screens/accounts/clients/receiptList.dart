@@ -7,6 +7,7 @@ import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/screens/accounts/clients/addInvoice.dart';
 import 'package:login2/screens/accounts/clients/addInvoiceUpdated.dart';
 import 'package:login2/screens/accounts/clients/editRecipt.dart';
+import 'package:login2/screens/accounts/clients/invoiceHistoryPage.dart';
 import 'package:login2/screens/accounts/clients/viewReceipt.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/screens/customer/customerDasboard.dart';
@@ -193,20 +194,13 @@ class _ReceiptListState extends State<ReceiptList> {
     setState(() {
       _ignoreWidgetDates = false;
     });
-
-    // Helper function to validate and parse dates
     DateTime? parseAndValidateDate(String? dateString) {
       if (dateString == null || dateString.isEmpty) return null;
-
       try {
         DateTime date;
-
-        // First try to parse as ISO format (from DateTime objects)
         if (dateString.contains('T') && dateString.contains(':')) {
           date = DateTime.parse(dateString);
-        }
-        // Try to parse as dd-MM-yyyy format
-        else if (dateString.contains('-') &&
+        } else if (dateString.contains('-') &&
             dateString.split('-').length == 3) {
           final parts = dateString.split('-');
           if (parts[0].length == 2 &&
@@ -216,9 +210,7 @@ class _ReceiptListState extends State<ReceiptList> {
           } else {
             return null;
           }
-        }
-        // Try to parse as yyyy-MM-dd format
-        else if (dateString.contains('-') &&
+        } else if (dateString.contains('-') &&
             dateString.split('-').length == 3) {
           final parts = dateString.split('-');
           if (parts[0].length == 4 &&
@@ -231,8 +223,6 @@ class _ReceiptListState extends State<ReceiptList> {
         } else {
           return null;
         }
-
-        // Check if year is reasonable (between 2000 and 2100)
         if (date.year < 2000 || date.year > 2100) return null;
         return date;
       } catch (e) {
@@ -241,22 +231,83 @@ class _ReceiptListState extends State<ReceiptList> {
       }
     }
 
+    // showModalBottomSheet(
+    //   context: context,
+    //   isScrollControlled: true,
+    //   builder: (context) {
+    //     return StatefulBuilder(
+    //       builder: (context, setModalState) {
+    //         DateTime? parsedFromDate =
+    //             parseAndValidateDate(currentFilters['created_from']);
+    //         DateTime? parsedToDate =
+    //             parseAndValidateDate(currentFilters['created_to']);
+    //         final Map<String, dynamic> initialFilters = {};
+    //         if (parsedFromDate != null) {
+    //           initialFilters['created_from'] =
+    //               DateFormat('dd-MM-yyyy').format(parsedFromDate);
+    //         } else if (!_ignoreWidgetDates &&
+    //             widget.fdate != null &&
+    //             widget.fdate!.isNotEmpty) {
+    //           initialFilters['created_from'] = widget.fdate;
+    //         }
+    //         if (parsedToDate != null) {
+    //           initialFilters['created_to'] =
+    //               DateFormat('dd-MM-yyyy').format(parsedToDate);
+    //         } else if (!_ignoreWidgetDates &&
+    //             widget.tdate != null &&
+    //             widget.tdate!.isNotEmpty) {
+    //           initialFilters['created_to'] = widget.tdate;
+    //         }
+    //         initialFilters.addAll(currentFilters);
+    //        initialFilters.remove('created_from');
+    //        initialFilters.remove('created_to');
+    //         return SingleChildScrollView(
+    //           child: Padding(
+    //             padding: EdgeInsets.only(
+    //               bottom: MediaQuery.of(context).viewInsets.bottom,
+    //             ),
+    //             child: ReceiptListFilterWidget(
+    //               pageId: 2,
+    //               initialFilters: initialFilters,
+    //               onApplyFilters: (filters) {
+    //                 setState(() {
+    //                   currentFilters = Map.from(filters);
+    //                   if (filters['created_from'] != null) {
+    //                     fDate = filters['created_from'];
+    //                   } else {
+    //                     fDate = "From Date";
+    //                   }
+    //                   if (filters['created_to'] != null) {
+    //                     tDate = filters['created_to'];
+    //                   } else {
+    //                     tDate = "To Date";
+    //                   }
+    //                   page = 1;
+    //                   items.clear();
+    //                 });
+    //                 getList();
+    //               },
+    //             ),
+    //           ),
+    //         );
+    //       },
+    //     );
+    //   },
+    // );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            // Parse dates from current filters
             DateTime? parsedFromDate =
                 parseAndValidateDate(currentFilters['created_from']);
             DateTime? parsedToDate =
                 parseAndValidateDate(currentFilters['created_to']);
 
-            // Prepare initial filters for the filter widget
             final Map<String, dynamic> initialFilters = {};
 
-            // Add dates in dd-MM-yyyy format if available
+            // First, handle dates
             if (parsedFromDate != null) {
               initialFilters['created_from'] =
                   DateFormat('dd-MM-yyyy').format(parsedFromDate);
@@ -274,9 +325,20 @@ class _ReceiptListState extends State<ReceiptList> {
                 widget.tdate!.isNotEmpty) {
               initialFilters['created_to'] = widget.tdate;
             }
-            initialFilters.addAll(currentFilters);
-            initialFilters.remove('created_from');
-            initialFilters.remove('created_to');
+
+            // Then add other filters from currentFilters, excluding dates
+            currentFilters.forEach((key, value) {
+              if (key != 'created_from' && key != 'created_to') {
+                initialFilters[key] = value;
+              }
+            });
+
+            // Alternative approach: Create a new map without dates
+            // final Map<String, dynamic> otherFilters = Map.from(currentFilters)
+            //   ..remove('created_from')
+            //   ..remove('created_to');
+            // initialFilters.addAll(otherFilters);
+
             return SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.only(
@@ -413,12 +475,34 @@ class _ReceiptListState extends State<ReceiptList> {
       fDate = widget.fdate!;
       tDate = widget.tdate!;
     }
+    String? fDateFilter;
+    String? tDateFilter;
+
+    if (!_ignoreWidgetDates) {
+      fDateFilter = currentFilters['created_from'] ?? widget.fdate;
+      tDateFilter = currentFilters['created_to'] ?? widget.tdate;
+    } else {
+      fDateFilter = currentFilters['created_from'];
+      tDateFilter = currentFilters['created_to'];
+    }
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -426,6 +510,7 @@ class _ReceiptListState extends State<ReceiptList> {
     }
     getList();
     getCustomerList();
+    _fetchAccountTotals(fDateFilter, tDateFilter, headId, search.text, type);
   }
 
   getCustomerList() async {
@@ -492,12 +577,28 @@ class _ReceiptListState extends State<ReceiptList> {
       _loadingAccountTotals = true;
     });
 
+    print("_fetchAccountTotals called with:");
+    print("fDateFilter: $fDateFilter");
+    print("tDateFilter: $tDateFilter");
+    print("headId: $headId");
+    print("searchKey: $searchKey");
+    print("type: $type");
+    print("widget.custId: ${widget.custId}");
+    print("widget.fromDash: ${widget.fromDash}");
+    print("widget.token: ${widget.token}");
+
     try {
+      String custIdToUse = widget.custId ?? "";
+      String fromDashToUse = widget.fromDash ?? "";
+
+      print(
+          "Making API call with custId: '$custIdToUse', fromDash: '$fromDashToUse'");
+
       ReceiptListAccountsModel? accountData =
           await HttpService.receptListAccounts(
         widget.token,
-        widget.fromDash!,
-        widget.custId!,
+        fromDashToUse,
+        custIdToUse,
         fDateFilter ?? "",
         tDateFilter ?? "",
         1,
@@ -507,19 +608,67 @@ class _ReceiptListState extends State<ReceiptList> {
         type,
       );
 
+      print("API response received: ${accountData != null}");
+
       if (accountData != null && accountData.status == true) {
+        print(
+            "Account totals API success: ${accountData.data?.length ?? 0} items");
+        print(
+            "Account totals: ${accountData.data?.map((e) => e.accountName).toList()}");
         setState(() {
           accountTotals = accountData.data ?? [];
         });
+      } else {
+        print("Account totals API failed - Response: ${accountData?.toJson()}");
+        print("Error message: ${accountData?.message ?? "No message"}");
+        setState(() {
+          accountTotals = [];
+        });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print("Error loading account totals: $e");
+      print("Stack trace: $stackTrace");
     } finally {
       setState(() {
         _loadingAccountTotals = false;
       });
     }
   }
+
+  // Future<void> _fetchAccountTotals(String? fDateFilter, String? tDateFilter,
+  //     String headId, String searchKey, String type) async {
+  //   setState(() {
+  //     _loadingAccountTotals = true;
+  //   });
+
+  //   try {
+  //     ReceiptListAccountsModel? accountData =
+  //         await HttpService.receptListAccounts(
+  //       widget.token,
+  //       widget.fromDash!,
+  //       widget.custId!,
+  //       fDateFilter ?? "",
+  //       tDateFilter ?? "",
+  //       1,
+  //       100,
+  //       headId,
+  //       searchKey,
+  //       type,
+  //     );
+
+  //     if (accountData != null && accountData.status == true) {
+  //       setState(() {
+  //         accountTotals = accountData.data ?? [];
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("Error loading account totals: $e");
+  //   } finally {
+  //     setState(() {
+  //       _loadingAccountTotals = false;
+  //     });
+  //   }
+  // }
 
   // getList() async {
   //   String? fDateFilter = currentFilters['created_from'];
@@ -563,7 +712,7 @@ class _ReceiptListState extends State<ReceiptList> {
     return result == true
         ? Scaffold(
             backgroundColor: Colors.grey.shade300,
-            appBar: widget.custName != ""
+            appBar: (widget.custName != "" && widget.custName != null)
                 ? PreferredSize(
                     preferredSize: Size.fromHeight(
                         MediaQuery.of(context).size.height * 0.08),
@@ -1030,6 +1179,11 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                                     SnackBar(content: Text("Failed to generate PDF")),
                                                                                   );
                                                                                 }
+                                                                              } else if (value == 'history') {
+                                                                                Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(builder: (context) => InvoiceHistoryTimelinePage(type: items[index].invoiceType, invId: items[index].invoiceId, receipt: "1")),
+                                                                                );
                                                                               } else if (value == 'edit') {
                                                                                 if (items[index].isVerified == "N") {
                                                                                   Navigator.push(
@@ -1125,6 +1279,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                             },
                                                                             itemBuilder: (context) =>
                                                                                 [
+                                                                              const PopupMenuItem(value: 'history', child: Text('Receipt History')),
                                                                               const PopupMenuItem(value: 'print', child: Text('Print')),
                                                                               const PopupMenuItem(value: 'edit', child: Text('Edit')),
                                                                               const PopupMenuItem(value: 'delete', child: Text('Delete')),

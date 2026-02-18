@@ -99,11 +99,23 @@ class _GstInvoiceState extends State<GstInvoice> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -165,7 +177,7 @@ class _GstInvoiceState extends State<GstInvoice> {
       filteredItems.addAll(items);
 
       if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-         products.clear(); 
+        products.clear();
         for (int i = 0;
             i < invoiceEditDetails!.data!.productDetails!.length;
             i++) {

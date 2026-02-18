@@ -32,11 +32,23 @@ class _AccountHeadState extends State<AccountHead> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -85,10 +97,7 @@ class _AccountHeadState extends State<AccountHead> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.only(
-                      left: 10.0,
-                      top: 10.0,
-                      bottom: 10.0,
-                      right: 10.0),
+                      left: 10.0, top: 10.0, bottom: 10.0, right: 10.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -116,14 +125,13 @@ class _AccountHeadState extends State<AccountHead> {
                         "Account Head",
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
-                      const Spacer(), 
+                      const Spacer(),
                       InkWell(
                         onTap: () {
-                            showDialog(
-                                    context: context,
-                                    builder: (context) =>
-                                        const AddAccountHeadDialog(),
-                                  );
+                          showDialog(
+                            context: context,
+                            builder: (context) => const AddAccountHeadDialog(),
+                          );
                         },
                         child: const Icon(
                           Icons.add,

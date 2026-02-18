@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/expense/staffListModel.dart';
 import 'dart:async';
 
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
 import 'package:login2/models/lead_management/staffWorkSummaryModel.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/service/service.dart';
 
 class TotalSummeryPage extends StatefulWidget {
@@ -18,14 +20,22 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
   late DateTime selectedDate;
   late TabController _tabController;
 
-  List<StaffWork> staffWorks = [];
-  List<StaffCalls> staffCalls = [];
+  List<StaffWork> allStaffWorks = [];
+  List<StaffCalls> allStaffCalls = [];
+  List<StaffWork> filteredStaffWorks = [];
+  List<StaffCalls> filteredStaffCalls = [];
+  List<Staff> allStaffs = [];
+  String selectedStaffName = 'All Staff';
+  String? selectedStaffId;
   String searchQuery = '';
 
   bool isLoadingWorks = true;
   bool isLoadingCalls = true;
+  bool isLoadingStaffs = true;
+  bool showSearchField = false;
 
   late AnimationController _blinkController;
+  final ScrollController _staffListController = ScrollController();
 
   @override
   void initState() {
@@ -36,6 +46,7 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
+    fetchStaffs();
     fetchDoneWorks(selectedDate);
     fetchDoneCalls(selectedDate);
   }
@@ -43,7 +54,32 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
   @override
   void dispose() {
     _blinkController.dispose();
+    _staffListController.dispose();
     super.dispose();
+  }
+
+  Future<void> fetchStaffs() async {
+    setState(() => isLoadingStaffs = true);
+    try {
+      final response = await HttpService.getStaffs();
+      if (response != null && response.status) {
+        setState(() {
+          allStaffs = response.data;
+          // Add "All Staff" option at the beginning
+          allStaffs.insert(
+              0,
+              Staff(
+                id: '',
+                name: 'All Staff',
+                userIdStaff: '',
+              ));
+        });
+      }
+    } catch (e) {
+      print("Error fetching staffs: $e");
+    } finally {
+      setState(() => isLoadingStaffs = false);
+    }
   }
 
   Future<void> fetchDoneWorks(DateTime date) async {
@@ -53,7 +89,8 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       final response = await HttpService.getAllDoneworks(formattedDate);
       if (response != null) {
         setState(() {
-          staffWorks = response.data;
+          allStaffWorks = response.data;
+          _filterData();
         });
       }
     } catch (e) {
@@ -70,13 +107,48 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       final response = await HttpService.getAllDonecalls(formattedDate);
       if (response != null) {
         setState(() {
-          staffCalls = response.data;
+          allStaffCalls = response.data;
+          _filterData();
         });
       }
     } catch (e) {
       print("Error fetching done calls: $e");
     } finally {
       setState(() => isLoadingCalls = false);
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    await Future.wait([
+      fetchDoneWorks(selectedDate),
+      fetchDoneCalls(selectedDate),
+    ]);
+  }
+
+  void _filterData() {
+    // First filter by selected staff
+    if (selectedStaffName == 'All Staff') {
+      filteredStaffWorks = List.from(allStaffWorks);
+      filteredStaffCalls = List.from(allStaffCalls);
+    } else {
+      filteredStaffWorks = allStaffWorks
+          .where((staff) => staff.staffName == selectedStaffName)
+          .toList();
+      filteredStaffCalls = allStaffCalls
+          .where((staff) => staff.staffName == selectedStaffName)
+          .toList();
+    }
+
+    // Then apply search filter if searchQuery is not empty
+    if (searchQuery.isNotEmpty) {
+      filteredStaffWorks = filteredStaffWorks
+          .where((staff) =>
+              staff.staffName.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+      filteredStaffCalls = filteredStaffCalls
+          .where((staff) =>
+              staff.staffName.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
     }
   }
 
@@ -100,192 +172,567 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
     return DateFormat('dd-MM-yyyy').format(selectedDate);
   }
 
+  /// Modified to handle isCompleted check
+  Widget buildStatusText(String status, String isCompleted) {
+    // ✅ Custom condition: if isCompleted is 1
+    if (isCompleted == "1") {
+      // First resolve the status label from the status code
+      String label;
+      switch (status) {
+        case '1':
+          label = 'To-do';
+          break;
+        case '2':
+          label = 'Pending';
+          break;
+        case '3':
+          label = 'Completed';
+          break;
+        case '4':
+          label = 'Running';
+          break;
+        case '5':
+          label = 'Cancelled';
+          break;
+        default:
+          label = 'Unknown';
+      }
 
-/// Modified to handle isCompleted check
-Widget buildStatusText(String status, String isCompleted) {
-  // ✅ Custom condition: if isCompleted is 1
-  if (isCompleted == "1") {
-    // First resolve the status label from the status code
+      return Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              decoration: TextDecoration.lineThrough, // 🔥 cut line
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "Completed",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
+        ],
+      );
+    }
+
+    Color color;
     String label;
+
     switch (status) {
       case '1':
-        label = 'New';
+        color = const Color.fromARGB(255, 56, 148, 235);
+        label = 'To-do';
         break;
       case '2':
+        color = const Color.fromARGB(255, 227, 143, 34);
         label = 'Pending';
         break;
       case '3':
+        color = Colors.green;
         label = 'Completed';
         break;
       case '4':
-        label = 'In-Progress';
+        color = const Color.fromARGB(255, 200, 181, 37);
+        label = 'Running';
         break;
       case '5':
+        color = const Color.fromARGB(255, 235, 69, 69);
         label = 'Cancelled';
         break;
       default:
+        color = Colors.grey;
         label = 'Unknown';
     }
 
-    return Column(
+    if (status == '1' || status == '2') {
+      return AnimatedBuilder(
+        animation: _blinkController,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _blinkController.value,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Text(
+      label,
+      style: TextStyle(fontWeight: FontWeight.bold, color: color),
+    );
+  }
+
+  Color _getStatusBackgroundColor(String status, String isCompleted) {
+    if (isCompleted == "1") {
+      return Colors.green.shade50;
+    }
+    switch (status) {
+      case '1': // To-do
+        return Colors.blue.shade50;
+      case '2': // Pending
+        return Colors.orange.shade50;
+      case '3': // Completed
+        return Colors.green.shade50;
+      case '4': // Running
+        return Colors.yellow.shade50;
+      case '5': // Cancelled
+        return Colors.red.shade50;
+      default:
+        return Colors.grey.shade50;
+    }
+  }
+
+  void _showSmallStaffPopup(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    TextEditingController searchController = TextEditingController();
+    bool showAll = false;
+    String searchQuery = '';
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            List<Staff> filteredStaffs = allStaffs.where((staff) {
+              if (searchQuery.isEmpty) return true;
+              return staff.name
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase());
+            }).toList();
+            final itemsToShow = showAll ? filteredStaffs.length : 15;
+            final displayStaffs = filteredStaffs.take(itemsToShow).toList();
+            return Stack(
+              children: [
+                Positioned(
+                  top: position.top + 30,
+                  right: 8,
+                  child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 200,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(8),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search,
+                                    size: 20, color: Colors.blue),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: searchController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Search staff...',
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    autofocus: true,
+                                    style: const TextStyle(fontSize: 14),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        searchQuery = value;
+                                        showAll = false;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => Navigator.pop(context),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: filteredStaffs.isEmpty
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(20.0),
+                                      child: Text(
+                                        'No staff found',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.all(0),
+                                    itemCount: displayStaffs.length,
+                                    itemBuilder: (context, index) {
+                                      final staff = displayStaffs[index];
+                                      return InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedStaffName = staff.name;
+                                            selectedStaffId = staff.userIdStaff;
+                                            _filterData();
+                                          });
+                                          Navigator.pop(context);
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                color: Colors.grey.shade200,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            staff.name,
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                          if (filteredStaffs.length > 15)
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    showAll = !showAll;
+                                  });
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      showAll
+                                          ? 'Show Less'
+                                          : 'View More (${filteredStaffs.length - 15})',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      showAll
+                                          ? Icons.arrow_drop_up
+                                          : Icons.arrow_drop_down,
+                                      size: 16,
+                                      color: Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStaffList() {
+    if (isLoadingStaffs) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Row(
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            decoration: TextDecoration.lineThrough, // 🔥 cut line
-            color: Colors.red,
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: ListView.builder(
+            controller: _staffListController,
+            scrollDirection: Axis.horizontal,
+            itemCount: allStaffs.length,
+            itemBuilder: (context, index) {
+              final staff = allStaffs[index];
+              final isSelected = staff.name == selectedStaffName;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedStaffName = staff.name;
+                    selectedStaffId = staff.userIdStaff;
+                    _filterData();
+                  });
+                },
+                child: Container(
+                  margin: EdgeInsets.only(
+                    left: index == 0 ? 0 : 8,
+                    right: index == allStaffs.length - 1 ? 8 : 0,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color.fromARGB(255, 77, 155, 228)
+                        : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color.fromARGB(255, 77, 155, 228)
+                          : Colors.grey.shade300,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: isSelected
+                            ? Colors.white
+                            : const Color.fromARGB(255, 77, 155, 228),
+                        child: Text(
+                          staff.name.isNotEmpty
+                              ? staff.name[0].toUpperCase()
+                              : '?',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? const Color.fromARGB(255, 77, 155, 228)
+                                : Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        staff.name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          "Completed",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
+        Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(
+              Icons.person,
+              color: Color.fromARGB(255, 77, 155, 228),
+              size: 24,
+            ),
+            onPressed: () => _showSmallStaffPopup(context),
+            tooltip: 'Filter Staff',
+            padding: EdgeInsets.zero,
           ),
         ),
       ],
     );
   }
 
-  // 🔽 Normal status handling if not completed
-  Color color;
-  String label;
-
-  switch (status) {
-    case '1':
-      color = const Color.fromARGB(255, 56, 148, 235);
-      label = 'New';
-      break;
-    case '2':
-      color = const Color.fromARGB(255, 227, 143, 34);
-      label = 'Pending';
-      break;
-    case '3':
-      color = Colors.green;
-      label = 'Completed';
-      break;
-    case '4':
-      color = const Color.fromARGB(255, 200, 181, 37);
-      label = 'In-Progress';
-      break;
-    case '5':
-      color = const Color.fromARGB(255, 235, 69, 69);
-      label = 'Cancelled';
-      break;
-    default:
-      color = Colors.grey;
-      label = 'Unknown';
-  }
-
-  if (status == '1' || status == '2') {
-    return AnimatedBuilder(
-      animation: _blinkController,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _blinkController.value,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        );
+  Widget _buildSearchField() {
+    return TextField(
+      controller: TextEditingController(text: searchQuery),
+      decoration: InputDecoration(
+        hintText: "Search by staff name...",
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            setState(() {
+              searchQuery = '';
+              _filterData();
+            });
+          },
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onChanged: (value) {
+        setState(() {
+          searchQuery = value;
+          _filterData();
+        });
       },
     );
   }
 
-  return Text(
-    label,
-    style: TextStyle(fontWeight: FontWeight.bold, color: color),
-  );
-}
-
-
   Widget buildWorkTab() {
-    final filteredWorks = staffWorks
-        .where((staff) =>
-            staff.staffName.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
-
     if (isLoadingWorks) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (filteredWorks.isEmpty) {
-      return const Center(
-        child: Text(
-          "No work found",
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+    if (filteredStaffWorks.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: ListView(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Center(
+                child: Text(
+                  selectedStaffName == 'All Staff'
+                      ? "No work found"
+                      : "No work found for $selectedStaffName",
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: filteredWorks.length,
-      itemBuilder: (context, index) {
-        final staff = filteredWorks[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  staff.staffName,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: ListView.builder(
+        itemCount: filteredStaffWorks.length,
+        itemBuilder: (context, index) {
+          final staff = filteredStaffWorks[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    staff.staffName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Chip(
-                      backgroundColor: Colors.green.shade50,
-                      label: Text("Login: ${staff.loginTime}",
-                          style: const TextStyle(color: Colors.green)),
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(
-                      backgroundColor: Colors.red.shade50,
-                      label: Text("Logout: ${staff.logoutTime}",
-                          style: const TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-                ...staff.projects.map((project) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 8),
+                  Row(
                     children: [
-                      Text(
-                        "${project.customerName ?? "No title"} [${project.projectName}]",
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                      Chip(
+                        backgroundColor: Colors.green.shade50,
+                        label: Text("Login: ${staff.loginTime}",
+                            style: const TextStyle(color: Colors.green)),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "Module: ${project.moduleName}",
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                      const SizedBox(width: 8),
+                      Chip(
+                        backgroundColor: Colors.red.shade50,
+                        label: Text("Logout: ${staff.logoutTime}",
+                            style: const TextStyle(color: Colors.red)),
                       ),
-                      const SizedBox(height: 12),
-                      Column(
-                        children: project.tasks.map((task) {
-                          bool isExpanded = false;
+                    ],
+                  ),
+                  ...staff.projects.map((project) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          // onTap: () {
+                          //   Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //       builder: (context) => AssignReport(
+                          //         workId: project.projectId,
+                          //         sectionId: "",
+                          //       ),
+                          //     ),
+                          //   );
+                          // },
+                          child: Text(
+                            "${project.customerName ?? "No title"} [${project.projectName}]",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        // const SizedBox(height: 12),
+                        // Text(
+                        //   "Module: ${project.moduleName}",
+                        //   style: const TextStyle(
+                        //     fontSize: 14,
+                        //     fontWeight: FontWeight.w600,
+                        //   ),
+                        // ),
+                        const SizedBox(height: 12),
+                        Column(
+                          children: project.tasks.map((task) {
+                            final isCompleted =
+                                task.status.toLowerCase() == "completed";
+                            final bgColor = _getStatusBackgroundColor(
+                                task.status, task.isCompleted);
 
-                          return StatefulBuilder(
-                            builder: (context, setInnerState) {
-                              final isCompleted =
-                                  task.status.toLowerCase() == "completed";
-                              return Row(
+                            return IntrinsicHeight(
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Column(
@@ -305,10 +752,11 @@ Widget buildStatusText(String status, String isCompleted) {
                                         ),
                                       ),
                                       if (project.tasks.last != task)
-                                        Container(
-                                          width: 2,
-                                          height: 60,
-                                          color: Colors.grey.shade300,
+                                        Expanded(
+                                          child: Container(
+                                            width: 2,
+                                            color: Colors.grey.shade300,
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -316,16 +764,22 @@ Widget buildStatusText(String status, String isCompleted) {
                                   Expanded(
                                     child: GestureDetector(
                                       onTap: () {
-                                        setInnerState(() {
-                                          isExpanded = !isExpanded;
-                                        });
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AssignReport(
+                                              workId: task.workId,
+                                              sectionId: "",
+                                            ),
+                                          ),
+                                        );
                                       },
                                       child: Container(
                                         margin:
                                             const EdgeInsets.only(bottom: 16),
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
+                                          color: bgColor,
                                           borderRadius:
                                               BorderRadius.circular(6),
                                           border: Border.all(
@@ -335,39 +789,41 @@ Widget buildStatusText(String status, String isCompleted) {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
+                                            Text(
+                                              "Module: ${task.moduleName ?? 'N/A'}",
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 15),
+                                            Text(
+                                              task.taskName,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                            const SizedBox(height: 8),
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    task.taskName,
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w600),
+                                                Text(
+                                                  '${task.startTime} - ${task.endTime}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black54,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                buildStatusText(task.status,
-                                                    task.isCompleted ?? "0"),
+                                                buildStatusText(
+                                                  task.status,
+                                                  task.isCompleted,
+                                                ),
                                               ],
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${task.startTime} - ${task.endTime}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.black54),
-                                            ),
-                                            AnimatedCrossFade(
-                                              duration: const Duration(
-                                                  milliseconds: 300),
-                                              crossFadeState: isExpanded
-                                                  ? CrossFadeState.showSecond
-                                                  : CrossFadeState.showFirst,
-                                              firstChild: Container(),
-                                              secondChild: Column(
+                                            if (task.remarks.isNotEmpty) ...[
+                                              const SizedBox(height: 8),
+                                              Column(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children:
@@ -381,10 +837,13 @@ Widget buildStatusText(String status, String isCompleted) {
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                        const Text("• ",
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .black54)),
+                                                        const Text(
+                                                          "• ",
+                                                          style: TextStyle(
+                                                            color:
+                                                                Colors.black54,
+                                                          ),
+                                                        ),
                                                         Expanded(
                                                           child: Text(
                                                             remark,
@@ -400,166 +859,191 @@ Widget buildStatusText(String status, String isCompleted) {
                                                   );
                                                 }).toList(),
                                               ),
-                                            ),
+                                            ],
                                           ],
                                         ),
                                       ),
                                     ),
                                   ),
                                 ],
-                              );
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const Divider(thickness: 1, color: Colors.grey),
-                      const SizedBox(height: 12),
-                    ],
-                  );
-                }),
-              ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const Divider(thickness: 1, color: Colors.grey),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Widget buildPhoneCallTab() {
-    final filteredCalls = staffCalls
-        .where((staff) =>
-            staff.staffName.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
-
     if (isLoadingCalls) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (filteredCalls.isEmpty) {
-      return const Center(
-        child: Text(
-          "No calls found",
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+    if (filteredStaffCalls.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: ListView(
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Center(
+                child: Text(
+                  selectedStaffName == 'All Staff'
+                      ? "No calls found"
+                      : "No calls found for $selectedStaffName",
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: filteredCalls.length,
-      itemBuilder: (context, index) {
-        final staff = filteredCalls[index];
-        final calls = staff.calls;
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: ListView.builder(
+        itemCount: filteredStaffCalls.length,
+        itemBuilder: (context, index) {
+          final staff = filteredStaffCalls[index];
+          final calls = staff.calls;
 
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      staff.staffName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    Chip(
-                      label: Text("Total Called: ${staff.totalCalls}",
-                          style: const TextStyle(color: Colors.white)),
-                      backgroundColor: Colors.deepPurple,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Chip(
-                      label: Text("Login: ${staff.loginTime}",
-                          style: const TextStyle(color: Colors.green)),
-                      backgroundColor: Colors.green.shade50,
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(
-                      label: Text("Logout: ${staff.logoutTime}",
-                          style: const TextStyle(color: Colors.red)),
-                      backgroundColor: Colors.red.shade50,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...calls.map((call) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        children: [
-                          Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(
-                              color: Colors.teal,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.phone,
-                                size: 10, color: Colors.white),
-                          ),
-                          Container(
-                            width: 2,
-                            height: 40,
-                            color: Colors.teal.shade200,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.teal.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                call.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text("Duration: ${call.duration}",
-                                  style: const TextStyle(
-                                      fontSize: 13, color: Colors.black54)),
-                              if (call.startTime != null &&
-                                  call.endTime != null)
-                                Text(
-                                  "Time: ${DateFormat('hh:mm a').format(call.startTime!)} - ${DateFormat('hh:mm a').format(call.endTime!)}",
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.black45),
-                                ),
-                            ],
-                          ),
+                      Text(
+                        staff.staffName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
                         ),
                       ),
+                      Chip(
+                        label: Text(
+                          "Total Called: ${staff.totalCalls}",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.deepPurple,
+                      ),
                     ],
-                  );
-                }),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Chip(
+                        label: Text(
+                          "Login: ${staff.loginTime}",
+                          style: const TextStyle(color: Colors.green),
+                        ),
+                        backgroundColor: Colors.green.shade50,
+                      ),
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: Text(
+                          "Logout: ${staff.logoutTime}",
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        backgroundColor: Colors.red.shade50,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...calls.map((call) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: Colors.teal,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.phone,
+                                size: 10,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Container(
+                              width: 2,
+                              height: 40,
+                              color: Colors.teal.shade200,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  call.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Duration: ${call.duration}",
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                if (call.startTime != null &&
+                                    call.endTime != null)
+                                  Text(
+                                    "Time: ${DateFormat('hh:mm a').format(call.startTime!)} - ${DateFormat('hh:mm a').format(call.endTime!)}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -573,14 +1057,36 @@ Widget buildStatusText(String status, String isCompleted) {
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Work'),
-            Tab(text: 'Phonecall'),
+            const Tab(
+              child: Text(
+                'Work',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            const Tab(
+              child: Text(
+                'Phonecall',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
             onPressed: () => _selectDate(context),
+          ),
+          IconButton(
+            icon: Icon(showSearchField ? Icons.list : Icons.search),
+            onPressed: () {
+              setState(() {
+                showSearchField = !showSearchField;
+                if (!showSearchField) {
+                  searchQuery = '';
+                  _filterData();
+                }
+              });
+            },
           ),
         ],
       ),
@@ -589,23 +1095,6 @@ Widget buildStatusText(String status, String isCompleted) {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: "Search by staff name...",
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   const Icon(Icons.calendar_today, color: Colors.indigo),
@@ -613,11 +1102,32 @@ Widget buildStatusText(String status, String isCompleted) {
                   Text(
                     getFormattedDisplayDate(),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    selectedStaffName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
                   ),
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: showSearchField
+                  ? _buildSearchField()
+                  : SizedBox(
+                      height: 50,
+                      child: _buildStaffList(),
+                    ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
               child: TabBarView(
                 controller: _tabController,

@@ -88,11 +88,23 @@ class _EditFollowupState extends State<EditFollowup> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -123,7 +135,8 @@ class _EditFollowupState extends State<EditFollowup> {
 
         leadSubType = followupDetails!.data!.leadSubCategory.toString();
         leadSubTypeId = followupDetails!.data!.leadSubCategoryId.toString();
-       leadTypeVal.text = followupDetails?.data?.leadCategory?.toString() ?? "";
+        leadTypeVal.text =
+            followupDetails?.data?.leadCategory?.toString() ?? "";
         leadSubTypeVal.text = followupDetails!.data!.leadSubCategory.toString();
         callResultVal.text = followupDetails!.data!.callResult.toString();
         callResponse = followupDetails!.data!.callResponse.toString();
@@ -140,8 +153,11 @@ class _EditFollowupState extends State<EditFollowup> {
 
   editFollowup() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
       if (callResultId == '') {
         Common.toastMessaage('Choose any Status', Colors.red);
       } else if (callResultId == '2' && nextFollowupDate1.text == '') {
@@ -177,7 +193,7 @@ class _EditFollowupState extends State<EditFollowup> {
           }
         }
       }
-    } else {
+    }} else {
       setState(() {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

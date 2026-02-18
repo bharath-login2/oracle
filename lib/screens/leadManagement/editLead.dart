@@ -250,11 +250,23 @@ class _EditLeadState extends State<EditLead> {
   // }
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -1492,71 +1504,82 @@ class _EditLeadState extends State<EditLead> {
                               (item) => ["", null, false, 0].contains(item));
                           final connectivityResult =
                               await (Connectivity().checkConnectivity());
-                          if (connectivityResult == ConnectivityResult.mobile ||
-                              connectivityResult == ConnectivityResult.wifi) {
-                            if (multiBranch == 'true' &&
-                                roleId == '2' &&
-                                branch == null) {
-                              Common.toastMessaage('Choose Branch', Colors.red);
-                            } else if (clientName.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Customer Name cannot be empty', Colors.red);
-                            } else if (contactNo.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Contact Number cannot be empty', Colors.red);
-                            } else if (code == '') {
-                              Common.toastMessaage(
-                                  'Select country code', Colors.red);
-                            } else if (code == '91' &&
-                                contactNo.text.length != 10) {
-                              Common.toastMessaage(
-                                  'Phone Number must be 10 digit', Colors.red);
-                            } else if (assignStaffId == '') {
-                              Common.toastMessaage(
-                                  'Staff cannot be empty', Colors.red);
-                            } else if (cost.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Cost cannot be empty', Colors.red);
-                            } else if (priorityId == '') {
-                              Common.toastMessaage(
-                                  'Priority cannot be empty', Colors.red);
-                            } else {
-                              if (context.mounted) {
-                                Common.showProgressDialog(context, "Loading..");
-                              }
-                              EditLeadModel object =
-                                  await HttpService.editLeads(
-                                      widget.token,
-                                      widget.callMasterId,
-                                      branch,
-                                      clientName.text,
-                                      leadTypeId,
-                                      leadSubTypeId,
-                                      contactNo.text,
-                                      assignStaffId,
-                                      cost.text,
-                                      priorityId,
-                                      address.text,
-                                      pinCode.text,
-                                      selectedPostOffice?.name ?? "",
-                                      remark.text,
-                                      descriptions,
-                                      code,
-                                      leadSourceId,
-                                      stateId: StateId,
-                                      districtId: DistrictId);
-                              if (object.status == true) {
+                          if (connectivityResult is List<ConnectivityResult>) {
+                            if (connectivityResult
+                                    .contains(ConnectivityResult.mobile) ||
+                                connectivityResult
+                                    .contains(ConnectivityResult.wifi)) {
+                              // if (connectivityResult == ConnectivityResult.mobile ||
+                              //     connectivityResult == ConnectivityResult.wifi) {
+                              if (multiBranch == 'true' &&
+                                  roleId == '2' &&
+                                  branch == null) {
                                 Common.toastMessaage(
-                                    object.message, Colors.green);
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  Navigator.pop(context);
-                                }
+                                    'Choose Branch', Colors.red);
+                              } else if (clientName.text.isEmpty) {
+                                Common.toastMessaage(
+                                    'Customer Name cannot be empty',
+                                    Colors.red);
+                              } else if (contactNo.text.isEmpty) {
+                                Common.toastMessaage(
+                                    'Contact Number cannot be empty',
+                                    Colors.red);
+                              } else if (code == '') {
+                                Common.toastMessaage(
+                                    'Select country code', Colors.red);
+                              } else if (code == '91' &&
+                                  contactNo.text.length != 10) {
+                                Common.toastMessaage(
+                                    'Phone Number must be 10 digit',
+                                    Colors.red);
+                              } else if (assignStaffId == '') {
+                                Common.toastMessaage(
+                                    'Staff cannot be empty', Colors.red);
+                              } else if (cost.text.isEmpty) {
+                                Common.toastMessaage(
+                                    'Cost cannot be empty', Colors.red);
+                              } else if (priorityId == '') {
+                                Common.toastMessaage(
+                                    'Priority cannot be empty', Colors.red);
                               } else {
-                                Common.toastMessaage(
-                                    object.message, Colors.red);
                                 if (context.mounted) {
-                                  Navigator.pop(context);
+                                  Common.showProgressDialog(
+                                      context, "Loading..");
+                                }
+                                EditLeadModel object =
+                                    await HttpService.editLeads(
+                                        widget.token,
+                                        widget.callMasterId,
+                                        branch,
+                                        clientName.text,
+                                        leadTypeId,
+                                        leadSubTypeId,
+                                        contactNo.text,
+                                        assignStaffId,
+                                        cost.text,
+                                        priorityId,
+                                        address.text,
+                                        pinCode.text,
+                                        selectedPostOffice?.name ?? "",
+                                        remark.text,
+                                        descriptions,
+                                        code,
+                                        leadSourceId,
+                                        stateId: StateId,
+                                        districtId: DistrictId);
+                                if (object.status == true) {
+                                  Common.toastMessaage(
+                                      object.message, Colors.green);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    Navigator.pop(context);
+                                  }
+                                } else {
+                                  Common.toastMessaage(
+                                      object.message, Colors.red);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               }
                             }

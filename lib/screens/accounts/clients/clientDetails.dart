@@ -136,11 +136,23 @@ class _ClientDetailsState extends State<ClientDetails> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -2190,7 +2202,6 @@ class _ClientDetailsState extends State<ClientDetails> {
                               mainClientDetail!.data.invoice.isNotEmpty &&
                                       mainClientDetail!.data.receipts.isNotEmpty
                                   ? Row(
-                                     
                                       children: [
                                         SizedBox(
                                             width: MediaQuery.of(context)

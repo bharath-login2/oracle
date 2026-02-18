@@ -62,9 +62,6 @@ class _EditInvoiceState extends State<EditInvoice> {
   TextEditingController remarks = TextEditingController();
   TextEditingController search = TextEditingController();
 
-
-  
-
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
   double totalTaxAmount = 0.00;
@@ -96,16 +93,18 @@ class _EditInvoiceState extends State<EditInvoice> {
       headerContent = !headerContent;
     });
   }
-void _resetAddProductForm() {
-  productName = "Choose Product";
-  productId = "";
-  productDescription.clear();
-  productRate.clear();
-  productQty.clear();
-  productTaxPercent.clear();
-  productTaxAmount.clear();
-  productTotalAmount.clear();
-}
+
+  void _resetAddProductForm() {
+    productName = "Choose Product";
+    productId = "";
+    productDescription.clear();
+    productRate.clear();
+    productQty.clear();
+    productTaxPercent.clear();
+    productTaxAmount.clear();
+    productTotalAmount.clear();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -113,8 +112,8 @@ void _resetAddProductForm() {
   }
 
   getData() async {
-    // Only load initial data once
-    if (_initialDataLoaded && products.isNotEmpty) {
+    // Only load initial data once - completely prevent re-fetching
+    if (_initialDataLoaded) {
       return;
     }
 
@@ -124,11 +123,25 @@ void _resetAddProductForm() {
     });
 
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //     isLoading = false;
+    //   });
+    //   return;
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -151,7 +164,6 @@ void _resetAddProductForm() {
 
       invoiceEditDetails =
           await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
-
       if (invoiceEditDetails != null) {
         billingName.text =
             invoiceEditDetails!.data!.billingAddress!.billingName.toString();
@@ -173,19 +185,16 @@ void _resetAddProductForm() {
         billingPostOffice.text = invoiceEditDetails!
             .data!.billingAddress!.billingPostOffice
             .toString();
-
         if (billingPinCode.text != '') {
           billingPostal =
               await HttpService.fetchPostOffice(billingPinCode.text);
         }
-
         if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
                 .toString() !=
             '') {
           code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
               .toString();
         }
-
         shippingName.text =
             invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
         shippingAddress.text = invoiceEditDetails!
@@ -202,60 +211,50 @@ void _resetAddProductForm() {
         shippingPostOffice.text = invoiceEditDetails!
             .data!.shippingAddress!.shippingPostOffice
             .toString();
-
         if (shippingPinCode.text != '') {
           shippingPostal =
               await HttpService.fetchPostOffice(shippingPinCode.text);
         }
-
         invoiceNumber.text =
             invoiceEditDetails!.data!.displayInvoice.toString();
         fromdate =
             DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
-
         items = invDetails!.data.products;
-        filteredItems.clear(); // Clear first to avoid duplication
+        filteredItems.clear();
         filteredItems.addAll(items);
+        if (!_initialDataLoaded &&
+            invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
+          products.clear();
 
-        if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
-          // Only clear and reload products on initial load
-          if (products.isEmpty) {
-            products.clear();
-            for (int i = 0;
-                i < invoiceEditDetails!.data!.productDetails!.length;
-                i++) {
-              double rate = double.parse(
-                  invoiceEditDetails!.data!.productDetails![i].rate.toString());
-              double qty = double.parse(
-                  invoiceEditDetails!.data!.productDetails![i].qty.toString());
-              double taxPercent = double.parse(invoiceEditDetails!
-                  .data!.productDetails![i].taxPercentage
-                  .toString());
-              double taxPerUnit = (rate * taxPercent) / 100;
-              double amountExcludingTax = rate * qty;
-              double totalTaxForProduct = taxPerUnit * qty;
-              double totalAmountWithTax =
-                  amountExcludingTax + totalTaxForProduct;
-
-              products.add({
-                "product_name":
-                    invoiceEditDetails!.data!.productDetails![i].productName,
-                "product_id":
-                    invoiceEditDetails!.data!.productDetails![i].productId,
-                "description": invoiceEditDetails!
-                    .data!.productDetails![i].productDescription,
-                "product_rate": rate.toStringAsFixed(2),
-                "quantity": qty.toStringAsFixed(2),
-                "tax_percent": taxPercent.toStringAsFixed(2),
-                "tax_per_unit": taxPerUnit.toStringAsFixed(2),
-                "total_tax_amount": totalTaxForProduct.toStringAsFixed(2),
-                "total_amount":
-                    totalAmountWithTax.toStringAsFixed(2), // Store WITH tax
-              });
-            }
+          for (int i = 0;
+              i < invoiceEditDetails!.data!.productDetails!.length;
+              i++) {
+            double rate = double.parse(
+                invoiceEditDetails!.data!.productDetails![i].rate.toString());
+            double qty = double.parse(
+                invoiceEditDetails!.data!.productDetails![i].qty.toString());
+            double taxPercent = double.parse(invoiceEditDetails!
+                .data!.productDetails![i].taxPercentage
+                .toString());
+            double taxPerUnit = (rate * taxPercent) / 100;
+            double amountExcludingTax = rate * qty;
+            double totalTaxForProduct = taxPerUnit * qty;
+            double totalAmountWithTax = amountExcludingTax + totalTaxForProduct;
+            products.add({
+              "product_name":
+                  invoiceEditDetails!.data!.productDetails![i].productName,
+              "product_id":
+                  invoiceEditDetails!.data!.productDetails![i].productId,
+              "description": invoiceEditDetails!
+                  .data!.productDetails![i].productDescription,
+              "product_rate": rate.toStringAsFixed(2),
+              "quantity": qty.toStringAsFixed(2),
+              "tax_percent": taxPercent.toStringAsFixed(2),
+              "tax_per_unit": taxPerUnit.toStringAsFixed(2),
+              "total_tax_amount": totalTaxForProduct.toStringAsFixed(2),
+              "total_amount": totalAmountWithTax.toStringAsFixed(2),
+            });
           }
-
-          // Always update totals from server
           subTotal =
               double.parse(invoiceEditDetails!.data!.subTotal.toString());
           totalTaxAmount =
@@ -281,6 +280,176 @@ void _resetAddProductForm() {
       });
     }
   }
+
+  // getData() async {
+  //   // Only load initial data once
+  //   if (_initialDataLoaded && products.isNotEmpty) {
+  //     return;
+  //   }
+
+  //   setState(() {
+  //     isLoading = true;
+  //     errorMessage = null;
+  //   });
+
+  //   final connectivityResult = await (Connectivity().checkConnectivity());
+  //   if (connectivityResult == ConnectivityResult.mobile ||
+  //       connectivityResult == ConnectivityResult.wifi) {
+  //     setState(() {
+  //       result = true;
+  //     });
+  //   } else {
+  //     setState(() {
+  //       result = false;
+  //       isLoading = false;
+  //     });
+  //     return;
+  //   }
+
+  //   try {
+  //     invDetails =
+  //         await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
+
+  //     if (invDetails == null) {
+  //       setState(() {
+  //         errorMessage = 'Failed to load common details';
+  //         isLoading = false;
+  //       });
+  //       return;
+  //     }
+
+  //     invoiceEditDetails =
+  //         await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
+
+  //     if (invoiceEditDetails != null) {
+  //       billingName.text =
+  //           invoiceEditDetails!.data!.billingAddress!.billingName.toString();
+  //       billingAddress.text =
+  //           invoiceEditDetails!.data!.billingAddress!.billingAddress.toString();
+  //       billingAddress2.text = invoiceEditDetails!
+  //           .data!.billingAddress!.billingAddress2
+  //           .toString();
+  //       billingAddress3.text = invoiceEditDetails!
+  //           .data!.billingAddress!.billingAddress3
+  //           .toString();
+  //       billingPhone.text = invoiceEditDetails!
+  //           .data!.billingAddress!.billingContactNo
+  //           .toString();
+  //       billingGstNo.text =
+  //           invoiceEditDetails!.data!.billingAddress!.billingGst.toString();
+  //       billingPinCode.text =
+  //           invoiceEditDetails!.data!.billingAddress!.billingPincode.toString();
+  //       billingPostOffice.text = invoiceEditDetails!
+  //           .data!.billingAddress!.billingPostOffice
+  //           .toString();
+
+  //       if (billingPinCode.text != '') {
+  //         billingPostal =
+  //             await HttpService.fetchPostOffice(billingPinCode.text);
+  //       }
+
+  //       if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //               .toString() !=
+  //           '') {
+  //         code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+  //             .toString();
+  //       }
+
+  //       shippingName.text =
+  //           invoiceEditDetails!.data!.shippingAddress!.shippingName.toString();
+  //       shippingAddress.text = invoiceEditDetails!
+  //           .data!.shippingAddress!.shippingAddress
+  //           .toString();
+  //       shippingPhone.text = invoiceEditDetails!
+  //           .data!.shippingAddress!.shippingContactNo
+  //           .toString();
+  //       shippingGstNo.text =
+  //           invoiceEditDetails!.data!.shippingAddress!.shippingGst.toString();
+  //       shippingPinCode.text = invoiceEditDetails!
+  //           .data!.shippingAddress!.shippingPincode
+  //           .toString();
+  //       shippingPostOffice.text = invoiceEditDetails!
+  //           .data!.shippingAddress!.shippingPostOffice
+  //           .toString();
+
+  //       if (shippingPinCode.text != '') {
+  //         shippingPostal =
+  //             await HttpService.fetchPostOffice(shippingPinCode.text);
+  //       }
+
+  //       invoiceNumber.text =
+  //           invoiceEditDetails!.data!.displayInvoice.toString();
+  //       fromdate =
+  //           DateTime.parse(invoiceEditDetails!.data!.invoiceDate.toString());
+
+  //       items = invDetails!.data.products;
+  //       filteredItems.clear(); // Clear first to avoid duplication
+  //       filteredItems.addAll(items);
+
+  //       if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
+  //         // Only clear and reload products on initial load
+  //         if (products.isEmpty) {
+  //           products.clear();
+  //           for (int i = 0;
+  //               i < invoiceEditDetails!.data!.productDetails!.length;
+  //               i++) {
+  //             double rate = double.parse(
+  //                 invoiceEditDetails!.data!.productDetails![i].rate.toString());
+  //             double qty = double.parse(
+  //                 invoiceEditDetails!.data!.productDetails![i].qty.toString());
+  //             double taxPercent = double.parse(invoiceEditDetails!
+  //                 .data!.productDetails![i].taxPercentage
+  //                 .toString());
+  //             double taxPerUnit = (rate * taxPercent) / 100;
+  //             double amountExcludingTax = rate * qty;
+  //             double totalTaxForProduct = taxPerUnit * qty;
+  //             double totalAmountWithTax =
+  //                 amountExcludingTax + totalTaxForProduct;
+
+  //             products.add({
+  //               "product_name":
+  //                   invoiceEditDetails!.data!.productDetails![i].productName,
+  //               "product_id":
+  //                   invoiceEditDetails!.data!.productDetails![i].productId,
+  //               "description": invoiceEditDetails!
+  //                   .data!.productDetails![i].productDescription,
+  //               "product_rate": rate.toStringAsFixed(2),
+  //               "quantity": qty.toStringAsFixed(2),
+  //               "tax_percent": taxPercent.toStringAsFixed(2),
+  //               "tax_per_unit": taxPerUnit.toStringAsFixed(2),
+  //               "total_tax_amount": totalTaxForProduct.toStringAsFixed(2),
+  //               "total_amount":
+  //                   totalAmountWithTax.toStringAsFixed(2), // Store WITH tax
+  //             });
+  //           }
+  //         }
+
+  //         // Always update totals from server
+  //         subTotal =
+  //             double.parse(invoiceEditDetails!.data!.subTotal.toString());
+  //         totalTaxAmount =
+  //             double.parse(invoiceEditDetails!.data!.estimatedTax.toString());
+  //         discount.text = invoiceEditDetails!.data!.discountAmount.toString();
+  //         shippingCharge.text =
+  //             invoiceEditDetails!.data!.shippingAmount.toString();
+  //         allTotal = double.parse(
+  //             invoiceEditDetails!.data!.totalInvoiceAmount.toString());
+  //         remarks.text = invoiceEditDetails!.data!.remarks.toString();
+  //       }
+  //       isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
+  //     }
+  //     setState(() {
+  //       isLoading = false;
+  //       _initialDataLoaded = true;
+  //     });
+  //   } catch (e) {
+  //     print('Error in getData: $e');
+  //     setState(() {
+  //       errorMessage = 'Failed to load data: $e';
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
 
   void _editProduct(int index) {
     // Populate the form fields with existing product data
@@ -750,7 +919,8 @@ void _resetAddProductForm() {
                               };
 
                               // Add new values to totals
-                              subTotal = subTotal + amountExcludingTax;
+                              // subTotal = subTotal + amountExcludingTax;
+                              subTotal = amountExcludingTax;
                               totalTaxAmount =
                                   totalTaxAmount + totalTaxForProduct;
 
@@ -1757,7 +1927,7 @@ void _resetAddProductForm() {
                             alignment: Alignment.topRight,
                             child: InkWell(
                               onTap: () async {
-                                 _resetAddProductForm();
+                                _resetAddProductForm();
                                 showGeneralDialog(
                                   barrierLabel: "showGeneralDialog",
                                   barrierDismissible: true,
@@ -2899,6 +3069,35 @@ void _resetAddProductForm() {
                             const SizedBox(
                               height: 5,
                             ),
+                            // Padding(
+                            //   padding: const EdgeInsets.only(right: 10),
+                            //   child: Row(
+                            //     mainAxisAlignment: MainAxisAlignment.end,
+                            //     children: [
+                            //       const Text('Total Tax:'),
+                            //       const SizedBox(
+                            //         width: 10,
+                            //       ),
+                            //       Container(
+                            //           width: MediaQuery.of(context).size.width *
+                            //               0.3,
+                            //           height: 35,
+                            //           decoration: BoxDecoration(
+                            //               color: Colors.grey.shade300,
+                            //               borderRadius:
+                            //                   BorderRadius.circular(5)),
+                            //           child: Padding(
+                            //             padding: const EdgeInsets.only(
+                            //                 left: 10,
+                            //                 right: 10,
+                            //                 top: 5,
+                            //                 bottom: 5),
+                            //             child: Text(
+                            //                 totalTaxAmount.toStringAsFixed(2)),
+                            //           ))
+                            //     ],
+                            //   ),
+                            // ),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
@@ -2909,22 +3108,35 @@ void _resetAddProductForm() {
                                     width: 10,
                                   ),
                                   Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade300,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 10,
+                                        right: 10,
+                                        top: 5,
+                                        bottom: 5,
+                                      ),
+                                      child: Center(
                                         child: Text(
-                                            totalTaxAmount.toStringAsFixed(2)),
-                                      ))
+                                          // Ensure tax is never negative and format it
+                                          (totalTaxAmount < 0
+                                                  ? 0.0
+                                                  : totalTaxAmount)
+                                              .toStringAsFixed(2),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

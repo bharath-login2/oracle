@@ -238,15 +238,27 @@ class _AddFollowupState extends State<AddFollowup> {
 
   getData() async {
     startDate.text = DateFormat('dd-MM-yyyy').format(invoiceDate);
-     createLeadCategory = await Common.getSharedPref("createLeadCategory");
-         addLeadSource = await Common.getSharedPref("addLeadSource");
+    createLeadCategory = await Common.getSharedPref("createLeadCategory");
+    addLeadSource = await Common.getSharedPref("addLeadSource");
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   setState(() {
+      //     result = true;
+      //   });
+      // } else {
+      //   setState(() {
+      //     result = false;
+      //   });
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          setState(() {
+            result = true;
+          });
+        }
       } else {
         setState(() {
           result = false;
@@ -1216,56 +1228,62 @@ class _AddFollowupState extends State<AddFollowup> {
                                     filled: true,
                                     prefixIcon: const Icon(Icons.category,
                                         color: Colors.grey),
-                                    suffixIcon:
-                                       createLeadCategory == 'true'?
-                                     IconButton(
-                                      icon: const Icon(Icons.add_circle,
-                                          color: Colors.green),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder:
-                                              (BuildContext dialogContext) =>
-                                                  AddLeadCategoryDialog(
-                                            onSubmit: (leadName, cost,
-                                                subcategory) async {
-                                              final token =
-                                                  await Common.getSharedPref(
-                                                      'token');
-                                              final response = await HttpService
-                                                  .postLeadCategory(leadName,
-                                                      cost, subcategory);
+                                    suffixIcon: createLeadCategory == 'true'
+                                        ? IconButton(
+                                            icon: const Icon(Icons.add_circle,
+                                                color: Colors.green),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext
+                                                        dialogContext) =>
+                                                    AddLeadCategoryDialog(
+                                                  onSubmit: (leadName, cost,
+                                                      subcategory) async {
+                                                    final token = await Common
+                                                        .getSharedPref('token');
+                                                    final response =
+                                                        await HttpService
+                                                            .postLeadCategory(
+                                                                leadName,
+                                                                cost,
+                                                                subcategory);
 
-                                              if (response != null &&
-                                                  response.status) {
-                                                final refreshed =
-                                                    await HttpService
-                                                        .addLeadCommonData(
-                                                            token);
-                                                setState(() {
-                                                  commonDetails = refreshed;
-                                                });
-                                                Navigator.pop(dialogContext);
+                                                    if (response != null &&
+                                                        response.status) {
+                                                      final refreshed =
+                                                          await HttpService
+                                                              .addLeadCommonData(
+                                                                  token);
+                                                      setState(() {
+                                                        commonDetails =
+                                                            refreshed;
+                                                      });
+                                                      Navigator.pop(
+                                                          dialogContext);
 
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                      content: Text(
-                                                          "Lead category added successfully")),
-                                                );
-                                              } else {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                      content: Text(
-                                                          "Failed to add lead category")),
-                                                );
-                                              }
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        const SnackBar(
+                                                            content: Text(
+                                                                "Lead category added successfully")),
+                                                      );
+                                                    } else {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        const SnackBar(
+                                                            content: Text(
+                                                                "Failed to add lead category")),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              );
                                             },
-                                          ),
-                                        );
-                                      },
-                                    ):SizedBox(),
+                                          )
+                                        : SizedBox(),
                                     border: const OutlineInputBorder(),
                                     focusedBorder: const OutlineInputBorder(
                                       borderSide:
@@ -2082,7 +2100,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                   .text) ??
                                                           0.0;
 
-                                                   if (discountAmount >
+                                                  if (discountAmount >
                                                       subTotalGrand) {
                                                     Common.toastMessaage(
                                                         'The discount should not exceed the total amount',
@@ -4543,8 +4561,11 @@ class _AddFollowupState extends State<AddFollowup> {
   postFollowup() async {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+        if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
         if (callResultId == '') {
           Common.toastMessaage('Choose any Status', Colors.red);
         } else if (callResponseId == '') {
@@ -4676,7 +4697,7 @@ class _AddFollowupState extends State<AddFollowup> {
             }
           }
         }
-      } else {
+      } }else {
         setState(() {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

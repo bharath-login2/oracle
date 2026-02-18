@@ -126,31 +126,36 @@ class _ChangePasswordState extends State<ChangePassword> {
               onTap: () async {
                 final connectivityResult =
                     await (Connectivity().checkConnectivity());
-                if (connectivityResult == ConnectivityResult.mobile ||
-                    connectivityResult == ConnectivityResult.wifi) {
-                  if (newPassword.text.isEmpty) {
-                    Common.toastMessaage('Enter New Password', Colors.red);
-                  } else if (newPassword.text != confirmPassword.text) {
-                    Common.toastMessaage('Password does not match', Colors.red);
-                  } else {
-                    if (mounted) {
-                      Common.showProgressDialog(context, "Loading..");
-                    }
-                    ChangePasswordModel changePassword =
-                        await HttpService.changePassword(
-                            widget.token, confirmPassword.text, widget.staffId);
-                    if (changePassword.data == true) {
+                // if (connectivityResult == ConnectivityResult.mobile ||
+                //     connectivityResult == ConnectivityResult.wifi) {
+                if (connectivityResult is List<ConnectivityResult>) {
+                  if (connectivityResult.contains(ConnectivityResult.mobile) ||
+                      connectivityResult.contains(ConnectivityResult.wifi)) {
+                    if (newPassword.text.isEmpty) {
+                      Common.toastMessaage('Enter New Password', Colors.red);
+                    } else if (newPassword.text != confirmPassword.text) {
                       Common.toastMessaage(
-                          changePassword.message, Colors.green);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      }
+                          'Password does not match', Colors.red);
                     } else {
-                      Common.toastMessaage(
-                          changePassword.message, Colors.green);
-                      if (context.mounted) {
-                        Navigator.pop(context, true);
+                      if (mounted) {
+                        Common.showProgressDialog(context, "Loading..");
+                      }
+                      ChangePasswordModel changePassword =
+                          await HttpService.changePassword(widget.token,
+                              confirmPassword.text, widget.staffId);
+                      if (changePassword.data == true) {
+                        Common.toastMessaage(
+                            changePassword.message, Colors.green);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        }
+                      } else {
+                        Common.toastMessaage(
+                            changePassword.message, Colors.green);
+                        if (context.mounted) {
+                          Navigator.pop(context, true);
+                        }
                       }
                     }
                   }

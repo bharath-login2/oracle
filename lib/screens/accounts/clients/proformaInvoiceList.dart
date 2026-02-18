@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/models/clients/invoiceListTempModel.dart';
-import 'package:login2/models/clients/invoiceListTempModel.dart '
-    hide InvoiceListModelTemp;
 import 'package:login2/screens/accounts/clients/addInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/editInvoiceTemp.dart';
 import 'package:login2/screens/accounts/clients/print_invoice_view_temp.dart';
@@ -134,11 +132,23 @@ class _ProformaInvoiceListState extends State<ProformaInvoiceList> {
     customers.clear();
     filteredCustomers.clear();
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+     if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;

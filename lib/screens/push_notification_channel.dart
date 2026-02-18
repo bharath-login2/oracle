@@ -23,7 +23,7 @@ class FirebaseServices {
 
   Future<void> init(BuildContext context) async {
     _initNotification(context);
-    await FirebaseMessaging.instance.requestPermission();
+    // await FirebaseMessaging.instance.requestPermission();
   }
 
   void _initNotification(BuildContext context) {
@@ -113,14 +113,14 @@ class FirebaseServices {
           ));
     } else if (navigation == 'notification') {
       if (notificationMessage.contains("task")) {
-        Get.to(() => AssignReport(workId: detailId.toString(),sectionId:""));
-      } else if(notificationMessage.contains("Work")){
-          Get.to(() => AssignReport(workId: detailId.toString(),sectionId:""));
-      }else if(notificationMessage.contains("logout")){
-          Get.to(() => Dashboard(token));
-      }else if(notificationMessage.contains("login")){
-          Get.to(() => Dashboard(token));
-      }else {
+        Get.to(() => AssignReport(workId: detailId.toString(), sectionId: ""));
+      } else if (notificationMessage.contains("Work")) {
+        Get.to(() => AssignReport(workId: detailId.toString(), sectionId: ""));
+      } else if (notificationMessage.contains("logout")) {
+        Get.to(() => Dashboard(token));
+      } else if (notificationMessage.contains("login")) {
+        Get.to(() => Dashboard(token));
+      } else {
         Get.to(() => LeadDetails(
               token!,
               editLead!,

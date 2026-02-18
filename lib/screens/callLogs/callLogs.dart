@@ -7,13 +7,16 @@ import 'package:call_e_log/call_log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+// import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 // import 'package:flutter_dialpad/flutter_dialpad.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/config.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/screens/leadManagement/add_leads.dart';
+import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 // import 'package:mobile_number/mobile_number.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -73,6 +76,68 @@ class _CallLogsState extends State<CallLogs> {
   List<Map<String, dynamic>> simList = [];
   String phoneNumber = "";
 
+  Future<void> checkPermission() async {
+    final bool status = await FlutterOverlayWindow.isPermissionGranted();
+    setState(() {
+      displayOverApps = status;
+    });
+  }
+
+  Future<void> checkBackgroundServiceStatus() async {
+    final service = FlutterBackgroundService();
+    final isRunning = await service.isRunning();
+    log('🔍 Background Service Status:');
+    log('   Is Running: $isRunning');
+
+    if (isRunning) {
+      log('   ✅ Service is ACTIVE');
+      service.invoke('test', {'message': 'Hello from app'});
+
+      // Show status
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Service Status'),
+            content: Text('✅ Background Service is RUNNING'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      log('   ❌ Service is NOT running');
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Service Status'),
+            content: Text('❌ Background Service is NOT running'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  // Try to start it
+                  await initService();
+                  Navigator.pop(context);
+                },
+                child: Text('Start Service'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   void dialNumber(String number) {
     setState(() {
       phoneNumber += number;
@@ -113,6 +178,7 @@ class _CallLogsState extends State<CallLogs> {
     } else {
       getData();
     }
+    checkPermission();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       askUserNeeds(context, false);
       deleteHiveData();
@@ -167,7 +233,6 @@ class _CallLogsState extends State<CallLogs> {
 
   Future<void> bulkUploadAll() async {
     if (history.isEmpty && selectAll) {
-      // If selectAll is true but history is empty, build the list
       history.clear();
       historyIndex.clear();
 
@@ -263,34 +328,28 @@ class _CallLogsState extends State<CallLogs> {
 
   Future<void> deleteHiveData() async {
     log('delete hive data function called');
-
     final List<HiveCaallHistoryModel> hiveDataLength =
         await HiveUtil.getAllCallLogs();
     log('hiveDataLength : ${hiveDataLength.length}');
-
-    if (hiveDataLength.length > 250) {
+    // if (hiveDataLength.length > 250) {
+    if (hiveDataLength.length > 1000) {
       List<HiveCaallHistoryModel> allLogs = await HiveUtil.getAllCallLogs();
-
       allLogs.sort((a, b) => b.timeStamp.compareTo(a.timeStamp));
-
-      List<HiveCaallHistoryModel> logsToKeep = allLogs.take(250).toList();
+      // List<HiveCaallHistoryModel> logsToKeep = allLogs.take(250).toList();
+      List<HiveCaallHistoryModel> logsToKeep = allLogs.take(1000).toList();
       List<String> idsToKeep = logsToKeep.map((e) => e.id).toList();
-
       List<String> idsToDelete = allLogs
           .where((log) => !idsToKeep.contains(log.id))
           .map((log) => log.id)
           .toList();
-
       log('IDs to delete: $idsToDelete');
       for (var id in idsToDelete) {
         await HiveUtil.deleteCallLog(id);
       }
-
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String fifthTimeStamp = logsToKeep.last.timeStamp;
       log('5th item timestamp to use later: $fifthTimeStamp');
       prefs.setString('callLogsStartingTime', fifthTimeStamp);
-
       log('Old call logs deleted, only 5 kept');
     } else {
       log('No need to delete old call logs, less than 5 entries found');
@@ -812,7 +871,6 @@ class _CallLogsState extends State<CallLogs> {
 
                         const SizedBox(height: 15),
 
-                        //! Privacy Disclaimer
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
@@ -829,6 +887,50 @@ class _CallLogsState extends State<CallLogs> {
                             textAlign: TextAlign.justify,
                           ),
                         ),
+
+                        // Display Over App Permission Toggle
+                        // Container(
+                        //   margin: const EdgeInsets.symmetric(vertical: 5),
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.white,
+                        //     borderRadius: BorderRadius.circular(10),
+                        //     boxShadow: [
+                        //       BoxShadow(
+                        //         color: Colors.grey.withOpacity(0.2),
+                        //         spreadRadius: 1,
+                        //         blurRadius: 3,
+                        //         offset: const Offset(0, 2),
+                        //       ),
+                        //     ],
+                        //   ),
+                        //   child: SwitchListTile(
+                        //     title: const Text(
+                        //       "Display Caller ID",
+                        //       style: TextStyle(
+                        //         fontWeight: FontWeight.bold,
+                        //         fontSize: 16,
+                        //       ),
+                        //     ),
+                        //     subtitle: const Text(
+                        //       "Show caller details over other apps",
+                        //       style: TextStyle(fontSize: 12),
+                        //     ),
+                        //     value: displayOverApps,
+                        //     onChanged: (bool value) async {
+                        //       if (value) {
+                        //         bool status = await FlutterOverlayWindow
+                        //             .isPermissionGranted();
+                        //         if (!status) {
+                        //           await FlutterOverlayWindow
+                        //               .requestPermission();
+                        //         }
+                        //       }
+                        //       await checkPermission();
+                        //     },
+                        //     secondary:
+                        //         const Icon(Icons.layers, color: Colors.blue),
+                        //   ),
+                        // ),
 
                         const SizedBox(height: 10),
                       ],
@@ -1056,7 +1158,7 @@ class _CallLogsState extends State<CallLogs> {
           setState(() {
             refresh = false;
           });
-          getSharedData();
+          // getSharedData();
           return;
         } else {
           log('No call logs found');
@@ -1151,7 +1253,7 @@ class _CallLogsState extends State<CallLogs> {
         final List<HiveCaallHistoryModel> unuploadedHiveLogs = hiveData
             .where((log) =>
                 log.isUploaded == false &&
-                log.isEnabled == false &&
+                log.isEnabled == true &&
                 log.isDeleted == false)
             .toList();
 
@@ -1338,7 +1440,7 @@ class _CallLogsState extends State<CallLogs> {
             setState(() {
               refresh = false;
             });
-            getSharedData();
+            // getSharedData();
 
             return;
           } else {
@@ -1619,7 +1721,6 @@ class _CallLogsState extends State<CallLogs> {
                       if (selectedIndex == 0 && permissionAccess == 'true')
                         Row(
                           children: [
-                            // Select All Checkbox
                             InkWell(
                               onTap: () {
                                 toggleSelectAll();
@@ -1645,8 +1746,6 @@ class _CallLogsState extends State<CallLogs> {
                                 ],
                               ),
                             ),
-
-                            // Count of selected items
                             if (historyIndex.isNotEmpty || selectAll)
                               Row(
                                 children: [
@@ -1682,7 +1781,6 @@ class _CallLogsState extends State<CallLogs> {
                           ],
                         ),
 
-                      // Original delete functionality
                       deleteHistoryIds.isNotEmpty
                           ? InkWell(
                               onTap: () {
@@ -3792,18 +3890,55 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   bulkUpload() async {
+    if (history.isEmpty) {
+      Common.toastMessaage("No logs selected to upload", Colors.blue);
+      return;
+    }
     Map<String, dynamic> body = {
       "token": widget.token,
       'log': history,
     };
     if (context.mounted) {
-      Common.showProgressDialog(context, "Uploading..");
+      Common.showProgressDialog(context, "Uploading ${history.length} logs...");
     }
     CallLogUploadModel object1 = await HttpService.callLogUpload(body);
     if (object1.data == true) {
-      Common.toastMessaage(object1.message, Colors.green);
+      Common.toastMessaage(
+          "${object1.message} (${history.length} logs)", Colors.green);
+      for (var item in history) {
+        for (var entry in _callLogEntries) {
+          if (entry.timestamp.toString() == item["timeStamp"]?.toString() &&
+              entry.number == item["phone_number"]) {
+            bool existsInHive = await HiveUtil.isCallLogWithIdAndNumberExists(
+                entry.timestamp.toString(), entry.number.toString());
+
+            if (existsInHive) {
+              await HiveUtil.markCallLogAsUploaded(entry.timestamp.toString());
+            } else {
+              HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                  id: entry.timestamp.toString(),
+                  name: entry.name.toString(),
+                  phoneNumber: entry.number.toString(),
+                  callType: entry.callType
+                      .toString()
+                      .substring(entry.callType.toString().indexOf('.') + 1),
+                  duration: entry.duration.toString(),
+                  timeStamp: entry.timestamp!.toString(),
+                  simSlot: entry.simDisplayName ?? "NIL",
+                  callRecordFilePath: "",
+                  isUploaded: true,
+                  isDeleted: false,
+                  isEnabled: false);
+              await HiveUtil.addCallLog(hiveCallLog);
+            }
+            break;
+          }
+        }
+      }
+
       if (context.mounted) {
         Navigator.pop(context);
+        getSharedData();
         getData();
       }
     } else {
@@ -3812,9 +3947,39 @@ class _CallLogsState extends State<CallLogs> {
         Navigator.pop(context);
       }
     }
+
     setState(() {
       history.clear();
       historyIndex.clear();
+      selectAll = false;
+      onLongPress = false;
     });
   }
+
+  // bulkUpload() async {
+  //   Map<String, dynamic> body = {
+  //     "token": widget.token,
+  //     'log': history,
+  //   };
+  //   if (context.mounted) {
+  //     Common.showProgressDialog(context, "Uploading..");
+  //   }
+  //   CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+  //   if (object1.data == true) {
+  //     Common.toastMessaage(object1.message, Colors.green);
+  //     if (context.mounted) {
+  //       Navigator.pop(context);
+  //       getData();
+  //     }
+  //   } else {
+  //     Common.toastMessaage(object1.message, Colors.red);
+  //     if (context.mounted) {
+  //       Navigator.pop(context);
+  //     }
+  //   }
+  //   setState(() {
+  //     history.clear();
+  //     historyIndex.clear();
+  //   });
+  // }
 }

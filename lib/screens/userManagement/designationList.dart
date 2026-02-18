@@ -31,11 +31,23 @@ class _DesignationListState extends State<DesignationList> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -214,7 +226,7 @@ class _DesignationListState extends State<DesignationList> {
                                                       content: const Text(
                                                           'Are you sure to Delete?'),
                                                       actions: [
-                                                         TextButton(
+                                                        TextButton(
                                                             onPressed: () {
                                                               Navigator.of(
                                                                       context)
@@ -261,7 +273,6 @@ class _DesignationListState extends State<DesignationList> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                       
                                                       ],
                                                     );
                                                   });

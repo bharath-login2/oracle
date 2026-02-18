@@ -77,11 +77,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
     token = await Common.getSharedPref("token");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -501,11 +513,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               ),
                                             )
                                           : const SizedBox(),
-                                      buildTextField(
-                                          "Full Name",
-                                         "Full Name",
-                                          name,
-                                          Icons.person),
+                                      buildTextField("Full Name", "Full Name",
+                                          name, Icons.person),
                                       buildTextField(
                                         "Phone Number",
                                         "Phone Number",
@@ -513,11 +522,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         Icons.phone_android_rounded,
                                         keyboardType: TextInputType.number,
                                       ),
-                                      buildTextField(
-                                          "E-mail",
-                                          "E-mail",
-                                          emailId,
-                                          Icons.email),
+                                      buildTextField("E-mail", "E-mail",
+                                          emailId, Icons.email),
                                       buildTextField(
                                         "Designation",
                                         "Add Designation",
@@ -547,8 +553,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 content: SizedBox(
                                                   width: double.maxFinite,
                                                   child: ListView.builder(
-                                                    shrinkWrap:
-                                                        true, 
+                                                    shrinkWrap: true,
                                                     itemCount: staffDetails!
                                                         .data!
                                                         .designationList!

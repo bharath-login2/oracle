@@ -139,11 +139,23 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -3134,7 +3146,7 @@ class _AddInvoiceTempState extends State<AddInvoiceTemp> {
                                 } else {
                                   Common.showProgressDialog(
                                       context, "Loading...");
-                                        Navigator.pop(context);
+                                  Navigator.pop(context);
 
                                   var body = FormData.fromMap({
                                     "token": widget.token,

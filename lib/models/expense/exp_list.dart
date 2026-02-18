@@ -84,19 +84,19 @@ class Expense {
     });
 
     factory Expense.fromJson(Map<String, dynamic> json) => Expense(
-        cmpnyExId: json["CmpnyExId"],
-        expCatid: json["ExpCatid"],
-        fromAccount: json["from_account"],
-        tothePerson: json["TothePerson"],
-        amount: json["Amount"],
+        cmpnyExId: json["CmpnyExId"]??"",
+        expCatid: json["ExpCatid"]??"",
+        fromAccount: json["from_account"]??"",
+        tothePerson: json["TothePerson"]??"",
+        amount: json["Amount"]??"",
         trnDate: DateTime.parse(json["TrnDate"]),
-        company: json["company"],
-        remarks: json["Remarks"],
-        fromAccountPerson: json["from_account_person"],
-        toAccountPerson: json["to_account_person"],
-        expCatName: json["ExpCatName"],
-        staffName: json["staff_name"],
-         isVerified: json["is_verified"],
+        company: json["company"]??"",
+        remarks: json["Remarks"]??"",
+        fromAccountPerson: json["from_account_person"]??"",
+        toAccountPerson: json["to_account_person"]??"",
+        expCatName: json["ExpCatName"]??"",
+        staffName: json["staff_name"]??"",
+         isVerified: json["is_verified"]??"",
     );
 
     Map<String, dynamic> toJson() => {

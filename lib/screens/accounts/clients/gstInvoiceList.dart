@@ -140,11 +140,23 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
     customers.clear();
     filteredCustomers.clear();
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -1283,8 +1295,8 @@ class _GSTInvoiceListState extends State<GSTInvoiceList> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    AddInvoiceTemp(widget.token, customerId,"")),
+                                builder: (context) => AddInvoiceTemp(
+                                    widget.token, customerId, "")),
                           ).then((_) {
                             getData();
                           });

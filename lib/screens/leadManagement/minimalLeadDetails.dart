@@ -355,9 +355,9 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
       //   selectedSim = "Tap to select";
       //   selectedSimId = "";
       // }
-      if (uploadPermission != "true" && Platform.isIOS) {
-        selectedIndex = -1;
-      }
+      // if (uploadPermission != "true" && Platform.isIOS) {
+      //   selectedIndex = -1;
+      // }
       setState(() {
         deleteAccess = deleteAccessStr == "true";
       });
@@ -785,11 +785,23 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
     });
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   setState(() {
+      //     result = true;
+      //   });
+      // } else {
+      //   setState(() {
+      //     result = false;
+      //   });
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          setState(() {
+            result = true;
+          });
+        }
       } else {
         setState(() {
           result = false;

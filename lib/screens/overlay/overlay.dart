@@ -3,11 +3,14 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/models/backgroundModel.dart';
+import 'package:login2/service/service.dart';
 import 'package:phone_state/phone_state.dart';
 
 class TrueCallerOverlay extends StatefulWidget {
-  String number;
-  TrueCallerOverlay({super.key, required this.number});
+  final String number;
+  const TrueCallerOverlay({super.key, required this.number});
 
   @override
   State<TrueCallerOverlay> createState() => _TrueCallerOverlayState();
@@ -41,24 +44,24 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
       status1 = event;
       if (status1.number != null) {
         number1 = status1.number.toString();
-      //  getOverlayDetails(number1);
+        getOverlayDetails(number1);
       }
-        });
+    });
   }
 
-  // getOverlayDetails(number) async {
-  //   Map<String, dynamic> body1 = {
-  //     "token": await Common.getSharedPref("token"),
-  //     'phoneNumber': number,
-  //   };
+  getOverlayDetails(number) async {
+    Map<String, dynamic> body1 = {
+      "token": await Common.getSharedPref("token"),
+      'phoneNumber': number,
+    };
 
-  //   BackgroundModel object = await HttpService.backgroundData(body1);
-  //   name = object.data.clientName;
-  //   category = object.data.leadCategory;
-  //   lastcall = object.data.lastCalledDate;
-  //   number1 = number;
-  //   setState(() {});
-  // }
+    BackgroundModel object = await HttpService.backgroundData(body1);
+    name = object.data.clientName;
+    category = object.data.leadCategory;
+    lastcall = object.data.lastCalledDate;
+    number1 = number;
+    setState(() {});
+  }
 
   @override
   void dispose() {
@@ -71,102 +74,64 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
       color: Colors.transparent,
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          padding: const EdgeInsets.all(16.0),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
           width: double.infinity,
+          height: 150, // Fixed height to ensure visibility
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: blueColors,
-            ),
+            color: Colors.blueAccent,
             borderRadius: BorderRadius.circular(12.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              )
+            ],
           ),
-          child: GestureDetector(
-            onTap: () {
-              FlutterOverlayWindow.getOverlayPosition().then((value) {});
-            },
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    ListTile(
-                      leading: Container(
-                        height: 80.0,
-                        width: 80.0,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white54),
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          image: const DecorationImage(
-                            image: AssetImage("assets/main/logo.png"),
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        name,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Divider(color: Colors.white54),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                number1,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                "Last call - $lastcall",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Text(
-                            "Login2",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: IconButton(
-                    onPressed: () async {
-                      await FlutterOverlayWindow.closeOverlay();
-                    },
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
+          child: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name.isEmpty ? "Unknown Caller" : name,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22.0,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    number1.isEmpty ? widget.number : number1,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18.0,
                     ),
                   ),
+                  if (category.isNotEmpty)
+                    Text(
+                      category,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                ],
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () async {
+                    log("Closing overlay");
+                    await FlutterOverlayWindow.closeOverlay();
+                  },
+                  child: const CircleAvatar(
+                    backgroundColor: Colors.white24,
+                    radius: 16,
+                    child: Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

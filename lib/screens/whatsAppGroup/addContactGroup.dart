@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 
 import '../../widgets/inputTextFeildWidget.dart';
 
-
 // ignore: must_be_immutable
 class AddContactGroup extends StatefulWidget {
   String? token;
@@ -31,11 +30,23 @@ class _AddContactGroupState extends State<AddContactGroup> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -122,7 +133,6 @@ class _AddContactGroupState extends State<AddContactGroup> {
                       iconData: Icons.person,
                     ),
                     const SizedBox(height: 10),
-
                     TextFormField(
                       maxLines: 10,
                       controller: numbers,
@@ -154,35 +164,45 @@ class _AddContactGroupState extends State<AddContactGroup> {
                       onTap: () async {
                         final connectivityResult =
                             await (Connectivity().checkConnectivity());
-                        if (connectivityResult == ConnectivityResult.mobile ||
-                            connectivityResult == ConnectivityResult.wifi) {
-                          if (groupName.text.isEmpty) {
-                            Common.toastMessaage('Type Group name', Colors.red);
-                          } else if (numbers.text.isEmpty) {
-                            Common.toastMessaage(
-                                'Enter Phone number', Colors.red);
-                          } else {
-                            if (context.mounted) {
-                              Common.showProgressDialog(context, "Loading..");
-                            }
-                            AddContactGroupModel object1 =
-                                await HttpService.addContactGroup(
-                                    widget.token, groupName.text, numbers.text);
-                            if (object1.data == true) {
+                        // if (connectivityResult == ConnectivityResult.mobile ||
+                        //     connectivityResult == ConnectivityResult.wifi) {
+                        if (connectivityResult is List<ConnectivityResult>) {
+                          if (connectivityResult
+                                  .contains(ConnectivityResult.mobile) ||
+                              connectivityResult
+                                  .contains(ConnectivityResult.wifi)) {
+                            if (groupName.text.isEmpty) {
                               Common.toastMessaage(
-                                  object1.message, Colors.green);
-                              if (context.mounted) {
-                                Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        GroupList(widget.token)),
-                              );
-                              }
+                                  'Type Group name', Colors.red);
+                            } else if (numbers.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Phone number', Colors.red);
                             } else {
-                              Common.toastMessaage(object1.message, Colors.red);
                               if (context.mounted) {
-                                Navigator.pop(context);
+                                Common.showProgressDialog(context, "Loading..");
+                              }
+                              AddContactGroupModel object1 =
+                                  await HttpService.addContactGroup(
+                                      widget.token,
+                                      groupName.text,
+                                      numbers.text);
+                              if (object1.data == true) {
+                                Common.toastMessaage(
+                                    object1.message, Colors.green);
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            GroupList(widget.token)),
+                                  );
+                                }
+                              } else {
+                                Common.toastMessaage(
+                                    object1.message, Colors.red);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
                               }
                             }
                           }

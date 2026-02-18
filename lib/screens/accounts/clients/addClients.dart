@@ -122,16 +122,28 @@ class _AddClientsState extends State<AddClients> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
       });
     }
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
     roleId = await Common.getSharedPref("roleId");
     multiBranch = await Common.getSharedPref("multiBranch");
     branchList = await HttpService.getBranchList(widget.token);
@@ -567,58 +579,58 @@ class _AddClientsState extends State<AddClients> {
                           //     });
                           //   },
                           // ),
-                        
 
-                         Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text(
-      "Select Tax Type",
-      style: TextStyle(
-        fontSize: 13,
-        color: Color.fromARGB(255, 5, 5, 5),
-        fontWeight: FontWeight.w500,
-      ),
-    ),
-    const SizedBox(height: 6),
-    Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          RadioListTile<String>(
-            title: const Text("Intrastate"),
-            value: "Intrastate",
-            groupValue: selectedTaxType,
-            onChanged: (value) {
-              setState(() {
-                selectedTaxType = value!;
-              });
-            },
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-          RadioListTile<String>(
-            title: const Text("Other State"),
-            value: "Interstate",
-            groupValue: selectedTaxType,
-            onChanged: (value) {
-              setState(() {
-                selectedTaxType = value!;
-              });
-            },
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ],
-      ),
-    ),
-  ],
-),
-
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Select Tax Type",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color.fromARGB(255, 5, 5, 5),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    RadioListTile<String>(
+                                      title: const Text("Intrastate"),
+                                      value: "Intrastate",
+                                      groupValue: selectedTaxType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedTaxType = value!;
+                                        });
+                                      },
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    RadioListTile<String>(
+                                      title: const Text("Other State"),
+                                      value: "Interstate",
+                                      groupValue: selectedTaxType,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedTaxType = value!;
+                                        });
+                                      },
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
 
                           SizedBox(
                             height: 10,

@@ -65,11 +65,23 @@ class _ViewReceiptState extends State<ViewReceipt> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
@@ -506,7 +518,8 @@ class _ViewReceiptState extends State<ViewReceipt> {
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                             color: Colors.blueAccent,
-                                             decoration: TextDecoration.underline,
+                                            decoration:
+                                                TextDecoration.underline,
                                           )),
                                     ),
                                   ],

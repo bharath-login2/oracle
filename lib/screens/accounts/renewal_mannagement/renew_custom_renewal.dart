@@ -30,6 +30,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   List filteredProducts = [];
   List filteredNames = [];
   List productName = [];
+  bool _initialDataLoaded = false;
   RenewalByIdModel? renewalDetails;
   TextEditingController subTotal = TextEditingController();
   TextEditingController totalTax = TextEditingController();
@@ -178,12 +179,14 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   }
 
   getDetails() async {
+    if (_initialDataLoaded) {
+      return;
+    }
     setState(() {
       isLoading = true;
     });
     renewalDetails = await HttpService.getRenewalDetailsById(
         widget.renId, widget.renewalType);
-
     if (renewalDetails != null && renewalDetails!.status == true) {
       getBranch();
       invoiceSlNum = renewalDetails!.data.slNumber;
@@ -206,37 +209,38 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
       templateId = renewalDetails!.data.templateId;
       remark.text = renewalDetails!.data.remarks;
       typeDuration = renewalDetails!.data.noOfDays;
+      filteredStaff.clear();
       filteredStaff.addAll(renewalDetails!.data.staff);
       targets = renewalDetails!.data.targetGroups;
+      filteredTargets.clear();
       filteredTargets.addAll(targets);
-
+      products.clear();
+      productName.clear();
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
-        double rate = double.parse(renewalDetails!.data.invoiceLists[i].rate);
-        double qty = double.parse(renewalDetails!.data.invoiceLists[i].qty);
+        double rate =
+            double.tryParse(renewalDetails!.data.invoiceLists[i].rate) ?? 0.0;
+        double qty =
+            double.tryParse(renewalDetails!.data.invoiceLists[i].qty) ?? 0.0;
         double rateTotal = rate * qty;
-        if (products.isEmpty) {
-          products.clear();
-          productName.add(renewalDetails!.data.invoiceLists[i].productName);
-          products.add({
-            "product_id": renewalDetails!.data.invoiceLists[i].productId,
-            "product_name": renewalDetails!.data.invoiceLists[i].productName,
-            "product_rate": renewalDetails!.data.invoiceLists[i].rate,
-            "quantity": renewalDetails!.data.invoiceLists[i].qty,
-            "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
-            "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
-            "total_amount": renewalDetails!.data.invoiceLists[i].amount,
-            "rate_total": rateTotal.toString(),
-            "description":
-                renewalDetails!.data.invoiceLists[i].productDescription,
-          });
-        }
+
+        products.add({
+          "product_id": renewalDetails!.data.invoiceLists[i].productId,
+          "product_name": renewalDetails!.data.invoiceLists[i].productName,
+          "product_rate": renewalDetails!.data.invoiceLists[i].rate,
+          "quantity": renewalDetails!.data.invoiceLists[i].qty,
+          "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
+          "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+          "total_amount": renewalDetails!.data.invoiceLists[i].amount,
+          "rate_total": rateTotal.toString(),
+          "description":
+              renewalDetails!.data.invoiceLists[i].productDescription,
+        });
+        productName.add(renewalDetails!.data.invoiceLists[i].productName);
       }
-
-      // Recalculate totals based on the new logic
       recalculateTotals();
-
       setState(() {
         isLoading = false;
+        _initialDataLoaded = true;
       });
     } else {
       setState(() {
@@ -667,6 +671,42 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                   ),
                                 ),
                                 PopupMenuButton<String>(
+                                  // onSelected: (value) async {
+                                  //   if (value == 'edit') {
+                                  //     _editProduct(context, index);
+                                  //   } else if (value == 'delete') {
+                                  //     final confirm = await showDialog<bool>(
+                                  //       context: context,
+                                  //       builder: (ctx) => AlertDialog(
+                                  //         title: const Text("Confirm Delete"),
+                                  //         content: const Text(
+                                  //             "Are you sure you want to delete this product?"),
+                                  //         actions: [
+                                  //           TextButton(
+                                  //             onPressed: () =>
+                                  //                 Navigator.pop(ctx, false),
+                                  //             child: const Text("Cancel"),
+                                  //           ),
+                                  //           TextButton(
+                                  //             onPressed: () =>
+                                  //                 Navigator.pop(ctx, true),
+                                  //             child: const Text("Delete",
+                                  //                 style: TextStyle(
+                                  //                     color: Colors.red)),
+                                  //           ),
+                                  //         ],
+                                  //       ),
+                                  //     );
+
+                                  //     if (confirm == true) {
+                                  //       products.removeAt(index);
+                                  //       productName.removeAt(index);
+                                  //       recalculateTotals();
+                                  //       setState(() {});
+                                  //     }
+                                  //   }
+                                  // },
+
                                   onSelected: (value) async {
                                     if (value == 'edit') {
                                       _editProduct(context, index);
@@ -695,6 +735,16 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                       );
 
                                       if (confirm == true) {
+                                        String deletedProductId =
+                                            products[index]['product_id'];
+                                        if (renewalDetails != null &&
+                                            renewalDetails!.data.invoiceLists !=
+                                                null) {
+                                          renewalDetails!.data.invoiceLists
+                                              .removeWhere((product) =>
+                                                  product.productId ==
+                                                  deletedProductId);
+                                        }
                                         products.removeAt(index);
                                         productName.removeAt(index);
                                         recalculateTotals();
@@ -2705,6 +2755,11 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                                   MaterialPageRoute(
                                     builder: (context) => const AddProducts(),
                                   )).then((_) {
+                                if (renewalDetails != null) {
+                                  filteredProducts =
+                                      renewalDetails!.data.allProducts;
+                                  setState(() {});
+                                }
                                 getDetails();
                               });
                             },

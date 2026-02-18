@@ -729,16 +729,28 @@ class _LeadDetailsState extends State<LeadDetails> {
     });
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   setState(() {
+      //     result = true;
+      //   });
+      // } else {
+      //   setState(() {
+      //     result = false;
+      //   });
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
         setState(() {
           result = true;
         });
-      } else {
-        setState(() {
-          result = false;
-        });
       }
+    } else {
+      setState(() {
+        result = false;
+      });
+    }
       await Common.saveSharedPref("openAppLeadId", '0');
       leadDetails = await HttpService.leadDetails(widget.token, callMasterId);
       commonDetails = await HttpService.addLeadCommonData(widget.token);

@@ -6,22 +6,37 @@ import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/workDetailsCompanyModel.dart';
 import 'package:login2/models/lead_management/workstatus_model.dart'
     as workStatus;
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/leadManagement/ChatScreenWork.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/assignWorkPage.dart';
+import 'package:login2/screens/leadManagement/editAssignedReportPage.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/blinkwidget.dart';
 import 'package:login2/widgets/filterWidget.dart';
 import 'package:login2/models/expense/staffListModel.dart';
+import 'package:login2/models/lead_management/staffwisePendingUpdatedModel.dart';
 
 class AssignReport extends StatefulWidget {
   final String workId;
   final String sectionId;
   final String? preselectedWorkId;
+  final String? selectedStatus;
+  final String? staffId;
+  final String? assignedToMyself;
+  final String? assignedByMyself;
+  final String? isUnassigned;
+
   const AssignReport(
       {super.key,
       required this.workId,
       required this.sectionId,
-      this.preselectedWorkId});
+      this.preselectedWorkId,
+      this.selectedStatus,
+      this.staffId,
+      this.assignedToMyself,
+      this.assignedByMyself,
+      this.isUnassigned});
 
   @override
   State<AssignReport> createState() => _AssignReportState();
@@ -31,12 +46,21 @@ class _AssignReportState extends State<AssignReport> {
   late String currentDate;
   late Future<List<AssignedWork>> assignedWorkFuture;
   Map<String, dynamic> currentFilters = {};
-  bool get isFiltered => currentFilters.isNotEmpty;
+  Map<String, bool> _expandedDescriptions = {};
+  Map<String, bool> _expandedRemarks = {};
+  // bool get isFiltered => currentFilters.isNotEmpty;
+  bool get isFiltered =>
+      currentFilters.isNotEmpty ||
+      (_hasInitialStatusFilter && currentFilters.isEmpty);
   workStatus.WorkStatus? existingWork;
   AssignedWorkStatus? assignedWorks;
   final bool _showAllTasks = false;
   WorkCompanyDetailsModel? workStatusDetails;
+  Map<String, bool> _expandedTimelineSessions = {};
   String? name;
+  String? token;
+  String? userId;
+  String? phoneCallLogPermission;
   String? assignWork;
   bool isLoading = true;
   bool isRemarkExpanded = false;
@@ -44,23 +68,63 @@ class _AssignReportState extends State<AssignReport> {
   final String _selectedFilter = 'all';
   String? _currentUserId;
   final Set<String> _selectedFilters = {};
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadData();
-  //   checkAssignedWorks();
-  //   _loadName();
-  //   currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-  // }
+  bool _isCalculatingCounts = false;
+  bool _hasInitialStatusFilter = false;
+  String? _initialStatus;
+  List<Summary>? staffwiseData;
+  List<Staff> allStaffs = [];
+  String? selectedStaffName;
+  String? selectedStaffId;
+  Map<String, int> _filterCounts = {
+    'assignedByMe': 0,
+    'pending': 0,
+    'todo': 0,
+    'all': 0,
+  };
+
+  bool _isMinimalView = true;
+  Map<String, bool> _expandedWorkSessions = {};
+  Map<String, bool> _cardMinimalViews = {};
+  bool _hasShownTaskDetails = false;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUserId();
-    _loadData();
+    _fetchStaffList();
+    _loadData(currentFilters);
     checkAssignedWorks();
     _loadName();
+    print('widget.isUnassigned: ${widget.isUnassigned}');
     currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (widget.selectedStatus != null && widget.selectedStatus!.isNotEmpty) {
+      _hasInitialStatusFilter = true;
+      _initialStatus = widget.selectedStatus!.toLowerCase();
+      final statusList = widget.selectedStatus!.split(',');
+      for (var status in statusList) {
+        final trimmedStatus = status.trim().toLowerCase();
+        if (trimmedStatus == 'pending') {
+          _selectedFilters.add('pending');
+        } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+          _selectedFilters.add('todo');
+        } else {
+          _selectedFilters.add(status.trim());
+        }
+      }
+    }
+  }
+
+  Future<void> _fetchStaffList() async {
+    try {
+      final response = await HttpService.getStaffs();
+      if (response != null && response.status) {
+        setState(() {
+          allStaffs = response.data;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching staffs: $e');
+    }
   }
 
   Future<void> _loadCurrentUserId() async {
@@ -69,54 +133,455 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   Future<void> _loadName() async {
+    token = await Common.getSharedPref("token");
     name = await Common.getSharedPref("name");
     assignWork = await Common.getSharedPref("assignWork");
-    setState(() {});
+    userId = await Common.getSharedPref("userId");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+    setState(() {
+      // Apply filters when navigating from project dashboard
+      if (widget.assignedByMyself == "1" &&
+          widget.staffId != null &&
+          widget.staffId!.isNotEmpty &&
+          userId != null) {
+        _selectedFilters.add('assignedByMe');
+        if (widget.selectedStatus != null &&
+            widget.selectedStatus!.isNotEmpty) {
+          final statusList = widget.selectedStatus!.split(',');
+          for (var status in statusList) {
+            final trimmedStatus = status.trim().toLowerCase();
+            if (trimmedStatus == 'pending') {
+              _selectedFilters.add('pending');
+            } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+              _selectedFilters.add('todo');
+            } else {
+              _selectedFilters.add(status.trim());
+            }
+          }
+          currentFilters['status_names'] =
+              statusList.map((s) => s.trim().toLowerCase()).toList();
+        }
+        // Set Assigned To as the staffId
+        currentFilters['assigned_to_ids'] = [widget.staffId!];
+        // Set Assigned By as the logged-in user
+        currentFilters['assigned_by_ids'] = [userId];
+        _hasInitialStatusFilter = false;
+        _initialStatus = null;
+      } else if (widget.assignedToMyself == "1" &&
+          widget.staffId != null &&
+          widget.staffId!.isNotEmpty &&
+          userId != null) {
+        // _selectedFilters.add('assignedByMe'); // Removed as per user request for general pending
+        if (widget.selectedStatus != null &&
+            widget.selectedStatus!.isNotEmpty) {
+          final statusList = widget.selectedStatus!.split(',');
+          for (var status in statusList) {
+            final trimmedStatus = status.trim().toLowerCase();
+            if (trimmedStatus == 'pending') {
+              _selectedFilters.add('pending');
+            } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+              _selectedFilters.add('todo');
+            } else {
+              _selectedFilters.add(status.trim());
+            }
+          }
+          currentFilters['status_names'] =
+              statusList.map((s) => s.trim().toLowerCase()).toList();
+        }
+        // Set Assigned To as the staffId
+        currentFilters['assigned_to_ids'] = [widget.staffId!];
+        // Set Assigned By as the logged-in user
+        // currentFilters['assigned_by_ids'] = [userId]; // Removed as per user request for general pending
+        _hasInitialStatusFilter = false;
+        _initialStatus = null;
+      } else if (widget.isUnassigned == "1") {
+        _selectedFilters.add('unassigned');
+        currentFilters['assigned_to_ids'] = ['0'];
+        currentFilters['status_names'] = ['unassigned'];
+        _hasInitialStatusFilter = false;
+        _initialStatus = null;
+      }
+      _loadData(currentFilters);
+    });
   }
 
-  // void _loadData() {
-  //   assignedWorkFuture = HttpService.getAssignedWorks(filters: currentFilters);
-  //   assignedWorkFuture.then((assignedList) {
-  //     if (widget.workId.isNotEmpty) {
-  //       final AssignedWork matchedItem = assignedList.firstWhere(
-  //         (item) => item.id.toString() == widget.workId,
-  //         orElse: () => null as AssignedWork,
-  //       );
-  //       if (matchedItem != null) {
-  //         WidgetsBinding.instance.addPostFrameCallback((_) {
-  //           _showTaskDetails(context, matchedItem);
-  //         });
-  //       }
-  //     }
-  //     setState(() {});
-  //   });
-  // }
-  void _loadData() {
+  void _showSmallStaffPopup(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    TextEditingController searchController = TextEditingController();
+    bool showAll = false;
+    String searchQuery = '';
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            List<Staff> filteredStaffs = allStaffs.where((staff) {
+              if (searchQuery.isEmpty) return true;
+              return staff.name
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase());
+            }).toList();
+            final itemsToShow = showAll ? filteredStaffs.length : 15;
+            final displayStaffs = filteredStaffs.take(itemsToShow).toList();
+            return Stack(
+              children: [
+                Positioned(
+                  top: position.top + 111,
+                  right: 8,
+                  child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 200,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(8),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search,
+                                    size: 20, color: Colors.blue),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: searchController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Search staff...',
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    autofocus: true,
+                                    style: const TextStyle(fontSize: 14),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        searchQuery = value;
+                                        showAll = false;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => Navigator.pop(context),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: filteredStaffs.isEmpty
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(20.0),
+                                      child: Text(
+                                        'No staff found',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.all(0),
+                                    itemCount: displayStaffs.length,
+                                    itemBuilder: (context, index) {
+                                      final staff = displayStaffs[index];
+                                      return InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedStaffName = staff.name;
+                                            selectedStaffId = staff.userIdStaff;
+                                            // Clear "To Me" filter when selecting a specific staff
+                                            _selectedFilters
+                                                .remove('assignedToMe');
+                                            // Add staff filter to currentFilters
+                                            currentFilters['assigned_to_ids'] =
+                                                [staff.userIdStaff];
+                                          });
+                                          Navigator.pop(context);
+                                          // Reload data with the new filter
+                                          _loadData(currentFilters);
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                color: Colors.grey.shade200,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            staff.name,
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+
+                          // View More / Show Less button
+                          if (filteredStaffs.length > 15)
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    showAll = !showAll;
+                                  });
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      showAll
+                                          ? 'Show Less'
+                                          : 'View More (${filteredStaffs.length - 15})',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      showAll
+                                          ? Icons.arrow_drop_up
+                                          : Icons.arrow_drop_down,
+                                      size: 16,
+                                      color: Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleEditWork(AssignedWork item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditWorkPage(
+          assignedWork: item,
+          onSuccess: () {
+            setState(() {
+              _loadData(currentFilters);
+              checkExistingWorkStatus();
+              checkAssignedWorks();
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _handleDeleteWork(AssignedWork item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Work'),
+        content: Text('Are you sure you want to delete "${item.projectName}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () async {
+              final result = await HttpService().deleteWork(item.id.toString());
+              if (result != null && result.status == true) {
+                _loadData(currentFilters);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result.message),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result?.message ?? "Failed to delete work"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearAllFiltersAndState() {
+    setState(() {
+      currentFilters.clear();
+      _selectedFilters.clear();
+      _hasInitialStatusFilter = false;
+      _initialStatus = null;
+      selectedStaffName = null;
+      selectedStaffId = null;
+      _filterCounts = {
+        'assignedByMe': 0,
+        'pending': 0,
+        'todo': 0,
+        'all': 0,
+      };
+      _expandedWorkSessions.clear();
+      _cardMinimalViews.clear();
+      _isMinimalView = false;
+      _loadData({});
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('All filters and selections cleared'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _loadData(currentFilters) {
     setState(() {
       isLoading = true;
+      _isCalculatingCounts = true;
     });
-
+    Map<String, dynamic> filters = {};
+    if (_hasInitialStatusFilter && currentFilters.isEmpty) {
+      filters['status_name'] = _initialStatus;
+    }
+    filters.addAll(currentFilters);
+    if (currentFilters.containsKey('status_ids') &&
+        (currentFilters['status_ids'] as List).isEmpty) {
+      filters.remove('status_name');
+      _hasInitialStatusFilter = false;
+      _initialStatus = null;
+    }
     assignedWorkFuture = HttpService.getAssignedWorks(
-            filters: currentFilters, sectionId: widget.sectionId)
+            filters: filters,
+            sectionId: widget.sectionId,
+            unassigned: widget.isUnassigned)
         .then((assignedList) {
+      int assignedByMeCount = assignedList.where((item) {
+        return item.assignedBy.toLowerCase() == name?.toLowerCase();
+      }).length;
+
+      int assignedToMeCount = assignedList.where((item) {
+        return item.assignedToId.toString() == userId.toString();
+      }).length;
+
+      int pendingCount = assignedList.where((item) {
+        return item.status.toLowerCase() == 'pending';
+      }).length;
+
+      int todoCount = assignedList.where((item) {
+        return item.status.toLowerCase() == 'to do';
+      }).length;
+      setState(() {
+        _filterCounts = {
+          'assignedByMe': assignedByMeCount,
+          'assignedToMe': assignedToMeCount,
+          'pending': pendingCount,
+          'todo': todoCount,
+          'all': assignedList.length,
+        };
+        _isCalculatingCounts = false;
+      });
       List<AssignedWork> filteredList = assignedList.where((item) {
         bool matchesAssignedByMe = _selectedFilters.contains('assignedByMe')
             ? item.assignedBy.toLowerCase() == name?.toLowerCase()
             : true;
 
-        bool matchesPending = _selectedFilters.contains('pending')
-            ? item.status.toLowerCase() == 'pending'
+        bool matchesAssignedToMe = _selectedFilters.contains('assignedToMe')
+            ? item.assignedToId.toString() == userId.toString()
             : true;
 
-        return matchesAssignedByMe && matchesPending;
+        bool hasStatusFilter = _selectedFilters.contains('pending') ||
+            _selectedFilters.contains('todo');
+        bool matchesStatus = true;
+
+        if (hasStatusFilter) {
+          bool matchesPending = _selectedFilters.contains('pending') &&
+              item.status.toLowerCase() == 'pending';
+          bool matchesTodo = _selectedFilters.contains('todo') &&
+              (item.status.toLowerCase() == 'to do' ||
+                  item.status.toLowerCase() == 'todo');
+          matchesStatus = matchesPending || matchesTodo;
+        }
+
+        return matchesAssignedByMe && matchesStatus && matchesAssignedToMe;
       }).toList();
 
-      if (widget.workId.isNotEmpty) {
+      if (widget.workId.isNotEmpty && !_hasShownTaskDetails) {
         final AssignedWork matchedItem = filteredList.firstWhere(
           (item) => item.id.toString() == widget.workId,
           orElse: () => null as AssignedWork,
         );
         if (mounted) {
+          _hasShownTaskDetails = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showTaskDetails(context, matchedItem);
           });
@@ -142,7 +607,7 @@ class _AssignReportState extends State<AssignReport> {
 
   Future<void> _handleRefresh() async {
     setState(() {
-      _loadData();
+      _loadData(currentFilters);
       checkExistingWorkStatus();
       checkAssignedWorks();
     });
@@ -151,7 +616,17 @@ class _AssignReportState extends State<AssignReport> {
   void _clearFilters() {
     setState(() {
       currentFilters.clear();
-      _loadData();
+      _selectedFilters.clear();
+      _hasInitialStatusFilter = false;
+      _initialStatus = null;
+      selectedStaffName = null;
+      selectedStaffId = null;
+
+      print('=== CLEAR FILTERS DEBUG ===');
+      print('Cleared all filters and selections');
+      print('Reset _hasInitialStatusFilter to: $_hasInitialStatusFilter');
+      print('widget.selectedStatus: ${widget.selectedStatus}');
+      _loadData(currentFilters);
     });
   }
 
@@ -178,245 +653,6 @@ class _AssignReportState extends State<AssignReport> {
     });
   }
 
-  void _showEditWorkDialog(BuildContext context, AssignedWork item) {
-    final _formKey = GlobalKey<FormState>();
-    final TextEditingController projectController =
-        TextEditingController(text: item.projectName);
-    final TextEditingController moduleController =
-        TextEditingController(text: item.moduleName);
-    final TextEditingController clientController =
-        TextEditingController(text: item.clientName);
-    final TextEditingController descriptionController =
-        TextEditingController(text: item.taskDescription);
-    final TextEditingController dueDateController =
-        TextEditingController(text: item.dueDate);
-    String selectedPriority = item.priority;
-    List<String> selectedStaffIds = List.from(item.notification.staffIds);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Row(
-                children: const [
-                  Icon(Icons.edit, color: Color(0xFF3A2F87)),
-                  SizedBox(width: 8),
-                  Text("Edit Work Details",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Project Name
-                      TextFormField(
-                        controller: projectController,
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          labelText: "Project Name",
-                          prefixIcon: const Icon(Icons.business_center),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Module Name
-                      TextFormField(
-                        controller: moduleController,
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          labelText: "Module Name",
-                          prefixIcon: const Icon(Icons.widgets_outlined),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Client Name
-                      TextFormField(
-                        controller: clientController,
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          labelText: "Client Name",
-                          prefixIcon: const Icon(Icons.person_outline),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<String>(
-                        value: selectedPriority,
-                        items: const [
-                          DropdownMenuItem(value: "1", child: Text("Normal")),
-                          DropdownMenuItem(value: "2", child: Text("High")),
-                          DropdownMenuItem(value: "3", child: Text("Critical")),
-                        ],
-                        onChanged: (val) =>
-                            setState(() => selectedPriority = val!),
-                        decoration: InputDecoration(
-                          labelText: "Priority",
-                          prefixIcon: const Icon(Icons.flag_outlined),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: dueDateController,
-                        readOnly: true,
-                        onTap: () async {
-                          DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              dueDateController.text =
-                                  "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                            });
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Due Date",
-                          prefixIcon: const Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: descriptionController,
-                        maxLines: 3,
-                        decoration: InputDecoration(
-                          labelText: "Work Description",
-                          prefixIcon: const Icon(Icons.description_outlined),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      InkWell(
-                        onTap: () async {
-                          final selected = await _showMultiStaffSelectionDialog(
-                            context,
-                            false,
-                            item.assignedToId,
-                            selectedStaffIds,
-                            item,
-                          );
-                          if (selected != null) {
-                            setState(() => selectedStaffIds = selected);
-                          }
-                        },
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            labelText: "Assigned Staff",
-                            prefixIcon: const Icon(Icons.people_outline),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  selectedStaffIds.isEmpty
-                                      ? 'Select Staff'
-                                      : '${selectedStaffIds.length} selected',
-                                  style: const TextStyle(fontSize: 15),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel",
-                      style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save, size: 18),
-                  label: const Text("Update"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF94CC51),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      try {
-                        final response = await HttpService.editAssignedWork(
-                          workId: item.id,
-                          projectName: projectController.text,
-                          moduleName: moduleController.text,
-                          clientName: clientController.text,
-                          description: descriptionController.text,
-                          priority: selectedPriority,
-                          dueDate: dueDateController.text,
-                          staffIds: selectedStaffIds,
-                        );
-
-                        if (response != null && response.status) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(response.message),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text(response?.message ?? "Update failed"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Error: $e"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -427,683 +663,2125 @@ class _AssignReportState extends State<AssignReport> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_alt_outlined),
-            onPressed: _showFilters,
-            tooltip: 'Filter',
+            icon: Icon(
+              _isMinimalView ? Icons.grid_view : Icons.view_list,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                _isMinimalView = !_isMinimalView;
+                _cardMinimalViews.clear();
+                if (!_isMinimalView) {
+                  _expandedWorkSessions.clear();
+                }
+              });
+            },
+            tooltip: _isMinimalView ? 'Detailed View' : 'Minimal View',
+          ),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.filter_alt_outlined),
+                onPressed: _showFilters,
+                tooltip: 'Filter',
+              ),
+              if (isFiltered)
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          )
+        ],
+      ),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                _selectedFilters.contains('assignedByMe')
+                                    ? Colors.blue
+                                    : Colors.grey.shade300,
+                            foregroundColor:
+                                _selectedFilters.contains('assignedByMe')
+                                    ? Colors.white
+                                    : Colors.black,
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              if (_selectedFilters.contains('assignedByMe')) {
+                                _selectedFilters.remove('assignedByMe');
+                                currentFilters.remove('assigned_by_ids');
+                              } else {
+                                _selectedFilters.add('assignedByMe');
+                                if (userId != null) {
+                                  currentFilters['assigned_by_ids'] = [userId];
+                                }
+                              }
+                              _loadData(currentFilters);
+                            });
+                          },
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'By Me',
+                              style: TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                _selectedFilters.contains('assignedToMe')
+                                    ? Colors.blue
+                                    : Colors.grey.shade300,
+                            foregroundColor:
+                                _selectedFilters.contains('assignedToMe')
+                                    ? Colors.white
+                                    : Colors.black,
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              if (_selectedFilters.contains('assignedToMe')) {
+                                _selectedFilters.remove('assignedToMe');
+                                currentFilters.remove('assigned_to_ids');
+                              } else {
+                                _selectedFilters.add('assignedToMe');
+                                // Clear staff filter when using "To Me" filter
+                                selectedStaffName = null;
+                                selectedStaffId = null;
+                                if (userId != null) {
+                                  currentFilters['assigned_to_ids'] = [userId];
+                                }
+                              }
+                              _loadData(currentFilters);
+                            });
+                          },
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'To Me',
+                              style: TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                _selectedFilters.contains('pending')
+                                    ? Colors.blue
+                                    : Colors.grey.shade300,
+                            foregroundColor:
+                                _selectedFilters.contains('pending')
+                                    ? Colors.white
+                                    : Colors.black,
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              if (_selectedFilters.contains('pending')) {
+                                _selectedFilters.remove('pending');
+                                if (currentFilters
+                                    .containsKey('status_names')) {
+                                  List<String> names = List<String>.from(
+                                      currentFilters['status_names']);
+                                  names.remove('pending');
+                                  if (names.isEmpty) {
+                                    currentFilters.remove('status_names');
+                                    currentFilters.remove('status_ids');
+                                  } else {
+                                    currentFilters['status_names'] = names;
+                                    List<String> statusIds = [];
+                                    if (names.contains('pending'))
+                                      statusIds.add('2');
+                                    if (names.contains('todo'))
+                                      statusIds.add('1');
+                                    currentFilters['status_ids'] = statusIds;
+                                  }
+                                }
+                              } else {
+                                _selectedFilters.add('pending');
+                                List<String> names =
+                                    currentFilters.containsKey('status_names')
+                                        ? List<String>.from(
+                                            currentFilters['status_names'])
+                                        : [];
+                                if (!names.contains('pending')) {
+                                  names.add('pending');
+                                }
+                                currentFilters['status_names'] = names;
+                                List<String> statusIds =
+                                    currentFilters.containsKey('status_ids')
+                                        ? List<String>.from(
+                                            currentFilters['status_ids'])
+                                        : [];
+                                if (!statusIds.contains('2')) {
+                                  statusIds.add('2');
+                                }
+                                currentFilters['status_ids'] = statusIds;
+                              }
+                              _loadData(currentFilters);
+                            });
+                          },
+                          // onPressed: () {
+                          //   setState(() {
+                          //     if (_selectedFilters.contains('pending')) {
+                          //       _selectedFilters.remove('pending');
+                          //       if (currentFilters
+                          //           .containsKey('status_names')) {
+                          //         List<String> names = List<String>.from(
+                          //             currentFilters['status_names']);
+                          //         names.remove('pending');
+                          //         if (names.isEmpty) {
+                          //           currentFilters.remove('status_names');
+                          //         } else {
+                          //           currentFilters['status_names'] = names;
+                          //         }
+                          //       }
+                          //     } else {
+                          //       _selectedFilters.add('pending');
+                          //       List<String> names =
+                          //           currentFilters.containsKey('status_names')
+                          //               ? List<String>.from(
+                          //                   currentFilters['status_names'])
+                          //               : [];
+                          //       if (!names.contains('pending')) {
+                          //         names.add('pending');
+                          //       }
+                          //       currentFilters['status_names'] = names;
+                          //     }
+                          //     _loadData(currentFilters);
+                          //   });
+                          // },
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Pending',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _selectedFilters.contains('todo')
+                                ? Colors.blue
+                                : Colors.grey.shade300,
+                            foregroundColor: _selectedFilters.contains('todo')
+                                ? Colors.white
+                                : Colors.black,
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              if (_selectedFilters.contains('todo')) {
+                                _selectedFilters.remove('todo');
+                                if (currentFilters
+                                    .containsKey('status_names')) {
+                                  List<String> names = List<String>.from(
+                                      currentFilters['status_names']);
+                                  names.remove('todo');
+                                  if (names.isEmpty) {
+                                    currentFilters.remove('status_names');
+                                    currentFilters.remove('status_ids');
+                                  } else {
+                                    currentFilters['status_names'] = names;
+                                    List<String> statusIds = [];
+                                    if (names.contains('pending'))
+                                      statusIds.add('2');
+                                    if (names.contains('todo'))
+                                      statusIds.add('1');
+                                    currentFilters['status_ids'] = statusIds;
+                                  }
+                                }
+                              } else {
+                                _selectedFilters.add('todo');
+                                List<String> names =
+                                    currentFilters.containsKey('status_names')
+                                        ? List<String>.from(
+                                            currentFilters['status_names'])
+                                        : [];
+                                if (!names.contains('todo')) {
+                                  names.add('todo');
+                                }
+                                currentFilters['status_names'] = names;
+                                List<String> statusIds =
+                                    currentFilters.containsKey('status_ids')
+                                        ? List<String>.from(
+                                            currentFilters['status_ids'])
+                                        : [];
+                                if (!statusIds.contains('1')) {
+                                  statusIds.add('1');
+                                }
+                                currentFilters['status_ids'] = statusIds;
+                              }
+                              _loadData(currentFilters);
+                            });
+                          },
+                          // onPressed: () {
+                          //   setState(() {
+                          //     if (_selectedFilters.contains('todo')) {
+                          //       _selectedFilters.remove('todo');
+                          //       if (currentFilters
+                          //           .containsKey('status_names')) {
+                          //         List<String> names = List<String>.from(
+                          //             currentFilters['status_names']);
+                          //         names.remove('todo');
+                          //         if (names.isEmpty) {
+                          //           currentFilters.remove('status_names');
+                          //         } else {
+                          //           currentFilters['status_names'] = names;
+                          //         }
+                          //       }
+                          //     } else {
+                          //       _selectedFilters.add('todo');
+                          //       List<String> names =
+                          //           currentFilters.containsKey('status_names')
+                          //               ? List<String>.from(
+                          //                   currentFilters['status_names'])
+                          //               : [];
+                          //       if (!names.contains('todo')) {
+                          //         names.add('todo');
+                          //       }
+                          //       currentFilters['status_names'] = names;
+                          //     }
+                          //     _loadData(currentFilters);
+                          //   });
+                          // },
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'To-Do',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // const SizedBox(width: 8),
+                    // Flexible(
+                    //   child: SizedBox(
+                    //     width: double.infinity,
+                    //     child: ElevatedButton(
+                    //       style: ElevatedButton.styleFrom(
+                    //         backgroundColor:
+                    //             _selectedFilters.contains('unassigned')
+                    //                 ? Colors.blue
+                    //                 : Colors.grey.shade300,
+                    //         foregroundColor:
+                    //             _selectedFilters.contains('unassigned')
+                    //                 ? Colors.white
+                    //                 : Colors.black,
+                    //         minimumSize: const Size(0, 36),
+                    //         padding: const EdgeInsets.symmetric(horizontal: 8),
+                    //       ),
+                    //       onPressed: () {
+                    //         setState(() {
+                    //           if (_selectedFilters.contains('unassigned')) {
+                    //             _selectedFilters.remove('unassigned');
+                    //             if (currentFilters
+                    //                 .containsKey('status_names')) {
+                    //               List<String> names = List<String>.from(
+                    //                   currentFilters['status_names']);
+                    //               names.remove('unassigned');
+                    //               if (names.isEmpty) {
+                    //                 currentFilters.remove('status_names');
+                    //                 currentFilters.remove('status_ids');
+                    //               } else {
+                    //                 currentFilters['status_names'] = names;
+                    //                 List<String> statusIds = List<String>.from(
+                    //                     currentFilters['status_ids'] ?? []);
+                    //                 statusIds.remove('0');
+                    //                 currentFilters['status_ids'] = statusIds;
+                    //               }
+                    //             }
+                    //           } else {
+                    //             _selectedFilters.add('unassigned');
+                    //             List<String> names =
+                    //                 currentFilters.containsKey('status_names')
+                    //                     ? List<String>.from(
+                    //                         currentFilters['status_names'])
+                    //                     : [];
+                    //             if (!names.contains('unassigned')) {
+                    //               names.add('unassigned');
+                    //             }
+                    //             currentFilters['status_names'] = names;
+                    //             List<String> statusIds =
+                    //                 currentFilters.containsKey('status_ids')
+                    //                     ? List<String>.from(
+                    //                         currentFilters['status_ids'])
+                    //                     : [];
+                    //             if (!statusIds.contains('0')) {
+                    //               statusIds.add('0');
+                    //             }
+                    //             currentFilters['status_ids'] = statusIds;
+                    //           }
+                    //           _loadData(currentFilters);
+                    //         });
+                    //       },
+                    //       child: const FittedBox(
+                    //         fit: BoxFit.scaleDown,
+                    //         child: Text(
+                    //           'Unassigned',
+                    //           style: TextStyle(fontSize: 12),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // Staff popup button
+                    Container(
+                      width: 40,
+                      height: 36,
+                      margin: const EdgeInsets.only(left: 8),
+                      child: IconButton(
+                        icon: const Icon(Icons.people),
+                        onPressed: () {
+                          _showSmallStaffPopup(context);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (selectedStaffName != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.blue.shade50,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person, size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Filtered by: $selectedStaffName',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          setState(() {
+                            selectedStaffName = null;
+                            selectedStaffId = null;
+                            // Remove staff filter from currentFilters
+                            currentFilters.remove('assigned_to_ids');
+                          });
+                          // Reload data without the staff filter
+                          _loadData(currentFilters);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              // Padding(
+              //   padding: const EdgeInsets.all(8.0),
+              //   child: Row(
+              //     children: [
+              //       Flexible(
+              //         child: SizedBox(
+              //           width: double.infinity,
+              //           child: ElevatedButton(
+              //             style: ElevatedButton.styleFrom(
+              //               backgroundColor:
+              //                   _selectedFilters.contains('assignedByMe')
+              //                       ? Colors.blue
+              //                       : Colors.grey.shade300,
+              //               foregroundColor:
+              //                   _selectedFilters.contains('assignedByMe')
+              //                       ? Colors.white
+              //                       : Colors.black,
+              //               minimumSize: const Size(0, 36),
+              //               padding: const EdgeInsets.symmetric(horizontal: 8),
+              //             ),
+              //             onPressed: () {
+              //               setState(() {
+              //                 if (_selectedFilters.contains('assignedByMe')) {
+              //                   _selectedFilters.remove('assignedByMe');
+              //                   currentFilters.remove('assigned_by_ids');
+              //                 } else {
+              //                   _selectedFilters.add('assignedByMe');
+              //                   if (userId != null) {
+              //                     currentFilters['assigned_by_ids'] = [userId];
+              //                   }
+              //                 }
+              //                 _loadData(currentFilters);
+              //               });
+              //             },
+              //             child: const FittedBox(
+              //               fit: BoxFit.scaleDown,
+              //               child: Text(
+              //                 'By Me',
+              //                 style: TextStyle(fontSize: 12),
+              //                 maxLines: 1,
+              //                 overflow: TextOverflow.ellipsis,
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 8),
+              //       Flexible(
+              //         child: SizedBox(
+              //           width: double.infinity,
+              //           child: ElevatedButton(
+              //             style: ElevatedButton.styleFrom(
+              //               backgroundColor:
+              //                   _selectedFilters.contains('assignedToMe')
+              //                       ? Colors.blue
+              //                       : Colors.grey.shade300,
+              //               foregroundColor:
+              //                   _selectedFilters.contains('assignedToMe')
+              //                       ? Colors.white
+              //                       : Colors.black,
+              //               minimumSize: const Size(0, 36),
+              //               padding: const EdgeInsets.symmetric(horizontal: 8),
+              //             ),
+              //             onPressed: () {
+              //               setState(() {
+              //                 if (_selectedFilters.contains('assignedToMe')) {
+              //                   _selectedFilters.remove('assignedToMe');
+              //                   currentFilters.remove('assigned_to_ids');
+              //                 } else {
+              //                   _selectedFilters.add('assignedToMe');
+              //                   if (userId != null) {
+              //                     currentFilters['assigned_to_ids'] = [userId];
+              //                   }
+              //                 }
+              //                 _loadData(currentFilters);
+              //               });
+              //             },
+              //             child: const FittedBox(
+              //               fit: BoxFit.scaleDown,
+              //               child: Text(
+              //                 'To Me',
+              //                 style: TextStyle(fontSize: 12),
+              //                 maxLines: 1,
+              //                 overflow: TextOverflow.ellipsis,
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 8),
+              //       Flexible(
+              //         child: SizedBox(
+              //           width: double.infinity,
+              //           child: ElevatedButton(
+              //             style: ElevatedButton.styleFrom(
+              //               backgroundColor:
+              //                   _selectedFilters.contains('pending')
+              //                       ? Colors.blue
+              //                       : Colors.grey.shade300,
+              //               foregroundColor:
+              //                   _selectedFilters.contains('pending')
+              //                       ? Colors.white
+              //                       : Colors.black,
+              //               minimumSize: const Size(0, 36),
+              //               padding: const EdgeInsets.symmetric(horizontal: 8),
+              //             ),
+              //             onPressed: () {
+              //               setState(() {
+              //                 if (_selectedFilters.contains('pending')) {
+              //                   _selectedFilters.remove('pending');
+              //                   // Remove 'pending' from status_names list if present
+              //                   if (currentFilters
+              //                       .containsKey('status_names')) {
+              //                     List<String> names = List<String>.from(
+              //                         currentFilters['status_names']);
+              //                     names.remove('pending');
+              //                     if (names.isEmpty) {
+              //                       currentFilters.remove('status_names');
+              //                     } else {
+              //                       currentFilters['status_names'] = names;
+              //                     }
+              //                   }
+              //                 } else {
+              //                   _selectedFilters.add('pending');
+              //                   // Add 'pending' to status_names list or create it
+              //                   List<String> names =
+              //                       currentFilters.containsKey('status_names')
+              //                           ? List<String>.from(
+              //                               currentFilters['status_names'])
+              //                           : [];
+              //                   if (!names.contains('pending')) {
+              //                     names.add('pending');
+              //                   }
+              //                   currentFilters['status_names'] = names;
+              //                 }
+              //                 _loadData(currentFilters);
+              //               });
+              //             },
+              //             child: const FittedBox(
+              //               fit: BoxFit.scaleDown,
+              //               child: Text(
+              //                 'Pending',
+              //                 style: TextStyle(fontSize: 12),
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 8),
+              //       Flexible(
+              //         child: SizedBox(
+              //           width: double.infinity,
+              //           child: ElevatedButton(
+              //             style: ElevatedButton.styleFrom(
+              //               backgroundColor: _selectedFilters.contains('todo')
+              //                   ? Colors.blue
+              //                   : Colors.grey.shade300,
+              //               foregroundColor: _selectedFilters.contains('todo')
+              //                   ? Colors.white
+              //                   : Colors.black,
+              //               minimumSize: const Size(0, 36),
+              //               padding: const EdgeInsets.symmetric(horizontal: 8),
+              //             ),
+              //             onPressed: () {
+              //               setState(() {
+              //                 if (_selectedFilters.contains('todo')) {
+              //                   _selectedFilters.remove('todo');
+              //                   // Remove 'todo' from status_names list if present
+              //                   if (currentFilters
+              //                       .containsKey('status_names')) {
+              //                     List<String> names = List<String>.from(
+              //                         currentFilters['status_names']);
+              //                     names.remove('todo');
+              //                     if (names.isEmpty) {
+              //                       currentFilters.remove('status_names');
+              //                     } else {
+              //                       currentFilters['status_names'] = names;
+              //                     }
+              //                   }
+              //                 } else {
+              //                   _selectedFilters.add('todo');
+              //                   // Add 'todo' to status_names list or create it
+              //                   List<String> names =
+              //                       currentFilters.containsKey('status_names')
+              //                           ? List<String>.from(
+              //                               currentFilters['status_names'])
+              //                           : [];
+              //                   if (!names.contains('todo')) {
+              //                     names.add('todo');
+              //                   }
+              //                   currentFilters['status_names'] = names;
+              //                 }
+              //                 _loadData(currentFilters);
+              //               });
+              //             },
+              //             child: const FittedBox(
+              //               fit: BoxFit.scaleDown,
+              //               child: Text(
+              //                 'To-Do',
+              //                 style: TextStyle(fontSize: 12),
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              if (isFiltered)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    border: Border(
+                      bottom:
+                          BorderSide(color: Colors.orange.shade100, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.filter_alt,
+                          size: 16, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      const Text('Filters applied',
+                          style: TextStyle(color: Colors.orange)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _clearAllFiltersAndState,
+                        child: const Text('Clear all',
+                            style: TextStyle(color: Colors.orange)),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: FutureBuilder<List<AssignedWork>>(
+                    future: assignedWorkFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.blue),
+                          ),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text("Error: ${snapshot.error}",
+                                  style: const TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        );
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.assignment_outlined,
+                                  size: 48, color: Colors.grey),
+                              const SizedBox(height: 16),
+                              Text(
+                                isFiltered
+                                    ? 'No matching assignments found'
+                                    : 'No work assigned yet',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              if (isFiltered) ...[
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: _clearFilters,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade800,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text('Clear filters',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }
+                      final assignedItems = snapshot.data!;
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: assignedItems.length,
+                              itemBuilder: (context, index) {
+                                final item = assignedItems[index];
+                                // Check if this card should use minimal view
+                                final isCardMinimal =
+                                    _cardMinimalViews[item.id.toString()] ??
+                                        _isMinimalView;
+                                return isCardMinimal
+                                    ? _buildMinimalAssignmentCard(
+                                        item, context, true)
+                                    : _buildAssignmentCard(item, context, true);
+                              },
+                            ),
+                          ),
+                          _buildBottomCountSummary(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
       floatingActionButton: assignWork == "true"
-          ? FloatingActionButton(
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.add, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AssignWorkPage(
-                      onSuccess: () {
-                        setState(() {
-                          checkExistingWorkStatus();
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-            )
-          : null,
-      body: Column(
-        children: [
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: Row(
-          //     children: [
-          //       Expanded(
-          //         child: ElevatedButton(
-          //           style: ElevatedButton.styleFrom(
-          //             backgroundColor: _selectedFilters.contains('assignedByMe')
-          //                 ? Colors.blue
-          //                 : Colors.grey.shade300,
-          //             foregroundColor: _selectedFilters.contains('assignedByMe')
-          //                 ? Colors.white
-          //                 : Colors.black,
-          //           ),
-          //           onPressed: () {
-          //             setState(() {
-          //               if (_selectedFilters.contains('assignedByMe')) {
-          //                 _selectedFilters.remove('assignedByMe');
-          //               } else {
-          //                 _selectedFilters.add('assignedByMe');
-          //               }
-          //               _loadData();
-          //             });
-          //           },
-          //           child: const Text('Assigned By Me',
-          //               style: TextStyle(fontSize: 14)),
-          //         ),
-          //       ),
-          //       const SizedBox(width: 8),
-          //       Expanded(
-          //         child: ElevatedButton(
-          //           style: ElevatedButton.styleFrom(
-          //             backgroundColor: _selectedFilters.contains('pending')
-          //                 ? Colors.blue
-          //                 : Colors.grey.shade300,
-          //             foregroundColor: _selectedFilters.contains('pending')
-          //                 ? Colors.white
-          //                 : Colors.black,
-          //           ),
-          //           onPressed: () {
-          //             setState(() {
-          //               if (_selectedFilters.contains('pending')) {
-          //                 _selectedFilters.remove('pending');
-          //               } else {
-          //                 _selectedFilters.add('pending');
-          //               }
-          //               _loadData();
-          //             });
-          //           },
-          //           child: const Text('Pending'),
-          //         ),
-          //       ),
-          //       const SizedBox(width: 8),
-          //       Expanded(
-          //         child: ElevatedButton(
-          //           style: ElevatedButton.styleFrom(
-          //             backgroundColor: _selectedFilters.contains('pending')
-          //                 ? Colors.blue
-          //                 : Colors.grey.shade300,
-          //             foregroundColor: _selectedFilters.contains('pending')
-          //                 ? Colors.white
-          //                 : Colors.black,
-          //           ),
-          //           onPressed: () {
-          //             setState(() {
-          //               if (_selectedFilters.contains('pending')) {
-          //                 _selectedFilters.remove('pending');
-          //               } else {
-          //                 _selectedFilters.add('pending');
-          //               }
-          //               _loadData();
-          //             });
-          //           },
-          //           child: const Text('To-Do'),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Flexible(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _selectedFilters.contains('assignedByMe')
-                                ? Colors.blue
-                                : Colors.grey.shade300,
-                        foregroundColor:
-                            _selectedFilters.contains('assignedByMe')
-                                ? Colors.white
-                                : Colors.black,
-                        minimumSize: const Size(0, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (_selectedFilters.contains('assignedByMe')) {
-                            _selectedFilters.remove('assignedByMe');
-                          } else {
-                            _selectedFilters.add('assignedByMe');
-                          }
-                          _loadData();
-                        });
-                      },
-                      child: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'Assigned By Me',
-                          style: TextStyle(fontSize: 12),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 48),
+              child: FloatingActionButton(
+                backgroundColor: Colors.blue,
+                child: const Icon(Icons.add, color: Colors.white),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AssignWorkPage(
+                        onSuccess: () {
+                          setState(() {
+                            checkExistingWorkStatus();
+                          });
+                        },
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _selectedFilters.contains('pending')
-                            ? Colors.blue
-                            : Colors.grey.shade300,
-                        foregroundColor: _selectedFilters.contains('pending')
-                            ? Colors.white
-                            : Colors.black,
-                        minimumSize: const Size(0, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (_selectedFilters.contains('pending')) {
-                            _selectedFilters.remove('pending');
-                          } else {
-                            _selectedFilters.add('pending');
-                          }
-                          _loadData();
-                        });
-                      },
-                      child: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'Pending',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _selectedFilters.contains('todo')
-                            ? Colors.blue
-                            : Colors.grey.shade300,
-                        foregroundColor: _selectedFilters.contains('todo')
-                            ? Colors.white
-                            : Colors.black,
-                        minimumSize: const Size(0, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          if (_selectedFilters.contains('todo')) {
-                            _selectedFilters.remove('todo');
-                          } else {
-                            _selectedFilters.add('todo');
-                          }
-                          _loadData();
-                        });
-                      },
-                      child: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'To-Do',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isFiltered)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                border: Border(
-                  bottom: BorderSide(color: Colors.orange.shade100, width: 1),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.filter_alt, size: 16, color: Colors.orange),
-                  const SizedBox(width: 8),
-                  const Text('Filters applied',
-                      style: TextStyle(color: Colors.orange)),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _clearFilters,
-                    child: const Text('Clear all',
-                        style: TextStyle(color: Colors.orange)),
-                  ),
-                ],
-              ),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _handleRefresh,
-              child: FutureBuilder<List<AssignedWork>>(
-                future: assignedWorkFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                      ),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline,
-                              size: 48, color: Colors.red),
-                          const SizedBox(height: 16),
-                          Text("Error: ${snapshot.error}",
-                              style: const TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.assignment_outlined,
-                              size: 48, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            isFiltered
-                                ? 'No matching assignments found'
-                                : 'No work assigned yet',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          if (isFiltered) ...[
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: _clearFilters,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade800,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text('Clear filters',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }
-
-                  final assignedItems = snapshot.data!;
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: assignedItems.length,
-                    itemBuilder: (context, index) {
-                      final item = assignedItems[index];
-                      return _buildAssignmentCard(item, context);
-                    },
                   );
+                  if (result == true) {
+                    setState(() {
+                      _loadData(currentFilters);
+                      checkExistingWorkStatus();
+                      checkAssignedWorks();
+                    });
+                  }
                 },
               ),
-            ),
-          ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 
-  Widget _buildAssignmentCard(AssignedWork item, BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 16),
-      color: item.status == "Completed"
-          ? const Color.fromARGB(255, 238, 255, 234)
-          : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: widget.workId == item.id.toString()
-            ? () => _showTaskDetails(context, item)
-            : null,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
+  Widget _buildMinimalAssignmentCard(
+      AssignedWork item, BuildContext context, bool showToggleButton) {
+    final workSessions = item.workSessions;
+    final isExpanded = _expandedWorkSessions[item.id.toString()] ?? false;
+    final sessionsToShow = isExpanded || workSessions.length <= 3
+        ? workSessions
+        : workSessions.sublist(0, 3);
+
+    return GestureDetector(
+      onTap: () => _showTaskDetails(context, item),
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 16),
+        color: item.status == "Completed"
+            ? const Color.fromARGB(255, 238, 255, 234)
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: widget.workId == item.id.toString()
+              ? () => _showTaskDetails(context, item)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.clientName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.projectName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color.fromARGB(255, 15, 15, 15),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color:
+                                _getStatusColor(item.status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _getStatusColor(item.status),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            item.status,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _getStatusColor(item.status),
+                            ),
+                          ),
+                        ),
+                        if (showToggleButton) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: Icon(
+                              Icons.expand_more,
+                              size: 20,
+                              color: Colors.blue,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _cardMinimalViews[item.id.toString()] = false;
+                              });
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            tooltip: 'Detailed View',
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Assigned by: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            TextSpan(
+                              text: item.assignedBy,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '  →  ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Assigned to: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            TextSpan(
+                              text: item.assignedTo,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (workSessions.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          item.projectName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Work Sessions',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            if (workSessions.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${workSessions.length}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.blue.shade800,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.moduleName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: const Color.fromARGB(255, 15, 15, 15),
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(height: 8),
+                        ...sessionsToShow.map((session) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          session.taskName,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: _getStatusColor(
+                                                        session.status)
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.circle,
+                                                    size: 8,
+                                                    color: _getStatusColor(
+                                                        session.status),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    session.status,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: _getStatusColor(
+                                                          session.status),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (session
+                                                .totalHours.isNotEmpty) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.timer,
+                                                      size: 11,
+                                                      color:
+                                                          Colors.green.shade700,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      session.totalHours,
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors
+                                                            .green.shade700,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (session.lastUpdatedTime.isNotEmpty) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      session.lastUpdatedTime,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        if (workSessions.length > 3 && !isExpanded) ...[
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _expandedWorkSessions[item.id.toString()] =
+                                      true;
+                                });
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Load more (${workSessions.length - 3} more)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.blue.shade800,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_drop_down,
+                                    size: 18,
+                                    color: Colors.blue.shade800,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
+                        if (isExpanded && workSessions.length > 3) ...[
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _expandedWorkSessions[item.id.toString()] =
+                                      false;
+                                });
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Show less',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.blue.shade800,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_drop_up,
+                                    size: 18,
+                                    color: Colors.blue.shade800,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getPriorityColor(item.priority).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _getPriorityColor(item.priority),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      _getPriorityText(item.priority),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _getPriorityColor(item.priority),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoRow(
-                      Icons.person_outline,
-                      "Assigned to",
-                      item.assignedTo,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // item.startStatus =="Not Started"?
-                  item.status != "Completed"
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.compare_arrows_outlined,
-                            color: const Color.fromARGB(255, 49, 222, 245),
+                Row(
+                  children: [
+                    if (name?.toLowerCase() == item.assignedTo.toLowerCase())
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: item.startStatus == "Started"
+                              ? const Color.fromARGB(255, 122, 121, 121)
+                              : const Color.fromARGB(255, 32, 179, 67),
+                          disabledBackgroundColor: const Color.fromARGB(
+                              255, 236, 167, 18), // for null onPressed
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          onPressed: () =>
-                              _showShareDialogTransfer(context, item),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                        ),
+                        onPressed: item.startStatus == "Started"
+                            ? null
+                            : () => _handleStartWork(item),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.startStatus == "Started"
+                                  ? Icons.stop_circle_outlined
+                                  : Icons.play_circle_outline,
+                              size: 16,
+                              color: item.startStatus == "Not Started"
+                                  ? Colors.white
+                                  : const Color.fromARGB(255, 179, 32, 32),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              item.startStatus == "Started"
+                                  ? "Started"
+                                  : "Start",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 90,
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.remove_red_eye, size: 16),
+                        label: const Text(
+                          "View",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade50,
+                          foregroundColor: Colors.blue.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: Colors.blue.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          elevation: 0,
+                          minimumSize: const Size(0, 32),
+                        ),
+                        onPressed: () => _showTaskDetails(context, item),
+                      ),
+                    ),
+
+                    //  const SizedBox(width: 8),
+                    // Stack(
+                    //   clipBehavior: Clip.none,
+                    //   children: [
+                    //     IconButton(
+                    //       icon: Icon(Icons.message,
+                    //           color: const Color.fromARGB(255, 22, 182, 62)),
+                    //       onPressed: () => Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => ChatScreenWork(
+                    //             groupId: item.id.toString(),
+                    //             nav: "",
+                    //             assignedTo: item.assignedTo,
+                    //             project: item.projectName,
+                    //             assignedToId: item.assignedToId.toString(),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //       style: IconButton.styleFrom(
+                    //         backgroundColor: Colors.blue.shade50,
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(8),
+                    //           side: BorderSide(
+                    //               color: const Color.fromARGB(255, 19, 175, 53)),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     item.unreadCount != "0"
+                    //         ? Positioned(
+                    //             top: -4,
+                    //             right: -4,
+                    //             child: Container(
+                    //               padding: const EdgeInsets.all(4),
+                    //               decoration: const BoxDecoration(
+                    //                 color: Colors.red,
+                    //                 shape: BoxShape.circle,
+                    //               ),
+                    //               constraints: const BoxConstraints(
+                    //                 minWidth: 20,
+                    //                 minHeight: 20,
+                    //               ),
+                    //               child: Text(
+                    //                 item.unreadCount,
+                    //                 style: const TextStyle(
+                    //                   color: Colors.white,
+                    //                   fontSize: 12,
+                    //                   fontWeight: FontWeight.bold,
+                    //                 ),
+                    //                 textAlign: TextAlign.center,
+                    //               ),
+                    //             ),
+                    //           )
+                    //         : const SizedBox(),
+                    //   ],
+                    // ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notification_add,
+                              color: Color.fromARGB(255, 146, 180, 20)),
+                          onPressed: () => _showShareDialog(context, item),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.blue.shade50,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: const BorderSide(
-                                color: Color.fromARGB(255, 20, 212, 94),
+                                  color: Color.fromARGB(255, 20, 212, 94)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color.fromARGB(255, 19, 175, 53),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.more_vert,
+                          color: Color.fromARGB(255, 22, 182, 62),
+                          size: 20,
+                        ),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'chat') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreenWork(
+                                groupId: item.id.toString(),
+                                nav: "",
+                                assignedTo: item.assignedTo,
+                                project: item.projectName,
+                                assignedToId: item.assignedToId.toString(),
                               ),
                             ),
-                          ),
-                        )
-                      : SizedBox(),
-                ],
-              ),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoRow(
-                      Icons.person,
-                      "Assigned by",
-                      item.assignedBy,
-                    ),
-                  ),
-                  if (name?.toLowerCase() == item.assignedTo.toLowerCase())
-                    _buildStatusChip(item.status),
-                ],
-              ),
-
-              const SizedBox(height: 6),
-
-              Row(
-                children: [
-                  if (item.dueDate.isNotEmpty)
-                    Expanded(
-                      child: _buildInfoRow(
-                        Icons.calendar_today,
-                        "Due date",
-                        item.dueDate,
-                      ),
-                    ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.edit,
-                      color: Color.fromARGB(255, 245, 138, 67),
-                    ),
-                    onPressed: () => _showEditWorkDialog(
-                        context, item), // ✅ replaced with edit dialog
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(
-                          color: Color.fromARGB(255, 154, 212, 20),
-                        ),
-                      ),
-                    ),
-                    tooltip: "Edit Work",
-                  ),
-                ],
-              ),
-
-              //  _buildInfoRow(
-              //     Icons.disabled_visible_outlined,
-              //     "Completion",
-              //     item.completion,
-
-              //   ),
-              _buildCompletionWidget(item.completion),
-
-              _buildInfoRow(Icons.work, "Work Status", item.startStatus),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  if (name?.toLowerCase() == item.assignedTo.toLowerCase())
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: item.startStatus == "Started"
-                            ? const Color.fromARGB(255, 122, 121, 121)
-                            : const Color.fromARGB(255, 32, 179, 67),
-                        disabledBackgroundColor: const Color.fromARGB(
-                            255, 236, 167, 18), // for null onPressed
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                      ),
-                      onPressed: item.startStatus == "Started"
-                          ? null
-                          : () => _handleStartWork(item),
-                      child: Row(
-                        children: [
-                          Icon(
-                            item.startStatus == "Started"
-                                ? Icons.stop_circle_outlined
-                                : Icons.play_circle_outline,
-                            size: 16,
-                            color: item.startStatus == "Not Started"
-                                ? Colors.white
-                                : const Color.fromARGB(255, 179, 32, 32),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.startStatus == "Started"
-                                ? "Work Started"
-                                : "Start Work",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (name?.toLowerCase() != item.assignedTo.toLowerCase())
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: item.status == "Completed"
-                            ? const Color.fromARGB(255, 32, 179, 67)
-                            : item.status == "To Do"
-                                ? const Color.fromARGB(255, 48, 192, 236)
-                                : item.status == "Pending"
-                                    ? const Color.fromARGB(255, 236, 190, 39)
-                                    : item.status == "In-Progress"
-                                        ? const Color.fromARGB(
-                                            255, 248, 145, 48)
-                                        : const Color.fromARGB(
-                                            255, 221, 53, 31),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                      ),
-                      onPressed: () => (),
-                      // item.startStatus == "Started"
-                      //     ? null
-                      //     : () =>() ,
-                      child: Row(
-                        children: [
-                          Icon(
-                            item.status == "Completed"
-                                ? Icons.check
-                                : item.status == "To Do"
-                                    ? Icons.list
-                                    : item.status == "Pending"
-                                        ? Icons.pending
-                                        : item.status == "Pending"
-                                            ? Icons.pause
-                                            : Icons.play_circle_outline,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.status,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.remove_red_eye,
-                        color: const Color.fromARGB(255, 238, 26, 26)),
-                    onPressed: () => _showTaskDetails(context, item),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                            color: const Color.fromARGB(255, 238, 23, 23)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.message,
-                            color: const Color.fromARGB(255, 22, 182, 62)),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatScreenWork(
-                              groupId: item.id.toString(),
-                              nav: "",
-                              assignedTo: item.assignedTo,
-                              project: item.projectName,
-                              assignedToId: item.assignedToId.toString(),
-                            ),
-                          ),
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.blue.shade50,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                                color: const Color.fromARGB(255, 19, 175, 53)),
-                          ),
-                        ),
-                      ),
-                      item.unreadCount != "0"
-                          ? Positioned(
-                              top: -4,
-                              right: -4,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 20,
-                                  minHeight: 20,
-                                ),
-                                child: Text(
-                                  item.unreadCount,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                          );
+                        } else if (value == 'edit') {
+                          _handleEditWork(item);
+                        } else if (value == 'delete') {
+                          _handleDeleteWork(item);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'chat',
+                          child: SizedBox(
+                            width: 100, // Set your desired width here
+                            child: Row(
+                              children: [
+                                const Icon(Icons.message,
+                                    color: Colors.green, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Chat',
+                                    style: TextStyle(fontSize: 14),
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                            )
-                          : SizedBox(),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notification_add,
-                            color: Color.fromARGB(255, 146, 180, 20)),
-                        onPressed: () => _showShareDialog(context, item),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.blue.shade50,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
-                                color: Color.fromARGB(255, 20, 212, 94)),
+                                if (item.unreadCount != "0" &&
+                                    item.unreadCount != "0") ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      item.unreadCount,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: SizedBox(
+                            width: 100, // Same width for consistency
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit,
+                                    color: Colors.blue, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Edit',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: SizedBox(
+                            width: 100, // Same width for consistency
+                            child: Row(
+                              children: [
+                                const Icon(Icons.delete,
+                                    color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                      elevation: 4,
+                      position: PopupMenuPosition.under,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildAssignmentCard(
+      AssignedWork item, BuildContext context, bool showToggleButton) {
+    return GestureDetector(
+      onTap: () => _showTaskDetails(context, item),
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 16),
+        color: item.status == "Completed"
+            ? const Color.fromARGB(255, 238, 255, 234)
+            : Colors.white,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: const Color.fromARGB(255, 226, 216, 216))),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: widget.workId == item.id.toString()
+              ? () => _showTaskDetails(context, item)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.clientName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.projectName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color.fromARGB(255, 15, 15, 15),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _getPriorityColor(item.priority)
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _getPriorityColor(item.priority),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            _getPriorityText(item.priority),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _getPriorityColor(item.priority),
+                            ),
+                          ),
+                        ),
+                        if (showToggleButton) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: Icon(
+                              Icons.expand_less,
+                              size: 20,
+                              color: Colors.blue,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _cardMinimalViews[item.id.toString()] = true;
+                              });
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            tooltip: 'Minimal View',
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.person,
+                        "Assigned by",
+                        item.assignedBy,
+                      ),
+                    ),
+                    if (name?.toLowerCase() == item.assignedTo.toLowerCase())
+                      _buildStatusChip(item.status),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoRow(
+                        Icons.person_outline,
+                        "Assigned to",
+                        item.assignedTo,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    if (item.dueDate.isNotEmpty)
+                      Expanded(
+                        child: _buildInfoRow(
+                          Icons.calendar_today,
+                          "Due date",
+                          item.dueDate,
+                        ),
+                      ),
+                  ],
+                ),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: _buildInfoRow(
+                //         Icons.star_outline_sharp,
+                //         "Status",
+                //         item.status,
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatusInfoRow(item),
+                    ),
+                  ],
+                ),
+                _buildCompletionWidget(item.completion),
+                _buildInfoRow(Icons.work, "Work Status", item.startStatus),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (name?.toLowerCase() == item.assignedTo.toLowerCase())
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: item.startStatus == "Started"
+                              ? const Color.fromARGB(255, 122, 121, 121)
+                              : const Color.fromARGB(255, 32, 179, 67),
+                          disabledBackgroundColor: const Color.fromARGB(
+                              255, 236, 167, 18), // for null onPressed
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                        ),
+                        onPressed: item.startStatus == "Started"
+                            ? null
+                            : () => _handleStartWork(item),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.startStatus == "Started"
+                                  ? Icons.stop_circle_outlined
+                                  : Icons.play_circle_outline,
+                              size: 16,
+                              color: item.startStatus == "Not Started"
+                                  ? Colors.white
+                                  : const Color.fromARGB(255, 179, 32, 32),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              item.startStatus == "Started"
+                                  ? "Started"
+                                  : "Start",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 90,
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.remove_red_eye, size: 16),
+                        label: const Text(
+                          "View",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade50,
+                          foregroundColor: Colors.blue.shade800,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(
+                              color: Colors.blue.shade300,
+                              width: 1.5, // thinner border
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6, // reduced height
+                          ),
+                          elevation: 0,
+                          minimumSize:
+                              const Size(0, 32), // control button height
+                        ),
+                        onPressed: () => _showTaskDetails(context, item),
+                      ),
+                    ),
+                    // const SizedBox(width: 8),
+                    // PopupMenuButton<String>(
+                    //   icon: Container(
+                    //     padding: const EdgeInsets.all(8),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.blue.shade50,
+                    //       shape: BoxShape.circle,
+                    //       border: Border.all(
+                    //         color: const Color.fromARGB(255, 19, 175, 53),
+                    //       ),
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.more_vert,
+                    //       color: Color.fromARGB(255, 22, 182, 62),
+                    //       size: 20,
+                    //     ),
+                    //   ),
+                    //   onSelected: (value) {
+                    //     if (value == 'chat') {
+                    //       Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => ChatScreenWork(
+                    //             groupId: item.id.toString(),
+                    //             nav: "",
+                    //             assignedTo: item.assignedTo,
+                    //             project: item.projectName,
+                    //             assignedToId: item.assignedToId.toString(),
+                    //           ),
+                    //         ),
+                    //       );
+                    //     } else if (value == 'edit') {
+                    //       _handleEditWork(item);
+                    //     } else if (value == 'delete') {
+                    //       _handleDeleteWork(item);
+                    //     }
+                    //   },
+                    //   itemBuilder: (BuildContext context) =>
+                    //       <PopupMenuEntry<String>>[
+                    //     PopupMenuItem<String>(
+                    //       value: 'chat',
+                    //       child: SizedBox(
+                    //         width: 200, // Set your desired width here
+                    //         child: Row(
+                    //           children: [
+                    //             const Icon(Icons.message,
+                    //                 color: Colors.green, size: 20),
+                    //             const SizedBox(width: 12),
+                    //             const Expanded(
+                    //               child: Text(
+                    //                 'Chat',
+                    //                 style: TextStyle(fontSize: 14),
+                    //               ),
+                    //             ),
+                    //             if (item.unreadCount != "0" &&
+                    //                 item.unreadCount != "0") ...[
+                    //               const SizedBox(width: 8),
+                    //               Container(
+                    //                 padding: const EdgeInsets.symmetric(
+                    //                     horizontal: 6, vertical: 2),
+                    //                 decoration: BoxDecoration(
+                    //                   color: Colors.red,
+                    //                   borderRadius: BorderRadius.circular(10),
+                    //                 ),
+                    //                 child: Text(
+                    //                   item.unreadCount,
+                    //                   style: const TextStyle(
+                    //                     color: Colors.white,
+                    //                     fontSize: 12,
+                    //                     fontWeight: FontWeight.bold,
+                    //                   ),
+                    //                 ),
+                    //               ),
+                    //             ],
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     const PopupMenuDivider(),
+                    //     PopupMenuItem<String>(
+                    //       value: 'edit',
+                    //       child: SizedBox(
+                    //         width: 200, // Same width for consistency
+                    //         child: Row(
+                    //           children: [
+                    //             const Icon(Icons.edit,
+                    //                 color: Colors.blue, size: 20),
+                    //             const SizedBox(width: 12),
+                    //             const Expanded(
+                    //               child: Text(
+                    //                 'Edit',
+                    //                 style: TextStyle(fontSize: 14),
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     const PopupMenuDivider(),
+                    //     PopupMenuItem<String>(
+                    //       value: 'delete',
+                    //       child: SizedBox(
+                    //         width: 200, // Same width for consistency
+                    //         child: Row(
+                    //           children: [
+                    //             const Icon(Icons.delete,
+                    //                 color: Colors.red, size: 20),
+                    //             const SizedBox(width: 12),
+                    //             const Expanded(
+                    //               child: Text(
+                    //                 'Delete',
+                    //                 style: TextStyle(fontSize: 14),
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    //   shape: RoundedRectangleBorder(
+                    //     borderRadius: BorderRadius.circular(12),
+                    //   ),
+                    //   elevation: 4,
+                    //   position: PopupMenuPosition.under,
+                    // ),
+                    // const SizedBox(width: 8),
+                    // Stack(
+                    //   clipBehavior: Clip.none,
+                    //   children: [
+                    //     IconButton(
+                    //       icon: Icon(Icons.message,
+                    //           color: const Color.fromARGB(255, 22, 182, 62)),
+                    //       onPressed: () => Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => ChatScreenWork(
+                    //             groupId: item.id.toString(),
+                    //             nav: "",
+                    //             assignedTo: item.assignedTo,
+                    //             project: item.projectName,
+                    //             assignedToId: item.assignedToId.toString(),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //       style: IconButton.styleFrom(
+                    //         backgroundColor: Colors.blue.shade50,
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(8),
+                    //           side: BorderSide(
+                    //               color:
+                    //                   const Color.fromARGB(255, 19, 175, 53)),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     item.unreadCount != "0"
+                    //         ? Positioned(
+                    //             top: -4,
+                    //             right: -4,
+                    //             child: Container(
+                    //               padding: const EdgeInsets.all(4),
+                    //               decoration: const BoxDecoration(
+                    //                 color: Colors.red,
+                    //                 shape: BoxShape.circle,
+                    //               ),
+                    //               constraints: const BoxConstraints(
+                    //                 minWidth: 20,
+                    //                 minHeight: 20,
+                    //               ),
+                    //               child: Text(
+                    //                 item.unreadCount,
+                    //                 style: const TextStyle(
+                    //                   color: Colors.white,
+                    //                   fontSize: 12,
+                    //                   fontWeight: FontWeight.bold,
+                    //                 ),
+                    //                 textAlign: TextAlign.center,
+                    //               ),
+                    //             ),
+                    //           )
+                    //         : const SizedBox(),
+                    //   ],
+                    // ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notification_add,
+                              color: Color.fromARGB(255, 146, 180, 20)),
+                          onPressed: () => _showShareDialog(context, item),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.blue.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(
+                                  color: Color.fromARGB(255, 20, 212, 94)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color.fromARGB(255, 19, 175, 53),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.more_vert,
+                          color: Color.fromARGB(255, 22, 182, 62),
+                          size: 20,
+                        ),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'chat') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreenWork(
+                                groupId: item.id.toString(),
+                                nav: "",
+                                assignedTo: item.assignedTo,
+                                project: item.projectName,
+                                assignedToId: item.assignedToId.toString(),
+                              ),
+                            ),
+                          );
+                        } else if (value == 'edit') {
+                          _handleEditWork(item);
+                        } else if (value == 'delete') {
+                          _handleDeleteWork(item);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'chat',
+                          child: SizedBox(
+                            width: 100, // Set your desired width here
+                            child: Row(
+                              children: [
+                                const Icon(Icons.message,
+                                    color: Colors.green, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Chat',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                                if (item.unreadCount != "0" &&
+                                    item.unreadCount != "0") ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      item.unreadCount,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: SizedBox(
+                            width: 100, // Same width for consistency
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit,
+                                    color: Colors.blue, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Edit',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: SizedBox(
+                            width: 100, // Same width for consistency
+                            child: Row(
+                              children: [
+                                const Icon(Icons.delete,
+                                    color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      position: PopupMenuPosition.under,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusInfoRow(AssignedWork item) {
+    bool isRunning = item.status.toLowerCase() == 'running';
+    Widget statusWidget = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            isRunning ? Icons.run_circle_outlined : Icons.star_outline_sharp,
+            size: 18,
+            color: isRunning ? Colors.green : Colors.grey.shade600,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            "Status:",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              item.status,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isRunning ? Colors.green : Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isRunning) {
+      return BlinkingWidget(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 47, 255, 54).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+                color: const Color.fromARGB(255, 28, 248, 36).withOpacity(0.3)),
+          ),
+          child: statusWidget,
+        ),
+      );
+    }
+
+    return statusWidget;
+  }
+
   Widget _buildCompletionWidget(String completion) {
     final parts = completion.split('/');
     int completed = int.tryParse(parts[0]) ?? 0;
     int total = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
-
     double progress = total > 0 ? completed / total : 0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1207,8 +2885,7 @@ class _AssignReportState extends State<AssignReport> {
         ),
       );
     } else {
-      if (!mounted) return;
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => AddWorkPage(
@@ -1224,263 +2901,1193 @@ class _AssignReportState extends State<AssignReport> {
           ),
         ),
       );
+      if (result == true) {
+        _loadData(currentFilters);
+        checkExistingWorkStatus();
+        checkAssignedWorks();
+      }
     }
   }
 
   void _showTaskDetails(BuildContext context, AssignedWork item) {
+    Map<String, bool> localExpandedSessions = {};
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 53, 157, 237),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            Widget _buildLocalCompactWorkSession(WorkSession session) {
+              final sessionKey = '${session.taskName}_${session.totalHours}';
+              final isExpanded = localExpandedSessions[sessionKey] ?? false;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  color: Colors.blue,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  child: Row(
-                    children: [
-                      Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.assignment, color: Colors.white),
-                          const SizedBox(width: 12),
-                          const Text(
-                            "Assignment Details",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.task_alt,
+                                    size: 18, color: Colors.blue),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${session.taskName} ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                          if (session.description.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            StatefulBuilder(
+                              builder: (context, setState) {
+                                final isExpanded = _expandedDescriptions[
+                                        '${item.id}_${session.taskName}'] ??
+                                    false;
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _expandedDescriptions[
+                                                  '${item.id}_${session.taskName}'] =
+                                              !isExpanded;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: Colors.grey.shade300,
+                                              width: 1),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // Icon(
+                                            //   isExpanded
+                                            //       ? Icons.expand_more
+                                            //       : Icons.chevron_right,
+                                            //   size: 20,
+                                            //   color: Colors.grey.shade600,
+                                            // ),
+                                            // const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    session.description,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color:
+                                                          Colors.grey.shade700,
+                                                    ),
+                                                    maxLines:
+                                                        isExpanded ? null : 1,
+                                                    overflow: isExpanded
+                                                        ? null
+                                                        : TextOverflow.ellipsis,
+                                                  ),
+                                                  if (!isExpanded &&
+                                                      session.description
+                                                              .length >
+                                                          80)
+                                                    const SizedBox(height: 4),
+                                                  if (!isExpanded &&
+                                                      session.description
+                                                              .length >
+                                                          80)
+                                                    Text(
+                                                      'View more',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors
+                                                            .blue.shade600,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            Icon(
+                                              isExpanded
+                                                  ? Icons.keyboard_arrow_up
+                                                  : Icons.keyboard_arrow_down,
+                                              size: 18,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                          if (session.totalHours.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Total Hours:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${session.totalHours}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: const Color.fromARGB(
+                                            255, 19, 18, 18),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 41),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(session.status)
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _getStatusColor(session.status)
+                                          .withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        size: 8,
+                                        color: _getStatusColor(session.status),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        session.status,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color:
+                                              _getStatusColor(session.status),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                          if (session.lastUpdatedTime.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  'Last Updated:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                Text(
+                                  '${session.lastUpdatedTime}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: const Color.fromARGB(255, 8, 8, 8),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDetailHeader(item.projectName, item.moduleName),
-                        const SizedBox(height: 24),
-                        _buildDetailSection("Overview", [
-                          _buildDetailItem("Client", item.clientName),
-                          _buildDetailItem(
-                              "Priority", _getPriorityText(item.priority)),
-                          _buildDetailItem("Status", item.status),
-                          _buildDetailItem("Due Date", item.dueDate),
-                        ]),
-                        const SizedBox(height: 24),
-                        _buildDetailSection("Assignment", [
-                          _buildDetailItem("Assigned To", item.assignedTo),
-                          _buildDetailItem("Assigned By", item.assignedBy),
-                          _buildDetailItem("Created At", item.createdAt),
-                        ]),
-                        const SizedBox(height: 24),
-                        _buildDetailSection("Participants", [
-                          _buildDetailItem(
-                            "Chat Participants",
-                            item.notification.participantNames.isNotEmpty
-                                ? item.notification.participantNames.join(", ")
-                                : "--",
+                    ),
+
+                    // Log count button (shows logs count and acts as expander)
+                    if (session.works.isNotEmpty) ...[
+                      GestureDetector(
+                        onTap: () {
+                          setSheetState(() {
+                            if (isExpanded) {
+                              localExpandedSessions.remove(sessionKey);
+                            } else {
+                              localExpandedSessions[sessionKey] = true;
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            border: Border.all(color: Colors.grey.shade200),
                           ),
-                        ]),
-                        const SizedBox(height: 24),
-                        _buildWorkSessionsSection(item),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.list_alt,
+                                    size: 18,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Timeline',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${session.count} Log${session.count != "1" ? "s" : ""}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.blue.shade800,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    isExpanded
+                                        ? Icons.expand_less
+                                        : Icons.expand_more,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Timeline section (only shown when expanded)
+                      if (isExpanded) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              ...session.works.map((work) {
+                                return _buildCompactTimelineItem(work);
+                              }),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              );
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    padding: const EdgeInsets.only(top: 12, bottom: 8),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  // Header with close button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.assignment,
+                                  size: 24, color: Colors.blue),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.projectName,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  item.createdAt,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.close, size: 20),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const Divider(height: 1, color: Colors.grey),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      _buildCompactDetailCard(
+                                        icon: Icons.person,
+                                        title: "Assigned To",
+                                        value: item.assignedTo,
+                                        color: Colors.blue,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildCompactDetailCard(
+                                        icon: Icons.flag,
+                                        title: "Priority",
+                                        value: _getPriorityText(item.priority),
+                                        color: _getPriorityColor(item.priority),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      _buildCompactDetailCard(
+                                        icon: Icons.person_outline,
+                                        title: "Assigned By",
+                                        value: item.assignedBy,
+                                        color: Colors.purple,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildCompactDetailCard(
+                                        icon: Icons.calendar_today,
+                                        title: "Due Date",
+                                        value: item.dueDate,
+                                        color: Colors.orange,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(item.status)
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _getStatusColor(item.status)
+                                          .withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        item.status == "Completed"
+                                            ? Icons.check_circle
+                                            : item.status == "To Do"
+                                                ? Icons.list_alt
+                                                : item.status == "Pending"
+                                                    ? Icons.pending_actions
+                                                    : item.status ==
+                                                            "In-Progress"
+                                                        ? Icons.timeline
+                                                        : Icons.error_outline,
+                                        color: _getStatusColor(item.status),
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Status",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          Text(
+                                            item.status,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  _getStatusColor(item.status),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        color: Colors.grey.shade700,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Last Work Time",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            item.lastWorkTime ?? "--",
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.grey.shade800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (name != null &&
+                                          token != null &&
+                                          userId != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                CustomerDashboard(
+                                              name: name!,
+                                              token: token!,
+                                              userId: userId!,
+                                              phoneCallLogPermission:
+                                                  phoneCallLogPermission,
+                                              custId: item.clientId,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: _buildCompactDetailCard(
+                                      icon: Icons.business,
+                                      title: "Client",
+                                      value: item.clientName,
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildCompactDetailCard(
+                                    icon: Icons.widgets,
+                                    title: "Module",
+                                    value: item.moduleName,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (item.workSessions.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Work Sessions",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...item.workSessions.map((session) {
+                              return _buildLocalCompactWorkSession(session);
+                            }),
+                          ] else ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.hourglass_empty,
+                                      size: 40, color: Colors.grey.shade400),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "No work sessions recorded",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (item
+                              .notification.participantNames.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Chat Participants",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: item.notification.participantNames
+                                  .map((name) {
+                                return Chip(
+                                  label: Text(name),
+                                  backgroundColor: Colors.blue.shade50,
+                                  side: BorderSide(color: Colors.blue.shade100),
+                                  avatar: const Icon(Icons.person, size: 16),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildDetailHeader(String project, String module) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          project,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+  // void _showTaskDetails(BuildContext context, AssignedWork item) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (context) {
+  //       return Container(
+  //         decoration: BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Colors.black.withOpacity(0.1),
+  //               blurRadius: 20,
+  //               offset: const Offset(0, -5),
+  //             ),
+  //           ],
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             // Drag handle
+  //             Container(
+  //               padding: const EdgeInsets.only(top: 12, bottom: 8),
+  //               child: Container(
+  //                 width: 40,
+  //                 height: 4,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey.shade400,
+  //                   borderRadius: BorderRadius.circular(2),
+  //                 ),
+  //               ),
+  //             ),
+
+  //             // Header with close button
+  //             Padding(
+  //               padding:
+  //                   const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   Row(
+  //                     children: [
+  //                       Container(
+  //                         padding: const EdgeInsets.all(8),
+  //                         decoration: BoxDecoration(
+  //                           color: Colors.blue.shade50,
+  //                           borderRadius: BorderRadius.circular(10),
+  //                         ),
+  //                         child: const Icon(Icons.assignment,
+  //                             size: 24, color: Colors.blue),
+  //                       ),
+  //                       const SizedBox(width: 12),
+  //                       Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             item.projectName,
+  //                             style: const TextStyle(
+  //                               fontSize: 18,
+  //                               fontWeight: FontWeight.w700,
+  //                               color: Colors.black87,
+  //                             ),
+  //                           ),
+  //                           Text(
+  //                             item.createdAt,
+  //                             style: TextStyle(
+  //                               fontSize: 14,
+  //                               color: Colors.grey.shade600,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   IconButton(
+  //                     icon: Container(
+  //                       padding: const EdgeInsets.all(6),
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.grey.shade100,
+  //                         borderRadius: BorderRadius.circular(10),
+  //                       ),
+  //                       child: const Icon(Icons.close, size: 20),
+  //                     ),
+  //                     onPressed: () => Navigator.pop(context),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+
+  //             const Divider(height: 1, color: Colors.grey),
+
+  //             // Main content - optimized for single screen
+  //             Expanded(
+  //               child: SingleChildScrollView(
+  //                 padding: const EdgeInsets.all(20),
+  //                 child: Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     // Quick stats in 2 columns
+  //                     Container(
+  //                       margin: const EdgeInsets.only(bottom: 20),
+  //                       child: Row(
+  //                         children: [
+  //                           // Left column
+  //                           Expanded(
+  //                             child: Column(
+  //                               children: [
+  //                                 _buildCompactDetailCard(
+  //                                   icon: Icons.person,
+  //                                   title: "Assigned To",
+  //                                   value: item.assignedTo,
+  //                                   color: Colors.blue,
+  //                                 ),
+  //                                 const SizedBox(height: 12),
+  //                                 _buildCompactDetailCard(
+  //                                   icon: Icons.flag,
+  //                                   title: "Priority",
+  //                                   value: _getPriorityText(item.priority),
+  //                                   color: _getPriorityColor(item.priority),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+
+  //                           const SizedBox(width: 12),
+
+  //                           // Right column
+  //                           Expanded(
+  //                             child: Column(
+  //                               children: [
+  //                                 _buildCompactDetailCard(
+  //                                   icon: Icons.person_outline,
+  //                                   title: "Assigned By",
+  //                                   value: item.assignedBy,
+  //                                   color: Colors.purple,
+  //                                 ),
+  //                                 const SizedBox(height: 12),
+  //                                 _buildCompactDetailCard(
+  //                                   icon: Icons.calendar_today,
+  //                                   title: "Due Date",
+  //                                   value: item.dueDate,
+  //                                   color: Colors.orange,
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+
+  //                     Row(
+  //                       children: [
+  //                         Expanded(
+  //                           child: Container(
+  //                             margin: const EdgeInsets.only(bottom: 20),
+  //                             padding: const EdgeInsets.all(16),
+  //                             decoration: BoxDecoration(
+  //                               color: _getStatusColor(item.status)
+  //                                   .withOpacity(0.1),
+  //                               borderRadius: BorderRadius.circular(12),
+  //                               border: Border.all(
+  //                                 color: _getStatusColor(item.status)
+  //                                     .withOpacity(0.3),
+  //                                 width: 1,
+  //                               ),
+  //                             ),
+  //                             child: Row(
+  //                               children: [
+  //                                 Icon(
+  //                                   item.status == "Completed"
+  //                                       ? Icons.check_circle
+  //                                       : item.status == "To Do"
+  //                                           ? Icons.list_alt
+  //                                           : item.status == "Pending"
+  //                                               ? Icons.pending_actions
+  //                                               : item.status == "In-Progress"
+  //                                                   ? Icons.timeline
+  //                                                   : Icons.error_outline,
+  //                                   color: _getStatusColor(item.status),
+  //                                   size: 24,
+  //                                 ),
+  //                                 const SizedBox(width: 12),
+  //                                 Column(
+  //                                   crossAxisAlignment:
+  //                                       CrossAxisAlignment.start,
+  //                                   children: [
+  //                                     Text(
+  //                                       "Status",
+  //                                       style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         color: Colors.grey.shade600,
+  //                                       ),
+  //                                     ),
+  //                                     Text(
+  //                                       item.status,
+  //                                       style: TextStyle(
+  //                                         fontSize: 16,
+  //                                         fontWeight: FontWeight.w600,
+  //                                         color: _getStatusColor(item.status),
+  //                                       ),
+  //                                     ),
+  //                                   ],
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ),
+
+  //                         const SizedBox(width: 12),
+
+  //                         // LAST WORK TIME
+  //                         Expanded(
+  //                           child: Container(
+  //                             margin: const EdgeInsets.only(bottom: 20),
+  //                             padding: const EdgeInsets.all(16),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.grey.shade100,
+  //                               borderRadius: BorderRadius.circular(12),
+  //                               border: Border.all(
+  //                                 color: Colors.grey.shade300,
+  //                                 width: 1,
+  //                               ),
+  //                             ),
+  //                             child: Row(
+  //                               children: [
+  //                                 Icon(
+  //                                   Icons.access_time,
+  //                                   color: Colors.grey.shade700,
+  //                                   size: 24,
+  //                                 ),
+  //                                 const SizedBox(width: 12),
+  //                                 Column(
+  //                                   crossAxisAlignment:
+  //                                       CrossAxisAlignment.start,
+  //                                   children: [
+  //                                     Text(
+  //                                       "Last Work Time",
+  //                                       style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         color: Colors.grey.shade600,
+  //                                       ),
+  //                                     ),
+  //                                     const SizedBox(height: 4),
+  //                                     Text(
+  //                                       item.lastWorkTime ?? "--",
+  //                                       style: TextStyle(
+  //                                         fontSize: 11,
+  //                                         fontWeight: FontWeight.w600,
+  //                                         color: Colors.grey.shade800,
+  //                                       ),
+  //                                     ),
+  //                                   ],
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+
+  //                     // Client and Module in row - FIXED SECTION
+  //                     Container(
+  //                       margin: const EdgeInsets.only(bottom: 20),
+  //                       child: Row(
+  //                         children: [
+  //                           // Client card with tap functionality
+  //                           Expanded(
+  //                             child: GestureDetector(
+  //                               onTap: () {
+  //                                 if (name != null &&
+  //                                     token != null &&
+  //                                     userId != null) {
+  //                                   Navigator.push(
+  //                                     context,
+  //                                     MaterialPageRoute(
+  //                                       builder: (context) => CustomerDashboard(
+  //                                         name: name!,
+  //                                         token: token!,
+  //                                         userId: userId!,
+  //                                         phoneCallLogPermission:
+  //                                             phoneCallLogPermission,
+  //                                         custId: item.clientId,
+  //                                       ),
+  //                                     ),
+  //                                   );
+  //                                 }
+  //                               },
+  //                               child: _buildCompactDetailCard(
+  //                                 icon: Icons.business,
+  //                                 title: "Client",
+  //                                 value: item.clientName,
+  //                                 color: Colors.teal,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 12),
+  //                           // Module card
+  //                           Expanded(
+  //                             child: _buildCompactDetailCard(
+  //                               icon: Icons.widgets,
+  //                               title: "Module",
+  //                               value: item.moduleName,
+  //                               color: Colors.indigo,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+
+  //                     if (item.workSessions.isNotEmpty) ...[
+  //                       const SizedBox(height: 8),
+  //                       const Text(
+  //                         "Work Sessions",
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontWeight: FontWeight.w700,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 12),
+  //                       ...item.workSessions.map((session) {
+  //                         return _buildCompactWorkSession(session);
+  //                       }),
+  //                     ] else ...[
+  //                       Container(
+  //                         margin: const EdgeInsets.only(bottom: 20),
+  //                         padding: const EdgeInsets.all(20),
+  //                         decoration: BoxDecoration(
+  //                           color: Colors.grey.shade50,
+  //                           borderRadius: BorderRadius.circular(12),
+  //                         ),
+  //                         child: Column(
+  //                           children: [
+  //                             Icon(Icons.hourglass_empty,
+  //                                 size: 40, color: Colors.grey.shade400),
+  //                             const SizedBox(height: 8),
+  //                             Text(
+  //                               "No work sessions recorded",
+  //                               style: TextStyle(
+  //                                 color: Colors.grey.shade600,
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                     ],
+
+  //                     // Participants section
+  //                     if (item.notification.participantNames.isNotEmpty) ...[
+  //                       const SizedBox(height: 8),
+  //                       const Text(
+  //                         "Chat Participants",
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontWeight: FontWeight.w700,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 12),
+  //                       Wrap(
+  //                         spacing: 8,
+  //                         runSpacing: 8,
+  //                         children:
+  //                             item.notification.participantNames.map((name) {
+  //                           return Chip(
+  //                             label: Text(name),
+  //                             backgroundColor: Colors.blue.shade50,
+  //                             side: BorderSide(color: Colors.blue.shade100),
+  //                             avatar: const Icon(Icons.person, size: 16),
+  //                           );
+  //                         }).toList(),
+  //                       ),
+  //                     ],
+
+  //                     const SizedBox(height: 20),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+// Helper widget for compact detail cards
+  Widget _buildCompactDetailCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          module,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildDetailSection(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.blueAccent,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Column(
-          children: items,
-        ),
-      ],
-    );
-  }
+  Widget _buildCompactWorkSession(WorkSession session) {
+    final sessionKey = '${session.taskName}_${session.totalHours}';
+    final isExpanded = _expandedTimelineSessions[sessionKey] ?? false;
 
-  Widget _buildDetailItem(String label, String value) {
-    IconData icon = Icons.info_outline;
-    Color iconColor = Colors.blue;
-
-    switch (label.toLowerCase()) {
-      case 'client':
-        icon = Icons.business;
-        iconColor = Colors.teal;
-        break;
-      case 'priority':
-        icon = Icons.priority_high;
-        iconColor = Colors.redAccent;
-        break;
-      case 'status':
-        icon = Icons.check_circle_outline;
-        iconColor = Colors.green;
-        break;
-      case 'due date':
-        icon = Icons.calendar_today;
-        iconColor = Colors.orange;
-        break;
-      case 'assigned to':
-        icon = Icons.person;
-        iconColor = Colors.purple;
-        break;
-      case 'assigned by':
-        icon = Icons.supervisor_account;
-        iconColor = Colors.indigo;
-        break;
-      case 'created at':
-        icon = Icons.access_time;
-        iconColor = Colors.brown;
-        break;
-    }
+    // Determine how many items to show
+    final worksToShow = isExpanded || session.works.length <= 5
+        ? session.works
+        : session.works.sublist(0, 5);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildWorkSessionsSection(AssignedWork item) {
-    if (item.workSessions.isEmpty) {
-      return _buildDetailSection("Work Sessions", [
-        const Center(
-          child: Column(
-            children: [
-              Icon(Icons.hourglass_empty, size: 48, color: Colors.grey),
-              SizedBox(height: 8),
-              Text("No work sessions recorded yet",
-                  style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-        ),
-      ]);
-    }
-
-    return _buildDetailSection("Work Sessions", [
-      ...item.workSessions.map((session) {
-        return _buildWorkSessionItem(session);
-      }),
-    ]);
-  }
-
-  Widget _buildWorkSessionItem(WorkSession session) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Session header (unchanged)
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1488,118 +4095,219 @@ class _AssignReportState extends State<AssignReport> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.task_alt, size: 20, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Text(
-                      session.taskName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.task_alt,
+                          size: 18, color: Colors.blue),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${session.taskName} ',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
-                if (session.description.isNotEmpty)
+                if (session.description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    session.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (session.totalHours.isNotEmpty) ...[
+                  const SizedBox(height: 8),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.description,
-                          size: 20, color: Colors.blue),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              const TextSpan(
-                                text: 'Description: ',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                      Row(
+                        children: [
+                          Text(
+                            'Total Hours:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          Text(
+                            '${session.totalHours}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: const Color.fromARGB(255, 19, 18, 18),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 41),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color:
+                              _getStatusColor(session.status).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _getStatusColor(session.status)
+                                .withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: _getStatusColor(session.status),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              session.status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: _getStatusColor(session.status),
                               ),
-                              TextSpan(
-                                text: session.description,
-                                style: const TextStyle(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+                if (session.lastUpdatedTime.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        'Last Updated:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      Text(
+                        '${session.lastUpdatedTime}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: const Color.fromARGB(255, 8, 8, 8),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          if (session.works.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Timeline',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(width: 175),
+                      Text(
+                        '${session.count} Log',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Show timeline items (limited to 5 if not expanded)
+                  ...worksToShow.map((work) {
+                    return _buildCompactTimelineItem(work);
+                  }),
+
+                  // Show "Show More/Less" button if there are more than 5 items
+                  if (session.works.length > 5) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.center,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isExpanded) {
+                              _expandedTimelineSessions.remove(sessionKey);
+                            } else {
+                              _expandedTimelineSessions[sessionKey] = true;
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.blue.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isExpanded
+                                    ? 'Show Less'
+                                    : 'Show More (${session.works.length - 5} more)',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue.shade800,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                isExpanded
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                                size: 16,
+                                color: Colors.blue.shade800,
                               ),
                             ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.remove_road_rounded,
-                        size: 20, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          final remarkList = session.remark
-                              .split(',')
-                              .map((e) => e.trim())
-                              .toList();
-                          if (remarkList.length > 1) {
-                            setState(() {
-                              isRemarkExpanded = !isRemarkExpanded;
-                            });
-                          }
-                        },
-                        child: Builder(
-                          builder: (context) {
-                            final remarkList = session.remark
-                                .split(',')
-                                .map((e) => e.trim())
-                                .toList();
-                            final hasMore = remarkList.length > 1;
-
-                            final displayText = isRemarkExpanded
-                                ? remarkList.join(', ')
-                                : hasMore
-                                    ? '${remarkList[0]} +${remarkList.length - 1} more'
-                                    : remarkList[0];
-
-                            return Text.rich(
-                              TextSpan(
-                                children: [
-                                  const TextSpan(
-                                    text: 'Remarks: ',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  TextSpan(
-                                    text: displayText,
-                                    style: const TextStyle(),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-          if (session.works.isNotEmpty) ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Work Timeline",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...session.works.map((work) {
-                    return _buildTimelineItem(work);
-                  }),
                 ],
               ),
             ),
@@ -1608,13 +4316,203 @@ class _AssignReportState extends State<AssignReport> {
       ),
     );
   }
+  // Widget _buildCompactWorkSession(WorkSession session) {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 12),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: Colors.grey.shade200, width: 1),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.05),
+  //           blurRadius: 4,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         // Session header
+  //         Padding(
+  //           padding: const EdgeInsets.all(16),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     padding: const EdgeInsets.all(6),
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.blue.shade50,
+  //                       borderRadius: BorderRadius.circular(8),
+  //                     ),
+  //                     child: const Icon(Icons.task_alt,
+  //                         size: 18, color: Colors.blue),
+  //                   ),
+  //                   const SizedBox(width: 10),
+  //                   Expanded(
+  //                     child: Text(
+  //                       '${session.taskName} ',
+  //                       style: const TextStyle(
+  //                         fontWeight: FontWeight.w600,
+  //                         fontSize: 15,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               if (session.description.isNotEmpty) ...[
+  //                 const SizedBox(height: 8),
+  //                 Text(
+  //                   session.description,
+  //                   style: TextStyle(
+  //                     fontSize: 13,
+  //                     color: Colors.grey.shade700,
+  //                   ),
+  //                   maxLines: 2,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //               ],
+  //               if (session.totalHours.isNotEmpty) ...[
+  //                 const SizedBox(height: 8),
+  //                 Row(
+  //                   children: [
+  //                     Row(
+  //                       children: [
+  //                         Text(
+  //                           'Total Hours:',
+  //                           style: TextStyle(
+  //                             fontSize: 14,
+  //                             color: Colors.grey.shade700,
+  //                           ),
+  //                         ),
+  //                         Text(
+  //                           '${session.totalHours}',
+  //                           style: TextStyle(
+  //                             fontSize: 13,
+  //                             color: const Color.fromARGB(255, 19, 18, 18),
+  //                             fontWeight: FontWeight.w600,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     const SizedBox(width: 41),
+  //                     Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 8, vertical: 4),
+  //                       decoration: BoxDecoration(
+  //                         color:
+  //                             _getStatusColor(session.status).withOpacity(0.1),
+  //                         borderRadius: BorderRadius.circular(12),
+  //                         border: Border.all(
+  //                           color: _getStatusColor(session.status)
+  //                               .withOpacity(0.3),
+  //                           width: 1,
+  //                         ),
+  //                       ),
+  //                       child: Row(
+  //                         mainAxisSize: MainAxisSize.min,
+  //                         children: [
+  //                           Icon(
+  //                             Icons.circle,
+  //                             size: 8,
+  //                             color: _getStatusColor(session.status),
+  //                           ),
+  //                           const SizedBox(width: 6),
+  //                           Text(
+  //                             session.status,
+  //                             style: TextStyle(
+  //                               fontSize: 11,
+  //                               fontWeight: FontWeight.w600,
+  //                               color: _getStatusColor(session.status),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 )
+  //               ],
+  //               if (session.lastUpdatedTime.isNotEmpty) ...[
+  //                 const SizedBox(height: 8),
+  //                 Row(
+  //                   children: [
+  //                     Text(
+  //                       'Last Updated:',
+  //                       style: TextStyle(
+  //                         fontSize: 14,
+  //                         color: Colors.grey.shade700,
+  //                       ),
+  //                     ),
+  //                     Text(
+  //                       '${session.lastUpdatedTime}',
+  //                       style: TextStyle(
+  //                         fontSize: 13,
+  //                         color: const Color.fromARGB(255, 8, 8, 8),
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ],
+  //           ),
+  //         ),
 
-  Widget _buildTimelineItem(Work work) {
+  //         if (session.works.isNotEmpty) ...[
+  //           Container(
+  //             padding: const EdgeInsets.all(16),
+  //             decoration: BoxDecoration(
+  //               color: Colors.grey.shade50,
+  //               borderRadius: const BorderRadius.only(
+  //                 bottomLeft: Radius.circular(12),
+  //                 bottomRight: Radius.circular(12),
+  //               ),
+  //             ),
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Row(
+  //                   children: [
+  //                     Text(
+  //                       'Timeline',
+  //                       style: TextStyle(
+  //                         fontSize: 14,
+  //                         fontWeight: FontWeight.w600,
+  //                         color: Colors.grey.shade700,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 175),
+  //                     Text(
+  //                       '${session.count} Log',
+  //                       style: TextStyle(
+  //                           fontSize: 13,
+  //                           color: Colors.grey.shade600,
+  //                           fontWeight: FontWeight.bold),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 const SizedBox(height: 12),
+  //                 ...session.works.map((work) {
+  //                   return _buildCompactTimelineItem(work);
+  //                 }),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildCompactTimelineItem(Work work) {
     String formatDate(String datetime) {
       try {
         final dateTime = DateTime.tryParse(datetime);
         if (dateTime != null) {
-          return DateFormat('dd-MM-yyyy').format(dateTime);
+          return DateFormat('dd MMM yyyy').format(dateTime);
         }
         return datetime;
       } catch (e) {
@@ -1626,7 +4524,7 @@ class _AssignReportState extends State<AssignReport> {
       try {
         final dateTime = DateTime.tryParse(datetime);
         if (dateTime != null) {
-          return DateFormat('HH:mm').format(dateTime);
+          return DateFormat('hh:mm a').format(dateTime);
         }
         return datetime;
       } catch (e) {
@@ -1638,72 +4536,255 @@ class _AssignReportState extends State<AssignReport> {
       if (duration.contains(':')) {
         final parts = duration.split(':');
         if (parts.length == 3) {
-          return '${parts[0]}h ${parts[1]}m';
-        }
-        if (parts.length == 2) {
-          return '${parts[0]}m ${parts[1]}s';
+          int hours = int.tryParse(parts[0]) ?? 0;
+          int minutes = int.tryParse(parts[1]) ?? 0;
+          if (hours > 0) {
+            return '${hours}h ${minutes}m';
+          }
+          return '${minutes}m';
         }
       }
       return duration;
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 3,
-            height: 60,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 2,
+                height: 40,
+                margin: const EdgeInsets.symmetric(vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+
+          const SizedBox(width: 12),
+
+          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date
-                Text(
-                  formatDate(work.workedDate),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  height: 30,
-                  child: Row(
-                    children: [
-                      // Scrollable chips
-                      Expanded(
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            _buildTimeChip(
-                                "Start: ${formatTime(work.startTime)}",
-                                Colors.green),
-                            const SizedBox(width: 6),
-                            _buildTimeChip(
-                                "End: ${formatTime(work.endTime)}", Colors.red),
-                            const SizedBox(width: 6),
-                            _buildTimeChip(
-                                "Duration: ${formatDuration(work.duration)}",
-                                Colors.blue),
-                            const SizedBox(width: 12),
-                          ],
-                        ),
+                // Date row
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-
-                      const Icon(Icons.arrow_forward_ios,
-                          size: 10, color: Colors.grey),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today,
+                              size: 12, color: Colors.blue),
+                          const SizedBox(width: 4),
+                          Text(
+                            formatDate(work.workedDate),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    //  const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 216, 201, 175),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          // const Icon(Icons.lock_clock,
+                          //     size: 9,
+                          //     color: Color.fromARGB(255, 151, 137, 137)),
+                          // const SizedBox(width: 4),
+                          Text(
+                            "${formatTime(work.startTime)} - ${formatTime(work.endTime)}",
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: const Color.fromARGB(255, 143, 133, 133),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.timer,
+                              size: 12, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            formatDuration(work.duration),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+
+                // const SizedBox(height: 8),
+                // Row(
+                //   children: [
+                //     Container(
+                //       padding: const EdgeInsets.symmetric(
+                //           horizontal: 9, vertical: 3),
+                //       decoration: BoxDecoration(
+                //         color: const Color.fromARGB(255, 216, 201, 175),
+                //         borderRadius: BorderRadius.circular(8),
+                //       ),
+                //       child: Row(
+                //         children: [
+                //           const Icon(Icons.lock_clock,
+                //               size: 12,
+                //               color: Color.fromARGB(255, 151, 137, 137)),
+                //           const SizedBox(width: 4),
+                //           Text(
+                //             "${formatTime(work.startTime)} - ${formatTime(work.endTime)}",
+                //             style: TextStyle(
+                //               fontSize: 11,
+                //               fontWeight: FontWeight.w600,
+                //               color: const Color.fromARGB(255, 143, 133, 133),
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
+
+                // Remarks section - Always show all remarks
+                if (work.remarks.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 237, 253, 227),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Remarks header with icon
+                        // Row(
+                        //   children: [
+                        //     Icon(
+                        //       Icons.note,
+                        //       size: 14,
+                        //       color: const Color.fromARGB(255, 208, 33, 243),
+                        //     ),
+                        //     const SizedBox(width: 6),
+                        //     Text(
+                        //       'Remarks (${work.remarks.length}):',
+                        //       style: TextStyle(
+                        //         fontSize: 12,
+                        //         fontWeight: FontWeight.w600,
+                        //         color: const Color.fromARGB(255, 208, 33, 243),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                        // const SizedBox(height: 6),
+                        // List all remarks
+                        ...work.remarks.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final remark = entry.value;
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: index == work.remarks.length - 1 ? 0 : 6,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${index + 1}.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color:
+                                        const Color.fromARGB(255, 19, 19, 19),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    remark,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: const Color.fromARGB(255, 7, 7, 7),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1712,57 +4793,508 @@ class _AssignReportState extends State<AssignReport> {
     );
   }
 
-  Widget _buildTimeChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            color == Colors.green
-                ? Icons.play_arrow
-                : color == Colors.red
-                    ? Icons.stop
-                    : Icons.timer,
-            size: 14,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildCompactTimelineItem(Work work) {
+  //   String formatDate(String datetime) {
+  //     try {
+  //       final dateTime = DateTime.tryParse(datetime);
+  //       if (dateTime != null) {
+  //         return DateFormat('dd MMM yyyy').format(dateTime);
+  //       }
+  //       return datetime;
+  //     } catch (e) {
+  //       return datetime;
+  //     }
+  //   }
 
-  Widget _buildTimePill(String text, Color bgColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
+  //   String formatTime(String datetime) {
+  //     try {
+  //       final dateTime = DateTime.tryParse(datetime);
+  //       if (dateTime != null) {
+  //         return DateFormat('hh:mm a').format(dateTime);
+  //       }
+  //       return datetime;
+  //     } catch (e) {
+  //       return datetime;
+  //     }
+  //   }
+
+  //   String formatDuration(String duration) {
+  //     if (duration.contains(':')) {
+  //       final parts = duration.split(':');
+  //       if (parts.length == 3) {
+  //         int hours = int.tryParse(parts[0]) ?? 0;
+  //         int minutes = int.tryParse(parts[1]) ?? 0;
+  //         if (hours > 0) {
+  //           return '${hours}h ${minutes}m';
+  //         }
+  //         return '${minutes}m';
+  //       }
+  //     }
+  //     return duration;
+  //   }
+
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 12),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Column(
+  //           children: [
+  //             Container(
+  //               width: 12,
+  //               height: 12,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.green,
+  //                 shape: BoxShape.circle,
+  //                 border: Border.all(color: Colors.white, width: 2),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.green.withOpacity(0.3),
+  //                     blurRadius: 4,
+  //                     offset: const Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             Container(
+  //               width: 2,
+  //               height: 40,
+  //               margin: const EdgeInsets.symmetric(vertical: 2),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey.shade300,
+  //                 borderRadius: BorderRadius.circular(1),
+  //               ),
+  //             ),
+  //             Container(
+  //               width: 12,
+  //               height: 12,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.red,
+  //                 shape: BoxShape.circle,
+  //                 border: Border.all(color: Colors.white, width: 2),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.red.withOpacity(0.3),
+  //                     blurRadius: 4,
+  //                     offset: const Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+
+  //         const SizedBox(width: 12),
+
+  //         // Content
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               // Date row
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     padding: const EdgeInsets.symmetric(
+  //                         horizontal: 10, vertical: 4),
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.blue.shade50,
+  //                       borderRadius: BorderRadius.circular(8),
+  //                     ),
+  //                     child: Row(
+  //                       children: [
+  //                         const Icon(Icons.calendar_today,
+  //                             size: 12, color: Colors.blue),
+  //                         const SizedBox(width: 4),
+  //                         Text(
+  //                           formatDate(work.workedDate),
+  //                           style: TextStyle(
+  //                             fontSize: 11,
+  //                             fontWeight: FontWeight.w600,
+  //                             color: Colors.blue.shade800,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   const Spacer(),
+  //                   Container(
+  //                     padding: const EdgeInsets.symmetric(
+  //                         horizontal: 10, vertical: 4),
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.orange.shade50,
+  //                       borderRadius: BorderRadius.circular(8),
+  //                     ),
+  //                     child: Row(
+  //                       children: [
+  //                         const Icon(Icons.timer,
+  //                             size: 12, color: Colors.orange),
+  //                         const SizedBox(width: 4),
+  //                         Text(
+  //                           formatDuration(work.duration),
+  //                           style: TextStyle(
+  //                             fontSize: 11,
+  //                             fontWeight: FontWeight.w600,
+  //                             color: Colors.orange.shade800,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+
+  //               const SizedBox(height: 8),
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     padding: const EdgeInsets.symmetric(
+  //                         horizontal: 9, vertical: 3),
+  //                     decoration: BoxDecoration(
+  //                       color: const Color.fromARGB(255, 216, 201, 175),
+  //                       borderRadius: BorderRadius.circular(8),
+  //                     ),
+  //                     child: Row(
+  //                       children: [
+  //                         const Icon(Icons.lock_clock,
+  //                             size: 12,
+  //                             color: const Color.fromARGB(255, 151, 137, 137)),
+  //                         const SizedBox(width: 4),
+  //                         Text(
+  //                           "${formatTime(work.startTime)} - ${formatTime(work.endTime)}",
+  //                           style: TextStyle(
+  //                             fontSize: 11,
+  //                             fontWeight: FontWeight.w600,
+  //                             color: const Color.fromARGB(255, 143, 133, 133),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+
+  //               const SizedBox(height: 8),
+  //               // if (work.remarks.isNotEmpty)
+  //               //   InkWell(
+  //               //     onTap: work.remarks.length > 1
+  //               //         ? () {
+  //               //             // Show popup with all remarks
+  //               //             showDialog(
+  //               //               context: context,
+  //               //               builder: (context) => AlertDialog(
+  //               //                 title: const Text("Remarks"),
+  //               //                 content: SingleChildScrollView(
+  //               //                   child: Column(
+  //               //                     mainAxisSize: MainAxisSize.min,
+  //               //                     crossAxisAlignment:
+  //               //                         CrossAxisAlignment.start,
+  //               //                     children: work.remarks
+  //               //                         .map((remark) => Padding(
+  //               //                               padding:
+  //               //                                   const EdgeInsets.symmetric(
+  //               //                                       vertical: 6),
+  //               //                               child: Row(
+  //               //                                 crossAxisAlignment:
+  //               //                                     CrossAxisAlignment.start,
+  //               //                                 children: [
+  //               //                                   Text("•",
+  //               //                                       style: TextStyle(
+  //               //                                         color: const Color
+  //               //                                             .fromARGB(
+  //               //                                             255, 208, 33, 243),
+  //               //                                         fontSize: 14,
+  //               //                                       )),
+  //               //                                   const SizedBox(width: 8),
+  //               //                                   Expanded(
+  //               //                                     child: Text(
+  //               //                                       remark,
+  //               //                                       style: const TextStyle(
+  //               //                                           fontSize: 14),
+  //               //                                     ),
+  //               //                                   ),
+  //               //                                 ],
+  //               //                               ),
+  //               //                             ))
+  //               //                         .toList(),
+  //               //                   ),
+  //               //                 ),
+  //               //                 actions: [
+  //               //                   TextButton(
+  //               //                     onPressed: () => Navigator.pop(context),
+  //               //                     child: const Text("Close"),
+  //               //                   ),
+  //               //                 ],
+  //               //               ),
+  //               //             );
+  //               //           }
+  //               //         : null, // Don't make clickable if only 1 remark
+  //               //     child: Container(
+  //               //       padding: const EdgeInsets.symmetric(
+  //               //           horizontal: 10, vertical: 4),
+  //               //       decoration: BoxDecoration(
+  //               //         color: const Color.fromARGB(255, 243, 227, 253),
+  //               //         borderRadius: BorderRadius.circular(8),
+  //               //       ),
+  //               //       child: Row(
+  //               //         children: [
+  //               //           const Icon(Icons.note,
+  //               //               size: 12,
+  //               //               color: Color.fromARGB(255, 208, 33, 243)),
+  //               //           const SizedBox(width: 4),
+  //               //           Text(
+  //               //             work.remarks.length == 1
+  //               //                 ? work.remarks[0]
+  //               //                 : "${work.remarks.length} remarks",
+  //               //             style: TextStyle(
+  //               //               fontSize: 11,
+  //               //               fontWeight: FontWeight.w600,
+  //               //               color: const Color.fromARGB(255, 208, 33, 243),
+  //               //             ),
+  //               //             maxLines: 1,
+  //               //             overflow: TextOverflow.ellipsis,
+  //               //           ),
+  //               //           if (work.remarks.length > 1) ...[
+  //               //             const SizedBox(width: 4),
+  //               //             Icon(
+  //               //               Icons.arrow_drop_down,
+  //               //               size: 14,
+  //               //               color: const Color.fromARGB(255, 208, 33, 243),
+  //               //             ),
+  //               //           ],
+  //               //         ],
+  //               //       ),
+  //               //     ),
+  //               //   ),
+  //               if (work.remarks.isNotEmpty)
+  //                 StatefulBuilder(
+  //                   builder: (context, setState) {
+  //                     final isRemarksExpanded = _expandedRemarks[
+  //                             '${work.startTime}_${work.endTime}'] ??
+  //                         false;
+  //                     final hasMultipleRemarks = work.remarks.length > 1;
+
+  //                     return Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         InkWell(
+  //                           onTap: hasMultipleRemarks
+  //                               ? () {
+  //                                   setState(() {
+  //                                     _expandedRemarks[
+  //                                             '${work.startTime}_${work.endTime}'] =
+  //                                         !isRemarksExpanded;
+  //                                   });
+  //                                 }
+  //                               : null,
+  //                           child: Container(
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 12, vertical: 10),
+  //                             decoration: BoxDecoration(
+  //                               color: const Color.fromARGB(255, 243, 227, 253),
+  //                               borderRadius: BorderRadius.circular(8),
+  //                             ),
+  //                             child: Column(
+  //                               crossAxisAlignment: CrossAxisAlignment.start,
+  //                               children: [
+  //                                 Row(
+  //                                   mainAxisAlignment:
+  //                                       MainAxisAlignment.spaceBetween,
+  //                                   crossAxisAlignment:
+  //                                       CrossAxisAlignment.start,
+  //                                   children: [
+  //                                     Expanded(
+  //                                       child: Column(
+  //                                         crossAxisAlignment:
+  //                                             CrossAxisAlignment.start,
+  //                                         children: [
+  //                                           // Single remark - show full text with wrapping
+  //                                           if (!hasMultipleRemarks) ...[
+  //                                             Text(
+  //                                               work.remarks[0],
+  //                                               style: TextStyle(
+  //                                                 fontSize: 12,
+  //                                                 fontWeight: FontWeight.w500,
+  //                                                 color: const Color.fromARGB(
+  //                                                     255, 208, 33, 243),
+  //                                               ),
+  //                                               maxLines: isRemarksExpanded
+  //                                                   ? null
+  //                                                   : 3,
+  //                                               overflow: isRemarksExpanded
+  //                                                   ? null
+  //                                                   : TextOverflow.ellipsis,
+  //                                             ),
+  //                                           ],
+
+  //                                           // Multiple remarks - show count
+  //                                           if (hasMultipleRemarks &&
+  //                                               !isRemarksExpanded) ...[
+  //                                             Text(
+  //                                               "${work.remarks.length} remarks",
+  //                                               style: TextStyle(
+  //                                                 fontSize: 12,
+  //                                                 fontWeight: FontWeight.w600,
+  //                                                 color: const Color.fromARGB(
+  //                                                     255, 208, 33, 243),
+  //                                               ),
+  //                                             ),
+  //                                           ],
+
+  //                                           // Show individual remarks when expanded
+  //                                           if (hasMultipleRemarks &&
+  //                                               isRemarksExpanded) ...[
+  //                                             ...work.remarks
+  //                                                 .asMap()
+  //                                                 .entries
+  //                                                 .map((entry) {
+  //                                               final index = entry.key;
+  //                                               final remark = entry.value;
+  //                                               return Padding(
+  //                                                 padding: EdgeInsets.only(
+  //                                                   bottom: index ==
+  //                                                           work.remarks
+  //                                                                   .length -
+  //                                                               1
+  //                                                       ? 0
+  //                                                       : 8,
+  //                                                 ),
+  //                                                 child: Row(
+  //                                                   crossAxisAlignment:
+  //                                                       CrossAxisAlignment
+  //                                                           .start,
+  //                                                   children: [
+  //                                                     Text(
+  //                                                       "${index + 1}.",
+  //                                                       style: TextStyle(
+  //                                                         fontSize: 12,
+  //                                                         fontWeight:
+  //                                                             FontWeight.w600,
+  //                                                         color: const Color
+  //                                                             .fromARGB(255,
+  //                                                             208, 33, 243),
+  //                                                       ),
+  //                                                     ),
+  //                                                     const SizedBox(width: 8),
+  //                                                     Expanded(
+  //                                                       child: Text(
+  //                                                         remark,
+  //                                                         style: TextStyle(
+  //                                                           fontSize: 12,
+  //                                                           fontWeight:
+  //                                                               FontWeight.w500,
+  //                                                           color: const Color
+  //                                                               .fromARGB(255,
+  //                                                               208, 33, 243),
+  //                                                         ),
+  //                                                       ),
+  //                                                     ),
+  //                                                   ],
+  //                                                 ),
+  //                                               );
+  //                                             }).toList(),
+  //                                           ],
+  //                                         ],
+  //                                       ),
+  //                                     ),
+
+  //                                     // Icon and arrow
+  //                                     if (hasMultipleRemarks) ...[
+  //                                       const SizedBox(width: 8),
+  //                                       Row(
+  //                                         children: [
+  //                                           Icon(
+  //                                             Icons.note,
+  //                                             size: 14,
+  //                                             color: const Color.fromARGB(
+  //                                                 255, 208, 33, 243),
+  //                                           ),
+  //                                           const SizedBox(width: 4),
+  //                                           Icon(
+  //                                             isRemarksExpanded
+  //                                                 ? Icons.expand_less
+  //                                                 : Icons.expand_more,
+  //                                             size: 16,
+  //                                             color: const Color.fromARGB(
+  //                                                 255, 208, 33, 243),
+  //                                           ),
+  //                                         ],
+  //                                       ),
+  //                                     ],
+  //                                   ],
+  //                                 ),
+
+  //                                 // "View more" hint for single long remark
+  //                                 if (!hasMultipleRemarks &&
+  //                                     work.remarks[0].length > 100 &&
+  //                                     !isRemarksExpanded) ...[
+  //                                   const SizedBox(height: 4),
+  //                                   Text(
+  //                                     'Tap to view more',
+  //                                     style: TextStyle(
+  //                                       fontSize: 10,
+  //                                       color: const Color.fromARGB(
+  //                                           255, 208, 33, 243),
+  //                                       fontStyle: FontStyle.italic,
+  //                                     ),
+  //                                   ),
+  //                                 ],
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ),
+
+  //                         // Make single long remarks expandable too
+  //                         if (!hasMultipleRemarks &&
+  //                             work.remarks[0].length > 100) ...[
+  //                           GestureDetector(
+  //                             onTap: () {
+  //                               setState(() {
+  //                                 _expandedRemarks[
+  //                                         '${work.startTime}_${work.endTime}'] =
+  //                                     !isRemarksExpanded;
+  //                               });
+  //                             },
+  //                             child: Container(
+  //                               padding: const EdgeInsets.only(top: 4),
+  //                               child: Row(
+  //                                 mainAxisAlignment: MainAxisAlignment.end,
+  //                                 children: [
+  //                                   Text(
+  //                                     isRemarksExpanded
+  //                                         ? 'Show less'
+  //                                         : 'View more',
+  //                                     style: TextStyle(
+  //                                       fontSize: 10,
+  //                                       color: const Color.fromARGB(
+  //                                           255, 208, 33, 243),
+  //                                       fontWeight: FontWeight.w600,
+  //                                     ),
+  //                                   ),
+  //                                   Icon(
+  //                                     isRemarksExpanded
+  //                                         ? Icons.keyboard_arrow_up
+  //                                         : Icons.keyboard_arrow_down,
+  //                                     size: 12,
+  //                                     color: const Color.fromARGB(
+  //                                         255, 208, 33, 243),
+  //                                   ),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ],
+  //                     );
+  //                   },
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   void _showShareDialog(BuildContext context, AssignedWork item) {
     bool whatsappNotification = item.notification.whatsappNotification == "1";
@@ -2091,7 +5623,7 @@ class _AssignReportState extends State<AssignReport> {
   void _showShareDialogTransfer(BuildContext context, AssignedWork item) {
     final _formKey = GlobalKey<FormState>();
     TextEditingController descriptionController = TextEditingController();
-    List<String> selectedStaffIds = []; // Keep track of selected staff
+    List<String> selectedStaffIds = [];
 
     showDialog(
       context: context,
@@ -2409,6 +5941,17 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   void _showFilters() {
+    print('=== SHOW FILTERS DEBUG ===');
+    print('_hasInitialStatusFilter: $_hasInitialStatusFilter');
+    print('_initialStatus: $_initialStatus');
+    print('currentFilters: $currentFilters');
+    print('currentFilters.isEmpty: ${currentFilters.isEmpty}');
+    Map<String, dynamic> initialFiltersForWidget = {};
+    if (currentFilters.isNotEmpty) {
+      initialFiltersForWidget.addAll(currentFilters);
+    } else if (_hasInitialStatusFilter) {
+      initialFiltersForWidget['status_name'] = _initialStatus;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2422,20 +5965,148 @@ class _AssignReportState extends State<AssignReport> {
                 ),
                 child: FilterWidget(
                   pageId: 2,
-                  initialFilters: {
-                    if (_selectedFilters.contains('assignedByMe'))
-                      'assigned_by_ids': [_currentUserId ?? '']
-                  }..addAll(currentFilters),
+                  initialFilters: initialFiltersForWidget,
+                  showUnassigned: true,
                   onApplyFilters: (filters) {
+                    print('=== FILTERS APPLIED DEBUG ===');
+                    print('Applied filters: $filters');
+                    print(
+                        'Has status_ids: ${filters.containsKey('status_ids')}');
+
+                    if (filters.containsKey('status_ids')) {
+                      print('status_ids value: ${filters['status_ids']}');
+                      print(
+                          'status_ids is empty list: ${(filters['status_ids'] as List).isEmpty}');
+                    }
                     setState(() {
+                      _hasInitialStatusFilter = false;
+                      _initialStatus = null;
+                      _selectedFilters.remove('todo');
+                      _selectedFilters.remove('pending');
+
+                      if (filters.containsKey('status_names')) {
+                        List<String> names =
+                            List<String>.from(filters['status_names'] ?? []);
+                        if (names.any((n) => n.contains('pending'))) {
+                          _selectedFilters.add('pending');
+                        }
+                        if (names.any(
+                            (n) => n.contains('todo') || n.contains('to do'))) {
+                          _selectedFilters.add('todo');
+                        }
+                        if (names.any((n) => n.contains('unassigned'))) {
+                          _selectedFilters.add('unassigned');
+                        }
+                      }
+
                       currentFilters = Map.from(filters);
-                      _loadData();
+                      print('Updated currentFilters: $currentFilters');
+                      print('Cleared widget status filter');
+                      _loadData(currentFilters);
                     });
                   },
                 ),
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomCountSummary() {
+    return FutureBuilder<List<AssignedWork>>(
+      future: assignedWorkFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            !snapshot.hasData ||
+            snapshot.data!.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+            ),
+            child: const SizedBox.shrink(),
+          );
+        }
+
+        final assignedItems = snapshot.data!;
+        String firstItemTotal =
+            assignedItems.isNotEmpty ? assignedItems.first.total : "0";
+        String firstTaskItemTotal =
+            assignedItems.isNotEmpty ? assignedItems.last.totalTask : "0";
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.assignment_outlined,
+                color: Colors.blue,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Work :',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color.fromARGB(255, 17, 17, 17),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        firstItemTotal,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      SizedBox(width: 25),
+                      Icon(
+                        Icons.assignment_outlined,
+                        color: Colors.blue,
+                        size: 24,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Task:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color.fromARGB(255, 22, 22, 22),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        firstTaskItemTotal,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -2461,7 +6132,7 @@ class _AssignReportState extends State<AssignReport> {
       case "2":
         return "High";
       case "3":
-        return "Ciritical";
+        return "Critical";
       default:
         return "__";
     }
@@ -2471,11 +6142,15 @@ class _AssignReportState extends State<AssignReport> {
     switch (status.toLowerCase()) {
       case 'pending':
         return Colors.orange;
+      case 'running':
+        return const Color.fromARGB(255, 88, 156, 10);
       case 'to do':
         return Colors.blue;
       case 'completed':
         return Colors.green;
       case 'overdue':
+        return Colors.red;
+      case 'cancel':
         return Colors.red;
       default:
         return Colors.blue;

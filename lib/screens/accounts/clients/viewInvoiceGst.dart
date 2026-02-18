@@ -43,19 +43,31 @@ class _ViewInvoiceGstState extends State<ViewInvoiceGst> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
+    // if (connectivityResult == ConnectivityResult.mobile ||
+    //     connectivityResult == ConnectivityResult.wifi) {
+    //   setState(() {
+    //     result = true;
+    //   });
+    // } else {
+    //   setState(() {
+    //     result = false;
+    //   });
+    // }
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult.contains(ConnectivityResult.mobile) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        setState(() {
+          result = true;
+        });
+      }
     } else {
       setState(() {
         result = false;
       });
     }
 
-    invDetails =
-        await HttpService.invoiceCommonDetailsGst(widget.token, widget.clientId);
+    invDetails = await HttpService.invoiceCommonDetailsGst(
+        widget.token, widget.clientId);
     invoiceEditDetails =
         await HttpService.invoiceEditDetailsGst(widget.token, widget.invoiceId);
     if (invoiceEditDetails != null) {
@@ -90,10 +102,9 @@ class _ViewInvoiceGstState extends State<ViewInvoiceGst> {
 
   takeScreenshot() async {
     //String? name = '${widget.invoiceNumber}.pdf';
-      String formattedDate =
+    String formattedDate =
         DateTime.now().toString().split(' ')[0].replaceAll('-', '_');
-          String name = 'perfoma_invoice_${widget.invoiceNumber}_$formattedDate.pdf';
-
+    String name = 'perfoma_invoice_${widget.invoiceNumber}_$formattedDate.pdf';
 
     // Take a screenshot
     Uint8List? screenshot = await screenshotController.capture();

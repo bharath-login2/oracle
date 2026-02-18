@@ -14,6 +14,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart'
 import 'package:login2/screens/accounts/renewal_mannagement/hidden_clients.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/payment_reports.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/quck_renewal.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_list_new.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
@@ -289,230 +290,585 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                     InkWell(
                       onTap: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RenewalFollowupList(
-                                clientId: "",
-                                clientName: "",
-                              ),
-                            )).then((_) {
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RenewalFollowupList(
+                              clientId: "",
+                              clientName: "",
+                            ),
+                          ),
+                        ).then((_) {
                           getDashboard();
                         });
                       },
                       child: Container(
                         width: MediaQuery.of(context).size.width * .95,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 2,
-                                color: Colors.grey.shade600,
-                                offset: const Offset(0, 2.0),
-                              )
-                            ]),
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white,
+                              Colors.blue.shade50,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.shade200,
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 1,
+                            ),
+                            BoxShadow(
+                              color: Colors.white,
+                              blurRadius: 5,
+                              offset: const Offset(0, -2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: Colors.blue.shade100,
+                            width: 1.5,
+                          ),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text("Upcoming Renewals :",
-                                      style: TextStyle(
-                                          color: Colors.blue.shade900,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold)),
-                                  Text(
-                                    renewalDashboard!.data.upcomingRenewals,
-                                    style: TextStyle(
-                                        color: Colors.blue.shade900,
-                                        fontSize: 25,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CustomRenewal(),
-                                      )).then((_) {
-                                    getDashboard();
-                                  });
-                                },
-                                label: const Text(
-                                  "Add Renewal",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.blue.shade600,
+                                            Colors.blue.shade800,
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.blue.shade300,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.timer_rounded,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "UPCOMING RENEWALS",
+                                            style: TextStyle(
+                                              color: Colors.blue.shade700,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 1.0,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            renewalDashboard!
+                                                .data.upcomingRenewals,
+                                            style: TextStyle(
+                                              color: Colors.blue.shade900,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.5,
+                                              shadows: [
+                                                Shadow(
+                                                  blurRadius: 2,
+                                                  color: Colors.black
+                                                      .withOpacity(0.1),
+                                                  offset: Offset(0, 1),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            "Renewals pending action",
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 11,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 1, backgroundColor: Colors.blue),
-                              )
+                              ),
+                              SizedBox(width: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.green.shade500,
+                                      Colors.green.shade700,
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.shade300,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CustomRenewal(),
+                                        ),
+                                      ).then((_) {
+                                        getDashboard();
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.add_circle_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            "ADD RENEWAL",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
+                    // InkWell(
+                    //   onTap: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (context) => RenewalFollowupList(
+                    //           clientId: "",
+                    //           clientName: "",
+                    //         ),
+                    //       ),
+                    //     ).then((_) {
+                    //       getDashboard();
+                    //     });
+                    //   },
+                    //   child: Container(
+                    //     width: MediaQuery.of(context).size.width * .95,
+                    //     decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(12),
+                    //       color: Colors.white,
+                    //       boxShadow: [
+                    //         BoxShadow(
+                    //           color: Colors.blueGrey.shade100,
+                    //           blurRadius: 8,
+                    //           offset: const Offset(0, 3),
+                    //         ),
+                    //       ],
+                    //       border: Border.all(
+                    //         color: Colors.blue.shade100,
+                    //         width: 1,
+                    //       ),
+                    //     ),
+                    //     child: Padding(
+                    //       padding: const EdgeInsets.all(18.0),
+                    //       child: Row(
+                    //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //         children: [
+                    //           Row(
+                    //             children: [
+                    //               Container(
+                    //                 padding: EdgeInsets.all(10),
+                    //                 decoration: BoxDecoration(
+                    //                   color: Colors.blue.shade50,
+                    //                   borderRadius: BorderRadius.circular(10),
+                    //                   border: Border.all(
+                    //                     color: Colors.blue.shade200,
+                    //                     width: 1,
+                    //                   ),
+                    //                 ),
+                    //                 child: Icon(
+                    //                   Icons.schedule_rounded,
+                    //                   color: Colors.blue.shade700,
+                    //                   size: 24,
+                    //                 ),
+                    //               ),
+                    //               SizedBox(width: 16),
+                    //               Column(
+                    //                 crossAxisAlignment:
+                    //                     CrossAxisAlignment.start,
+                    //                 children: [
+                    //                   Text(
+                    //                     "Upcoming Renewals",
+                    //                     style: TextStyle(
+                    //                       color: Colors.blue.shade800,
+                    //                       fontSize: 15,
+                    //                       fontWeight: FontWeight.bold,
+                    //                     ),
+                    //                   ),
+                    //                   SizedBox(height: 6),
+                    //                   Text(
+                    //                     renewalDashboard!.data.upcomingRenewals,
+                    //                     style: TextStyle(
+                    //                       color: Colors.blue.shade900,
+                    //                       fontSize: 28,
+                    //                       fontWeight: FontWeight.bold,
+                    //                     ),
+                    //                   ),
+                    //                 ],
+                    //               ),
+                    //             ],
+                    //           ),
+                    //           ElevatedButton.icon(
+                    //             onPressed: () {
+                    //               Navigator.push(
+                    //                 context,
+                    //                 MaterialPageRoute(
+                    //                   builder: (context) => CustomRenewal(),
+                    //                 ),
+                    //               ).then((_) {
+                    //                 getDashboard();
+                    //               });
+                    //             },
+                    //             icon: Icon(
+                    //               Icons.add_circle_outline_rounded,
+                    //               size: 20,
+                    //             ),
+                    //             label: Text(
+                    //               "Add Renewal",
+                    //               style: TextStyle(
+                    //                 color: Colors.white,
+                    //                 fontSize: 14,
+                    //                 fontWeight: FontWeight.w600,
+                    //               ),
+                    //             ),
+                    //             style: ElevatedButton.styleFrom(
+                    //               elevation: 2,
+                    //               backgroundColor: Colors.blue.shade600,
+                    //               padding: EdgeInsets.symmetric(
+                    //                   horizontal: 16, vertical: 12),
+                    //               shape: RoundedRectangleBorder(
+                    //                 borderRadius: BorderRadius.circular(10),
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // InkWell(
+                    //   onTap: () {
+                    //     Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => RenewalFollowupList(
+                    //             clientId: "",
+                    //             clientName: "",
+                    //           ),
+                    //         )).then((_) {
+                    //       getDashboard();
+                    //     });
+                    //   },
+                    //   child: Container(
+                    //     width: MediaQuery.of(context).size.width * .95,
+                    //     decoration: BoxDecoration(
+                    //         borderRadius: BorderRadius.circular(5),
+                    //         color: Colors.white,
+                    //         boxShadow: [
+                    //           BoxShadow(
+                    //             blurRadius: 2,
+                    //             color: Colors.grey.shade600,
+                    //             offset: const Offset(0, 2.0),
+                    //           )
+                    //         ]),
+                    //     child: Padding(
+                    //       padding: const EdgeInsets.all(16.0),
+                    //       child: Row(
+                    //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    //         children: [
+                    //           Column(
+                    //             crossAxisAlignment: CrossAxisAlignment.center,
+                    //             children: [
+                    //               Text("Upcoming Renewals :",
+                    //                   style: TextStyle(
+                    //                       color: Colors.blue.shade900,
+                    //                       fontSize: 15,
+                    //                       fontWeight: FontWeight.bold)),
+                    //               Text(
+                    //                 renewalDashboard!.data.upcomingRenewals,
+                    //                 style: TextStyle(
+                    //                     color: Colors.blue.shade900,
+                    //                     fontSize: 25,
+                    //                     fontWeight: FontWeight.bold),
+                    //               ),
+                    //             ],
+                    //           ),
+                    //           ElevatedButton.icon(
+                    //             onPressed: () {
+                    //               Navigator.push(
+                    //                   context,
+                    //                   MaterialPageRoute(
+                    //                     builder: (context) => CustomRenewal(),
+                    //                   )).then((_) {
+                    //                 getDashboard();
+                    //               });
+                    //             },
+                    //             label: const Text(
+                    //               "Add Renewal",
+                    //               style: TextStyle(
+                    //                   color: Colors.white,
+                    //                   fontSize: 15,
+                    //                   fontWeight: FontWeight.bold),
+                    //             ),
+                    //             style: ElevatedButton.styleFrom(
+                    //                 elevation: 1, backgroundColor: Colors.blue),
+                    //           )
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                     const SizedBox(
                       height: 15,
                     ),
+
                     SizedBox(
-                      height: MediaQuery.of(context).size.height * .2,
-                      width: MediaQuery.of(context).size.width,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        // gridDelegate:
-                        //     const SliverGridDelegateWithFixedCrossAxisCount(
-                        //   crossAxisCount: 2,
-                        //   crossAxisSpacing: 10.0,
-                        //   mainAxisSpacing: 10.0,
-                        //   childAspectRatio: 1.2,
-                        // ),
-                        shrinkWrap: true,
+                      height: MediaQuery.of(context).size.height * .25,
+                      child: Column(
                         children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RenewalList(
-                                       custId: "",
-                                      title: "Current Month",
-                                      searchKey: "current_month",
-                                      searchMonth: "",
-                                      renewed: int.parse(renewalDashboard!
-                                          .data.currentMonthData.paidCount),
-                                    ),
-                                  )).then((_) {
-                                getDashboard();
-                              });
-                            },
-                            child: RenewalGridItem(
-                              title: "Current Month",
-                              paidAmount: renewalDashboard!
-                                  .data.currentMonthData.paidAmount
-                                  .toString(),
-                              paidCount: renewalDashboard!
-                                  .data.currentMonthData.paidCount
-                                  .toString(),
-                              totalAmount: renewalDashboard!
-                                  .data.currentMonthData.totalAmount
-                                  .toString(),
-                              totalCount: renewalDashboard!
-                                  .data.currentMonthData.totalCount
-                                  .toString(),
-                              color: const Color(0xFF2a86c9),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Renewal Overview",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                                Text(
+                                  "Swipe to view",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RenewalList(
-                                       custId: "",
-                                      title: "Next Month",
-                                      searchKey: "next_month",
-                                      searchMonth: "",
-                                      renewed: int.parse(renewalDashboard!
-                                          .data.nextMonthData.paidCount),
-                                    ),
-                                  )).then((_) {
-                                getDashboard();
-                              });
-                            },
-                            child: RenewalGridItem(
-                              title: "Next Month",
-                              paidAmount: renewalDashboard!
-                                  .data.nextMonthData.paidAmount
-                                  .toString(),
-                              paidCount: renewalDashboard!
-                                  .data.nextMonthData.paidCount
-                                  .toString(),
-                              totalAmount: renewalDashboard!
-                                  .data.nextMonthData.totalAmount
-                                  .toString(),
-                              totalCount: renewalDashboard!
-                                  .data.nextMonthData.totalCount
-                                  .toString(),
-                              color: const Color(0xFF2a86c9),
+                          SizedBox(height: 12),
+                          Expanded(
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: 4,
+                              itemBuilder: (context, index) {
+                                return _buildRenewalCard(index);
+                              },
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RenewalList(
-                                       custId: "",
-                                      title: "Current Year",
-                                      searchKey: "current_year",
-                                      searchMonth: "",
-                                      renewed: int.parse(renewalDashboard!
-                                          .data.allData.paidCount),
-                                    ),
-                                  )).then((_) {
-                                getDashboard();
-                              });
-                            },
-                            child: RenewalGridItem(
-                              title: "Current Year",
-                              paidAmount: renewalDashboard!
-                                  .data.allData.paidAmount
-                                  .toString(),
-                              paidCount: renewalDashboard!
-                                  .data.allData.paidCount
-                                  .toString(),
-                              totalAmount: renewalDashboard!
-                                  .data.allData.totalAmount
-                                  .toString(),
-                              totalCount: renewalDashboard!
-                                  .data.allData.totalCount
-                                  .toString(),
-                              color: const Color(0xFF2a86c9),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RenewalList(
-                                       custId: "",
-                                      title: "Expired",
-                                      searchMonth: "",
-                                      searchKey: "expired",
-                                      renewed: int.parse(renewalDashboard!
-                                          .data.expiredData.paidCount),
-                                    ),
-                                  )).then((_) {
-                                getDashboard();
-                              });
-                            },
-                            child: RenewalGridItem(
-                                title: "Expired",
-                                paidAmount: renewalDashboard!
-                                    .data.expiredData.paidAmount
-                                    .toString(),
-                                paidCount: renewalDashboard!
-                                    .data.expiredData.paidCount
-                                    .toString(),
-                                totalAmount: renewalDashboard!
-                                    .data.expiredData.totalAmount
-                                    .toString(),
-                                totalCount: renewalDashboard!
-                                    .data.expiredData.totalCount
-                                    .toString(),
-                                color: Colors.red.shade200),
                           ),
                         ],
                       ),
                     ),
+
+// Add this method to your class:
+
+                    // SizedBox(
+                    //   height: MediaQuery.of(context).size.height * .2,
+                    //   width: MediaQuery.of(context).size.width,
+                    //   child: ListView(
+                    //     scrollDirection: Axis.horizontal,
+                    //     // gridDelegate:
+                    //     //     const SliverGridDelegateWithFixedCrossAxisCount(
+                    //     //   crossAxisCount: 2,
+                    //     //   crossAxisSpacing: 10.0,
+                    //     //   mainAxisSpacing: 10.0,
+                    //     //   childAspectRatio: 1.2,
+                    //     // ),
+                    //     shrinkWrap: true,
+                    //     children: [
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           Navigator.push(
+                    //               context,
+                    //               MaterialPageRoute(
+                    //                 builder: (context) => RenewalList(
+                    //                    custId: "",
+                    //                   title: "Current Month",
+                    //                   searchKey: "current_month",
+                    //                   searchMonth: "",
+                    //                   renewed: int.parse(renewalDashboard!
+                    //                       .data.currentMonthData.paidCount),
+                    //                 ),
+                    //               )).then((_) {
+                    //             getDashboard();
+                    //           });
+                    //         },
+                    //         child: RenewalGridItem(
+                    //           title: "Current Month",
+                    //           paidAmount: renewalDashboard!
+                    //               .data.currentMonthData.paidAmount
+                    //               .toString(),
+                    //           paidCount: renewalDashboard!
+                    //               .data.currentMonthData.paidCount
+                    //               .toString(),
+                    //           totalAmount: renewalDashboard!
+                    //               .data.currentMonthData.totalAmount
+                    //               .toString(),
+                    //           totalCount: renewalDashboard!
+                    //               .data.currentMonthData.totalCount
+                    //               .toString(),
+                    //           color: const Color(0xFF2a86c9),
+                    //         ),
+                    //       ),
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           Navigator.push(
+                    //               context,
+                    //               MaterialPageRoute(
+                    //                 builder: (context) => RenewalList(
+                    //                    custId: "",
+                    //                   title: "Next Month",
+                    //                   searchKey: "next_month",
+                    //                   searchMonth: "",
+                    //                   renewed: int.parse(renewalDashboard!
+                    //                       .data.nextMonthData.paidCount),
+                    //                 ),
+                    //               )).then((_) {
+                    //             getDashboard();
+                    //           });
+                    //         },
+                    //         child: RenewalGridItem(
+                    //           title: "Next Month",
+                    //           paidAmount: renewalDashboard!
+                    //               .data.nextMonthData.paidAmount
+                    //               .toString(),
+                    //           paidCount: renewalDashboard!
+                    //               .data.nextMonthData.paidCount
+                    //               .toString(),
+                    //           totalAmount: renewalDashboard!
+                    //               .data.nextMonthData.totalAmount
+                    //               .toString(),
+                    //           totalCount: renewalDashboard!
+                    //               .data.nextMonthData.totalCount
+                    //               .toString(),
+                    //           color: const Color(0xFF2a86c9),
+                    //         ),
+                    //       ),
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           Navigator.push(
+                    //               context,
+                    //               MaterialPageRoute(
+                    //                 builder: (context) => RenewalList(
+                    //                    custId: "",
+                    //                   title: "Current Year",
+                    //                   searchKey: "current_year",
+                    //                   searchMonth: "",
+                    //                   renewed: int.parse(renewalDashboard!
+                    //                       .data.allData.paidCount),
+                    //                 ),
+                    //               )).then((_) {
+                    //             getDashboard();
+                    //           });
+                    //         },
+                    //         child: RenewalGridItem(
+                    //           title: "Current Year",
+                    //           paidAmount: renewalDashboard!
+                    //               .data.allData.paidAmount
+                    //               .toString(),
+                    //           paidCount: renewalDashboard!
+                    //               .data.allData.paidCount
+                    //               .toString(),
+                    //           totalAmount: renewalDashboard!
+                    //               .data.allData.totalAmount
+                    //               .toString(),
+                    //           totalCount: renewalDashboard!
+                    //               .data.allData.totalCount
+                    //               .toString(),
+                    //           color: const Color(0xFF2a86c9),
+                    //         ),
+                    //       ),
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           Navigator.push(
+                    //               context,
+                    //               MaterialPageRoute(
+                    //                 builder: (context) => RenewalList(
+                    //                    custId: "",
+                    //                   title: "Expired",
+                    //                   searchMonth: "",
+                    //                   searchKey: "expired",
+                    //                   renewed: int.parse(renewalDashboard!
+                    //                       .data.expiredData.paidCount),
+                    //                 ),
+                    //               )).then((_) {
+                    //             getDashboard();
+                    //           });
+                    //         },
+                    //         child: RenewalGridItem(
+                    //             title: "Expired",
+                    //             paidAmount: renewalDashboard!
+                    //                 .data.expiredData.paidAmount
+                    //                 .toString(),
+                    //             paidCount: renewalDashboard!
+                    //                 .data.expiredData.paidCount
+                    //                 .toString(),
+                    //             totalAmount: renewalDashboard!
+                    //                 .data.expiredData.totalAmount
+                    //                 .toString(),
+                    //             totalCount: renewalDashboard!
+                    //                 .data.expiredData.totalCount
+                    //                 .toString(),
+                    //             color: Colors.red.shade200),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     // const SizedBox(
                     //   height: 15,
                     // ),
@@ -593,8 +949,9 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                         Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => RenewalList(
-                                                 custId: "",
+                                              builder: (context) => RenewalListNew(
+                                                custId: "",
+                                                  custName: "",
                                                 title: renewalDashboard!.data
                                                     .monthReport[index].label,
                                                 searchKey: "",
@@ -885,6 +1242,228 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 20),
                       child: Image.asset("assets/icons/menu.png", width: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRenewalCard(int index) {
+    late Map<String, dynamic> cardData;
+    if (renewalDashboard != null) {
+      switch (index) {
+        case 0:
+          cardData = {
+            'title': 'Current Month',
+            'paidAmount':
+                renewalDashboard!.data.currentMonthData.paidAmount.toString(),
+            'paidCount':
+                renewalDashboard!.data.currentMonthData.paidCount.toString(),
+            'totalAmount':
+                renewalDashboard!.data.currentMonthData.totalAmount.toString(),
+            'totalCount':
+                renewalDashboard!.data.currentMonthData.totalCount.toString(),
+            'color': Color(0xFF2a86c9),
+            'searchKey': 'current_month',
+            'renewed':
+                int.parse(renewalDashboard!.data.currentMonthData.paidCount),
+          };
+          break;
+        case 1:
+          cardData = {
+            'title': 'Next Month',
+            'paidAmount':
+                renewalDashboard!.data.nextMonthData.paidAmount.toString(),
+            'paidCount':
+                renewalDashboard!.data.nextMonthData.paidCount.toString(),
+            'totalAmount':
+                renewalDashboard!.data.nextMonthData.totalAmount.toString(),
+            'totalCount':
+                renewalDashboard!.data.nextMonthData.totalCount.toString(),
+            'color': Color(0xFF2a86c9),
+            'searchKey': 'next_month',
+            'renewed':
+                int.parse(renewalDashboard!.data.nextMonthData.paidCount),
+          };
+          break;
+        case 2:
+          cardData = {
+            'title': 'Current Year',
+            'paidAmount': renewalDashboard!.data.allData.paidAmount.toString(),
+            'paidCount': renewalDashboard!.data.allData.paidCount.toString(),
+            'totalAmount':
+                renewalDashboard!.data.allData.totalAmount.toString(),
+            'totalCount': renewalDashboard!.data.allData.totalCount.toString(),
+            'color': Color(0xFF2a86c9),
+            'searchKey': 'current_year',
+            'renewed': int.parse(renewalDashboard!.data.allData.paidCount),
+          };
+          break;
+        case 3:
+          cardData = {
+            'title': 'Expired',
+            'paidAmount':
+                renewalDashboard!.data.expiredData.paidAmount.toString(),
+            'paidCount':
+                renewalDashboard!.data.expiredData.paidCount.toString(),
+            'totalAmount':
+                renewalDashboard!.data.expiredData.totalAmount.toString(),
+            'totalCount':
+                renewalDashboard!.data.expiredData.totalCount.toString(),
+            'color': Colors.red.shade400,
+            'searchKey': 'expired',
+            'renewed': int.parse(renewalDashboard!.data.expiredData.paidCount),
+          };
+          break;
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RenewalListNew(
+              custId: "",
+                custName: "",
+              title: cardData['title'],
+              searchKey: cardData['searchKey'],
+              searchMonth: "",
+              renewed: cardData['renewed'],
+            ),
+          ),
+        ).then((_) {
+          getDashboard();
+        });
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.7,
+        margin: EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                cardData['title'],
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: cardData['color'],
+                ),
+              ),
+              SizedBox(height: 12),
+
+              // Paid section
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Paid",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "₹${cardData['paidAmount']}",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "${cardData['paidCount']} items",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.green.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Total section
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Total",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "₹${cardData['totalAmount']}",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "${cardData['totalCount']} items",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // Progress bar
+              SizedBox(height: 5),
+              LinearProgressIndicator(
+                value: cardData['totalCount'] != "0"
+                    ? int.parse(cardData['paidCount']) /
+                        int.parse(cardData['totalCount'])
+                    : 0,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(cardData['color']),
+                minHeight: 6,
+                borderRadius: BorderRadius.circular(3),
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    cardData['totalCount'] != "0"
+                        ? "${((int.parse(cardData['paidCount']) / int.parse(cardData['totalCount'])) * 100).toStringAsFixed(0)}% completed"
+                        : "0% completed",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
                     ),
                   ),
                 ],

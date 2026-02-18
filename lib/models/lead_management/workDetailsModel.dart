@@ -38,6 +38,7 @@ class WorkDetailsModel {
 
 class workDetailsList {
   final String id;
+    final String projectName;
   final String projectId;
   final String customerName;
   final String title;
@@ -60,6 +61,7 @@ class workDetailsList {
 
   workDetailsList({
     required this.id,
+     required this.projectName,
     required this.projectId,
     required this.customerName,
     required this.title,
@@ -84,6 +86,7 @@ class workDetailsList {
   factory workDetailsList.fromJson(Map<String, dynamic> json) =>
       workDetailsList(
         id: json["id"] ?? "",
+          projectName: json["project_name"] ?? "",
         projectId: json["project_id"] ?? "",
         customerName: json["customer_name"] ?? "",
         title: json["title"] ?? "",
@@ -112,6 +115,7 @@ class workDetailsList {
       );
   Map<String, dynamic> toJson() => {
         "id": id,
+          "project_name": projectName,
         "project_id": projectId,
         "customer_name": customerName,
         "title": title,

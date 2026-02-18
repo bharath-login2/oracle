@@ -46,6 +46,7 @@ import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:app_settings/app_settings.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
@@ -479,13 +480,24 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
       final dismissedDate = prefs.getString('loginPromptDismissedDate');
       final today = DateTime.now().toIso8601String().substring(0, 10);
 
-      await Permission.notification.request();
       final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
-        setState(() {
-          result = true;
-        });
+      // if (connectivityResult == ConnectivityResult.mobile ||
+      //     connectivityResult == ConnectivityResult.wifi) {
+      //   setState(() {
+      //     result = true;
+      //   });
+      // } else {
+      //   setState(() {
+      //     result = false;
+      //   });
+      // }
+      if (connectivityResult is List<ConnectivityResult>) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          setState(() {
+            result = true;
+          });
+        }
       } else {
         setState(() {
           result = false;
@@ -615,6 +627,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
         }
         getAccountDash();
         getRenewalDashboard();
+        await Permission.notification.request();
       }
       setState(() {
         timeOut = false;
@@ -681,7 +694,8 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green,foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, foregroundColor: Colors.white),
               child: const Text("Yes"),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -1655,7 +1669,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
-                                 custId: "",
+                                custId: "",
                                 title: "Current Month",
                                 searchKey: "current_month",
                                 searchMonth: "",
@@ -1687,7 +1701,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
-                                 custId: "",
+                                custId: "",
                                 title: "Next Month",
                                 searchKey: "next_month",
                                 searchMonth: "",
@@ -1719,7 +1733,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
-                                 custId: "",
+                                custId: "",
                                 title: "Current Year",
                                 searchKey: "current_year",
                                 searchMonth: "",
@@ -1747,7 +1761,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RenewalList(
-                                 custId: "",
+                                custId: "",
                                 title: "Expired",
                                 searchMonth: "",
                                 searchKey: "expired",
@@ -1831,7 +1845,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => RenewalList(
-                                           custId: "",
+                                          custId: "",
                                           title: renewalDashboard!
                                               .data.monthReport[index].label,
                                           searchKey: "",
@@ -1995,8 +2009,12 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        InvoiceList(widget.token
-                                                            .toString(),"","","")),
+                                                        InvoiceList(
+                                                            widget.token
+                                                                .toString(),
+                                                            "",
+                                                            "",
+                                                            "")),
                                               );
                                             } else if (list[i] ==
                                                 "Pending Invoices") {
@@ -2037,7 +2055,8 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         ClientList(
-                                                            widget.token!,_scaffoldKey)),
+                                                            widget.token!,
+                                                            _scaffoldKey)),
                                               );
                                             }
                                           },
@@ -3016,8 +3035,8 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ClientList(widget.token!,_scaffoldKey)),
+                                              builder: (context) => ClientList(
+                                                  widget.token!, _scaffoldKey)),
                                         );
                                       } else if (userDashboard!
                                               .data.modules[i].menuName ==
@@ -9092,7 +9111,34 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                   width: 20,
                 ),
                 InkWell(
-                  onTap: () {
+                  onTap: () async {
+                    var status = await Permission.notification.status;
+                    if (status.isPermanentlyDenied) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Permission Required'),
+                          content: const Text(
+                              'Notification permission is permanently denied. Please enable it in settings to receive updates.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                AppSettings.openAppSettings(
+                                    type: AppSettingsType.notification);
+                              },
+                              child: const Text('Open Settings'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      await Permission.notification.request();
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
