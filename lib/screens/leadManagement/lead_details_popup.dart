@@ -1731,213 +1731,547 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   Widget _buildAddNewFollowupForm() {
     if (commonDetails == null) return const SizedBox();
 
-    return Card(
-      margin: const EdgeInsets.all(12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        onExpansionChanged: (isExpanded) {
-          if (isExpanded) {
-            setState(() {
-              calledDate1.text =
-                  DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
-            });
-          }
-        },
-        title: const Text(
-          'Add New Followup',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2a86c9),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                isExpand = !isExpand;
+                if (isExpand) {
+                  calledDate1.text =
+                      DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+                }
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2a86c9), Color(0xFF2a86c9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2a86c9).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isExpand ? Icons.close : Icons.add_circle_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isExpand ? "Close Followup Form" : "Add New Followup",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        subtitle: const Text('Tap to expand and add a new followup'),
-        backgroundColor: Colors.white,
-        collapsedBackgroundColor: Colors.blue.shade50,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Status Dropdown
-                _buildDropdown(
-                  label: 'Stages *',
-                  value: callResultId.isEmpty ? null : callResultId,
-                  items: commonDetails!.data.callResult.map((item) {
-                    return DropdownMenuItem(
-                      value: item.callResultId.toString(),
-                      child: Text(item.callResult),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      callResultId = value!;
-                      callResult = commonDetails!.data.callResult
-                          .firstWhere((element) =>
-                              element.callResultId.toString() == value)
-                          .callResult;
-                      _fetchCallResultReason();
-                      _fetchLeadExtraSettings(callResultId).then((_) {
-                        if (leadSettings != null &&
-                            !leadSettings!.isFollowupRequiredBool) {
-                          if (mounted) {
-                            setState(() {
-                              nextFollowupDate1.clear();
-                              checked = false;
-                            });
-                          }
-                        } else if (leadSettings == null &&
-                            callResultId != '2') {
-                          if (mounted) {
-                            setState(() {
-                              nextFollowupDate1.clear();
-                              checked = false;
-                            });
-                          }
+        if (isExpand)
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            elevation: 2,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Called Date
+                  const Text(
+                    'Called Date',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (pickedTime != null) {
+                          setState(() {
+                            final dt = DateTime(
+                                pickedDate.year,
+                                pickedDate.month,
+                                pickedDate.day,
+                                pickedTime.hour,
+                                pickedTime.minute);
+                            calledDate1.text =
+                                DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                          });
                         }
-                      });
-                    });
-                  },
-                ),
-
-                // Next Followup Date (Conditional)
-                if (leadSettings != null
-                    ? leadSettings!.isFollowupRequiredBool
-                    : callResultId == '2') // Assuming '2' is Pending/Followup
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Next Followup Date *',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500),
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () async {
-                          DateTime now = DateTime.now();
-                          DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: now,
-                            firstDate: now,
-                            lastDate: DateTime(2101),
-                          );
-                          if (pickedDate != null) {
-                            TimeOfDay? pickedTime = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-                            if (pickedTime != null) {
-                              final dt = DateTime(
-                                  pickedDate.year,
-                                  pickedDate.month,
-                                  pickedDate.day,
-                                  pickedTime.hour,
-                                  pickedTime.minute);
-
-                              if (!dt.isAfter(now)) {
-                                if (context.mounted) {
-                                  Common.toastMessaage(
-                                      'You cannot choose a past time for the follow-up date',
-                                      Colors.red);
-                                }
-                                return;
-                              }
-
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(calledDate1.text),
+                          const Icon(Icons.access_time_filled, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Status Dropdown
+                  _buildDropdown(
+                    label: 'Stages *',
+                    value: callResultId.isEmpty ? null : callResultId,
+                    items: commonDetails!.data.callResult.map((item) {
+                      return DropdownMenuItem(
+                        value: item.callResultId.toString(),
+                        child: Text(item.callResult),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        callResultId = value!;
+                        callResult = commonDetails!.data.callResult
+                            .firstWhere((element) =>
+                                element.callResultId.toString() == value)
+                            .callResult;
+                        _fetchCallResultReason();
+                        _fetchLeadExtraSettings(callResultId).then((_) {
+                          if (leadSettings != null &&
+                              !leadSettings!.isFollowupRequiredBool) {
+                            if (mounted) {
                               setState(() {
-                                nextFollowupDate1.text =
-                                    DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                                nextFollowupDate1.clear();
+                                checked = false;
+                              });
+                            }
+                          } else if (leadSettings == null &&
+                              callResultId != '2') {
+                            if (mounted) {
+                              setState(() {
+                                nextFollowupDate1.clear();
+                                checked = false;
                               });
                             }
                           }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                nextFollowupDate1.text.isEmpty
-                                    ? 'Select Date & Time'
-                                    : nextFollowupDate1.text,
-                              ),
-                              const Icon(Icons.calendar_month, size: 18),
-                            ],
+                        });
+                      });
+                    },
+                  ),
+
+                  // Next Followup Date (Conditional)
+                  if (leadSettings != null
+                      ? leadSettings!.isFollowupRequiredBool
+                      : callResultId == '2') // Assuming '2' is Pending/Followup
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Next Followup Date *',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            DateTime now = DateTime.now();
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: now,
+                              firstDate: now,
+                              lastDate: DateTime(2101),
+                            );
+                            if (pickedDate != null) {
+                              TimeOfDay? pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (pickedTime != null) {
+                                final dt = DateTime(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                    pickedTime.hour,
+                                    pickedTime.minute);
+
+                                if (!dt.isAfter(now)) {
+                                  if (context.mounted) {
+                                    Common.toastMessaage(
+                                        'You cannot choose a past time for the follow-up date',
+                                        Colors.red);
+                                  }
+                                  return;
+                                }
+
+                                setState(() {
+                                  nextFollowupDate1.text =
+                                      DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                                });
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade400),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  nextFollowupDate1.text.isEmpty
+                                      ? 'Select Date & Time'
+                                      : nextFollowupDate1.text,
+                                ),
+                                const Icon(Icons.calendar_month, size: 18),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-                      // Reminder
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Reminder',
-                            style: TextStyle(fontSize: 14)),
-                        value: checked,
-                        onChanged: (value) {
-                          setState(() {
-                            checked = value!;
-                          });
-                        },
-                        controlAffinity: ListTileControlAffinity.leading,
+                        // Reminder
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Reminder',
+                              style: TextStyle(fontSize: 14)),
+                          value: checked,
+                          onChanged: (value) {
+                            setState(() {
+                              checked = value!;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        if (checked) ...[
+                          Row(
+                            children: [
+                              const Text('Time Before (min): ',
+                                  style: TextStyle(fontSize: 13)),
+                              const SizedBox(width: 10),
+                              Container(
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: timeBefore,
+                                        textAlign: TextAlign.center,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                            border: InputBorder.none),
+                                      ),
+                                    ),
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            int val =
+                                                int.tryParse(timeBefore.text) ??
+                                                    0;
+                                            setState(() =>
+                                                timeBefore.text = "${val + 1}");
+                                          },
+                                          child: const Icon(Icons.arrow_drop_up,
+                                              size: 18),
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            int val =
+                                                int.tryParse(timeBefore.text) ??
+                                                    0;
+                                            if (val > 0) {
+                                              setState(() => timeBefore.text =
+                                                  "${val - 1}");
+                                            }
+                                          },
+                                          child: const Icon(
+                                              Icons.arrow_drop_down,
+                                              size: 18),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
+
+                  // Call Result Description Dropdown
+                  _buildDropdown(
+                    label: 'Call Result *',
+                    value: callResponseId.isEmpty ? null : callResponseId,
+                    items: commonDetails!.data.callResponseStatus.map((item) {
+                      return DropdownMenuItem(
+                        value: item.callResponseId.toString(),
+                        child: Text(item.callResponse),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        callResponseId = value!;
+                        callResponse = commonDetails!.data.callResponseStatus
+                            .firstWhere((element) =>
+                                element.callResponseId.toString() == value)
+                            .callResponse;
+                      });
+                    },
+                  ),
+
+                  // Call Result Reason (if available)
+                  if (callResultReason != null &&
+                      (callResultReason!.data?.isNotEmpty ?? false))
+                    _buildDropdown(
+                      label: (leadSettings?.isReasonRequiredBool ?? false)
+                          ? 'Reason *'
+                          : 'Reason',
+                      value: callResultReasonId.isEmpty
+                          ? null
+                          : callResultReasonId,
+                      items: callResultReason!.data!.map((item) {
+                        return DropdownMenuItem(
+                          value: item.id ?? '',
+                          child: Text(item.reason ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          callResultReasonId = value!;
+                        });
+                      },
+                    ),
+
+                  // More Details Toggle
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        isMoreDetails = !isMoreDetails;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            isMoreDetails ? 'Less Details' : 'More Details',
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(
+                            isMoreDetails
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: Colors.blue.shade700,
+                          ),
+                        ],
                       ),
-                      if (checked) ...[
+                    ),
+                  ),
+
+                  Visibility(
+                    visible: isMoreDetails,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Priority',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 50,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: commonDetails!.data.priority.length,
+                            itemBuilder: (context, i) {
+                              final p = commonDetails!.data.priority[i];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: Radio<String>(
+                                        activeColor: p.priorityId.toString() ==
+                                                '1'
+                                            ? Colors.grey
+                                            : p.priorityId.toString() == '2'
+                                                ? Colors.green
+                                                : p.priorityId.toString() == '3'
+                                                    ? Colors.red
+                                                    : Colors.purple,
+                                        value: p.priorityId.toString(),
+                                        groupValue: priorityId,
+                                        onChanged: (String? value) {
+                                          setState(() {
+                                            priorityId = value!;
+                                            priority = p.priority;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    Text(p.priority,
+                                        style: const TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Category and Subcategory
                         Row(
                           children: [
-                            const Text('Time Before (min): ',
-                                style: TextStyle(fontSize: 13)),
-                            const SizedBox(width: 10),
-                            Container(
-                              width: 100,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade400),
-                                borderRadius: BorderRadius.circular(8),
+                            Expanded(
+                              child: _buildDropdown(
+                                label: 'Category',
+                                value: leadTypeId.isEmpty ? null : leadTypeId,
+                                items: commonDetails!.data.leadCategory
+                                    .map((item) {
+                                  return DropdownMenuItem(
+                                    value: item.leadCategoryId.toString(),
+                                    child: Text(item.leadCategory),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    leadTypeId = value!;
+                                    leadType = commonDetails!.data.leadCategory
+                                        .firstWhere((element) =>
+                                            element.leadCategoryId.toString() ==
+                                            value)
+                                        .leadCategory;
+                                    _fetchLeadSubType();
+                                  });
+                                },
                               ),
-                              child: Row(
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDropdown(
+                                label: 'Sub Category',
+                                value: leadSubTypeId.isEmpty
+                                    ? null
+                                    : leadSubTypeId,
+                                items:
+                                    (leadSubTypeList?.data ?? []).map((item) {
+                                  return DropdownMenuItem(
+                                    value: item.leadSubCategoryId.toString(),
+                                    child: Text(item.leadSubCategory ?? ''),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    leadSubTypeId = value!;
+                                    leadSubType = leadSubTypeList!.data!
+                                        .firstWhere((element) =>
+                                            element.leadSubCategoryId
+                                                .toString() ==
+                                            value)
+                                        .leadSubCategory!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // WhatsApp Number and Email ID
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: timeBefore,
-                                      textAlign: TextAlign.center,
-                                      keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                          border: InputBorder.none),
+                                  const Text(
+                                    'WhatsApp Number',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  TextField(
+                                    controller: whatsappLead,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: InputDecoration(
+                                      hintText: 'WhatsApp Number',
+                                      border: const OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      prefixIcon: const Icon(
+                                          FontAwesomeIcons.whatsapp,
+                                          size: 18,
+                                          color: Colors.green),
                                     ),
                                   ),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          int val =
-                                              int.tryParse(timeBefore.text) ??
-                                                  0;
-                                          setState(() =>
-                                              timeBefore.text = "${val + 1}");
-                                        },
-                                        child: const Icon(Icons.arrow_drop_up,
-                                            size: 18),
-                                      ),
-                                      InkWell(
-                                        onTap: () {
-                                          int val =
-                                              int.tryParse(timeBefore.text) ??
-                                                  0;
-                                          if (val > 0) {
-                                            setState(() =>
-                                                timeBefore.text = "${val - 1}");
-                                          }
-                                        },
-                                        child: const Icon(Icons.arrow_drop_down,
-                                            size: 18),
-                                      ),
-                                    ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Email ID',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  TextField(
+                                    controller: emailLead,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: InputDecoration(
+                                      hintText: 'Email ID',
+                                      border: const OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      prefixIcon: const Icon(Icons.email,
+                                          size: 18, color: Colors.blue),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1945,590 +2279,301 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ],
                         ),
                         const SizedBox(height: 12),
-                      ],
-                    ],
-                  ),
 
-                // Call Result Description Dropdown
-                _buildDropdown(
-                  label: 'Call Result *',
-                  value: callResponseId.isEmpty ? null : callResponseId,
-                  items: commonDetails!.data.callResponseStatus.map((item) {
-                    return DropdownMenuItem(
-                      value: item.callResponseId.toString(),
-                      child: Text(item.callResponse),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      callResponseId = value!;
-                      callResponse = commonDetails!.data.callResponseStatus
-                          .firstWhere((element) =>
-                              element.callResponseId.toString() == value)
-                          .callResponse;
-                    });
-                  },
-                ),
-
-                // Call Result Reason (if available)
-                if (callResultReason != null &&
-                    (callResultReason!.data?.isNotEmpty ?? false))
-                  _buildDropdown(
-                    label: (leadSettings?.isReasonRequiredBool ?? false)
-                        ? 'Reason *'
-                        : 'Reason',
-                    value:
-                        callResultReasonId.isEmpty ? null : callResultReasonId,
-                    items: callResultReason!.data!.map((item) {
-                      return DropdownMenuItem(
-                        value: item.id ?? '',
-                        child: Text(item.reason ?? ''),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        callResultReasonId = value!;
-                      });
-                    },
-                  ),
-
-                // Called Date
-                const Text(
-                  'Called Date',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: () async {
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
-                    );
-                    if (pickedDate != null) {
-                      TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          final dt = DateTime(
-                              pickedDate.year,
-                              pickedDate.month,
-                              pickedDate.day,
-                              pickedTime.hour,
-                              pickedTime.minute);
-                          calledDate1.text =
-                              DateFormat('dd-MM-yyyy HH:mm').format(dt);
-                        });
-                      }
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(calledDate1.text),
-                        const Icon(Icons.access_time_filled, size: 18),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // More Details Toggle
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      isMoreDetails = !isMoreDetails;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          isMoreDetails ? 'Less Details' : 'More Details',
+                        // Product Selection (Moved from More Details)
+                        const Text(
+                          'Products',
                           style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.bold,
+                              fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _productSearchCtrl,
+                          onChanged: _onFollowupProductSearch,
+                          decoration: InputDecoration(
+                            hintText: 'Search Product...',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            isDense: true,
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
                           ),
                         ),
-                        Icon(
-                          isMoreDetails
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.blue.shade700,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Visibility(
-                  visible: isMoreDetails,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Priority',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 50,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: commonDetails!.data.priority.length,
-                          itemBuilder: (context, i) {
-                            final p = commonDetails!.data.priority[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 20),
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: Radio<String>(
-                                      activeColor: p.priorityId.toString() ==
-                                              '1'
-                                          ? Colors.grey
-                                          : p.priorityId.toString() == '2'
-                                              ? Colors.green
-                                              : p.priorityId.toString() == '3'
-                                                  ? Colors.red
-                                                  : Colors.purple,
-                                      value: p.priorityId.toString(),
-                                      groupValue: priorityId,
-                                      onChanged: (String? value) {
-                                        setState(() {
-                                          priorityId = value!;
-                                          priority = p.priority;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  Text(p.priority,
-                                      style: const TextStyle(fontSize: 12)),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Category and Subcategory
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDropdown(
-                              label: 'Category',
-                              value: leadTypeId.isEmpty ? null : leadTypeId,
-                              items:
-                                  commonDetails!.data.leadCategory.map((item) {
-                                return DropdownMenuItem(
-                                  value: item.leadCategoryId.toString(),
-                                  child: Text(item.leadCategory),
+                        if (_productSearchResults.isNotEmpty)
+                          Container(
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            margin: const EdgeInsets.only(top: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _productSearchResults.length,
+                              itemBuilder: (ctx, i) {
+                                final p = _productSearchResults[i];
+                                return ListTile(
+                                  title: Text(p.productName ?? ''),
+                                  subtitle: Text("₹ ${p.totalAmount}"),
+                                  onTap: () => _addFollowupProduct(p),
                                 );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  leadTypeId = value!;
-                                  leadType = commonDetails!.data.leadCategory
-                                      .firstWhere((element) =>
-                                          element.leadCategoryId.toString() ==
-                                          value)
-                                      .leadCategory;
-                                  _fetchLeadSubType();
-                                });
                               },
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildDropdown(
-                              label: 'Sub Category',
-                              value:
-                                  leadSubTypeId.isEmpty ? null : leadSubTypeId,
-                              items: (leadSubTypeList?.data ?? []).map((item) {
-                                return DropdownMenuItem(
-                                  value: item.leadSubCategoryId.toString(),
-                                  child: Text(item.leadSubCategory ?? ''),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  leadSubTypeId = value!;
-                                  leadSubType = leadSubTypeList!.data!
-                                      .firstWhere((element) =>
-                                          element.leadSubCategoryId
-                                              .toString() ==
-                                          value)
-                                      .leadSubCategory!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // WhatsApp Number and Email ID
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'WhatsApp Number',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 4),
-                                TextField(
-                                  controller: whatsappLead,
-                                  keyboardType: TextInputType.phone,
-                                  decoration: InputDecoration(
-                                    hintText: 'WhatsApp Number',
-                                    border: const OutlineInputBorder(),
-                                    contentPadding: const EdgeInsets.all(12),
-                                    prefixIcon: const Icon(
-                                        FontAwesomeIcons.whatsapp,
-                                        size: 18,
-                                        color: Colors.green),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Email ID',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 4),
-                                TextField(
-                                  controller: emailLead,
-                                  keyboardType: TextInputType.emailAddress,
-                                  decoration: InputDecoration(
-                                    hintText: 'Email ID',
-                                    border: const OutlineInputBorder(),
-                                    contentPadding: const EdgeInsets.all(12),
-                                    prefixIcon: const Icon(Icons.email,
-                                        size: 18, color: Colors.blue),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Product Selection (Moved from More Details)
-                      const Text(
-                        'Products',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _productSearchCtrl,
-                        onChanged: _onFollowupProductSearch,
-                        decoration: InputDecoration(
-                          hintText: 'Search Product...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: _selectedProducts
+                              .map((p) => Chip(
+                                    label: Text(p.productName ?? ''),
+                                    onDeleted: () => _removeFollowupProduct(p),
+                                    backgroundColor: Colors.blue.shade50,
+                                    deleteIconColor: Colors.red,
+                                  ))
+                              .toList(),
                         ),
-                      ),
-                      if (_productSearchResults.isNotEmpty)
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          margin: const EdgeInsets.only(top: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: _productSearchResults.length,
-                            itemBuilder: (ctx, i) {
-                              final p = _productSearchResults[i];
-                              return ListTile(
-                                title: Text(p.productName ?? ''),
-                                subtitle: Text("₹ ${p.totalAmount}"),
-                                onTap: () => _addFollowupProduct(p),
-                              );
-                            },
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: _selectedProducts
-                            .map((p) => Chip(
-                                  label: Text(p.productName ?? ''),
-                                  onDeleted: () => _removeFollowupProduct(p),
-                                  backgroundColor: Colors.blue.shade50,
-                                  deleteIconColor: Colors.red,
-                                ))
-                            .toList(),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: cost,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Cost',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(12),
-                                prefixIcon:
-                                    Icon(Icons.currency_rupee, size: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: cost,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Cost',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.all(12),
+                                  prefixIcon:
+                                      Icon(Icons.currency_rupee, size: 18),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: address,
-                              decoration: const InputDecoration(
-                                labelText: 'Address',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(12),
-                                prefixIcon: Icon(Icons.home, size: 18),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: address,
+                                decoration: const InputDecoration(
+                                  labelText: 'Address',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.all(12),
+                                  prefixIcon: Icon(Icons.home, size: 18),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
 
-                      // Common Response suggestions
-                      if (commonDetails!.data.callResponse.isNotEmpty)
-                        SizedBox(
-                          height: 35,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: commonDetails!.data.callResponse.length,
-                            itemBuilder: (context, i) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      remarks.text = commonDetails!
-                                          .data.callResponse[i]
-                                          .toString();
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(16),
-                                      color: Colors.white,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        commonDetails!.data.callResponse[i]
-                                            .toString(),
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54),
+                        // Common Response suggestions
+                        if (commonDetails!.data.callResponse.isNotEmpty)
+                          SizedBox(
+                            height: 35,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount:
+                                  commonDetails!.data.callResponse.length,
+                              itemBuilder: (context, i) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        remarks.text = commonDetails!
+                                            .data.callResponse[i]
+                                            .toString();
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(16),
+                                        color: Colors.white,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          commonDetails!.data.callResponse[i]
+                                              .toString(),
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black54),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+
+                        // Remarks
+                        TextField(
+                          controller: remarks,
+                          maxLines: 2,
+                          decoration: const InputDecoration(
+                            labelText: 'Remarks',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.all(12),
                           ),
                         ),
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 12),
 
-                      // Remarks
-                      TextField(
-                        controller: remarks,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          labelText: 'Remarks',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.all(12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      const SizedBox(height: 12),
-                    ],
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Create Order and Create Customer Checkboxes
-                if ((leadSettings != null
-                        ? leadSettings!.createInvoiceBool
-                        : (callResultId == '4' &&
-                            commonDetails!.data.customerAddInvoicePermission ==
-                                true)) ||
-                    (leadSettings?.createCustomerBool ?? false))
-                  Row(
-                    children: [
-                      if (leadSettings != null
+                  // Create Order and Create Customer Checkboxes
+                  if ((leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
                               commonDetails!
                                       .data.customerAddInvoicePermission ==
-                                  true))
-                        Expanded(
-                          child: CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Create Order',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            value: createOrder,
-                            onChanged: (value) {
-                              setState(() {
-                                createOrder = value!;
-                                if (!createOrder) createRenewal = false;
-                              });
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: const Color(0xFF2a86c9),
-                          ),
-                        ),
-                      if (leadSettings?.createCustomerBool ?? false)
-                        Expanded(
-                          child: CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Create Customer',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            value: createCustomer,
-                            onChanged: (value) {
-                              setState(() {
-                                createCustomer = value!;
-                              });
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: const Color(0xFF2a86c9),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                // Order Details (Conditional)
-                if (createOrder &&
-                    (leadSettings != null
-                        ? leadSettings!.createInvoiceBool
-                        : (callResultId == '4' &&
-                            commonDetails!.data.customerAddInvoicePermission ==
-                                true)))
-                  _buildOrderSection(),
-
-                // Create Renewal Checkbox (Conditional)
-                if (createOrder &&
-                    (leadSettings != null
-                        ? leadSettings!.createRenewalBool
-                        : (callResultId == '4' &&
-                            commonDetails!.data.isRenewal == true)))
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Create Renewal',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    value: createRenewal,
-                    onChanged: (value) {
-                      setState(() {
-                        createRenewal = value!;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: const Color(0xFF2a86c9),
-                  ),
-
-                // Renewal Details (Conditional)
-                if (createRenewal &&
-                    createOrder &&
-                    (leadSettings != null
-                        ? leadSettings!.createRenewalBool
-                        : commonDetails!.data.isRenewal == true))
-                  _buildRenewalSection(),
-
-                const SizedBox(height: 20),
-
-                // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isSavingFollowup
-                        ? null
-                        : () {
-                            if (callResultId == '4' && createOrder == false) {
-                              createOrderDialog(context);
-                            } else {
-                              postFollowup();
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2a86c9),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: isSavingFollowup
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                                  true)) ||
+                      (leadSettings?.createCustomerBool ?? false))
+                    Row(
+                      children: [
+                        if (leadSettings != null
+                            ? leadSettings!.createInvoiceBool
+                            : (callResultId == '4' &&
+                                commonDetails!
+                                        .data.customerAddInvoicePermission ==
+                                    true))
+                          Expanded(
+                            child: CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Create Order',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              value: createOrder,
+                              onChanged: (value) {
+                                setState(() {
+                                  createOrder = value!;
+                                  if (!createOrder) createRenewal = false;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              activeColor: const Color(0xFF2a86c9),
                             ),
-                          )
-                        : const Text(
-                            'Save Followup',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
+                        if (leadSettings?.createCustomerBool ?? false)
+                          Expanded(
+                            child: CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Create Customer',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              value: createCustomer,
+                              onChanged: (value) {
+                                setState(() {
+                                  createCustomer = value!;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              activeColor: const Color(0xFF2a86c9),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                  // Order Details (Conditional)
+                  if (createOrder &&
+                      (leadSettings != null
+                          ? leadSettings!.createInvoiceBool
+                          : (callResultId == '4' &&
+                              commonDetails!
+                                      .data.customerAddInvoicePermission ==
+                                  true)))
+                    _buildOrderSection(),
+
+                  // Create Renewal Checkbox (Conditional)
+                  if (createOrder &&
+                      (leadSettings != null
+                          ? leadSettings!.createRenewalBool
+                          : (callResultId == '4' &&
+                              commonDetails!.data.isRenewal == true)))
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Create Renewal',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      value: createRenewal,
+                      onChanged: (value) {
+                        setState(() {
+                          createRenewal = value!;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: const Color(0xFF2a86c9),
+                    ),
+
+                  // Renewal Details (Conditional)
+                  if (createRenewal &&
+                      createOrder &&
+                      (leadSettings != null
+                          ? leadSettings!.createRenewalBool
+                          : commonDetails!.data.isRenewal == true))
+                    _buildRenewalSection(),
+
+                  const SizedBox(height: 20),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSavingFollowup
+                          ? null
+                          : () {
+                              if (callResultId == '4' && createOrder == false) {
+                                createOrderDialog(context);
+                              } else {
+                                postFollowup();
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2a86c9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: isSavingFollowup
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Save Followup',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

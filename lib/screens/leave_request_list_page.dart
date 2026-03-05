@@ -504,18 +504,6 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
         foregroundColor: Colors.white,
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: _loadData,
-              tooltip: 'Refresh',
-            ),
-          ),
-          Container(
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
@@ -924,101 +912,11 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                               color: lightBlue,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: PopupMenuButton<String>(
+                            child: IconButton(
                               icon: const Icon(Icons.more_vert,
                                   size: 20, color: primaryBlue),
-                              onSelected: (val) {
-                                if (val == 'approve') _showApproveDialog(item);
-                                if (val == 'reject') _confirmReject(item);
-                                if (val == 'edit')
-                                  _openApplyLeaveDialog(item: item);
-                                if (val == 'delete') _confirmDelete(item);
-                                if (val == 'details') _showDetails(item);
-                                if (val == 'attendance') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => StaffCalendarPage(
-                                        staffId: item.userId,
-                                        selectedDate: DateTime.now(),
-                                        staffName: item.staffName,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'details',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.visibility_outlined,
-                                          size: 18, color: primaryBlue),
-                                      SizedBox(width: 8),
-                                      Text("View Details"),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'attendance',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.calendar_month_outlined,
-                                          size: 18, color: primaryBlue),
-                                      SizedBox(width: 8),
-                                      Text("View Attendance"),
-                                    ],
-                                  ),
-                                ),
-                                if (isPending && _canApprove)
-                                  const PopupMenuItem(
-                                    value: 'approve',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.check_circle_outline,
-                                            size: 18, color: softGreen),
-                                        SizedBox(width: 8),
-                                        Text("Approve"),
-                                      ],
-                                    ),
-                                  ),
-                                if (isPending && _canReject)
-                                  const PopupMenuItem(
-                                    value: 'reject',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.cancel_outlined,
-                                            size: 18, color: softRed),
-                                        SizedBox(width: 8),
-                                        Text("Reject"),
-                                      ],
-                                    ),
-                                  ),
-                                if (isPending && _canEdit)
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.edit_outlined,
-                                            size: 18, color: softOrange),
-                                        SizedBox(width: 8),
-                                        Text("Edit"),
-                                      ],
-                                    ),
-                                  ),
-                                if (isPending && _canDelete)
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete_outline,
-                                            size: 18, color: softRed),
-                                        SizedBox(width: 8),
-                                        Text("Delete"),
-                                      ],
-                                    ),
-                                  ),
-                              ],
+                              onPressed: () =>
+                                  _showActionSheet(item, isPending),
                             ),
                           ),
                         ],
@@ -1336,39 +1234,70 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                       ],
                     ),
                   ),
-                  if (item.remarks != null && item.remarks!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: primaryBlue.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.notes_rounded,
-                              size: 16, color: primaryBlue),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              item.remarks != ""
-                                  ? 'Remarks :${item.remarks!}'
-                                  : 'Reason :${item.reason!}',
-                              style: TextStyle(
-                                color: primaryBlue,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  const SizedBox(height: 16),
+                  !isPending && item.approvedDates != ""
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 255, 245, 185),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                          child: Row(
+                            children: [
+                              Icon(Icons.date_range_outlined,
+                                  size: 16,
+                                  color:
+                                      const Color.fromARGB(255, 250, 210, 80)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
+                                  'Approved Dates:${item.approvedDates}',
+                                  style: TextStyle(
+                                    color:
+                                        const Color.fromARGB(255, 15, 15, 15),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SizedBox(),
+                  const SizedBox(height: 16),
+                  !isPending && item.approvedBy != ""
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 197, 255, 185),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.date_range_outlined,
+                                  size: 16,
+                                  color:
+                                      const Color.fromARGB(255, 206, 245, 155)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
+                                  'Approved By:${item.approvedBy}',
+                                  style: TextStyle(
+                                    color:
+                                        const Color.fromARGB(255, 15, 15, 15),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SizedBox(),
                   if (item.reason != null && item.reason.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -1400,9 +1329,199 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                       ),
                     ),
                   ],
+                  if (item.remarks != null && item.remarks!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 250, 232, 232),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: const Color.fromARGB(255, 255, 170, 156)
+                                .withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.notes_rounded,
+                              size: 16,
+                              color: const Color.fromARGB(255, 3, 3, 3)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              item.remarks != ""
+                                  ? 'Remarks :${item.remarks!}'
+                                  : 'Reason :${item.reason!}',
+                              style: TextStyle(
+                                color: const Color.fromARGB(255, 17, 17, 17),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showActionSheet(dynamic item, bool isPending) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Options",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: primaryBlue,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildActionItem(
+                icon: Icons.visibility_outlined,
+                label: "View Details",
+                color: primaryBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDetails(item);
+                },
+              ),
+              _buildActionItem(
+                icon: Icons.calendar_month_outlined,
+                label: "View Attendance",
+                color: primaryBlue,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StaffCalendarPage(
+                        staffId: item.userId,
+                        selectedDate: DateTime.now(),
+                        staffName: item.staffName,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              if (isPending && _canApprove)
+                _buildActionItem(
+                  icon: Icons.check_circle_outline,
+                  label: "Approve",
+                  color: softGreen,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showApproveDialog(item);
+                  },
+                ),
+              if (isPending && _canReject)
+                _buildActionItem(
+                  icon: Icons.cancel_outlined,
+                  label: "Reject",
+                  color: softRed,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmReject(item);
+                  },
+                ),
+              if (isPending && _canEdit)
+                _buildActionItem(
+                  icon: Icons.edit_outlined,
+                  label: "Edit",
+                  color: softOrange,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openApplyLeaveDialog(item: item);
+                  },
+                ),
+              if (isPending && _canDelete)
+                _buildActionItem(
+                  icon: Icons.delete_outline,
+                  label: "Delete",
+                  color: softRed,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmDelete(item);
+                  },
+                ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withOpacity(0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+            ],
           ),
         ),
       ),
@@ -1538,7 +1657,13 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                     _buildDetailRow(
                         Icons.info_outline, "Status", item.status ?? 'Pending',
                         isStatus: true, status: item.status),
-                    if (item.remarks != null)
+                    if (item.approvedBy != "")
+                      _buildDetailRow(Icons.person_pin_outlined, "Approved By",
+                          item.approvedBy),
+                    if (item.approvedDates != "")
+                      _buildDetailRow(Icons.date_range_outlined,
+                          "Approved Dates", item.approvedDates),
+                    if (item.remarks != null && item.remarks!.isNotEmpty)
                       _buildDetailRow(Icons.notes, "Remarks", item.remarks!,
                           isRemarks: true),
                   ],
@@ -1565,7 +1690,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                       icon: const Icon(Icons.calendar_month_outlined,
                           size: 18, color: primaryBlue),
                       label: const Text(
-                        "View Attendance",
+                        "Attendance",
                         style: TextStyle(color: primaryBlue, fontSize: 14),
                       ),
                       style: OutlinedButton.styleFrom(

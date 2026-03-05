@@ -57,6 +57,7 @@ import 'package:login2/models/lead_management/attendanceHistoryModel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/callDataModel.dart';
+import 'package:login2/models/lead_management/categoryWiseLeadBarModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
@@ -73,6 +74,8 @@ import 'package:login2/models/lead_management/leadDashboardCountNewModel.dart';
 import 'package:login2/models/lead_management/leadExtraSettings.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart';
 import 'package:login2/models/lead_management/leadProductsModel.dart';
+import 'package:login2/models/lead_management/leadProgressBarStaffModel.dart';
+import 'package:login2/models/lead_management/leadProgressBarStatusWise.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/lead_management/pendingExpenseModel.dart';
@@ -12266,6 +12269,8 @@ class HttpService {
     String? fromDate,
     String? toDate,
     String? userId,
+    String? targetFromDate,
+    String? targetToDate,
   }) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -12280,6 +12285,8 @@ class HttpService {
           "from_date": fromDate ?? "",
           "to_date": toDate ?? "",
           "user_id": userId ?? "",
+          "target_from_date": targetFromDate ?? "",
+          "target_to_date": targetToDate ?? "",
         }),
       );
       if (response.statusCode == 200) {
@@ -12323,6 +12330,116 @@ class HttpService {
       }
     } catch (e) {
       log("approvedLeaveList error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadProgressBarStaffModel?> leadProgressBarStaff({
+    String? fromDate,
+    String? toDate,
+    String? leadStatus,
+    String? selectedType,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leadProgressBarStaff error: Token not found");
+        return null;
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}leadProgressBarStaff",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate ?? "",
+          "toDate": toDate ?? "",
+          "leadStatus": leadStatus ?? "",
+          "selectedType": selectedType ?? "",
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 1) {
+          return LeadProgressBarStaffModel.fromJson(data);
+        } else {
+          log("leadProgressBarStaff API error: ${data['message'] ?? 'Unknown error'}");
+        }
+      } else {
+        log("leadProgressBarStaff HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leadProgressBarStaff error: $e");
+    }
+    return null;
+  }
+
+  static Future<CategoryWiseLeadBarModel?> leadProgressBarCategory({
+    String? fromDate,
+    String? toDate,
+    String? leadStatus,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leadProgressBarCategory error: Token not found");
+        return null;
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}leadProgressBarCategory",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate ?? "",
+          "toDate": toDate ?? "",
+          "leadStatus": leadStatus ?? "",
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 1) {
+          return CategoryWiseLeadBarModel.fromJson(data);
+        } else {
+          log("leadProgressBarCategory API error: ${data['message'] ?? 'Unknown error'}");
+        }
+      } else {
+        log("leadProgressBarCategory HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leadProgressBarCategory error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadProgressBarStatusWise?> leadProgressBarStatus({
+    String? fromDate,
+    String? toDate,
+    String? leadStatus,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leadProgressBarCategory error: Token not found");
+        return null;
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}leadProgressBarStatus",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate ?? "",
+          "toDate": toDate ?? "",
+          "leadStatus": leadStatus ?? "",
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 1) {
+          return LeadProgressBarStatusWise.fromJson(data);
+        } else {
+          log("leadProgressBarCategory API error: ${data['message'] ?? 'Unknown error'}");
+        }
+      } else {
+        log("leadProgressBarCategory HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leadProgressBarCategory error: $e");
     }
     return null;
   }

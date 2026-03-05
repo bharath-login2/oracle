@@ -40,6 +40,8 @@ class PendingLeaveData {
   final String createdAt;
   final String noOfDays;
   final String staffName;
+  final String approvedDates;
+  final String approvedBy;
   final String? fromDate;
   final String? toDate;
   final String? remarks;
@@ -55,6 +57,8 @@ class PendingLeaveData {
     required this.createdAt,
     required this.noOfDays,
     required this.staffName,
+    required this.approvedDates,
+    required this.approvedBy,
     this.fromDate,
     this.toDate,
     this.remarks,
@@ -72,6 +76,8 @@ class PendingLeaveData {
       createdAt: json['created_at']?.toString() ?? '',
       noOfDays: json['no_of_days']?.toString() ?? '0',
       staffName: json['staff_name']?.toString() ?? '',
+      approvedDates: json['approved_dates']?.toString() ?? '',
+      approvedBy: json['approved_by']?.toString() ?? '',
       fromDate: json['from_date']?.toString(),
       toDate: json['to_date']?.toString(),
       remarks: json['remarks']?.toString() ?? json['remarks']?.toString(),
@@ -90,6 +96,8 @@ class PendingLeaveData {
       'created_at': createdAt,
       'no_of_days': noOfDays,
       'staff_name': staffName,
+      'approved_dates': approvedDates,
+      'approved_by': approvedBy,
       'from_date': fromDate,
       'to_date': toDate,
       'remarks': remarks,
