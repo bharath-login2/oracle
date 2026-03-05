@@ -87,12 +87,38 @@ class _AssignReportState extends State<AssignReport> {
   Map<String, bool> _cardMinimalViews = {};
   bool _hasShownTaskDetails = false;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadCurrentUserId();
+  //   _fetchStaffList();
+  //   _loadData(currentFilters);
+  //   checkAssignedWorks();
+  //   _loadName();
+  //   print('widget.isUnassigned: ${widget.isUnassigned}');
+  //   currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  //   if (widget.selectedStatus != null && widget.selectedStatus!.isNotEmpty) {
+  //     _hasInitialStatusFilter = true;
+  //     _initialStatus = widget.selectedStatus!.toLowerCase();
+  //     final statusList = widget.selectedStatus!.split(',');
+  //     for (var status in statusList) {
+  //       final trimmedStatus = status.trim().toLowerCase();
+  //       if (trimmedStatus == 'pending') {
+  //         _selectedFilters.add('pending');
+  //       } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+  //         _selectedFilters.add('todo');
+  //       } else {
+  //         _selectedFilters.add(status.trim());
+  //       }
+  //     }
+  //   }
+  // }
+
   @override
   void initState() {
     super.initState();
     _loadCurrentUserId();
     _fetchStaffList();
-    _loadData(currentFilters);
     checkAssignedWorks();
     _loadName();
     print('widget.isUnassigned: ${widget.isUnassigned}');
@@ -139,8 +165,8 @@ class _AssignReportState extends State<AssignReport> {
     userId = await Common.getSharedPref("userId");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+
     setState(() {
-      // Apply filters when navigating from project dashboard
       if (widget.assignedByMyself == "1" &&
           widget.staffId != null &&
           widget.staffId!.isNotEmpty &&
@@ -162,9 +188,9 @@ class _AssignReportState extends State<AssignReport> {
           currentFilters['status_names'] =
               statusList.map((s) => s.trim().toLowerCase()).toList();
         }
-        // Set Assigned To as the staffId
+
         currentFilters['assigned_to_ids'] = [widget.staffId!];
-        // Set Assigned By as the logged-in user
+
         currentFilters['assigned_by_ids'] = [userId];
         _hasInitialStatusFilter = false;
         _initialStatus = null;
@@ -172,7 +198,6 @@ class _AssignReportState extends State<AssignReport> {
           widget.staffId != null &&
           widget.staffId!.isNotEmpty &&
           userId != null) {
-        // _selectedFilters.add('assignedByMe'); // Removed as per user request for general pending
         if (widget.selectedStatus != null &&
             widget.selectedStatus!.isNotEmpty) {
           final statusList = widget.selectedStatus!.split(',');
@@ -189,10 +214,8 @@ class _AssignReportState extends State<AssignReport> {
           currentFilters['status_names'] =
               statusList.map((s) => s.trim().toLowerCase()).toList();
         }
-        // Set Assigned To as the staffId
+
         currentFilters['assigned_to_ids'] = [widget.staffId!];
-        // Set Assigned By as the logged-in user
-        // currentFilters['assigned_by_ids'] = [userId]; // Removed as per user request for general pending
         _hasInitialStatusFilter = false;
         _initialStatus = null;
       } else if (widget.isUnassigned == "1") {
@@ -202,9 +225,84 @@ class _AssignReportState extends State<AssignReport> {
         _hasInitialStatusFilter = false;
         _initialStatus = null;
       }
-      _loadData(currentFilters);
     });
+
+    _loadData(currentFilters);
   }
+
+  // Future<void> _loadName() async {
+  //   token = await Common.getSharedPref("token");
+  //   name = await Common.getSharedPref("name");
+  //   assignWork = await Common.getSharedPref("assignWork");
+  //   userId = await Common.getSharedPref("userId");
+  //   phoneCallLogPermission =
+  //       await Common.getSharedPref("phoneCallLogPermission");
+  //   setState(() {
+  //     // Apply filters when navigating from project dashboard
+  //     if (widget.assignedByMyself == "1" &&
+  //         widget.staffId != null &&
+  //         widget.staffId!.isNotEmpty &&
+  //         userId != null) {
+  //       _selectedFilters.add('assignedByMe');
+  //       if (widget.selectedStatus != null &&
+  //           widget.selectedStatus!.isNotEmpty) {
+  //         final statusList = widget.selectedStatus!.split(',');
+  //         for (var status in statusList) {
+  //           final trimmedStatus = status.trim().toLowerCase();
+  //           if (trimmedStatus == 'pending') {
+  //             _selectedFilters.add('pending');
+  //           } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+  //             _selectedFilters.add('todo');
+  //           } else {
+  //             _selectedFilters.add(status.trim());
+  //           }
+  //         }
+  //         currentFilters['status_names'] =
+  //             statusList.map((s) => s.trim().toLowerCase()).toList();
+  //       }
+  //       // Set Assigned To as the staffId
+  //       currentFilters['assigned_to_ids'] = [widget.staffId!];
+  //       // Set Assigned By as the logged-in user
+  //       currentFilters['assigned_by_ids'] = [userId];
+  //       _hasInitialStatusFilter = false;
+  //       _initialStatus = null;
+  //     } else if (widget.assignedToMyself == "1" &&
+  //         widget.staffId != null &&
+  //         widget.staffId!.isNotEmpty &&
+  //         userId != null) {
+  //       // _selectedFilters.add('assignedByMe'); // Removed as per user request for general pending
+  //       if (widget.selectedStatus != null &&
+  //           widget.selectedStatus!.isNotEmpty) {
+  //         final statusList = widget.selectedStatus!.split(',');
+  //         for (var status in statusList) {
+  //           final trimmedStatus = status.trim().toLowerCase();
+  //           if (trimmedStatus == 'pending') {
+  //             _selectedFilters.add('pending');
+  //           } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
+  //             _selectedFilters.add('todo');
+  //           } else {
+  //             _selectedFilters.add(status.trim());
+  //           }
+  //         }
+  //         currentFilters['status_names'] =
+  //             statusList.map((s) => s.trim().toLowerCase()).toList();
+  //       }
+  //       // Set Assigned To as the staffId
+  //       currentFilters['assigned_to_ids'] = [widget.staffId!];
+  //       // Set Assigned By as the logged-in user
+  //       // currentFilters['assigned_by_ids'] = [userId]; // Removed as per user request for general pending
+  //       _hasInitialStatusFilter = false;
+  //       _initialStatus = null;
+  //     } else if (widget.isUnassigned == "1") {
+  //       _selectedFilters.add('unassigned');
+  //       currentFilters['assigned_to_ids'] = ['0'];
+  //       currentFilters['status_names'] = ['unassigned'];
+  //       _hasInitialStatusFilter = false;
+  //       _initialStatus = null;
+  //     }
+  //     _loadData(currentFilters);
+  //   });
+  // }
 
   void _showSmallStaffPopup(BuildContext context) {
     final RenderBox button = context.findRenderObject() as RenderBox;
@@ -550,30 +648,7 @@ class _AssignReportState extends State<AssignReport> {
         };
         _isCalculatingCounts = false;
       });
-      List<AssignedWork> filteredList = assignedList.where((item) {
-        bool matchesAssignedByMe = _selectedFilters.contains('assignedByMe')
-            ? item.assignedBy.toLowerCase() == name?.toLowerCase()
-            : true;
-
-        bool matchesAssignedToMe = _selectedFilters.contains('assignedToMe')
-            ? item.assignedToId.toString() == userId.toString()
-            : true;
-
-        bool hasStatusFilter = _selectedFilters.contains('pending') ||
-            _selectedFilters.contains('todo');
-        bool matchesStatus = true;
-
-        if (hasStatusFilter) {
-          bool matchesPending = _selectedFilters.contains('pending') &&
-              item.status.toLowerCase() == 'pending';
-          bool matchesTodo = _selectedFilters.contains('todo') &&
-              (item.status.toLowerCase() == 'to do' ||
-                  item.status.toLowerCase() == 'todo');
-          matchesStatus = matchesPending || matchesTodo;
-        }
-
-        return matchesAssignedByMe && matchesStatus && matchesAssignedToMe;
-      }).toList();
+      List<AssignedWork> filteredList = assignedList;
 
       if (widget.workId.isNotEmpty && !_hasShownTaskDetails) {
         final AssignedWork matchedItem = filteredList.firstWhere(
@@ -660,7 +735,7 @@ class _AssignReportState extends State<AssignReport> {
       appBar: AppBar(
         title: const Text("Assign Report",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 77, 173, 252),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -1883,8 +1958,8 @@ class _AssignReportState extends State<AssignReport> {
                     if (name?.toLowerCase() == item.assignedTo.toLowerCase())
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: item.startStatus == "Started"
-                              ? const Color.fromARGB(255, 122, 121, 121)
+                          backgroundColor: item.status == "Running"
+                              ? const Color.fromARGB(255, 226, 180, 80)
                               : const Color.fromARGB(255, 32, 179, 67),
                           disabledBackgroundColor: const Color.fromARGB(
                               255, 236, 167, 18), // for null onPressed
@@ -1894,25 +1969,29 @@ class _AssignReportState extends State<AssignReport> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                         ),
-                        onPressed: item.startStatus == "Started"
+                        onPressed: item.status == "Running"
                             ? null
                             : () => _handleStartWork(item),
                         child: Row(
                           children: [
                             Icon(
-                              item.startStatus == "Started"
-                                  ? Icons.stop_circle_outlined
+                              item.status == "Running"
+                                  ? Icons.pause_circle_outline
                                   : Icons.play_circle_outline,
                               size: 16,
-                              color: item.startStatus == "Not Started"
-                                  ? Colors.white
-                                  : const Color.fromARGB(255, 179, 32, 32),
+                              color: item.status == "Running"
+                                  ? const Color.fromARGB(255, 106, 219, 61)
+                                  : item.startStatus == "Started"
+                                      ? const Color.fromARGB(255, 106, 219, 61)
+                                      : const Color.fromARGB(255, 179, 32, 32),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              item.startStatus == "Started"
-                                  ? "Started"
-                                  : "Start",
+                              item.status == "Running"
+                                  ? "Running"
+                                  : item.startStatus == "Started"
+                                      ? "Restart"
+                                      : "Start",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ],
@@ -2333,7 +2412,7 @@ class _AssignReportState extends State<AssignReport> {
                               horizontal: 16, vertical: 8),
                         ),
                         onPressed: item.startStatus == "Started"
-                            ? null
+                            ? () => _handleStartWork(item)
                             : () => _handleStartWork(item),
                         child: Row(
                           children: [
@@ -2884,6 +2963,28 @@ class _AssignReportState extends State<AssignReport> {
           ],
         ),
       );
+    } else if (item.startStatus == "Started") {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddWorkPage(
+            workId: item.id,
+            existingWork: null,
+            isPaused: 0,
+            Restart: 1,
+            onSuccess: () {
+              setState(() {
+                checkExistingWorkStatus();
+              });
+            },
+          ),
+        ),
+      );
+      if (result == true) {
+        _loadData(currentFilters);
+        checkExistingWorkStatus();
+        checkAssignedWorks();
+      }
     } else {
       final result = await Navigator.push(
         context,

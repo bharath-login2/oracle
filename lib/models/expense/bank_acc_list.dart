@@ -31,12 +31,16 @@ class Data {
   String totalCredit;
   String toalDebit;
   String advance;
+  String openingBalance;
+  String closingBalance;
 
   Data({
     required this.lists,
     required this.totalCredit,
     required this.toalDebit,
     required this.advance,
+    required this.openingBalance,
+    required this.closingBalance,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -45,6 +49,8 @@ class Data {
         totalCredit: json["total_credit"],
         toalDebit: json["toal_debit"],
         advance: json["advance"],
+        openingBalance: json["opening_balance"],
+        closingBalance: json["closing_balance"],
       );
 }
 

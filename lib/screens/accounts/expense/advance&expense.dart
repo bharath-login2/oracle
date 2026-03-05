@@ -11,7 +11,9 @@ import 'package:login2/widgets/AddPendingExpenseForm.dart';
 // ignore: must_be_immutable
 class PendingExpense extends StatefulWidget {
   String status;
-  PendingExpense({super.key, required this.status});
+  String? fdate;
+  String? tdate;
+  PendingExpense({super.key, required this.status, this.fdate, this.tdate});
 
   @override
   State<PendingExpense> createState() => _PendingExpenseState();
@@ -61,7 +63,8 @@ class _PendingExpenseState extends State<PendingExpense> {
   }
 
   getList() async {
-    accountList = await HttpService.getPendingExpense(widget.status);
+    accountList = await HttpService.getPendingExpense(widget.status,
+        fromDate: widget.fdate, toDate: widget.tdate);
     if (accountList != null && accountList!.status == true) {
       filteredExpenses.addAll(accountList!.data.lists);
       setState(() {

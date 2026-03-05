@@ -396,9 +396,11 @@ class _LoginState extends State<Login> {
                 "accountName", object.data!.accountName.toString());
             Common.saveSharedPref(
                 "accountId", object.data!.accountId.toString());
-            UserPermissionModel object1 =
+            UserPermissionModel? object1 =
                 await HttpService.userPermissionCheck(object.data!.token);
-            if (object1.status == true) {
+            if (object1 != null &&
+                object1.status == true &&
+                object1.data != null) {
               Common.saveSharedPref("isVisible", 'true');
               Common.saveSharedPref(
                   "accPermission", object1.data!.readAccount.toString());
@@ -475,120 +477,130 @@ class _LoginState extends State<Login> {
 
               Common.saveSharedPref(
                   "uploadCallLog", object1.data!.uploadCallLog.toString());
-            }
-            Common.saveSharedPref("sound", 'slow_spring_board');
-            Common.saveSharedPref("token", object.data!.token.toString());
-            Common.saveSharedPref(
-                "name", object.data!.name.toString().toUpperCase());
-            Common.saveSharedPref("userId", object.data!.userId.toString());
-            Common.saveSharedPref("role", object.data!.role.toString());
-            Common.saveSharedPref("roleId", object.data!.roleId.toString());
-            Common.saveSharedPref(
-                "multiBranch", object.data!.isMultiBranch.toString());
-            Common.saveSharedPref(
-                "faceDetection", object1.data!.faceDetection.toString());
-            Common.saveSharedPref(
-                "companyLocation", object1.data!.companyLocation.toString());
-            Common.saveSharedPref(
-                "assignWork", object1.data!.assignWork.toString());
-            Common.saveSharedPref("ProjectDashboardPermission",
-                object1.data!.ProjectDashboard.toString());
-            Common.saveSharedPref(
-                "LeadDashboard", object1.data!.LeadDashboard.toString());
-            Common.saveSharedPref("AccountsDashboardPermission",
-                object1.data!.AccountsDashboard.toString());
-            Common.saveSharedPref("QuotationDashboardPermission",
-                object1.data!.QuotationDashboard.toString());
-            Common.saveSharedPref(
-                "RoomDashboard", object1.data!.RoomDashboard.toString());
-            Common.saveSharedPref("JobCard", object1.data!.JobCard.toString());
-            //////////////Modules permissions /////////////////////////////////////////
-            Common.saveSharedPref(
-                "RoomModule", object1.data!.roomModule.toString());
-            Common.saveSharedPref(
-                "workWithoutLogin", object1.data!.workWithoutLogin.toString());
-            Common.saveSharedPref(
-                "quotationModule", object1.data!.quotationModule.toString());
-            Common.saveSharedPref(
-                "workModule", object1.data!.workModule.toString());
-            Common.saveSharedPref(
-                "renewalModule", object1.data!.renewalModule.toString());
-            Common.saveSharedPref(
-                "accountsModule", object1.data!.accountsModule.toString());
-            Common.saveSharedPref(
-                "leadModule", object1.data!.leadModule.toString());
+              Common.saveSharedPref("addApproveLeavePermission",
+                  object1.data!.addApproveLeave.toString());
+              Common.saveSharedPref("rejectRequestLeavePermission",
+                  object1.data!.rejectRequestLeave.toString());
+              Common.saveSharedPref("editLeaveRequestPermission",
+                  object1.data!.editLeaveRequest.toString());
+              Common.saveSharedPref("deleteLeaveRequestPermission",
+                  object1.data!.deleteLeaveRequest.toString());
+              Common.saveSharedPref("sound", 'slow_spring_board');
+              Common.saveSharedPref("token", object.data!.token.toString());
+              Common.saveSharedPref(
+                  "name", object.data!.name.toString().toUpperCase());
+              Common.saveSharedPref("userId", object.data!.userId.toString());
+              Common.saveSharedPref("role", object.data!.role.toString());
+              Common.saveSharedPref("roleId", object.data!.roleId.toString());
+              Common.saveSharedPref(
+                  "multiBranch", object.data!.isMultiBranch.toString());
+              Common.saveSharedPref(
+                  "faceDetection", object1.data!.faceDetection.toString());
+              Common.saveSharedPref(
+                  "companyLocation", object1.data!.companyLocation.toString());
+              Common.saveSharedPref(
+                  "assignWork", object1.data!.assignWork.toString());
+              Common.saveSharedPref("ProjectDashboardPermission",
+                  object1.data!.ProjectDashboard.toString());
+              Common.saveSharedPref(
+                  "LeadDashboard", object1.data!.LeadDashboard.toString());
+              Common.saveSharedPref("AccountsDashboardPermission",
+                  object1.data!.AccountsDashboard.toString());
+              Common.saveSharedPref("QuotationDashboardPermission",
+                  object1.data!.QuotationDashboard.toString());
+              Common.saveSharedPref(
+                  "RoomDashboard", object1.data!.RoomDashboard.toString());
+              Common.saveSharedPref(
+                  "JobCard", object1.data!.JobCard.toString());
+              //////////////Modules permissions /////////////////////////////////////////
+              Common.saveSharedPref(
+                  "RoomModule", object1.data!.roomModule.toString());
+              Common.saveSharedPref("workWithoutLogin",
+                  object1.data!.workWithoutLogin.toString());
+              Common.saveSharedPref(
+                  "quotationModule", object1.data!.quotationModule.toString());
+              Common.saveSharedPref(
+                  "workModule", object1.data!.workModule.toString());
+              Common.saveSharedPref(
+                  "renewalModule", object1.data!.renewalModule.toString());
+              Common.saveSharedPref(
+                  "accountsModule", object1.data!.accountsModule.toString());
+              Common.saveSharedPref(
+                  "leadModule", object1.data!.leadModule.toString());
 
-            ///      Modulessss eNDSSSS ///////////////////////////////////////
-            Common.saveSharedPref(
-                "MenuDashboard", object1.data!.MenuDashboard.toString());
-            Common.saveSharedPref("RenewalDashboardPermission",
-                object1.data!.RenewalDashboard.toString());
-            Common.saveSharedPref("NewleadDashboardPermission",
-                object1.data!.NewleadDashboard.toString());
-            Common.saveSharedPref(
-                "addWorkModule", object1.data!.addWorkModule.toString());
-            Common.saveSharedPref("viewAttendanceSection",
-                object1.data!.viewAttendanceSection.toString());
-            Common.saveSharedPref(
-                "approvePayroll", object1.data!.approvePayroll.toString());
-            Common.saveSharedPref("proformaInvoiceMenu",
-                object1.data!.proformaInvoiceMenu.toString());
-            Common.saveSharedPref(
-                "gstInvoiceMenu", object1.data!.gstInvoiceMenu.toString());
-            Common.saveSharedPref(
-                "receiptMenu", object1.data!.receiptMenu.toString());
-            Common.saveSharedPref("pendingInvoiceMenu",
-                object1.data!.pendingInvoiceMenu.toString());
-            Common.saveSharedPref("createLeadCategory",
-                object1.data!.createLeadCategory.toString());
-            Common.saveSharedPref(
-                "addLeadSource", object1.data!.addLeadSource.toString());
-            Common.saveSharedPref(
-                "updateDashboard", object1.data!.updateDashboard.toString());
-            Common.saveSharedPref(
-                "viewPendingWorks", object1.data!.viewPendingWorks.toString());
-            // Common.saveSharedPref("callLogPermission", 'false');
-            //  Common.saveSharedPref(
-            //  "callLogPermission", 'true');
-            String? projectDash = object1.data!.ProjectDashboard.toString();
-            String? leadDash = object1.data!.LeadDashboard.toString();
-            String? accountsDash = object1.data!.AccountsDashboard.toString();
-            String? menuDash = object1.data!.MenuDashboard.toString();
-            String? renewalDash = object1.data!.RenewalDashboard.toString();
-            String? quotationDash = object1.data!.QuotationDashboard.toString();
-            Widget dashboardToOpen;
-            if (projectDash == "true") {
-              dashboardToOpen = ProjectDashboard();
-            } else if (leadDash == "true") {
-              dashboardToOpen = Dashboard(object.data!.token.toString());
-            } else if (accountsDash == "true") {
-              dashboardToOpen =
-                  AccountsDashboard(token: object.data!.token.toString());
-            } else if (menuDash == "true") {
-              dashboardToOpen = HomePage(object.data!.token.toString());
-            } else if (renewalDash == "true") {
-              dashboardToOpen = RenewalDashboard();
-            } else if (quotationDash == "true") {
-              dashboardToOpen = QuotationDashboard();
-            } else {
-              dashboardToOpen =
-                  Dashboard(object.data!.token.toString()); // fallback
-            }
-
-            if (object.status == true) {
-              if (mounted) {
-                // Navigator.of(context).push(
-                //   MaterialPageRoute(
-                //       builder: (context) =>
-                //           Dashboard(object.data!.token.toString())),
-                // );
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => dashboardToOpen),
-                );
+              ///      Modulessss eNDSSSS ///////////////////////////////////////
+              Common.saveSharedPref(
+                  "MenuDashboard", object1.data!.MenuDashboard.toString());
+              Common.saveSharedPref("RenewalDashboardPermission",
+                  object1.data!.RenewalDashboard.toString());
+              Common.saveSharedPref("NewleadDashboardPermission",
+                  object1.data!.NewleadDashboard.toString());
+              Common.saveSharedPref(
+                  "addWorkModule", object1.data!.addWorkModule.toString());
+              Common.saveSharedPref("viewAttendanceSection",
+                  object1.data!.viewAttendanceSection.toString());
+              Common.saveSharedPref(
+                  "approvePayroll", object1.data!.approvePayroll.toString());
+              Common.saveSharedPref("proformaInvoiceMenu",
+                  object1.data!.proformaInvoiceMenu.toString());
+              Common.saveSharedPref(
+                  "gstInvoiceMenu", object1.data!.gstInvoiceMenu.toString());
+              Common.saveSharedPref(
+                  "receiptMenu", object1.data!.receiptMenu.toString());
+              Common.saveSharedPref("pendingInvoiceMenu",
+                  object1.data!.pendingInvoiceMenu.toString());
+              Common.saveSharedPref("createLeadCategory",
+                  object1.data!.createLeadCategory.toString());
+              Common.saveSharedPref(
+                  "addLeadSource", object1.data!.addLeadSource.toString());
+              Common.saveSharedPref(
+                  "updateDashboard", object1.data!.updateDashboard.toString());
+              Common.saveSharedPref("viewPendingWorks",
+                  object1.data!.viewPendingWorks.toString());
+              // Common.saveSharedPref("callLogPermission", 'false');
+              //  Common.saveSharedPref(
+              //  "callLogPermission", 'true');
+              String? projectDash = object1.data!.ProjectDashboard.toString();
+              String? leadDash = object1.data!.LeadDashboard.toString();
+              String? accountsDash = object1.data!.AccountsDashboard.toString();
+              String? menuDash = object1.data!.MenuDashboard.toString();
+              String? renewalDash = object1.data!.RenewalDashboard.toString();
+              String? quotationDash =
+                  object1.data!.QuotationDashboard.toString();
+              Widget dashboardToOpen;
+              if (projectDash == "true") {
+                dashboardToOpen = ProjectDashboard();
+              } else if (leadDash == "true") {
+                dashboardToOpen = Dashboard(object.data!.token.toString());
+              } else if (accountsDash == "true") {
+                dashboardToOpen =
+                    AccountsDashboard(token: object.data!.token.toString());
+              } else if (menuDash == "true") {
+                dashboardToOpen = HomePage(object.data!.token.toString());
+              } else if (renewalDash == "true") {
+                dashboardToOpen = RenewalDashboard();
+              } else if (quotationDash == "true") {
+                dashboardToOpen = QuotationDashboard();
+              } else {
+                dashboardToOpen =
+                    Dashboard(object.data!.token.toString()); // fallback
               }
-            } else {}
 
-            Common.toastMessaage(object.message, Colors.green);
+              if (object.status == true) {
+                if (mounted) {
+                  // Navigator.of(context).push(
+                  //   MaterialPageRoute(
+                  //       builder: (context) =>
+                  //           Dashboard(object.data!.token.toString())),
+                  // );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => dashboardToOpen),
+                  );
+                }
+              } else {}
+
+              Common.toastMessaage(object.message, Colors.green);
+            }
           } else {
             setState(() {
               _loading = false;

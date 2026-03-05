@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_settings/app_settings.dart';
+import 'package:login2/screens/accounts/reports/customer_payment_report_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
@@ -99,10 +100,38 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
   int notificationCount = 0;
   List<TargetGroupAll> companyTargets = [];
   bool isLoadingTargets = false;
+
+  String targetMonth = '';
+  int targetYear = 2023;
+
+  String overviewMonth = '';
+  int overviewYear = 2023;
+
+  String profitLossMonth = '';
+  int profitLossYear = 2023;
+
   DateTime targetFromDate = DateTime.now();
   DateTime targetToDate = DateTime.now();
   ProfitLossItem? dashboardProfitLoss;
   bool isDashboardPLLoading = false;
+
+  int _getMonthNumber(String monthName) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    return months.indexOf(monthName) + 1;
+  }
 
   List<dynamic> get list => [
         "Invoices",
@@ -129,11 +158,11 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
   Future<void> _fetchDashboardProfitLoss() async {
     setState(() => isDashboardPLLoading = true);
     try {
-      final now = DateTime.now();
-      String month = DateFormat('MM').format(now);
-      String year = now.year.toString();
+      int monthNum = _getMonthNumber(profitLossMonth);
+      String monthStr = monthNum.toString().padLeft(2, '0');
+      String yearStr = profitLossYear.toString();
 
-      final response = await HttpService().getProfitOrLose(month, year);
+      final response = await HttpService().getProfitOrLose(monthStr, yearStr);
       if (mounted) {
         if (response != null &&
             response.data != null &&
@@ -271,9 +300,10 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
   Future<void> getCompanyTargets() async {
     setState(() => isLoadingTargets = true);
 
-    final now = DateTime.now();
-    targetFromDate = DateTime(now.year, now.month, 1);
-    targetToDate = now;
+    int monthNum = _getMonthNumber(targetMonth);
+    targetFromDate = DateTime(targetYear, monthNum, 1);
+    targetToDate =
+        DateTime(targetYear, monthNum + 1, 0); // Last day of the month
 
     final fromStr = targetFromDate.toIso8601String().split('T').first;
     final toStr = targetToDate.toIso8601String().split('T').first;
@@ -307,6 +337,15 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
 
   @override
   void initState() {
+    targetMonth = _getCurrentMonth();
+    targetYear = DateTime.now().year;
+
+    overviewMonth = _getCurrentMonth();
+    overviewYear = DateTime.now().year;
+
+    profitLossMonth = _getCurrentMonth();
+    profitLossYear = DateTime.now().year;
+
     getData();
     _fetchDashboardProfitLoss();
     _initializeFloatingButtonPosition();
@@ -523,6 +562,65 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
     });
   }
 
+  Widget _buildMonthYearFilter({
+    required String selectedMonth,
+    required int selectedYear,
+    required Function(String) onMonthChanged,
+    required Function(int) onYearChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2a86c9).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () =>
+                _showMonthPicker(context, selectedMonth, onMonthChanged),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month,
+                    size: 14, color: Color(0xFF2a86c9)),
+                const SizedBox(width: 4),
+                Text(selectedMonth,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2a86c9))),
+                const Icon(Icons.arrow_drop_down,
+                    size: 16, color: Color(0xFF2a86c9)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Text("-",
+              style: TextStyle(
+                  color: Color(0xFF2a86c9),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => _showYearPicker(context, selectedYear, onYearChanged),
+            child: Row(
+              children: [
+                Text(selectedYear.toString(),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2a86c9))),
+                const Icon(Icons.arrow_drop_down,
+                    size: 16, color: Color(0xFF2a86c9)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isSmallScreen = MediaQuery.of(context).size.width < 600;
@@ -563,21 +661,18 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                               color: Colors.grey[800],
                                             ),
                                           ),
-                                          // IconButton(
-                                          //   icon: Icon(Icons.add,
-                                          //       color: Color(0xFF2a86c9)),
-                                          //   onPressed: () {
-                                          //     Navigator.push(
-                                          //       context,
-                                          //       MaterialPageRoute(
-                                          //         builder: (context) =>
-                                          //             const SetTargetPage(),
-                                          //       ),
-                                          //     ).then((_) {
-                                          //       getCompanyTargets();
-                                          //     });
-                                          //   },
-                                          // ),
+                                          _buildMonthYearFilter(
+                                            selectedMonth: targetMonth,
+                                            selectedYear: targetYear,
+                                            onMonthChanged: (m) {
+                                              setState(() => targetMonth = m);
+                                              getCompanyTargets();
+                                            },
+                                            onYearChanged: (y) {
+                                              setState(() => targetYear = y);
+                                              getCompanyTargets();
+                                            },
+                                          ),
                                         ],
                                       ),
                                       const SizedBox(height: 9),
@@ -620,13 +715,51 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16.0),
-                                  child: Text(
-                                    "Quick Overview",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey[800],
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Quick Overview",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                      _buildMonthYearFilter(
+                                        selectedMonth: overviewMonth,
+                                        selectedYear: overviewYear,
+                                        onMonthChanged: (m) {
+                                          setState(() {
+                                            overviewMonth = m;
+                                            int monthNum =
+                                                _getMonthNumber(overviewMonth);
+                                            fDate = DateFormat('dd-MM-yyyy')
+                                                .format(DateTime(
+                                                    overviewYear, monthNum, 1));
+                                            tDate = DateFormat('dd-MM-yyyy')
+                                                .format(DateTime(overviewYear,
+                                                    monthNum + 1, 0));
+                                          });
+                                          getList();
+                                        },
+                                        onYearChanged: (y) {
+                                          setState(() {
+                                            overviewYear = y;
+                                            int monthNum =
+                                                _getMonthNumber(overviewMonth);
+                                            fDate = DateFormat('dd-MM-yyyy')
+                                                .format(DateTime(
+                                                    overviewYear, monthNum, 1));
+                                            tDate = DateFormat('dd-MM-yyyy')
+                                                .format(DateTime(overviewYear,
+                                                    monthNum + 1, 0));
+                                          });
+                                          getList();
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -662,6 +795,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                                         .data.bankAccountId,
                                                     accName: dashboard!
                                                         .data.bankAccountName,
+                                                    fDate: fDate,
+                                                    tDate: tDate,
                                                   ),
                                                 ),
                                               );
@@ -712,6 +847,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                                 builder: (context) =>
                                                     PendingExpense(
                                                   status: "2",
+                                                  fdate: fDate,
+                                                  tdate: tDate,
                                                 ),
                                               ),
                                             );
@@ -774,13 +911,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                             MaterialPageRoute(
                                               builder: (context) => ReceiptList(
                                                 widget.token,
-                                                fdate: DateFormat('dd-MM-yyyy')
-                                                    .format(DateTime(
-                                                        DateTime.now().year,
-                                                        DateTime.now().month,
-                                                        1)),
-                                                tdate: DateFormat('dd-MM-yyyy')
-                                                    .format(DateTime.now()),
+                                                fdate: fDate,
+                                                tdate: tDate,
                                               ),
                                             ),
                                           );
@@ -798,19 +930,20 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                             MaterialPageRoute(
                                               builder: (context) => ExpenseList(
                                                 fdate: DateFormat('yyyy-MM-dd')
-                                                    .format(DateTime(
-                                                        DateTime.now().year,
-                                                        DateTime.now().month,
-                                                        1)),
+                                                    .format(
+                                                        DateFormat('dd-MM-yyyy')
+                                                            .parse(fDate)),
                                                 tdate: DateFormat('yyyy-MM-dd')
-                                                    .format(DateTime.now()),
+                                                    .format(
+                                                        DateFormat('dd-MM-yyyy')
+                                                            .parse(tDate)),
                                               ),
                                             ),
                                           );
                                         },
                                       ),
                                       _buildModernCard(
-                                        title: "Pending Invoice",
+                                        title: "Customer Payment",
                                         value: dashboard?.data.pendingIncome ??
                                             "₹0",
                                         icon: Icons.receipt_long,
@@ -820,11 +953,30 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  PendingInvoice(widget.token),
+                                                  CustomerPaymentReportScreen(
+                                                fDate: fDate,
+                                                tDate: tDate,
+                                              ),
                                             ),
                                           );
                                         },
                                       ),
+                                      // _buildModernCard(
+                                      //   title: "Pending Invoice",
+                                      //   value: dashboard?.data.pendingIncome ??
+                                      //       "₹0",
+                                      //   icon: Icons.receipt_long,
+                                      //   color: Colors.deepOrange,
+                                      //   onTap: () {
+                                      //     Navigator.push(
+                                      //       context,
+                                      //       MaterialPageRoute(
+                                      //         builder: (context) =>
+                                      //             PendingInvoice(widget.token),
+                                      //       ),
+                                      //     );
+                                      //   },
+                                      // ),
                                       _buildModernCard(
                                         title: "Advance Amount",
                                         value: dashboard?.data.advanceAmount ??
@@ -838,6 +990,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                               builder: (context) =>
                                                   PendingExpense(
                                                 status: "3",
+                                                fdate: fDate,
+                                                tdate: tDate,
                                               ),
                                             ),
                                           );
@@ -862,23 +1016,17 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                           color: Colors.grey[800],
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF2a86c9)
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          "This Month",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                            color: const Color(0xFF2a86c9),
-                                          ),
-                                        ),
+                                      _buildMonthYearFilter(
+                                        selectedMonth: profitLossMonth,
+                                        selectedYear: profitLossYear,
+                                        onMonthChanged: (m) {
+                                          setState(() => profitLossMonth = m);
+                                          _fetchDashboardProfitLoss();
+                                        },
+                                        onYearChanged: (y) {
+                                          setState(() => profitLossYear = y);
+                                          _fetchDashboardProfitLoss();
+                                        },
                                       ),
                                     ],
                                   ),
@@ -1122,129 +1270,125 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            "Date Range",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Expanded(
-                                                child: GestureDetector(
-                                                  onTap: () async {
-                                                    final selectedDate =
-                                                        await showDatePicker(
-                                                      context: context,
-                                                      initialDate: DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month,
-                                                          1),
-                                                      firstDate: DateTime(2000),
-                                                      lastDate: DateTime.now(),
-                                                    );
-                                                    if (selectedDate != null) {
-                                                      fDate = DateFormat(
-                                                              'dd-MM-yyyy')
-                                                          .format(selectedDate);
-                                                      getList();
-                                                      setState(() {});
-                                                    }
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            12),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.blue[50],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Text(
-                                                          fDate,
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 14),
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 8),
-                                                        Icon(
-                                                            Icons
-                                                                .calendar_today,
-                                                            size: 16,
-                                                            color: Colors.blue),
-                                                      ],
-                                                    ),
-                                                  ),
+                                              const Text(
+                                                "Date Range",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.grey,
                                                 ),
                                               ),
-                                              const SizedBox(width: 8),
-                                              Text("to",
-                                                  style: TextStyle(
-                                                      color: Colors.grey[600])),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: GestureDetector(
-                                                  onTap: () async {
-                                                    final selectedDate =
-                                                        await showDatePicker(
-                                                      context: context,
-                                                      initialDate:
-                                                          DateTime.now(),
-                                                      firstDate: DateTime(2000),
-                                                      lastDate: DateTime(2100),
-                                                    );
-                                                    if (selectedDate != null) {
-                                                      tDate = DateFormat(
-                                                              'dd-MM-yyyy')
-                                                          .format(selectedDate);
-                                                      getList();
-                                                      setState(() {});
-                                                    }
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            12),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.blue[50],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Text(
-                                                          tDate,
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 14),
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 8),
-                                                        Icon(
-                                                            Icons
-                                                                .calendar_today,
-                                                            size: 16,
-                                                            color: Colors.blue),
-                                                      ],
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      DateTime parsedDate;
+                                                      try {
+                                                        parsedDate = DateFormat(
+                                                                'dd-MM-yyyy')
+                                                            .parse(fDate);
+                                                      } catch (_) {
+                                                        parsedDate =
+                                                            DateTime.now();
+                                                      }
+                                                      final selectedDate =
+                                                          await showDatePicker(
+                                                        context: context,
+                                                        initialDate: parsedDate,
+                                                        firstDate:
+                                                            DateTime(2000),
+                                                        lastDate:
+                                                            DateTime.now(),
+                                                      );
+                                                      if (selectedDate !=
+                                                          null) {
+                                                        fDate = DateFormat(
+                                                                'dd-MM-yyyy')
+                                                            .format(
+                                                                selectedDate);
+                                                        getList();
+                                                        setState(() {});
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.blue[50],
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.calendar_month,
+                                                        size: 18,
+                                                        color: Colors.blue,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
+                                                  const SizedBox(width: 8),
+                                                  const Icon(
+                                                      Icons
+                                                          .arrow_forward_rounded,
+                                                      color: Colors.grey,
+                                                      size: 16),
+                                                  const SizedBox(width: 8),
+                                                  GestureDetector(
+                                                    onTap: () async {
+                                                      DateTime parsedDate;
+                                                      try {
+                                                        parsedDate = DateFormat(
+                                                                'dd-MM-yyyy')
+                                                            .parse(tDate);
+                                                      } catch (_) {
+                                                        parsedDate =
+                                                            DateTime.now();
+                                                      }
+                                                      final selectedDate =
+                                                          await showDatePicker(
+                                                        context: context,
+                                                        initialDate: parsedDate,
+                                                        firstDate:
+                                                            DateTime(2000),
+                                                        lastDate:
+                                                            DateTime(2100),
+                                                      );
+                                                      if (selectedDate !=
+                                                          null) {
+                                                        tDate = DateFormat(
+                                                                'dd-MM-yyyy')
+                                                            .format(
+                                                                selectedDate);
+                                                        getList();
+                                                        setState(() {});
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.blue[50],
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.calendar_month,
+                                                        size: 18,
+                                                        color: Colors.blue,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -1646,33 +1790,76 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                   "Target",
                   "₹${NumberFormat("#,##0").format(targetAmount)}",
                   Colors.blue[700]!,
+                  Colors.blue[700]!,
                 ),
                 _buildTargetStat(
                   "Achieved",
                   "₹${NumberFormat("#,##0").format(achievedAmount)}",
                   Colors.green[700]!,
+                  Colors.green[700]!,
                 ),
                 _buildTargetStat(
-                  "Remaining",
-                  "₹${NumberFormat("#,##0").format(targetAmount - achievedAmount)}",
-                  Colors.orange[700]!,
+                  (targetAmount - achievedAmount) < 0
+                      ? "Achievement"
+                      : "Remaining",
+                  (targetAmount - achievedAmount) < 0
+                      ? "+₹${NumberFormat("#,##0").format((achievedAmount - targetAmount))}"
+                      : "₹${NumberFormat("#,##0").format(targetAmount - achievedAmount)}",
+                  (targetAmount - achievedAmount) < 0
+                      ? Colors.purple
+                      : Colors.orange[700]!,
+                  (targetAmount - achievedAmount) < 0
+                      ? Colors.amber
+                      : Colors.orange[700]!,
                 ),
               ],
-            ),
+            )
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     _buildTargetStat(
+            //       "Target",
+            //       "₹${NumberFormat("#,##0").format(targetAmount)}",
+            //       Colors.blue[700]!,
+            //     ),
+            //     _buildTargetStat(
+            //       "Achieved",
+            //       "₹${NumberFormat("#,##0").format(achievedAmount)}",
+            //       Colors.green[700]!,
+            //     ),
+            //     _buildTargetStat(
+            //       (targetAmount - achievedAmount) < 0
+            //           ? "Achievement"
+            //           : "Remaining",
+            //       (targetAmount - achievedAmount) < 0
+            //           ? "+₹${NumberFormat("#,##0").format((achievedAmount - targetAmount))}"
+            //           : "₹${NumberFormat("#,##0").format(targetAmount - achievedAmount)}",
+            //       (targetAmount - achievedAmount) < 0
+            //           ? const Color.fromARGB(255, 9, 255, 140)!
+            //           : Colors.orange[700]!,
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTargetStat(String label, String value, Color color) {
+  Widget _buildTargetStat(
+    String label,
+    String value,
+    Color labelColor,
+    Color valueColor,
+  ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: labelColor,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1680,14 +1867,38 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
+            color: valueColor,
             fontWeight: FontWeight.bold,
-            color: color,
           ),
         ),
       ],
     );
   }
+
+  // Widget _buildTargetStat(String label, String value, Color color) {
+  //   return Column(
+  //     children: [
+  //       Text(
+  //         label,
+  //         style: TextStyle(
+  //           fontSize: 12,
+  //           color: Colors.grey[600],
+  //           fontWeight: FontWeight.w500,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 4),
+  //       Text(
+  //         value,
+  //         style: TextStyle(
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.bold,
+  //           color: color,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildModernCard({
     required String title,
@@ -1737,12 +1948,16 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -2265,8 +2480,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   GestureDetector(
-                                    onTap: () =>
-                                        _showMonthPicker(context, (month) {
+                                    onTap: () => _showMonthPicker(
+                                        context, selectedMonth, (month) {
                                       setDialogState(() {
                                         selectedMonth = month;
                                         isFirstLoad = true;
@@ -2305,8 +2520,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                           fontWeight: FontWeight.w500)),
                                   const SizedBox(width: 8),
                                   GestureDetector(
-                                    onTap: () =>
-                                        _showYearPicker(context, (year) {
+                                    onTap: () => _showYearPicker(
+                                        context, selectedYear, (year) {
                                       setDialogState(() {
                                         selectedYear = year;
                                         isFirstLoad = true;
@@ -2435,7 +2650,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               GestureDetector(
-                                onTap: () => _showMonthPicker(context, (month) {
+                                onTap: () => _showMonthPicker(
+                                    context, selectedMonth, (month) {
                                   selectedMonth = month;
                                   _loadProfitLossData(month, selectedYear);
                                 }),
@@ -2485,7 +2701,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap: () => _showYearPicker(context, (year) {
+                                onTap: () => _showYearPicker(
+                                    context, selectedYear, (year) {
                                   selectedYear = year;
                                   _loadProfitLossData(selectedMonth, year);
                                 }),
@@ -2648,8 +2865,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
     );
   }
 
-  Future<void> _showMonthPicker(
-      BuildContext context, Function(String) onMonthSelected) async {
+  Future<void> _showMonthPicker(BuildContext context, String currentSelection,
+      Function(String) onMonthSelected) async {
     final months = [
       'January',
       'February',
@@ -2665,8 +2882,10 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
       'December'
     ];
 
-    final currentMonth = _getCurrentMonth();
-    final initialIndex = months.indexOf(currentMonth);
+    // Handle potential short month names like "Feb" vs "February"
+    final initialIndex = months.indexWhere((m) => m
+        .toLowerCase()
+        .startsWith(currentSelection.toLowerCase().substring(0, 3)));
 
     await showDialog(
       context: context,
@@ -2695,8 +2914,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
     );
   }
 
-  Future<void> _showYearPicker(
-      BuildContext context, Function(int) onYearSelected) async {
+  Future<void> _showYearPicker(BuildContext context, int currentSelection,
+      Function(int) onYearSelected) async {
     final currentYear = DateTime.now().year;
     final years = List.generate(5, (index) => currentYear - 2 + index);
 
@@ -2712,7 +2931,7 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
             itemBuilder: (context, index) {
               return ListTile(
                 title: Text(years[index].toString()),
-                trailing: currentYear == years[index]
+                trailing: currentSelection == years[index]
                     ? const Icon(Icons.check, color: Colors.green)
                     : null,
                 onTap: () {

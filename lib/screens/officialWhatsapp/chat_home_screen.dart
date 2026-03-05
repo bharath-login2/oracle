@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
@@ -56,12 +55,16 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   @override
   void initState() {
-    chats('');
+    _initChatData();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     chatCampaignsList('');
     getOfficialConfigaration();
     socketStream();
     super.initState();
+  }
+
+  void _initChatData() {
+    chats('', reset: true);
   }
 
   @override
@@ -93,17 +96,26 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     socket.sink.add(jsonEncode({'type': 'register', 'userId': "#$userId"}));
     socket.stream.listen((response) async {
       try {
-        // log("response :$response");
-        // WebsocketResponseModel res =
-        //     WebsocketResponseModel.fromJson(jsonDecode(response));
-        // log("res :$res");
-        FlutterRingtonePlayer().playNotification();
         log("socket success");
-        await Future.delayed(const Duration(seconds: 5));
-        page = 1;
-        add = 1;
-        items.clear();
-        chats("");
+        if (searchController.text.isNotEmpty) return;
+        await Future.delayed(const Duration(seconds: 3));
+
+        var res = await HttpService.fetchChatList("", 1, pageSize);
+        if (res != null && mounted) {
+          setState(() {
+            var newItems = res.data;
+            var mergedItems = <ChatData>[];
+            mergedItems.addAll(newItems);
+            for (var item in items) {
+              if (!newItems.any((newItem) => newItem.groupId == item.groupId)) {
+                mergedItems.add(item);
+              }
+            }
+            items = mergedItems;
+          });
+          Common.saveSharedPref(
+              "chatList", jsonEncode(items.map((i) => i.toJson()).toList()));
+        }
       } catch (e) {
         log(e.toString());
       }
@@ -214,11 +226,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                 autofocus: true,
                                                 controller: searchController,
                                                 onChanged: (value) async {
-                                                  page = 1;
-                                                  add = 1;
-                                                  items.clear();
-                                                  await chats(value);
-                                                  setState(() {});
+                                                  chats(value, reset: true);
                                                 },
                                                 decoration: InputDecoration(
                                                   contentPadding:
@@ -295,10 +303,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                 horizontal: 5),
                                             child: RefreshIndicator(
                                               onRefresh: () async {
-                                                page = 1;
-                                                add = 1;
-                                                items.clear();
-                                                chats("");
+                                                chats("", reset: true);
                                               },
                                               child: whatsAppConfigured ==
                                                       "true"
@@ -336,10 +341,6 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                     nav: "",
                                                                   ),
                                                                 )).then((v) async {
-                                                              page = 1;
-                                                              add = 1;
-                                                              items.clear();
-                                                              chats("");
                                                               try {
                                                                 userId = await Common
                                                                     .getSharedPref(
@@ -450,8 +451,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                   nav: '',
                                                                 ),
                                                               )).then((v) {
-                                                            chatCampaignsList(
-                                                                '');
+                                                            // Do not reload the list here to preserve scrolling position
                                                           });
                                                         },
                                                         child: campaignsBubble(
@@ -529,33 +529,57 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   oldChat() async {
     try {
       final jsonString = await Common.getSharedPref("chatList") ?? "";
-      final decodeList = jsonDecode(jsonString);
-      log(decodeList.toString());
-      final List<Map<String, dynamic>> chatDataList =
-          decodeList.cast<Map<String, dynamic>>();
-      final List<ChatData> jsonList =
-          chatDataList.map((json) => ChatData.fromJson(json)).toList();
-      items.addAll(jsonList);
-      setState(() {});
+      if (jsonString.isNotEmpty) {
+        final decodeList = jsonDecode(jsonString);
+        final List<Map<String, dynamic>> chatDataList =
+            decodeList.cast<Map<String, dynamic>>();
+        final List<ChatData> jsonList =
+            chatDataList.map((json) => ChatData.fromJson(json)).toList();
+        if (mounted) {
+          setState(() {
+            items.addAll(jsonList);
+            isLoading = false;
+          });
+        }
+      }
     } catch (e) {
       log(e.toString());
     }
   }
 
-  chats(search) async {
-    chatListModel = await HttpService.fetchChatList(search, page, pageSize);
-    if (chatListModel != null) {
+  chats(search, {bool reset = false}) async {
+    if (reset) {
+      page = 1;
+      add = 1;
+      items.clear();
       setState(() {
-        items.addAll(chatListModel!.data);
+        isLoading = true;
+      });
+    }
+    chatListModel = await HttpService.fetchChatList(search, page, pageSize);
+    if (chatListModel != null && mounted) {
+      setState(() {
+        if (page == 1 && items.isNotEmpty) {
+          var newItems = chatListModel!.data;
+          var mergedItems = <ChatData>[];
+          mergedItems.addAll(newItems);
+          for (var item in items) {
+            if (!newItems.any((newItem) => newItem.groupId == item.groupId)) {
+              mergedItems.add(item);
+            }
+          }
+          items = mergedItems;
+        } else {
+          items.addAll(chatListModel!.data);
+        }
         page++;
         isLoading = false;
       });
       final itemsString =
           jsonEncode(items.map((item) => item.toJson()).toList());
-      log(itemsString);
       Common.saveSharedPref("chatList", itemsString);
     }
-    whatsAppConfigured = Common.getSharedPref("whatsapp");
+    whatsAppConfigured = await Common.getSharedPref("whatsapp") ?? "true";
   }
 
   chatCampaignsList(search) async {

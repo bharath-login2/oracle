@@ -1,0 +1,26 @@
+Analyzing dashboardleadsnew.dart...                             
+
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: DashboardLeadNew.token - lib\screens\leadmanagement\dashboardleadsnew.dart:117:7 - must_be_immutable
+warning - The value of the field '_fadeAnimation' isn't used - lib\screens\leadmanagement\dashboardleadsnew.dart:131:26 - unused_field
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:309:24 - strict_top_level_inference
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:309:31 - strict_top_level_inference
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:309:41 - strict_top_level_inference
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnew.dart:502:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnew.dart:575:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnew.dart:581:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnew.dart:597:20 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\screens\leadmanagement\dashboardleadsnew.dart:653:7 - avoid_print
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:664:35 - strict_top_level_inference
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:664:42 - strict_top_level_inference
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:664:52 - strict_top_level_inference
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnew.dart:664:60 - strict_top_level_inference
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\screens\leadmanagement\dashboardleadsnew.dart:1341:12 - sized_box_for_whitespace
+  error - Undefined name 'index' - lib\screens\leadmanagement\dashboardleadsnew.dart:1366:35 - undefined_identifier
+  error - Undefined name 'index' - lib\screens\leadmanagement\dashboardleadsnew.dart:1367:36 - undefined_identifier
+  error - Undefined name 'index' - lib\screens\leadmanagement\dashboardleadsnew.dart:1374:42 - undefined_identifier
+  error - The argument type 'String' can't be assigned to the parameter type 'DateTime'.  - lib\screens\leadmanagement\dashboardleadsnew.dart:1440:32 - argument_type_not_assignable
+  error - The named parameter 'borderRadius' isn't defined - lib\screens\leadmanagement\dashboardleadsnew.dart:1550:13 - undefined_named_parameter
+  error - The named parameter 'borderRadius' isn't defined - lib\screens\leadmanagement\dashboardleadsnew.dart:1824:13 - undefined_named_parameter
+  error - The named parameter 'borderRadius' isn't defined - lib\screens\leadmanagement\dashboardleadsnew.dart:2242:15 - undefined_named_parameter
+  error - The named parameter 'borderRadius' isn't defined - lib\screens\leadmanagement\dashboardleadsnew.dart:2299:15 - undefined_named_parameter
+

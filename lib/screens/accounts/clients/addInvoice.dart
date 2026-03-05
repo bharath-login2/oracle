@@ -118,6 +118,468 @@ class _AddInvoiceState extends State<AddInvoice> {
     });
   }
 
+  void _recalculateRenewalEndDate() {
+    if (startDate.text.isNotEmpty && typeDuration.isNotEmpty) {
+      try {
+        DateTime start = DateFormat('dd-MM-yyyy').parse(startDate.text);
+        int duration = int.tryParse(typeDuration) ?? 0;
+        DateTime end = start.add(Duration(days: duration));
+        endDate.text = DateFormat('dd-MM-yyyy').format(end);
+        setState(() {});
+      } catch (e) {
+        // ignore: avoid_print
+        print("Error calculating renewal end date: $e");
+      }
+    }
+  }
+
+  void _showDurationConfirmationDialog(String pName, String pDuration) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Renewal Duration'),
+        content: Text(
+            'Do you want to use "$pName"\'s duration ($pDuration days) for the renewal end date?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () {
+              typeDuration = pDuration;
+              _recalculateRenewalEndDate();
+              Navigator.pop(context);
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+//   void _showProductSelectionDialog() {
+//     if (renProducts.isEmpty) return;
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+// //         Validity Selection Required
+// // You have selected multiple products with different validity periods.
+
+// // Please select one validity option that will be applied to all selected products.
+
+// // Alternatively, you may add renewals separately for each product.
+
+// //Do this on all renewal selection
+//         title: const Text('Select Product for Renewal Duration'),
+//         content: SizedBox(
+//           width: double.maxFinite,
+//           child: ListView.builder(
+//             shrinkWrap: true,
+//             itemCount: renProducts.length,
+//             itemBuilder: (context, index) {
+//               return ListTile(
+//                 title: Text(renProducts[index]['product_name']),
+//                 subtitle:
+//                     Text('Duration: ${renProducts[index]['duration']} days'),
+//                 onTap: () {
+//                   typeDuration = renProducts[index]['duration'];
+//                   _recalculateRenewalEndDate();
+//                   Navigator.pop(context);
+//                 },
+//               );
+//             },
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+  void _showProductSelectionDialog() {
+    if (renProducts.isEmpty) return;
+
+    // Check if products have different durations
+    bool hasDifferentDurations = false;
+    String? firstDuration;
+
+    for (var product in renProducts) {
+      String currentDuration = product['duration']?.toString() ?? '';
+      if (firstDuration == null) {
+        firstDuration = currentDuration;
+      } else if (firstDuration != currentDuration) {
+        hasDifferentDurations = true;
+        break;
+      }
+    }
+
+    // Temporary local state for the dialog
+    String localTypeDuration = typeDuration;
+
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Force user to use Submit or close intentionally
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with icon
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: hasDifferentDurations
+                            ? Colors.amber.shade50
+                            : Colors.blue.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        hasDifferentDurations
+                            ? Icons.warning_amber_rounded
+                            : Icons.event_available,
+                        color: hasDifferentDurations
+                            ? Colors.amber.shade800
+                            : Colors.blue.shade800,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        hasDifferentDurations
+                            ? 'Validity Selection Required'
+                            : 'Select Renewal Duration',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                if (hasDifferentDurations) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.amber.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.amber.shade800,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Multiple products with different validity periods',
+                                style: TextStyle(
+                                  color: Colors.amber.shade800,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Please select one validity that will apply to all selected products.',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Select a product:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${renProducts.length} products',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.4,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: renProducts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final product = renProducts[index];
+                      final currentProdDuration =
+                          product['duration']?.toString() ?? '';
+                      // Use a composite check if needed, but here user wants uncheck/select.
+                      // Since typeDuration is what's used for the whole renewal, we show it based on that.
+                      final isSelected =
+                          localTypeDuration == currentProdDuration;
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              if (localTypeDuration == currentProdDuration) {
+                                // Deselect
+                                localTypeDuration = "";
+                              } else {
+                                // Select
+                                localTypeDuration = currentProdDuration;
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.blue.shade400
+                                    : Colors.grey.shade200,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              color: isSelected
+                                  ? Colors.blue.shade50
+                                  : Colors.white,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Colors.blue.shade100
+                                        : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: isSelected
+                                        ? Colors.blue.shade700
+                                        : Colors.grey.shade600,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product['product_name'],
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                          color: Colors.grey.shade800,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 12,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${product['duration']} days validity',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSelected
+                                        ? Colors.blue
+                                        : Colors.grey.shade200,
+                                  ),
+                                  child: Icon(
+                                    isSelected
+                                        ? Icons.check
+                                        : Icons.arrow_forward_ios,
+                                    size: isSelected ? 14 : 12,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.blue.shade100,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.blue.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tip: You can also add renewals separately for each product.',
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Submit button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (localTypeDuration.isEmpty) {
+                        Common.toastMessaage(
+                            "Please select a duration", Colors.red);
+                        return;
+                      }
+                      setState(() {
+                        typeDuration = localTypeDuration;
+                        _recalculateRenewalEndDate();
+                      });
+                      Navigator.pop(context);
+
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Duration set to $typeDuration days',
+                          ),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          margin: const EdgeInsets.all(10),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> _getAllProducts() {
     List<Map<String, dynamic>> allProducts = [];
     if (widget.products != null) {
@@ -2898,6 +3360,20 @@ class _AddInvoiceState extends State<AddInvoice> {
                               onChanged: (bool? value) {
                                 setState(() {
                                   createRenewal = value!;
+                                  if (createRenewal) {
+                                    if (renProducts.isNotEmpty) {
+                                      _showProductSelectionDialog();
+                                    }
+                                  } else {
+                                    // Clear all renewal states when unchecked
+                                    typeDuration = "";
+                                    startDate.text = DateFormat('dd-MM-yyyy')
+                                        .format(DateTime.now());
+                                    endDate.clear();
+                                    renewalRemarks.clear();
+                                    reminderTemplate.clear();
+                                    isDifrent = false;
+                                  }
                                 });
                               },
                               controlAffinity: ListTileControlAffinity.leading),
@@ -2927,13 +3403,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               startDate.text =
                                                   DateFormat('dd-MM-yyyy')
                                                       .format(selectedValue);
-                                              final endValue =
-                                                  selectedValue.add(Duration(
-                                                      days: int.parse(
-                                                          typeDuration)));
-                                              endDate.text =
-                                                  DateFormat('dd-MM-yyyy')
-                                                      .format(endValue);
+                                              _recalculateRenewalEndDate();
                                             });
                                           }
                                         },
@@ -3979,6 +4449,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "total_amount": productTotalAmount.text,
                                 "discount_amount": "0.00",
                                 "shipping_charge": "0.00",
+                                "duration": typeDuration,
                               });
 
                               renProducts.add({
@@ -3992,9 +4463,14 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "total_amount": productTotalAmount.text,
                                 "discount_amount": "0.00",
                                 "shipping_charge": "0.00",
+                                "duration": typeDuration,
                               });
 
                               _updateTotals();
+
+                              final addedProductName = productName;
+                              final addedProductDuration = typeDuration;
+
                               productName = "Choose Product";
                               productId = "";
                               productDescription.clear();
@@ -4003,12 +4479,18 @@ class _AddInvoiceState extends State<AddInvoice> {
                               productTaxPercent.clear();
                               productTaxAmount.clear();
                               productTotalAmount.clear();
-                              final durationDays =
-                                  int.tryParse(typeDuration) ?? 0;
-                              final endValue = DateTime.now()
-                                  .add(Duration(days: durationDays));
-                              endDate.text =
-                                  DateFormat('dd-MM-yyyy').format(endValue);
+
+                              // Recalculate endDate only if it's the first product or after confirmation
+                              if (createRenewal) {
+                                if (renProducts.length == 1) {
+                                  typeDuration = addedProductDuration;
+                                  _recalculateRenewalEndDate();
+                                } else {
+                                  _showDurationConfirmationDialog(
+                                      addedProductName, addedProductDuration);
+                                }
+                              }
+
                               Navigator.of(context).pop();
                               setState(() {});
 
@@ -4434,11 +4916,10 @@ class _AddInvoiceState extends State<AddInvoice> {
       context: context,
       builder: (context) {
         return Builder(builder: (context) {
-          return StatefulBuilder(builder: (context, setState) {
-            // Create a LOCAL list for this dialog
-            List<Product> localFilteredItems = [];
-            localFilteredItems.addAll(items); // Start with all items
+          // Create a LOCAL list for this dialog OUTSIDE StatefulBuilder
+          List<Product> localFilteredItems = List.from(items);
 
+          return StatefulBuilder(builder: (context, setState) {
             return AlertDialog(
               scrollable: true,
               title: Column(
@@ -4558,6 +5039,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                               renProductTotalAmount.text =
                                   double.parse(renProductTotalAmount.text)
                                       .toStringAsFixed(2);
+                              typeDuration = localFilteredItems[index].noOfDays;
                             }
                             setState(() {});
                             if (context.mounted) {
@@ -4847,6 +5329,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 "tax_percent": renProductTaxPercent.text,
                                 "total_tax_amount": renProductTaxAmount.text,
                                 "total_amount": renProductTotalAmount.text,
+                                "duration": typeDuration,
                               };
                               _updateTotals();
                               Navigator.of(context).pop();

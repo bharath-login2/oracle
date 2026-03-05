@@ -1,10 +1,12 @@
 class StaffwiseCompletedUpdatedModel {
   final bool status;
   final List<Summary> summary;
+  final Count count;
 
   StaffwiseCompletedUpdatedModel({
     required this.status,
     required this.summary,
+    required this.count,
   });
 
   factory StaffwiseCompletedUpdatedModel.fromJson(Map<String, dynamic> json) {
@@ -14,6 +16,7 @@ class StaffwiseCompletedUpdatedModel {
           .map((summaryJson) =>
               Summary.fromJson(summaryJson as Map<String, dynamic>))
           .toList(),
+      count: Count.fromJson(json['count'] as Map<String, dynamic>? ?? {}),
     );
   }
 
@@ -21,6 +24,7 @@ class StaffwiseCompletedUpdatedModel {
     return {
       'status': status,
       'summary': summary.map((summary) => summary.toJson()).toList(),
+      'count': count.toJson(),
     };
   }
 }
@@ -148,6 +152,30 @@ class Task {
       'priority': priority,
       'due_date': dueDate,
       'remarks': remarks,
+    };
+  }
+}
+
+class Count {
+  final String workCount;
+  final String taskCount;
+
+  Count({
+    required this.workCount,
+    required this.taskCount,
+  });
+
+  factory Count.fromJson(Map<String, dynamic> json) {
+    return Count(
+      workCount: (json['work_count'] ?? '0').toString(),
+      taskCount: (json['task_count'] ?? '0').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'work_count': workCount,
+      'task_count': taskCount,
     };
   }
 }

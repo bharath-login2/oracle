@@ -1,15 +1,18 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../core/common.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/callResultResonModel.dart';
 import '../../models/lead_management/editLeadFollowupModel.dart';
 import '../../models/lead_management/followupDetailsModel.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
+import '../../models/lead_management/leadProductsModel.dart';
+import '../../models/lead_management/leadDetailsModel.dart';
 import '../../service/service.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 import '../../widgets/inputTextFeildWidget.dart';
 
 // ignore: must_be_immutable
@@ -47,9 +50,13 @@ class EditFollowup extends StatefulWidget {
 }
 
 class _EditFollowupState extends State<EditFollowup> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   AddLeadCommonDataModel? commonDetails;
   LeadSubTypeModel? leadSubTypeList;
   CallResultResonModel? callResultReason;
+
+  // Form Fields
   String callResult = 'New';
   String callResultId = '1';
   String callResponse = 'Call Response';
@@ -60,24 +67,47 @@ class _EditFollowupState extends State<EditFollowup> {
   String leadSubTypeId = '';
   String callResultReasonName = 'Reason';
   String callResultReasonId = '';
-  TextEditingController cost = TextEditingController();
-  TextEditingController remarks = TextEditingController();
-  bool? result = true;
-  bool? result1 = true;
+
+  final TextEditingController cost = TextEditingController();
+  final TextEditingController remarks = TextEditingController();
+  final TextEditingController calledDate1 = TextEditingController();
+  final TextEditingController nextFollowupDate1 = TextEditingController();
+  final TextEditingController leadTypeVal = TextEditingController();
+  final TextEditingController leadSubTypeVal = TextEditingController();
+  final TextEditingController callResultVal = TextEditingController();
+  final TextEditingController callResponseVal = TextEditingController();
+  final TextEditingController callReasonVal = TextEditingController();
+  final TextEditingController whatsappLead = TextEditingController();
+  final TextEditingController emailLead = TextEditingController();
+
   FollowupDetailsModel? followupDetails;
-  TextEditingController calledDate1 = TextEditingController();
-  TextEditingController nextFollowupDate1 = TextEditingController();
-  TextEditingController leadTypeVal = TextEditingController();
-  TextEditingController leadSubTypeVal = TextEditingController();
-  TextEditingController callResultVal = TextEditingController();
-  TextEditingController callResponseVal = TextEditingController();
-  TextEditingController callReasonVal = TextEditingController();
+  LeadProductSectionModel? productSectionModel;
+  LeadDeatailsModel? leadDetails;
+  List<LeadProduct> _selectedProducts = [];
+
+  bool? result = true;
+  bool isLoading = true;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
+  }
+
+  @override
+  void dispose() {
+    cost.dispose();
+    remarks.dispose();
+    calledDate1.dispose();
+    nextFollowupDate1.dispose();
+    leadTypeVal.dispose();
+    leadSubTypeVal.dispose();
+    callResultVal.dispose();
+    callResponseVal.dispose();
+    callReasonVal.dispose();
+    whatsappLead.dispose();
+    emailLead.dispose();
+    super.dispose();
   }
 
   String getYmdFromDmy(String dmy) {
@@ -88,124 +118,155 @@ class _EditFollowupState extends State<EditFollowup> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    // if (connectivityResult == ConnectivityResult.mobile ||
-    //     connectivityResult == ConnectivityResult.wifi) {
-    //   setState(() {
-    //     result = true;
-    //   });
-    // } else {
-    //   setState(() {
-    //     result = false;
-    //   });
-    // }
+
     if (connectivityResult is List<ConnectivityResult>) {
       if (connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.wifi)) {
-        setState(() {
-          result = true;
-        });
+        setState(() => result = true);
+      } else {
+        setState(() => result = false);
       }
     } else {
-      setState(() {
-        result = false;
-      });
+      setState(() => result = false);
     }
 
-    commonDetails = await HttpService.addLeadCommonData(widget.token);
-    followupDetails =
-        await HttpService.followupDetails(widget.token, widget.callFollowupId);
-    if (followupDetails != null) {
-      if (followupDetails!.data!.leadCategoryId.toString() != '') {
-        leadSubTypeList = await HttpService.leadSubType(
-            followupDetails!.data!.leadCategoryId.toString());
-        setState(() {});
+    if (result == false) {
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      commonDetails = await HttpService.addLeadCommonData(widget.token);
+      productSectionModel = await HttpService.leadProductSection();
+      leadDetails =
+          await HttpService.leadDetails(widget.token, widget.callMasterId);
+      followupDetails = await HttpService.followupDetails(
+          widget.token, widget.callFollowupId);
+
+      if (followupDetails != null) {
+        if (followupDetails!.data!.leadCategoryId.toString().isNotEmpty) {
+          leadSubTypeList = await HttpService.leadSubType(
+              followupDetails!.data!.leadCategoryId.toString());
+        }
+
+        _populateFormData();
       }
-
-      setState(() {
-        callResult = followupDetails!.data!.callResult.toString();
-        callResultId = followupDetails!.data!.callResultId.toString();
-        calledDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
-            DateTime.parse(followupDetails!.data!.calledDate.toString()));
-        nextFollowupDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
-            DateTime.parse(followupDetails!.data!.followupDate.toString()));
-        leadType = followupDetails!.data!.leadCategory.toString();
-        leadTypeId = followupDetails!.data!.leadCategoryId.toString();
-        cost.text = followupDetails!.data!.cost.toString();
-        remarks.text = followupDetails!.data!.remarks.toString();
-
-        leadSubType = followupDetails!.data!.leadSubCategory.toString();
-        leadSubTypeId = followupDetails!.data!.leadSubCategoryId.toString();
-        leadTypeVal.text =
-            followupDetails?.data?.leadCategory?.toString() ?? "";
-        leadSubTypeVal.text = followupDetails!.data!.leadSubCategory.toString();
-        callResultVal.text = followupDetails!.data!.callResult.toString();
-        callResponse = followupDetails!.data!.callResponse.toString();
-        callResponseId = followupDetails!.data!.callResponseId.toString();
-        callResponseVal.text = followupDetails!.data!.callResponse.toString();
-
-        callResultReasonName = followupDetails!.data!.reason.toString();
-        callResultReasonId = followupDetails!.data!.reasonId.toString();
-        callReasonVal.text = followupDetails!.data!.reason.toString();
-        callResultReasonList();
-      });
+    } catch (e) {
+      print('Error loading data: $e');
+    } finally {
+      setState(() => isLoading = false);
     }
+  }
+
+  void _populateFormData() {
+    setState(() {
+      callResult = followupDetails!.data!.callResult.toString();
+      callResultId = followupDetails!.data!.callResultId.toString();
+      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
+          .format(DateTime.parse(followupDetails!.data!.calledDate.toString()));
+      nextFollowupDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
+          DateTime.parse(followupDetails!.data!.followupDate.toString()));
+      leadType = followupDetails!.data!.leadCategory.toString();
+      leadTypeId = followupDetails!.data!.leadCategoryId.toString();
+      cost.text = followupDetails!.data!.cost.toString();
+      remarks.text = followupDetails!.data!.remarks.toString();
+
+      leadSubType = followupDetails!.data!.leadSubCategory.toString();
+      leadSubTypeId = followupDetails!.data!.leadSubCategoryId.toString();
+      leadTypeVal.text = followupDetails?.data?.leadCategory?.toString() ?? "";
+      leadSubTypeVal.text = followupDetails!.data!.leadSubCategory.toString();
+      callResultVal.text = followupDetails!.data!.callResult.toString();
+      callResponse = followupDetails!.data!.callResponse.toString();
+      callResponseId = followupDetails!.data!.callResponseId.toString();
+      callResponseVal.text = followupDetails!.data!.callResponse.toString();
+
+      callResultReasonName = followupDetails!.data!.reason.toString();
+      callResultReasonId = followupDetails!.data!.reasonId.toString();
+      callReasonVal.text = followupDetails!.data!.reason.toString();
+
+      callResultReasonList();
+
+      if (leadDetails != null && leadDetails!.data != null) {
+        whatsappLead.text = leadDetails!.data!.whatsaAppNumber ?? '';
+        emailLead.text = leadDetails!.data!.emailId ?? '';
+
+        if (productSectionModel != null && productSectionModel!.data != null) {
+          String leadProductsRaw = leadDetails!.data!.productsOnAdd ?? '';
+          if (leadProductsRaw.isNotEmpty) {
+            List<String> assignedProductIds = leadProductsRaw.split(',');
+            _selectedProducts = productSectionModel!.data!
+                .where(
+                    (prod) => assignedProductIds.contains(prod.id.toString()))
+                .toList();
+          }
+        }
+      }
+    });
   }
 
   editFollowup() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-    // if (connectivityResult == ConnectivityResult.mobile ||
-    //     connectivityResult == ConnectivityResult.wifi) {
-      if (connectivityResult is List<ConnectivityResult>) {
-        if (connectivityResult.contains(ConnectivityResult.mobile) ||
-            connectivityResult.contains(ConnectivityResult.wifi)) {
-      if (callResultId == '') {
-        Common.toastMessaage('Choose any Status', Colors.red);
-      } else if (callResultId == '2' && nextFollowupDate1.text == '') {
-        Common.toastMessaage('Choose next followup date', Colors.red);
-      } else {
-        if (context.mounted) {
-          Common.showProgressDialog(context, "Loading..");
-        }
-        print(callResponseId);
-        EditLeadFollowupModel object1 = await HttpService.editLeadsFollowup(
-            widget.token,
-            widget.callFollowupId,
-            callResultId,
-            nextFollowupDate1.text,
-            cost.text,
-            leadTypeId,
-            leadSubTypeId,
-            remarks.text,
-            calledDate1.text,
-            widget.callMasterId,
-            callResponseId,
-            callResultReasonId);
-        if (object1.status == true) {
-          Common.toastMessaage(object1.message, Colors.green);
-          if (context.mounted) {
-            Navigator.pop(context);
-            Navigator.pop(context);
-          }
-        } else {
-          Common.toastMessaage(object1.message, Colors.red);
-          if (context.mounted) {
-            Navigator.pop(context);
-          }
-        }
+
+    if (connectivityResult is List<ConnectivityResult>) {
+      if (!connectivityResult.contains(ConnectivityResult.mobile) &&
+          !connectivityResult.contains(ConnectivityResult.wifi)) {
+        _showNoNetworkSnackbar();
+        return;
       }
-    }} else {
-      setState(() {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No Network Found..Try Again Later..'),
-            backgroundColor: Colors.redAccent,
-            elevation: 10,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(10),
-          ),
-        );
-      });
     }
+
+    if (!_formKey.currentState!.validate()) return;
+
+    if (callResultId == '') {
+      Common.toastMessaage('Choose any Status', Colors.red);
+    } else if (callResultId == '2' && nextFollowupDate1.text == '') {
+      Common.toastMessaage('Choose next followup date', Colors.red);
+    } else {
+      if (context.mounted) {
+        Common.showProgressDialog(context, "Loading..");
+      }
+
+      EditLeadFollowupModel object1 =
+          await HttpService.editLeadsFollowupUpdated(
+              widget.token,
+              widget.callFollowupId,
+              callResultId,
+              nextFollowupDate1.text,
+              cost.text,
+              leadTypeId,
+              leadSubTypeId,
+              remarks.text,
+              calledDate1.text,
+              widget.callMasterId,
+              callResponseId,
+              callResultReasonId,
+              whatsappLead: whatsappLead.text,
+              emailLead: emailLead.text,
+              products: _selectedProducts.map((p) => p.id).join(','));
+
+      if (context.mounted) Navigator.pop(context);
+
+      if (object1.status == true) {
+        Common.toastMessaage(object1.message, Colors.green);
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        Common.toastMessaage(object1.message, Colors.red);
+      }
+    }
+  }
+
+  void _showNoNetworkSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No Network Found..Try Again Later..'),
+        backgroundColor: Colors.redAccent,
+        elevation: 10,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(10),
+      ),
+    );
   }
 
   callResultReasonList() async {
@@ -218,841 +279,831 @@ class _EditFollowupState extends State<EditFollowup> {
 
   @override
   Widget build(BuildContext context) {
-    return result == true
-        ? Scaffold(
-            backgroundColor: Colors.grey.shade200,
-            appBar: PreferredSize(
-              preferredSize:
-                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-              child: Container(
-                padding:
-                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Container(
-                              height: 25,
-                              width: 25,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.white),
-                                  shape: BoxShape.circle),
-                              child: const Icon(
-                                Icons.arrow_back_ios_outlined,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 25,
-                          ),
-                          const Text(
-                            'Edit Followup',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: _buildAppBar(),
+      body: result == false
+          ? _buildNoNetworkView()
+          : isLoading
+              ? Center(
+                  child: Lottie.asset('assets/main/loading.json', width: 150))
+              : commonDetails == null
+                  ? _buildErrorView()
+                  : _buildForm(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: const Text(
+        'Edit Followup',
+        style: TextStyle(color: Colors.white, fontSize: 18),
+      ),
+      backgroundColor: const Color(0xFF2a86c9),
+      foregroundColor: Colors.white,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, size: 20),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  Widget _buildNoNetworkView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 200,
+            height: 200,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/icons/noNetwork.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const Text(
+            'No Network Found!',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 15),
+          InkWell(
+            onTap: getData,
+            child: Container(
+              width: 120,
+              height: 35,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: const Center(
+                child: Text(
+                  'Try Again',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-            body: commonDetails != null && callResultReason != null
-                ? SingleChildScrollView(
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.only(left: 15, right: 15, top: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          TextFormField(
-                            controller: calledDate1,
-                            readOnly: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 80, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text(
+            'Failed to load data',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: getData,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildSectionCard(
+              title: 'Call Information',
+              icon: Icons.phone_in_talk_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildCalledDateField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Contact Details',
+              icon: Icons.contact_phone_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildContactRow(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Products',
+              icon: Icons.inventory_2_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildProductSelection(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Stages',
+              icon: Icons.assignment_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildCallResultField(),
+                const SizedBox(height: 12),
+                if (callResultId == '2') _buildNextFollowupField(),
+                const SizedBox(height: 12),
+                if (callResultReason?.data?.isNotEmpty ?? false)
+                  _buildCallReasonField(),
+                const SizedBox(height: 12),
+                _buildCallResponseField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Lead Details',
+              icon: Icons.info_outline,
+              children: [
+                const SizedBox(height: 12),
+                _buildLeadCategoryField(),
+                const SizedBox(height: 12),
+                if (leadSubTypeList?.data?.isNotEmpty ?? false)
+                  _buildLeadSubCategoryField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Additional Information',
+              icon: Icons.note_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildCostField(),
+                const SizedBox(height: 12),
+                _buildRemarksField(),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildSubmitButton(),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Card(
+      elevation: 1,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: const Color(0xFF2a86c9), size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalledDateField() {
+    return TextFormField(
+      controller: calledDate1,
+      readOnly: true,
+      onTap: () async {
+        final selectedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime.now(),
+          lastDate: DateTime(2100),
+        );
+
+        if (selectedDate != null) {
+          final selectedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.now(),
+          );
+
+          if (selectedTime != null) {
+            String newDate = selectedDate.toString().split(' ')[0];
+            String convertedNewDate = getYmdFromDmy(newDate);
+            calledDate1.text =
+                "$convertedNewDate ${selectedTime.format(context)}";
+          }
+        }
+      },
+      validator: (v) => v!.isEmpty ? 'Called date is required' : null,
+      decoration: _inputDecoration('Called Date *', Icons.calendar_today),
+    );
+  }
+
+  Widget _buildContactRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: whatsappLead,
+            keyboardType: TextInputType.phone,
+            decoration:
+                _inputDecoration('WhatsApp Number', FontAwesomeIcons.whatsapp)
+                    .copyWith(
+                        prefixIcon: Icon(FontAwesomeIcons.whatsapp,
+                            color: Colors.green, size: 20)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextFormField(
+            controller: emailLead,
+            keyboardType: TextInputType.emailAddress,
+            decoration: _inputDecoration('Email ID', Icons.email),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            if (productSectionModel?.data != null) {
+              _showProductSelectionDialog(productSectionModel!.data!);
+            } else {
+              Common.toastMessaage('Products not loaded yet', Colors.orange);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _selectedProducts.isEmpty
+                      ? 'Select Products'
+                      : '${_selectedProducts.length} Product(s) Selected',
+                  style: TextStyle(
+                    color: _selectedProducts.isEmpty
+                        ? Colors.grey.shade600
+                        : Colors.black87,
+                    fontSize: 14,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
+        if (_selectedProducts.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _selectedProducts.map((product) {
+              return Chip(
+                label: Text(product.productName ?? 'Unknown',
+                    style: const TextStyle(fontSize: 12)),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () =>
+                    setState(() => _selectedProducts.remove(product)),
+                backgroundColor: Colors.blue.shade50,
+                side: BorderSide(color: Colors.blue.shade200),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCallResultField() {
+    return GestureDetector(
+      onTap: () => _showSelectionDialog(
+        title: 'Stages',
+        items: commonDetails!.data.callResult
+            .map((cr) => cr.callResult.toString())
+            .toList(),
+        onSelected: (index) {
+          setState(() {
+            callResultVal.text =
+                commonDetails!.data.callResult[index].callResult.toString();
+            callResult =
+                commonDetails!.data.callResult[index].callResult.toString();
+            callResultId =
+                commonDetails!.data.callResult[index].callResultId.toString();
+            callResultReasonList();
+            if (callResultId != '2') {
+              nextFollowupDate1.clear();
+            }
+          });
+        },
+      ),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: callResultVal,
+          validator: (v) => v!.isEmpty ? 'Stages is required' : null,
+          decoration: _inputDecoration('Stages *', Icons.assignment_turned_in),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNextFollowupField() {
+    return TextFormField(
+      controller: nextFollowupDate1,
+      readOnly: true,
+      onTap: () async {
+        final selectedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime.now(),
+          lastDate: DateTime(2100),
+        );
+
+        if (selectedDate != null) {
+          final selectedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.now(),
+          );
+
+          if (selectedTime != null) {
+            final now = DateTime.now();
+            final selectedDateTime = DateTime(
+              selectedDate.year,
+              selectedDate.month,
+              selectedDate.day,
+              selectedTime.hour,
+              selectedTime.minute,
+            );
+
+            if (selectedDateTime.isAfter(now)) {
+              String convertedNewDate = selectedDate.toString().split(' ')[0];
+              nextFollowupDate1.text =
+                  "$convertedNewDate ${selectedTime.format(context)}";
+            } else {
+              Common.toastMessaage(
+                "You cannot choose a past time for the follow-up date",
+                Colors.red,
+              );
+            }
+          }
+        }
+      },
+      validator: (v) {
+        if (callResultId == '2' && v!.isEmpty) {
+          return 'Next followup date is required';
+        }
+        return null;
+      },
+      decoration: _inputDecoration('Next Followup Date', Icons.calendar_month),
+    );
+  }
+
+  Widget _buildCallReasonField() {
+    return GestureDetector(
+      onTap: () => _showSelectionDialog(
+        title: 'Reason',
+        items: callResultReason!.data!.map((r) => r.reason.toString()).toList(),
+        onSelected: (index) {
+          setState(() {
+            callResultReasonName =
+                callResultReason!.data![index].reason.toString();
+            callResultReasonId = callResultReason!.data![index].id.toString();
+            callReasonVal.text =
+                callResultReason!.data![index].reason.toString();
+          });
+        },
+      ),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: callReasonVal,
+          decoration: _inputDecoration('Reason', Icons.reply_all_sharp),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCallResponseField() {
+    return GestureDetector(
+      onTap: () => _showSelectionDialog(
+        title: 'Call Response',
+        items: commonDetails!.data.callResponseStatus
+            .map((r) => r.callResponse.toString())
+            .toList(),
+        onSelected: (index) {
+          setState(() {
+            callResponseVal.text = commonDetails!
+                .data.callResponseStatus[index].callResponse
+                .toString();
+            callResponse = commonDetails!
+                .data.callResponseStatus[index].callResponse
+                .toString();
+            callResponseId = commonDetails!
+                .data.callResponseStatus[index].callResponseId
+                .toString();
+          });
+        },
+      ),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: callResponseVal,
+          decoration: _inputDecoration('Call Response', Icons.add_call),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeadCategoryField() {
+    return GestureDetector(
+      onTap: () => _showLeadCategoryDialog(),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: leadTypeVal,
+          validator: (v) => v!.isEmpty ? 'Lead category is required' : null,
+          decoration: _inputDecoration('Lead Category *', Icons.category),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeadSubCategoryField() {
+    return GestureDetector(
+      onTap: () => _showLeadSubCategoryDialog(),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: leadSubTypeVal,
+          decoration: _inputDecoration('Lead Sub Category', Icons.subtitles),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCostField() {
+    return TextFormField(
+      controller: cost,
+      keyboardType: TextInputType.number,
+      decoration: _inputDecoration('Cost', Icons.currency_rupee),
+    );
+  }
+
+  Widget _buildRemarksField() {
+    return TextFormField(
+      controller: remarks,
+      maxLines: 3,
+      decoration: _inputDecoration('Remarks', Icons.note).copyWith(
+        alignLabelWithHint: true,
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: editFollowup,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2a86c9),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 2,
+        ),
+        child: const Text(
+          'Update Followup',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.grey, size: 20),
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+      ),
+      labelStyle: const TextStyle(color: Colors.grey),
+    );
+  }
+
+  void _showSelectionDialog({
+    required String title,
+    required List<String> items,
+    required Function(int) onSelected,
+  }) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        TextEditingController searchCtrl = TextEditingController();
+        List<String> filteredItems = List.from(items);
+
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: Text(title),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      onChanged: (v) {
+                        setState(() {
+                          filteredItems = items
+                              .where((item) =>
+                                  item.toLowerCase().contains(v.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredItems.length,
+                        itemBuilder: (_, i) {
+                          return ListTile(
+                            title: Text(filteredItems[i]),
+                            onTap: () {
+                              final originalIndex =
+                                  items.indexOf(filteredItems[i]);
+                              onSelected(originalIndex);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLeadCategoryDialog() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        TextEditingController searchCtrl = TextEditingController();
+        var filtered = List.from(commonDetails!.data.leadCategory);
+
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('Lead Category'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (v) {
+                        setState(() {
+                          filtered = commonDetails!.data.leadCategory
+                              .where((c) => c.leadCategory
+                                  .toString()
+                                  .toLowerCase()
+                                  .contains(v.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (_, i) {
+                          return ListTile(
+                            title: Text(filtered[i].leadCategory.toString()),
                             onTap: () async {
-                              await showDatePicker(
-                                      context: context,
-                                      initialDate: DateTime.now(),
-                                      firstDate: DateTime.now(),
-                                      lastDate: DateTime(2100))
-                                  .then((selectedDate) {
-                                if (selectedDate != null) {
-                                  showTimePicker(
-                                          context: context,
-                                          initialTime: TimeOfDay.now())
-                                      .then((selectedTime) {
-                                    String newDate = selectedDate.toString();
-                                    newDate = newDate.substring(
-                                        0, newDate.indexOf(" "));
-                                    String convertedNewDate =
-                                        getYmdFromDmy(newDate);
-                                    if (selectedTime != null) {
-                                      calledDate1.text =
-                                          "$convertedNewDate ${selectedTime.format(context)}";
-                                    } else {}
-                                  });
+                              leadSubTypeList = await HttpService.leadSubType(
+                                  filtered[i].leadCategoryId.toString());
+                              setState(() {
+                                leadTypeVal.text =
+                                    filtered[i].leadCategory.toString();
+                                leadType = filtered[i].leadCategory.toString();
+                                leadTypeId =
+                                    filtered[i].leadCategoryId.toString();
+                                leadSubType = 'Lead Sub Category';
+                                leadSubTypeId = '';
+                                leadSubTypeVal.text = 'Lead Sub Category';
+                              });
+                              if (context.mounted) Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLeadSubCategoryDialog() {
+    if (leadSubTypeList == null) return;
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Lead Sub Category'),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: 300,
+            child: ListView.builder(
+              itemCount: leadSubTypeList!.data!.length,
+              itemBuilder: (_, i) {
+                return ListTile(
+                  title: Text(
+                      leadSubTypeList!.data![i].leadSubCategory.toString()),
+                  onTap: () {
+                    setState(() {
+                      leadSubType =
+                          leadSubTypeList!.data![i].leadSubCategory.toString();
+                      leadSubTypeId = leadSubTypeList!
+                          .data![i].leadSubCategoryId
+                          .toString();
+                      leadSubTypeVal.text = leadSubType;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showProductSelectionDialog(List<LeadProduct> products) {
+    List<LeadProduct> filteredProducts = List.from(products);
+    List<LeadProduct> localSelected = List.from(_selectedProducts);
+    TextEditingController searchCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Select Products'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 500,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Search products...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          filteredProducts = products
+                              .where((p) => (p.productName ?? '')
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+                          final isSelected =
+                              localSelected.any((p) => p.id == product.id);
+
+                          return CheckboxListTile(
+                            title: Text(product.productName ?? 'Unknown'),
+                            subtitle: Text('₹ ${product.totalAmount ?? '0'}'),
+                            value: isSelected,
+                            onChanged: (bool? value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  localSelected.add(product);
+                                } else {
+                                  localSelected
+                                      .removeWhere((p) => p.id == product.id);
                                 }
                               });
                             },
-                            style: const TextStyle(
-                              color: Colors.black,
-                            ),
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Called Date',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: callResultVal,
-                            onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Status'),
-                                      content: SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .25,
-                                        width:
-                                            MediaQuery.of(context).size.height *
-                                                .8,
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.callResult.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  callResultVal.text =
-                                                      commonDetails!
-                                                          .data
-                                                          .callResult[ind]
-                                                          .callResult
-                                                          .toString();
-                                                  callResult = commonDetails!
-                                                      .data
-                                                      .callResult[ind]
-                                                      .callResult
-                                                      .toString();
-
-                                                  callResultId = commonDetails!
-                                                      .data
-                                                      .callResult[ind]
-                                                      .callResultId
-                                                      .toString();
-                                                  callResultReasonList();
-                                                  if (callResultId != '2') {
-                                                    nextFollowupDate1.text = '';
-                                                  }
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .callResult[ind]
-                                                      .callResult
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  });
-                            },
-                            maxLines: 1,
-                            readOnly: true,
-                            keyboardType: TextInputType.text,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Call Result',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(height: 15),
-                          callResultId == '2'
-                              ? Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: TextFormField(
-                                    controller: nextFollowupDate1,
-                                    readOnly: true,
-                                    onTap: () async {
-                                      DateTime? selectedDate =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime.now(),
-                                        lastDate: DateTime(2100),
-                                      );
-
-                                      TimeOfDay? selectedTime =
-                                          await showTimePicker(
-                                        context: context,
-                                        initialTime: TimeOfDay.now(),
-                                      );
-
-                                      if (selectedTime != null) {
-                                        final now = DateTime.now();
-                                        final selectedDateTime = DateTime(
-                                          selectedDate!.year,
-                                          selectedDate.month,
-                                          selectedDate.day,
-                                          selectedTime.hour,
-                                          selectedTime.minute,
-                                        );
-
-                                        if (selectedDateTime.isAfter(now)) {
-                                          String convertedNewDate =
-                                              getYmdFromDmy(selectedDate
-                                                  .toString()
-                                                  .split(' ')[0]);
-                                          nextFollowupDate1.text =
-                                              "$convertedNewDate ${selectedTime.format(context)}";
-                                        } else {
-                                          Common.toastMessaage(
-                                            "You cannot choose a past time for the follow-up date",
-                                            Colors.red,
-                                          );
-                                        }
-                                      }
-                                    },
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                    ),
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.only(
-                                            left: 10, top: 2, bottom: 2),
-                                        labelText: 'Next Followup Date',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        prefixIcon: Icon(
-                                            Icons
-                                                .arrow_drop_down_circle_outlined,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                )
-                              : const SizedBox(),
-                          callResultReason!.data!.isNotEmpty
-                              ? Padding(
-                                  padding: const EdgeInsets.only(bottom: 15),
-                                  child: TextFormField(
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text('Reason'),
-                                              content: SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .32,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .8,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: callResultReason!
-                                                      .data!.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          callResultReasonName =
-                                                              callResultReason!
-                                                                  .data![ind]
-                                                                  .reason
-                                                                  .toString();
-                                                          callResultReasonId =
-                                                              callResultReason!
-                                                                  .data![ind].id
-                                                                  .toString();
-                                                          callReasonVal.text =
-                                                              callResultReason!
-                                                                  .data![ind]
-                                                                  .reason
-                                                                  .toString();
-
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Text(
-                                                          callResultReason!
-                                                              .data![ind].reason
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            );
-                                          });
-                                    },
-                                    maxLines: 1,
-                                    readOnly: true,
-                                    controller: callReasonVal,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.only(
-                                            left: 10, top: 2, bottom: 2),
-                                        labelText: 'Reason',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        prefixIcon: Icon(Icons.reply_all_sharp,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                )
-                              : TextFormField(
-                                  onTap: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            scrollable: true,
-                                            title: const Text('Call Response'),
-                                            content: SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .height *
-                                                  .8,
-                                              child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: commonDetails!.data
-                                                    .callResponseStatus.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        callResponseVal.text =
-                                                            commonDetails!
-                                                                .data
-                                                                .callResponseStatus[
-                                                                    ind]
-                                                                .callResponse
-                                                                .toString();
-                                                        callResponse =
-                                                            commonDetails!
-                                                                .data
-                                                                .callResponseStatus[
-                                                                    ind]
-                                                                .callResponse
-                                                                .toString();
-
-                                                        callResponseId =
-                                                            commonDetails!
-                                                                .data
-                                                                .callResponseStatus[
-                                                                    ind]
-                                                                .callResponseId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        commonDetails!
-                                                            .data
-                                                            .callResponseStatus[
-                                                                ind]
-                                                            .callResponse
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          );
-                                        });
-                                  },
-                                  maxLines: 1,
-                                  readOnly: true,
-                                  controller: callResponseVal,
-                                  decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Call Response',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(
-                                          Icons.arrow_drop_down_circle_outlined,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                ),
-                          const SizedBox(
-                            height: 15,
-                          ),
-                          TextFormField(
-                            controller: cost,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Cost',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(Icons.currency_rupee,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          // InputTextField(
-                          //   hintText: 'Cost',
-                          //   hintTextColor: Colors.white,
-                          //   backgroundColor: Colors.white,
-                          //   controller: cost,
-                          //   width: 1,
-                          //   iconData: Icons.currency_rupee,
-                          //   keyboardType: TextInputType.number,
-                          //
-                          // ),
-
-                          const SizedBox(height: 15),
-                          TextFormField(
-                            controller: leadTypeVal,
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  List filteredCategories = List.from(
-                                      commonDetails!.data.leadCategory);
-                                  TextEditingController searchController =
-                                      TextEditingController();
-
-                                  return StatefulBuilder(
-                                    builder: (context, setState) {
-                                      return AlertDialog(
-                                        scrollable: true,
-                                        title: const Text('Lead Category'),
-                                        content: SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.8,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.6,
-                                          child: Column(
-                                            children: [
-                                              // Search Box
-                                              TextField(
-                                                controller: searchController,
-                                                decoration: InputDecoration(
-                                                  hintText:
-                                                      "Search lead category...",
-                                                  prefixIcon:
-                                                      const Icon(Icons.search),
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                  contentPadding:
-                                                      const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 10,
-                                                          vertical: 5),
-                                                ),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    filteredCategories = commonDetails!
-                                                        .data.leadCategory
-                                                        .where((element) => element
-                                                            .leadCategory
-                                                            .toString()
-                                                            .toLowerCase()
-                                                            .contains(value
-                                                                .toLowerCase()))
-                                                        .toList();
-                                                  });
-                                                },
-                                              ),
-                                              const SizedBox(height: 10),
-                                              // List of Lead Categories
-                                              Expanded(
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount:
-                                                      filteredCategories.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () async {
-                                                        leadSubTypeList =
-                                                            await HttpService.leadSubType(
-                                                                filteredCategories[
-                                                                        ind]
-                                                                    .leadCategoryId
-                                                                    .toString());
-
-                                                        setState(() {
-                                                          leadTypeVal.text =
-                                                              filteredCategories[
-                                                                      ind]
-                                                                  .leadCategory
-                                                                  .toString();
-                                                          leadType =
-                                                              filteredCategories[
-                                                                      ind]
-                                                                  .leadCategory
-                                                                  .toString();
-                                                          leadTypeId =
-                                                              filteredCategories[
-                                                                      ind]
-                                                                  .leadCategoryId
-                                                                  .toString();
-                                                          leadSubType =
-                                                              'Lead Sub Category';
-                                                          leadSubTypeId = '';
-                                                          leadSubTypeVal.text =
-                                                              'Lead Sub Category';
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  vertical: 8,
-                                                                  horizontal:
-                                                                      5),
-                                                          child: Text(
-                                                            filteredCategories[
-                                                                    ind]
-                                                                .leadCategory
-                                                                .toString(),
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        18),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            maxLines: 1,
-                            readOnly: true,
-                            keyboardType: TextInputType.text,
-                            decoration: const InputDecoration(
-                              contentPadding:
-                                  EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                              labelText: 'Lead Category',
-                              fillColor: Colors.white,
-                              filled: true,
-                              prefixIcon: Icon(
-                                  Icons.arrow_drop_down_circle_outlined,
-                                  color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          leadSubTypeList != null &&
-                                  leadSubTypeList!.data!.isNotEmpty
-                              ? Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: TextFormField(
-                                    controller: leadSubTypeVal,
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            scrollable: true,
-                                            title:
-                                                const Text('Lead Sub Category'),
-                                            content: SingleChildScrollView(
-                                              child: ConstrainedBox(
-                                                constraints: BoxConstraints(
-                                                  maxHeight:
-                                                      MediaQuery.of(context)
-                                                              .size
-                                                              .height *
-                                                          0.8,
-                                                ),
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: leadSubTypeList!
-                                                      .data!.length,
-                                                  itemBuilder:
-                                                      (context, subIndex) {
-                                                    return InkWell(
-                                                      // onTap: () {
-                                                      //   setState(() {
-                                                      //     leadSubType =
-                                                      //         leadSubTypeList!
-                                                      //             .data![
-                                                      //                 subIndex]
-                                                      //             .leadSubCategory
-                                                      //             .toString();
-                                                      //     leadSubTypeId =
-                                                      //         leadSubTypeList!
-                                                      //             .data![
-                                                      //                 subIndex]
-                                                      //             .leadSubCategoryId
-                                                      //             .toString();
-                                                      //     Navigator.pop(
-                                                      //         context, true);
-                                                      //   });
-                                                      // },
-                                                      onTap: () {
-                                                        setState(() {
-                                                          leadSubType =
-                                                              leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategory
-                                                                  .toString();
-
-                                                          leadSubTypeId =
-                                                              leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategoryId
-                                                                  .toString();
-                                                          leadSubTypeVal.text =
-                                                              leadSubType;
-
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Text(
-                                                          leadSubTypeList!
-                                                              .data![subIndex]
-                                                              .leadSubCategory
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    maxLines: 1,
-                                    readOnly: true,
-                                    keyboardType: TextInputType.text,
-                                    decoration: const InputDecoration(
-                                        labelText: 'Lead Sub Category',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        prefixIcon: Icon(
-                                            Icons
-                                                .arrow_drop_down_circle_outlined,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                )
-                              : const SizedBox(),
-                          InputTextField(
-                            hintText: 'Remarks',
-                            hintTextColor: Colors.white,
-                            backgroundColor: Colors.white,
-                            controller: remarks,
-                            width: 1,
-                            height: 80,
-                            maxLine: 2,
-                          ),
-                          const SizedBox(
-                            height: 25,
-                          ),
-                          InkWell(
-                            onTap: () async {
-                              editFollowup();
-                            },
-                            child: Container(
-                              width: MediaQuery.of(context).size.width * 0.45,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Center(
-                                child: Text('Submit',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
-                  )
-                : Center(
-                    child: Lottie.asset('assets/main/loading.json',
-                        fit: BoxFit.fill),
-                  ),
-          )
-        : Scaffold(
-            backgroundColor: Colors.white,
-            body: SizedBox(
-              width: MediaQuery.of(context).size.width * 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 300,
-                    height: 300,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/icons/noNetwork.jpg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'No Network Found !',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      getData();
-                    },
-                    child: SizedBox(
-                      width: 120,
-                      height: 35,
-                      child: Padding(
-                        padding: const EdgeInsets.all(1.5),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Try Again',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ));
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedProducts = List.from(localSelected);
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2a86c9),
+                  ),
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

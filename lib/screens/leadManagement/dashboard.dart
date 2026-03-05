@@ -98,6 +98,7 @@ import '../fileManager/fileManagerList.dart';
 import '../officialWhatsapp/chat_home_screen.dart';
 import '../userManagement/viewUsers.dart';
 import 'notification_page.dart';
+import '../authentication/deep_link_handler.dart';
 
 // ignore: must_be_immutable
 class Dashboard extends StatefulWidget {
@@ -229,7 +230,6 @@ class _DashboardState extends State<Dashboard> {
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
-
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy')
@@ -413,6 +413,16 @@ class _DashboardState extends State<Dashboard> {
     getData(widget.token, fromdate, todate);
     _loadWorkStatus();
     // _checkDashboardPermission();
+
+    // Consume pending deep links if any
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      deepLinkHandler.getPendingDeepLink().then((data) {
+        if (data != null && mounted) {
+          log('[DEEPLINK] Dashboard: Consuming pending deep link: $data');
+          deepLinkHandler.validateAndNavigate(context, data);
+        }
+      });
+    });
   }
 
   void _checkDashboardPermission() async {
@@ -5547,7 +5557,8 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
                                                     widget.token,
                                                     updateLeadPermission1,
                                                     deleteLeadPermission1,
@@ -5584,12 +5595,12 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                   widget.token,
                                                   updateLeadPermission1,
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
-                                                  pageName: 'New Leadsss',
+                                                  pageName: 'New Leads',
                                                   fromDate: fromdate.toString(),
                                                   toDate: todate.toString(),
                                                   status: '1',
@@ -5795,19 +5806,24 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                  widget.token,
-                                                  updateLeadPermission1,
-                                                  deleteLeadPermission1,
-                                                  cloudCallPermission1,
-                                                  pageName: 'Followup Leads',
-                                                  fromDate: DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month,
-                                                          DateTime.now().day)
-                                                      .toString(),
-                                                  toDate: todate.toString(),
-                                                  status: '2')),
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName:
+                                                          'Followup Leads',
+                                                      fromDate: DateTime(
+                                                              DateTime.now()
+                                                                  .year,
+                                                              DateTime.now()
+                                                                  .month,
+                                                              DateTime.now()
+                                                                  .day)
+                                                          .toString(),
+                                                      toDate: todate.toString(),
+                                                      status: '2')),
                                         ).then((r) {
                                           getData(
                                               widget.token, fromdate, todate);
@@ -5820,7 +5836,7 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                 widget.token,
                                                 updateLeadPermission1,
                                                 deleteLeadPermission1,
@@ -6041,15 +6057,17 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                  widget.token,
-                                                  updateLeadPermission1,
-                                                  deleteLeadPermission1,
-                                                  cloudCallPermission1,
-                                                  pageName: 'Closed Leads',
-                                                  fromDate: fromdate.toString(),
-                                                  toDate: todate.toString(),
-                                                  status: '4')),
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName: 'Closed Leads',
+                                                      fromDate:
+                                                          fromdate.toString(),
+                                                      toDate: todate.toString(),
+                                                      status: '4')),
                                         ).then((r) {
                                           getData(
                                               widget.token, fromdate, todate);
@@ -6062,7 +6080,7 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                 widget.token,
                                                 updateLeadPermission1,
                                                 deleteLeadPermission1,
@@ -6274,17 +6292,19 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
-                                                  widget.token,
-                                                  updateLeadPermission1,
-                                                  deleteLeadPermission1,
-                                                  cloudCallPermission1,
-                                                  pageName: 'Total Called',
-                                                  fromDate: fromdate.toString(),
-                                                  toDate: todate.toString(),
-                                                  leadType: "-1",
-                                                  callStatus: "1",
-                                                  status: '0')),
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName: 'Total Called',
+                                                      fromDate:
+                                                          fromdate.toString(),
+                                                      toDate: todate.toString(),
+                                                      leadType: "-1",
+                                                      callStatus: "1",
+                                                      status: '0')),
                                         ).then((r) {
                                           getData(
                                               widget.token, fromdate, todate);
@@ -6297,7 +6317,7 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                 widget.token,
                                                 updateLeadPermission1,
                                                 deleteLeadPermission1,
@@ -6514,7 +6534,8 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
                                                     widget.token,
                                                     updateLeadPermission1,
                                                     deleteLeadPermission1,
@@ -6536,7 +6557,7 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                   widget.token,
                                                   updateLeadPermission1,
                                                   deleteLeadPermission1,
@@ -6748,7 +6769,8 @@ class _DashboardState extends State<Dashboard> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ViewLeads(
+                                              builder: (context) =>
+                                                  ViewLeadsNew(
                                                     widget.token,
                                                     updateLeadPermission1,
                                                     deleteLeadPermission1,
@@ -6769,7 +6791,7 @@ class _DashboardState extends State<Dashboard> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => ViewLeads(
+                                            builder: (context) => ViewLeadsNew(
                                                   widget.token,
                                                   updateLeadPermission1,
                                                   deleteLeadPermission1,
@@ -10727,7 +10749,7 @@ class _DashboardState extends State<Dashboard> {
           ),
           ElevatedButton(
             onPressed: () {
-              SystemNavigator.pop();
+              exit(0);
             },
             child: const Text("Yes"),
           ),

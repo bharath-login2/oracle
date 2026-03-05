@@ -45,6 +45,7 @@ import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
+import '../authentication/deep_link_handler.dart';
 
 class ProjectDashboard extends StatefulWidget {
   const ProjectDashboard({super.key});
@@ -150,6 +151,16 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
     _loadWorkStatus();
     loadAssignedData();
+
+    // Consume pending deep links if any
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      deepLinkHandler.getPendingDeepLink().then((data) {
+        if (data != null && mounted) {
+          log('[DEEPLINK] ProjectDashboard: Consuming pending deep link: $data');
+          deepLinkHandler.validateAndNavigate(context, data);
+        }
+      });
+    });
   }
 
   // Refresh method for pull-to-refresh
@@ -847,34 +858,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     return WillPopScope(
       onWillPop: () async {
         if (ProjectDashboardPermission == "true") {
-          final shouldExit = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Exit App'),
-              content: const Text('Do you want to exit the application?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('No'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    SystemNavigator.pop();
-                  },
-                  child: const Text('Yes'),
-                ),
-              ],
-            ),
-          );
-
-          if (shouldExit ?? false) {
-            if (Platform.isAndroid) {
-              SystemNavigator.pop();
-            } else if (Platform.isIOS) {
-              exit(0);
-            }
-            return false;
-          }
+          await _exitApp(context);
           return false;
         } else {
           return true;
@@ -1949,7 +1933,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
             builder: (context) => PendingWorkPageNew(
               workId: "",
               sectionId: sectionId,
-              selectedStatus: 'todo,pending',
+              selectedStatus: 'todo,pending,in-progress',
               staffId: staffId,
               assignedToMyself: '1',
             ),
@@ -1978,7 +1962,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
             builder: (context) => PendingWorkPageNew(
               workId: "",
               sectionId: sectionId,
-              selectedStatus: 'todo,pending',
+              selectedStatus: 'todo,pending,in-progress',
               staffId: staffId,
               assignedToMyself: '1',
               isOverdue: '1',
@@ -2496,6 +2480,31 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
         ),
       ),
     );
+  }
+
+  Future<bool?> _exitApp(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Warning"),
+        content: const Text("Are you sure to exit app?"),
+        actions: <Widget>[
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+            },
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              exit(0);
+            },
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
+    );
+    return null;
   }
 }
 

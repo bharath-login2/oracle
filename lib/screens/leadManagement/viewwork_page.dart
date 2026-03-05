@@ -202,6 +202,10 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: widget.staffName != null && widget.staffName!.isNotEmpty
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

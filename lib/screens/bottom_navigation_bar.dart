@@ -17,7 +17,7 @@ class BottomNavigation extends StatefulWidget {
   String phoneCallLogPermission;
   String? name;
   String? userId;
-  GlobalKey<ScaffoldState>? scaffoldKey; 
+  GlobalKey<ScaffoldState>? scaffoldKey;
 
   BottomNavigation(this.token,
       {required this.phoneCallLogPermission,
@@ -243,7 +243,11 @@ class _BottomNavigationState extends State<BottomNavigation> {
                     widget.scaffoldKey!.currentState != null) {
                   widget.scaffoldKey!.currentState!.openEndDrawer();
                 } else {
-                  Scaffold.of(context).openEndDrawer();
+                  try {
+                    Scaffold.of(context).openEndDrawer();
+                  } catch (e) {
+                    debugPrint("Error opening end drawer: $e");
+                  }
                 }
               },
               child: SizedBox(

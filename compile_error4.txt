@@ -1,0 +1,104 @@
+Analyzing add_leads_new.dart...
+
+  error - add_leads_new.dart:1213:12 - Expected to find ')'. - expected_token
+  error - add_leads_new.dart:1215:8 - Expected a class member. Try placing this code inside a class member. - expected_class_member
+  error - add_leads_new.dart:1216:5 - Expected a class member. Try placing this code inside a class member. - expected_class_member
+  error - add_leads_new.dart:1216:6 - Expected a class member. Try placing this code inside a class member. - expected_class_member
+  error - add_leads_new.dart:1221:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1224:34 - Undefined name 'commonDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1229:36 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1243:34 - Undefined name 'commonDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1261:31 - Undefined name 'callResponse'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1262:31 - Undefined name 'callResponseId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1263:31 - Undefined name 'callResponseCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1263:55 - Undefined name 'callResponse'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1265:43 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1282:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1285:34 - Undefined name 'stateDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1290:36 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1304:34 - Undefined name 'stateDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1320:31 - Undefined name 'stateCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1321:31 - Undefined name 'StateId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1322:31 - Undefined name 'districtCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1323:31 - Undefined name 'districtList'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1324:31 - Undefined name 'isDistrictLoading'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1326:43 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1328:63 - Undefined name 'StateId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1330:31 - Undefined name 'districtList'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1331:31 - Undefined name 'isDistrictLoading'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1349:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1355:13 - Undefined name 'commonDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1356:13 - The function 'setState' isn't defined. Try importing the library that defines 'setState', correcting the name to the name of an existing function, or defining a function named 'setState'. - undefined_function
+  error - add_leads_new.dart:1357:27 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1358:34 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1364:34 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1376:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1382:13 - Undefined name 'commonDetails'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1383:13 - The function 'setState' isn't defined. Try importing the library that defines 'setState', correcting the name to the name of an existing function, or defining a function named 'setState'. - undefined_function
+  error - add_leads_new.dart:1384:27 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1386:34 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1397:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1402:34 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1424:54 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1430:39 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1432:25 - Undefined name 'contactPermission'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1451:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1457:46 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1461:32 - Undefined name 'configure'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1480:9 - The function 'setState' isn't defined. Try importing the library that defines 'setState', correcting the name to the name of an existing function, or defining a function named 'setState'. - undefined_function
+  error - add_leads_new.dart:1481:11 - Undefined name 'contactNoCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1482:11 - Undefined name 'clientNameCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1491:10 - Undefined name '_formKey'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1492:5 - Undefined name '_formKey'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1494:9 - Undefined name 'multiBranch'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1494:34 - Undefined name 'roleId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1494:51 - Undefined name 'branch'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1499:9 - Undefined name 'callResultId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1499:32 - Undefined name 'nextFollowupCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1504:31 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1506:9 - Undefined name 'widget'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1506:23 - Undefined name 'contactNoCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1506:43 - Undefined name 'code'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1509:21 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1518:16 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1524:46 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1528:29 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1529:41 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1540:25 - Undefined name '_selectedProducts'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1543:7 - Undefined name 'widget'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1544:7 - Undefined name 'branch'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1545:7 - Undefined name 'clientNameCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1546:7 - Undefined name 'leadTypeId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1547:7 - Undefined name 'leadSubTypeId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1548:7 - Undefined name 'contactNoCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1549:7 - Undefined name 'assignStaffId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1550:7 - Undefined name 'costCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1551:7 - Undefined name 'priorityId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1552:7 - Undefined name 'addressCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1553:7 - Undefined name 'pinCodeCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1554:7 - Undefined name 'selectedPostOffice'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1555:7 - Undefined name 'remarkCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1556:7 - Undefined name 'callResultId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1557:7 - Undefined name 'callResponseId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1558:7 - Undefined name 'nextFollowupCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1559:7 - Undefined name '_additionalValues'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1560:7 - Undefined name 'code'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1561:7 - Undefined name 'checked'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1562:7 - Undefined name 'timeBeforeCtrl'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1563:7 - Undefined name 'leadSourceId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1564:16 - Undefined name 'StateId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1565:19 - Undefined name 'DistrictId'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1569:19 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1572:21 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - add_leads_new.dart:1577:1 - Expected a method, getter, setter or operator declaration. This appears to be incomplete code. Try removing it or completing it. - expected_executable
+warning - add_leads_new.dart:24:7 - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: AddLeadsNew.token, AddLeadsNew.page, AddLeadsNew.leadMasterId, AddLeadsNew.clientName, AddLeadsNew.phoneNumber, AddLeadsNew.fromDate, AddLeadsNew.toDate, AddLeadsNew.editLead, AddLeadsNew.deleteLead, AddLeadsNew.cloudCall, AddLeadsNew.countryCode, AddLeadsNew.address - must_be_immutable
+warning - add_leads_new.dart:119:9 - Unnecessary type check; the result is always 'true'. Try correcting the type check, or removing the type check. - unnecessary_type_check
+warning - add_leads_new.dart:852:62 - The '!' will have no effect because the receiver can't be null. Try removing the '!' operator. - unnecessary_non_null_assertion
+   info - add_leads_new.dart:425:21 - The private field _selectedProducts could be 'final'. Try making the field 'final'. - prefer_final_fields
+   info - add_leads_new.dart:772:19 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:777:84 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1050:43 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1477:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:1479:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+
+100 issues found.

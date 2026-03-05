@@ -21,6 +21,8 @@ import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNew.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
@@ -31,6 +33,7 @@ import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/staffReport.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/leave_request_list_page.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/rental/rentalDashboard.dart';
 import 'package:login2/screens/roombooking/hotelDashboard.dart';
@@ -954,7 +957,7 @@ class _HomePageState extends State<HomePage> {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        Dashboard(
+                                                        DashboardLeadNewUpdated(
                                                             widget.token)),
                                               );
                                             } else if (userDashboard!
@@ -1798,11 +1801,179 @@ class _HomePageState extends State<HomePage> {
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Attendance') {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const SalaryReportPage()));
+                                              showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return Dialog(
+                                                    elevation: 8,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                    ),
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.85,
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          vertical: 24,
+                                                          horizontal: 16),
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          // Header with close button
+                                                          Stack(
+                                                            children: [
+                                                              const Center(
+                                                                child: Text(
+                                                                  "Attendance Options",
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        20,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Color(
+                                                                        0xFF1E293B),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              Positioned(
+                                                                right: 0,
+                                                                child:
+                                                                    GestureDetector(
+                                                                  onTap: () =>
+                                                                      Navigator.pop(
+                                                                          context),
+                                                                  child:
+                                                                      Container(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            4),
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade200,
+                                                                      shape: BoxShape
+                                                                          .circle,
+                                                                    ),
+                                                                    child:
+                                                                        const Icon(
+                                                                      Icons
+                                                                          .close,
+                                                                      size: 18,
+                                                                      color: Color(
+                                                                          0xFF64748B),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                              height: 24),
+
+                                                          // Animated options
+                                                          TweenAnimationBuilder(
+                                                            tween:
+                                                                Tween<double>(
+                                                                    begin: 0,
+                                                                    end: 1),
+                                                            duration:
+                                                                const Duration(
+                                                                    milliseconds:
+                                                                        400),
+                                                            curve: Curves
+                                                                .easeOutCubic,
+                                                            builder: (context,
+                                                                double value,
+                                                                child) {
+                                                              return Opacity(
+                                                                opacity: value,
+                                                                child: Transform
+                                                                    .translate(
+                                                                  offset: Offset(
+                                                                      0,
+                                                                      20 *
+                                                                          (1 -
+                                                                              value)),
+                                                                  child: child,
+                                                                ),
+                                                              );
+                                                            },
+                                                            child: Column(
+                                                              children: [
+                                                                // Salary Report Option
+                                                                _buildOptionCard(
+                                                                  icon: Icons
+                                                                      .receipt_long,
+                                                                  iconColor:
+                                                                      Colors
+                                                                          .blue,
+                                                                  title:
+                                                                      "Salary Report",
+                                                                  subtitle:
+                                                                      "View your salary details and history",
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    Navigator
+                                                                        .push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                const SalaryReportPage(),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                                const SizedBox(
+                                                                    height: 12),
+
+                                                                // Leave Request Option
+                                                                _buildOptionCard(
+                                                                  icon: Icons
+                                                                      .calendar_month,
+                                                                  iconColor:
+                                                                      Colors
+                                                                          .green,
+                                                                  title:
+                                                                      "Leave Request",
+                                                                  subtitle:
+                                                                      "Apply for leave or check status",
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    Navigator
+                                                                        .push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                const LeaveRequestListPage(),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              );
                                             } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'renewal') {
@@ -2304,6 +2475,80 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
+  // Helper widget for option cards
+  Widget _buildOptionCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              // Icon with background
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Arrow icon
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey.shade400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<bool?> _exitApp(BuildContext context) async {
     showDialog(
       context: context,
@@ -2319,7 +2564,7 @@ class _HomePageState extends State<HomePage> {
           ),
           ElevatedButton(
             onPressed: () {
-              SystemNavigator.pop();
+              exit(0);
             },
             child: const Text("Yes"),
           ),

@@ -35,7 +35,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
   String token = '';
   CommonResponse? loginOrNot;
   String viewAttendanceSection = '';
-    String viewAttendance = '';
+  String viewAttendance = '';
   bool? isLoggedIn;
   @override
   @override
@@ -58,16 +58,14 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
 
   Future<void> _initMultipleWorksCheck() async {
     final value = await Common.getSharedPref("multipleWorks");
-   
+
     setState(() {
       multipleWorksCheck = value ?? '';
     });
   }
 
-  
   Future<void> _viewAttendanceSection() async {
-  
-     final viewAttendanceSection =
+    final viewAttendanceSection =
         await Common.getSharedPref("viewAttendanceSection");
     setState(() {
       viewAttendance = viewAttendanceSection ?? '';
@@ -134,7 +132,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("View All Works"),
-           backgroundColor: const Color.fromARGB(255, 77, 155, 228),
+        backgroundColor: const Color.fromARGB(255, 77, 155, 228),
         foregroundColor: Colors.white,
         actions: [
           Row(
@@ -412,7 +410,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (_) => ViewWorkPage(
-                                                     staffName: staff.name,
+                                                    staffName: staff.name,
                                                     staffId: staff.staffId,
                                                     selectedDate: selectedDate,
                                                   ),
@@ -446,17 +444,16 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                     },
                                   );
                                 } else if (staff.taskName == "") {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ViewWorkPage(
-                                           staffName: staff.name,
-                                        staffId: staff.staffId,
-                                        selectedDate: selectedDate,
-                                      ),
-                                    ),
-                                  );
-                                } else {
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (_) => ViewWorkPage(
+                                  //       staffName: staff.name,
+                                  //       staffId: staff.staffId,
+                                  //       selectedDate: selectedDate,
+                                  //     ),
+                                  //   ),
+                                  // );
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -469,6 +466,29 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                                       ),
                                     ),
                                   );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ViewWorkPage(
+                                        staffName: staff.name,
+                                        staffId: staff.staffId,
+                                        selectedDate: selectedDate,
+                                      ),
+                                    ),
+                                  );
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (_) => const TimelinePage(),
+                                  //     settings: RouteSettings(
+                                  //       arguments: {
+                                  //         "staffId": staff.staffId,
+                                  //         "selectedDate": selectedDate,
+                                  //       },
+                                  //     ),
+                                  //   ),
+                                  // );
                                 }
                               },
                               // child: Container(

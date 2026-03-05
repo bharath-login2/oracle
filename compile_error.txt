@@ -1,0 +1,30 @@
+Analyzing add_leads_new.dart...
+
+  error - add_leads_new.dart:252:13 - The method '_buildSectionCard' isn't defined for the type '_AddLeadsNewState'. Try correcting the name to the name of an existing method, or defining a method named '_buildSectionCard'. - undefined_method
+  error - add_leads_new.dart:265:13 - The method '_buildSectionCard' isn't defined for the type '_AddLeadsNewState'. Try correcting the name to the name of an existing method, or defining a method named '_buildSectionCard'. - undefined_method
+  error - add_leads_new.dart:281:13 - The method '_buildSectionCard' isn't defined for the type '_AddLeadsNewState'. Try correcting the name to the name of an existing method, or defining a method named '_buildSectionCard'. - undefined_method
+  error - add_leads_new.dart:296:13 - The method '_buildSectionCard' isn't defined for the type '_AddLeadsNewState'. Try correcting the name to the name of an existing method, or defining a method named '_buildSectionCard'. - undefined_method
+  error - add_leads_new.dart:315:15 - The method '_buildSectionCard' isn't defined for the type '_AddLeadsNewState'. Try correcting the name to the name of an existing method, or defining a method named '_buildSectionCard'. - undefined_method
+warning - add_leads_new.dart:15:8 - Unused import: '../../models/lead_management/addLeadModel.dart'. Try removing the import directive. - unused_import
+warning - add_leads_new.dart:16:8 - Unused import: '../../models/lead_management/checkLeadPhoneNumberModel.dart'. Try removing the import directive. - unused_import
+warning - add_leads_new.dart:19:8 - Unused import: 'dart:io'. Try removing the import directive. - unused_import
+warning - add_leads_new.dart:21:7 - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: AddLeadsNew.token, AddLeadsNew.page, AddLeadsNew.leadMasterId, AddLeadsNew.clientName, AddLeadsNew.phoneNumber, AddLeadsNew.fromDate, AddLeadsNew.toDate, AddLeadsNew.editLead, AddLeadsNew.deleteLead, AddLeadsNew.cloudCall, AddLeadsNew.countryCode, AddLeadsNew.address - must_be_immutable
+warning - add_leads_new.dart:116:9 - Unnecessary type check; the result is always 'true'. Try correcting the type check, or removing the type check. - unnecessary_type_check
+warning - add_leads_new.dart:313:36 - The receiver can't be 'null' because of short-circuiting, so the null-aware operator '?.' can't be used. Try replacing the operator '?.' with '.'. - invalid_null_aware_operator
+           - The operator '?.' is causing the short circuiting at add_leads_new.dart:313:30.
+warning - add_leads_new.dart:727:62 - The '!' will have no effect because the receiver can't be null. Try removing the '!' operator. - unnecessary_non_null_assertion
+   info - add_leads_new.dart:647:19 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:652:84 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:888:43 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1195:27 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1196:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1202:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1222:27 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1224:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1315:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:1317:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:1347:21 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1404:19 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1407:21 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+
+25 issues found.

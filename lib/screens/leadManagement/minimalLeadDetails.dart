@@ -399,14 +399,15 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
       callLogData.clear();
-      final String dateTimeFrom =
-          prefs.getString('callLogsStartingTime').toString();
+      final String? dateTimeFromStr = prefs.getString('callLogsStartingTime');
       //  List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
       //       log('callTypes : $callTypesQ');
-      if (callLogCount == 0) {
+      if (callLogCount == 0 &&
+          dateTimeFromStr != null &&
+          dateTimeFromStr != "null") {
         log('No call logs found in Hive.');
 
-        final DateTime startingTime = DateTime.parse(dateTimeFrom);
+        final DateTime startingTime = DateTime.parse(dateTimeFromStr);
         // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
         int to = DateTime.now().millisecondsSinceEpoch;
         final Iterable<CallLogEntry> result = await CallLog.query(
@@ -1693,14 +1694,22 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                   ),
                                                   Container(
                                                     decoration: BoxDecoration(
-                                                        color: _colors[int
-                                                            .parse(leadDetails!
-                                                                .data!
-                                                                .callResultId
-                                                                .toString())],
+                                                        color: (int.tryParse(leadDetails!.data!.callResultId.toString()) ??
+                                                                        0) >=
+                                                                    0 &&
+                                                                (int.tryParse(leadDetails!.data!.callResultId.toString()) ??
+                                                                        0) <
+                                                                    _colors
+                                                                        .length
+                                                            ? _colors[int.tryParse(leadDetails!
+                                                                    .data!
+                                                                    .callResultId
+                                                                    .toString()) ??
+                                                                0]
+                                                            : const Color.fromARGB(
+                                                                255, 245, 160, 34),
                                                         borderRadius:
-                                                            BorderRadius
-                                                                .circular(5)),
+                                                            BorderRadius.circular(5)),
                                                     child: Padding(
                                                       padding:
                                                           const EdgeInsets.only(
@@ -3196,7 +3205,7 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                                           ),
                                                                           Container(
                                                                             decoration:
-                                                                                BoxDecoration(color: _colors[int.parse(leadDetailsFollowup!.data.followUpData[index].callResultId.toString())], borderRadius: BorderRadius.circular(5)),
+                                                                                BoxDecoration(color: (int.tryParse(leadDetailsFollowup!.data.followUpData[index].callResultId.toString()) ?? 0) >= 0 && (int.tryParse(leadDetailsFollowup!.data.followUpData[index].callResultId.toString()) ?? 0) < _colors.length ? _colors[int.tryParse(leadDetailsFollowup!.data.followUpData[index].callResultId.toString()) ?? 0] : const Color.fromARGB(255, 245, 160, 34), borderRadius: BorderRadius.circular(5)),
                                                                             child:
                                                                                 Padding(
                                                                               padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),

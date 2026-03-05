@@ -85,6 +85,7 @@ import '../fileManager/fileManagerList.dart';
 import '../officialWhatsapp/chat_home_screen.dart';
 import '../userManagement/viewUsers.dart';
 import 'notification_page.dart';
+import '../authentication/deep_link_handler.dart';
 
 // ignore: must_be_immutable
 class MinimalDashboard extends StatefulWidget {
@@ -393,6 +394,16 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
 
     getData(widget.token, fromdate, todate);
     _loadWorkStatus();
+
+    // Consume pending deep links if any
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      deepLinkHandler.getPendingDeepLink().then((data) {
+        if (data != null && mounted) {
+          log('[DEEPLINK] MinimalDashboard: Consuming pending deep link: $data');
+          deepLinkHandler.validateAndNavigate(context, data);
+        }
+      });
+    });
   }
 
   void _loadWorkStatus() async {
@@ -9862,7 +9873,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
           ),
           ElevatedButton(
             onPressed: () {
-              SystemNavigator.pop();
+              exit(0);
             },
             child: const Text("Yes"),
           ),

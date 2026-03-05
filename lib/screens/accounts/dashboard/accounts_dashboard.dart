@@ -39,6 +39,7 @@ import 'package:login2/screens/sidebarscreens/accountsSidebarScreen.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../authentication/deep_link_handler.dart';
 
 class AccountsDashboard extends StatefulWidget {
   String token;
@@ -281,6 +282,16 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     getData();
     _initializeFloatingButtonPosition();
     super.initState();
+
+    // Consume pending deep links if any
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      deepLinkHandler.getPendingDeepLink().then((data) {
+        if (data != null && mounted) {
+          log('[DEEPLINK] AccountsDashboard: Consuming pending deep link: $data');
+          deepLinkHandler.validateAndNavigate(context, data);
+        }
+      });
+    });
   }
 
   void _initializeFloatingButtonPosition() {

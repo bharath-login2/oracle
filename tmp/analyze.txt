@@ -1,0 +1,73 @@
+﻿Analyzing add_leads_new.dart...                                 
+
+warning - The declaration '<unnamed>' isn't referenced - lib\screens\leadmanagement\add_leads_new.dart:56:7 - unused_element
+   info - Missing type annotation - lib\screens\leadmanagement\add_leads_new.dart:145:3 - strict_top_level_inference
+warning - Unnecessary type check; the result is always 'true' - lib\screens\leadmanagement\add_leads_new.dart:151:9 - unnecessary_type_check
+  error - The name 'leadProductsModel' is already defined - lib\screens\leadmanagement\add_leads_new.dart:232:5 - duplicate_definition
+  error - Variables must be declared using the keywords 'const', 'final', 'var' or a type name - lib\screens\leadmanagement\add_leads_new.dart:232:5 - missing_const_final_var_or_type
+  error - The await expression can only be used in an async function - lib\screens\leadmanagement\add_leads_new.dart:232:25 - await_in_wrong_context
+  error - Expected a class member - lib\screens\leadmanagement\add_leads_new.dart:233:5 - expected_class_member
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:233:8 - missing_identifier
+   info - Missing type annotation - lib\screens\leadmanagement\add_leads_new.dart:233:9 - strict_top_level_inference
+  error - Expected to find ')' - lib\screens\leadmanagement\add_leads_new.dart:233:27 - expected_token
+   info - The 'child' argument should be last in widget constructor invocations - lib\screens\leadmanagement\add_leads_new.dart:355:29 - sort_child_properties_last
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:423:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:424:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:427:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:428:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:431:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:432:59 - unnecessary_const
+  error - Undefined name 'borderRadius' - lib\screens\leadmanagement\add_leads_new.dart:847:47 - undefined_identifier
+  error - Expected to find ')' - lib\screens\leadmanagement\add_leads_new.dart:847:59 - expected_token
+  error - Expected to find ']' - lib\screens\leadmanagement\add_leads_new.dart:847:59 - expected_token
+  error - The named parameter 'enabledBorder' isn't defined - lib\screens\leadmanagement\add_leads_new.dart:850:45 - undefined_named_parameter
+  error - Too many positional arguments: 0 expected, but 4 found - lib\screens\leadmanagement\add_leads_new.dart:863:33 - extra_positional_arguments_could_be_named
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:991:75 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:1092:71 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:1094:75 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:1106:75 - use_build_context_synchronously
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1232:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1233:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1236:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1237:59 - unnecessary_const
+  error - The named parameter 'borderRadius' isn't defined - lib\screens\leadmanagement\add_leads_new.dart:1333:47 - undefined_named_parameter
+  error - The named parameter 'borderSide' isn't defined - lib\screens\leadmanagement\add_leads_new.dart:1334:47 - undefined_named_parameter
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:1335:46 - missing_identifier
+  error - Expected to find ':' - lib\screens\leadmanagement\add_leads_new.dart:1335:46 - expected_token
+  error - The named parameter 'enabledBorder' isn't defined - lib\screens\leadmanagement\add_leads_new.dart:1336:45 - undefined_named_parameter
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1496:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1497:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1500:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1501:59 - unnecessary_const
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:1541:63 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\add_leads_new.dart:1544:67 - use_build_context_synchronously
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1643:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1644:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1647:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1648:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1675:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1676:59 - unnecessary_const
+  error - The constructor being called isn't a const constructor - lib\screens\leadmanagement\add_leads_new.dart:1679:61 - const_with_non_const
+   info - Unnecessary 'const' keyword - lib\screens\leadmanagement\add_leads_new.dart:1680:59 - unnecessary_const
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:1748:33 - missing_identifier
+  error - Expected to find ')' - lib\screens\leadmanagement\add_leads_new.dart:1748:33 - expected_token
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2789:30 - missing_identifier
+  error - Expected to find ':' - lib\screens\leadmanagement\add_leads_new.dart:2789:30 - expected_token
+  error - Expected to find ';' - lib\screens\leadmanagement\add_leads_new.dart:2857:27 - expected_token
+warning - Dead code - lib\screens\leadmanagement\add_leads_new.dart:2857:28 - dead_code
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2857:28 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\add_leads_new.dart:2857:28 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\add_leads_new.dart:2857:28 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2858:17 - missing_identifier
+  error - Unexpected text ';' - lib\screens\leadmanagement\add_leads_new.dart:2858:17 - unexpected_token
+  error - Expected to find ';' - lib\screens\leadmanagement\add_leads_new.dart:2861:19 - expected_token
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2861:20 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\add_leads_new.dart:2861:20 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\add_leads_new.dart:2861:20 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2862:11 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\add_leads_new.dart:2862:11 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\add_leads_new.dart:2862:11 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\add_leads_new.dart:2863:9 - missing_identifier
+  error - Unexpected text ';' - lib\screens\leadmanagement\add_leads_new.dart:2863:9 - unexpected_token
+   info - Missing type annotation - lib\screens\leadmanagement\add_leads_new.dart:3049:23 - strict_top_level_inference
+

@@ -4,7 +4,8 @@
 
 import 'dart:convert';
 
-SubmitResponse submitResponseFromJson(String str) => SubmitResponse.fromJson(json.decode(str));
+SubmitResponse submitResponseFromJson(String str) =>
+    SubmitResponse.fromJson(json.decode(str));
 
 String submitResponseToJson(SubmitResponse data) => json.encode(data.toJson());
 
@@ -19,11 +20,25 @@ class SubmitResponse {
     required this.status,
   });
 
-  factory SubmitResponse.fromJson(Map<String, dynamic> json) => SubmitResponse(
-        message: json["message"] ?? "",
-        data: json["data"],
-        status: json["status"] ?? false,
-      );
+  factory SubmitResponse.fromJson(Map<String, dynamic> json) {
+    var rawStatus = json["status"];
+    bool finalStatus = false;
+    if (rawStatus is bool) {
+      finalStatus = rawStatus;
+    } else if (rawStatus is String) {
+      finalStatus = (rawStatus.toLowerCase() == "success" ||
+          rawStatus.toLowerCase() == "true" ||
+          rawStatus == "1");
+    } else if (rawStatus is int) {
+      finalStatus = (rawStatus == 1);
+    }
+
+    return SubmitResponse(
+      message: json["message"]?.toString() ?? "",
+      data: json["data"],
+      status: finalStatus,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "message": message,
@@ -31,4 +46,3 @@ class SubmitResponse {
         "status": status,
       };
 }
-

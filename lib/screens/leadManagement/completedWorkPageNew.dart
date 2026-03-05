@@ -58,6 +58,7 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
     'todo': 0,
     'all': 0,
   };
+  Count? _totalCounts;
   bool _isCalculatingCounts = false;
 
   @override
@@ -147,6 +148,7 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
         HttpService().getStaffwiseWorkCompletedNew(widget.staffId).then((data) {
       if (data != null && data.status && data.summary.isNotEmpty) {
         staffwiseData = data.summary;
+        _totalCounts = data.count;
         _calculateFilterCounts(data.summary);
 
         if (widget.staffId.isNotEmpty) {
@@ -686,13 +688,20 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredStaffData!.length,
-                    itemBuilder: (context, index) {
-                      final staff = filteredStaffData![index];
-                      return _buildStaffCard(staff);
-                    },
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredStaffData!.length,
+                          itemBuilder: (context, index) {
+                            final staff = filteredStaffData![index];
+                            return _buildStaffCard(staff);
+                          },
+                        ),
+                      ),
+                      _buildBottomCountSummary(),
+                    ],
                   );
                 },
               ),
@@ -721,6 +730,92 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
               },
             )
           : null,
+    );
+  }
+
+  Widget _buildBottomCountSummary() {
+    if (_totalCounts == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+        ),
+        child: const SizedBox.shrink(),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.assignment_outlined,
+            color: Colors.blue,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Work :',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 17, 17, 17),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _totalCounts!.workCount,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 25),
+                  const Icon(
+                    Icons.assignment_outlined,
+                    color: Colors.blue,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Task:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 22, 22, 22),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _totalCounts!.taskCount,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1065,7 +1160,7 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
                     MaterialPageRoute(
                       builder: (context) => AssignReport(
                         preselectedWorkId: selectedWorkId,
-                        workId: widget.workId,
+                        workId: selectedWorkId,
                         sectionId: "",
                       ),
                     ),

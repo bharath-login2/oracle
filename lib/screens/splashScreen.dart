@@ -2,15 +2,14 @@
 
 import 'dart:async';
 import 'dart:developer';
-import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:login2/models/userPermissionModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
-import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
@@ -46,11 +45,9 @@ class _SplashScreenState extends State<SplashScreen> {
     buildNumber: 'Unknown',
     buildSignature: 'Unknown',
   );
-  late AppLinks _appLinks;
-
   // ignore: unused_field
-  StreamSubscription<Uri>? _linkSubscription;
   String? navigation;
+  String? _debugLink; // Debug variable
   final firebaseServices = FirebaseServices();
 
   @override
@@ -65,14 +62,16 @@ class _SplashScreenState extends State<SplashScreen> {
     handleAsync();
     getData();
     _updateSelectedDashboard();
+    log('[DEEPLINK] SplashScreen: initState completed');
   }
 
   Future<void> _updateSelectedDashboard() async {
     try {
       final token = await Common.getSharedPref("token");
       if (token != null) {
-        final object1 = await HttpService.userPermissionCheck(token);
-        if (object1.status == true) {
+        final UserPermissionModel? object1 =
+            await HttpService.userPermissionCheck(token);
+        if (object1 != null && object1.status == true && object1.data != null) {
           Common.saveSharedPref("ProjectDashboardPermission",
               object1.data!.ProjectDashboard.toString());
           Common.saveSharedPref(
@@ -89,6 +88,14 @@ class _SplashScreenState extends State<SplashScreen> {
               object1.data!.QuotationDashboard.toString());
           Common.saveSharedPref(
               "RoomDashboard", object1.data!.RoomDashboard.toString());
+          Common.saveSharedPref("addApproveLeavePermission",
+              object1.data!.addApproveLeave.toString());
+          Common.saveSharedPref("rejectRequestLeavePermission",
+              object1.data!.rejectRequestLeave.toString());
+          Common.saveSharedPref("editLeaveRequestPermission",
+              object1.data!.editLeaveRequest.toString());
+          Common.saveSharedPref("deleteLeaveRequestPermission",
+              object1.data!.deleteLeaveRequest.toString());
           if (object1.data!.ProjectDashboard == "true") {
             Navigator.pushAndRemoveUntil(
               context,
@@ -167,99 +174,59 @@ class _SplashScreenState extends State<SplashScreen> {
       print("Error refreshing permissions after dashboard update: $e");
     }
   }
-  //!   deeplink init function
 
   Future<void> initDeepLinks() async {
-    _appLinks = AppLinks();
+    log('[DEEPLINK] SplashScreen: initDeepLinks called');
 
-    // Check initial link if app was in cold state (terminated)
-    // final appLink = await _appLinks.getInitialAppLink();
-    final appLink = await _appLinks.getInitialLink();
-    if (appLink != null) {
-      openAppLink(appLink);
-    } else {
-      String? token = await Common.getSharedPref("token");
-      String? ProjectDashboardPermission =
-          await Common.getSharedPref("ProjectDashboardPermission");
-      String? LeadDashboard = await Common.getSharedPref("LeadDashboard");
-      String? AccountsDashboardPermission =
-          await Common.getSharedPref("AccountsDashboardPermission");
-      String? MenuDashboard = await Common.getSharedPref("MenuDashboard");
-      String? RenewalDashboardPermission =
-          await Common.getSharedPref("RenewalDashboardPermission");
-      String? NewleadDashboardPermission =
-          await Common.getSharedPref("NewleadDashboardPermission");
-      String? QuotationDashboardPermission =
-          await Common.getSharedPref("QuotationDashboardPermission");
-      String? RoomDashboardPer = await Common.getSharedPref("RoomDashboard");
-      String? savedUrl = await Common.getSharedPref("url");
-      Widget dashboardToOpen;
-      if (ProjectDashboardPermission == "true") {
-        dashboardToOpen = ProjectDashboard();
-      } else if (LeadDashboard == "true") {
-        dashboardToOpen = Dashboard(token);
-      } else if (AccountsDashboardPermission == "true") {
-        if (token != null) {
-          dashboardToOpen = AccountsDashboard(token: token);
-        } else {
-          dashboardToOpen = dashboardToOpen = Dashboard(token);
-        }
-      } else if (MenuDashboard == "true") {
-        dashboardToOpen = HomePage(token);
-      } else if (RenewalDashboardPermission == "true") {
-        dashboardToOpen = RenewalDashboard();
-      } else if (NewleadDashboardPermission == "true") {
-        dashboardToOpen = MinimalDashboard(token);
-      } else if (QuotationDashboardPermission == "true") {
-        dashboardToOpen = QuotationDashboard();
-      } else if (RoomDashboardPer == "true") {
-        dashboardToOpen = RoomDashboard();
+    // We no longer manually check initial link here because MyApp's global
+    // listener already handles the stream (including the initial link).
+    // This prevents double-handling on startup.
+
+    String? token = await Common.getSharedPref("token");
+    String? ProjectDashboardPermission =
+        await Common.getSharedPref("ProjectDashboardPermission");
+    String? LeadDashboard = await Common.getSharedPref("LeadDashboard");
+    String? AccountsDashboardPermission =
+        await Common.getSharedPref("AccountsDashboardPermission");
+    String? MenuDashboard = await Common.getSharedPref("MenuDashboard");
+    String? RenewalDashboardPermission =
+        await Common.getSharedPref("RenewalDashboardPermission");
+    String? NewleadDashboardPermission =
+        await Common.getSharedPref("NewleadDashboardPermission");
+    String? QuotationDashboardPermission =
+        await Common.getSharedPref("QuotationDashboardPermission");
+    String? RoomDashboardPer = await Common.getSharedPref("RoomDashboard");
+
+    Widget dashboardToOpen;
+    if (ProjectDashboardPermission == "true") {
+      dashboardToOpen = const ProjectDashboard();
+    } else if (LeadDashboard == "true") {
+      dashboardToOpen = Dashboard(token);
+    } else if (AccountsDashboardPermission == "true") {
+      if (token != null) {
+        dashboardToOpen = AccountsDashboard(token: token);
       } else {
         dashboardToOpen = Dashboard(token);
       }
-      if (mounted) {
-        // Navigator.of(context)
-        //     .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => dashboardToOpen),
-        );
-      }
+    } else if (MenuDashboard == "true") {
+      dashboardToOpen = HomePage(token);
+    } else if (RenewalDashboardPermission == "true") {
+      dashboardToOpen = const RenewalDashboard();
+    } else if (NewleadDashboardPermission == "true") {
+      dashboardToOpen = MinimalDashboard(token);
+    } else if (QuotationDashboardPermission == "true") {
+      dashboardToOpen = const QuotationDashboard();
+    } else if (RoomDashboardPer == "true") {
+      dashboardToOpen = RoomDashboard();
+    } else {
+      dashboardToOpen = Dashboard(token);
     }
 
-    // Handle link when app is in warm state (front or background)
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      openAppLink(uri);
-    });
-  }
-
-  Future<void> openAppLink(Uri uri) async {
-    String? token = await Common.getSharedPref("token");
-    String? leadId = await Common.getSharedPref("openAppLeadId");
-    String editLead = await Common.getSharedPref("updateLeadPermission");
-    String deleteLead = await Common.getSharedPref("deleteLeadPermission");
-    String cloudCall = await Common.getSharedPref("cloudCallPermission");
-
-    if (leadId == '0') {
-      if (mounted) {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => Dashboard(token),
-        ));
-      }
-    } else {
-      if (mounted) {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => LeadDetails(
-            token.toString(),
-            editLead.toBoolean(),
-            deleteLead.toBoolean(),
-            cloudCall.toBoolean(),
-            leadId.toString(),
-            fromDate: DateTime.now().toString(),
-            toDate: DateTime.now().toString(),
-            pageName: 'notification',
-          ),
-        ));
-      }
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => dashboardToOpen),
+        (route) => false,
+      );
     }
   }
 
@@ -579,6 +546,27 @@ class _SplashScreenState extends State<SplashScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
+                      if (_debugLink != null)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _debugLink!,
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      const SizedBox(height: 10),
+                      if (_debugLink != null)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _debugLink!,
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -728,12 +716,4 @@ class _SplashScreenState extends State<SplashScreen> {
   //     }
   //   }
   // }
-}
-
-extension on String {
-  bool toBoolean() {
-    return (this.toLowerCase() == "true" || this.toLowerCase() == "1")
-        ? true
-        : false;
-  }
 }

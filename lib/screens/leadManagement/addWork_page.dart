@@ -101,7 +101,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   void calculateTotalExisting() {}
   late String token;
   late String userId;
-    String? addWorkModule;
+  String? addWorkModule;
   List<Staff> staffList = [];
   List<TaskState> allTaskStates = [];
   List<PrioState> allPriorities = [];
@@ -156,11 +156,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
     checkAssignedWorks();
   }
 
-  // void _initAsync() async {
-  //   token = await Common.getSharedPref("token") ?? "";
-  //     userId = await Common.getSharedPref("userId");
-  //   await _loadProjects();
-  // }
   void _initAsync() async {
     token = await Common.getSharedPref("token") ?? "";
     userId = await Common.getSharedPref("userId");
@@ -181,9 +176,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (tasks.isEmpty ||
         !tasks.any((task) => task.controller.text.trim().isNotEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one task to proceed'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please add at least one task to proceed'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return false;
@@ -191,12 +190,47 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
     if (!atLeastOneChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please check at least one task to proceed'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please check at least one task to proceed'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return false;
+    }
+
+    // Check if mandatory descriptions (remarks) are provided for checked/completed tasks
+    // User requested mandatory only for Save Work and Stop Work
+    bool isSaveOrStopWork = widget.existingWork != null &&
+        widget.Restart != 1 &&
+        widget.isPaused != 1;
+
+    if (isSaveOrStopWork) {
+      for (int i = 0; i < tasks.length; i++) {
+        if (tasks[i].isChecked || tasks[i].status == '4') {
+          bool hasRemark = tasks[i]
+              .remarksControllers
+              .any((controller) => controller.text.trim().isNotEmpty);
+          if (!hasRemark) {
+            String label = widget.Restart == 1 ? 'remark' : 'description';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Please provide a $label for task: ${tasks[i].controller.text.isEmpty ? (i + 1) : tasks[i].controller.text}'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.red.shade400,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+            return false;
+          }
+        }
+      }
     }
     return true;
   }
@@ -299,7 +333,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
         selectedProjectId = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load projects: $e')),
+        SnackBar(
+          content: Text('Failed to load projects: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     }
   }
@@ -330,12 +371,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
     }
   }
 
-  // Future<void> _loadStaffs() async {
-  //   final response = await HttpService.getStaffs();
-  //   if (response != null && response.status == true) {
-  //     staffList = response.data;
-  //   }
-  // }
   Future<void> _loadStaffs() async {
     final response = await HttpService.getStaffs();
     if (response != null && response.status == true) {
@@ -452,13 +487,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     });
   }
 
-  void _addRemarkField(int taskIndex) {
+  void _addDescriptionField(int taskIndex) {
     setState(() {
       tasks[taskIndex].remarksControllers.add(TextEditingController());
     });
   }
 
-  void _removeRemarkField(int taskIndex, int remarkIndex) {
+  void _removeDescriptionField(int taskIndex, int remarkIndex) {
     if (tasks[taskIndex].remarksControllers.length > 1) {
       setState(() {
         tasks[taskIndex].remarksControllers.removeAt(remarkIndex);
@@ -471,18 +506,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a project'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
     }
     if (_isGettingLocation) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait, fetching location...'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Please wait, fetching location...'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.orange.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -491,9 +534,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (isLocationEnabled &&
         (currentLatitude == null || currentLongitude == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available yet.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Location not available yet.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -502,9 +549,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
         selectedTitleId!.isEmpty ||
         titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a title'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a title'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -516,11 +567,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
-
       if (widget.workId != "") 'attendance_id': widget.workId,
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
@@ -532,10 +578,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'description': task.controller.text,
           'status': task.status,
           'is_checked': task.isChecked ? 1 : 0,
-          'remarks': task.remarksControllers
+          'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
-              .toList(),
+              .join('\n'),
         };
       }).toList(),
     };
@@ -550,34 +596,38 @@ class _AddWorkPageState extends State<AddWorkPage> {
             content: Text(widget.existingWork != null
                 ? 'Work stopped successfully!'
                 : 'Work started successfully!'),
-            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
         ProjectDashboardPermission == "true"
-            ? Navigator.pushAndRemoveUntil(
+            ? Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  //  builder: (context) => ProjectDashboard(),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               )
-            : Navigator.pushAndRemoveUntil(
+            : Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  //  builder: (context) => Dashboard(token),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response.message ?? 'Operation failed'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -585,7 +635,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -595,9 +649,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a project'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -608,10 +666,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
@@ -622,10 +676,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'description': task.controller.text,
           'status': task.status,
           'is_checked': task.isChecked ? 1 : 0,
-          'remarks': task.remarksControllers
+          'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
-              .toList(),
+              .join('\n'),
         };
       }).toList(),
     };
@@ -633,9 +687,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
       final response = await HttpService.saveWorkData(workData);
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Work saved successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Work saved successfully!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         widget.onSuccess();
@@ -644,7 +702,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response.message ?? 'Failed to save work'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -652,7 +714,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving work: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -662,18 +728,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a project'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
     }
     if (_isGettingLocation) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait, fetching location...'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Please wait, fetching location...'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.orange.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -682,9 +756,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (isLocationEnabled &&
         (currentLatitude == null || currentLongitude == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available yet.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Location not available yet.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -693,9 +771,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
         selectedTitleId!.isEmpty ||
         titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a title'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a title'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -707,10 +789,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
@@ -720,10 +798,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
           'task_id': task.taskId,
           'description': task.controller.text,
           'status': task.status,
-          'remarks': task.remarksControllers
+          'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
-              .toList(),
+              .join('\n'),
         };
       }).toList(),
     };
@@ -736,35 +814,39 @@ class _AddWorkPageState extends State<AddWorkPage> {
             content: Text(widget.existingWork != null
                 ? 'Work stopped successfully!'
                 : 'Work started successfully!'),
-            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
 
         ProjectDashboardPermission == "true"
-            ? Navigator.pushAndRemoveUntil(
+            ? Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  // builder: (context) => ProjectDashboard(),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               )
-            : Navigator.pushAndRemoveUntil(
+            : Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  // builder: (context) => Dashboard(token),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response.message ?? 'Operation failed'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -772,7 +854,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -782,18 +868,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a project'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a project'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
     }
     if (_isGettingLocation) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait, fetching location...'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Please wait, fetching location...'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.orange.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -802,9 +896,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
     if (isLocationEnabled &&
         (currentLatitude == null || currentLongitude == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location not available yet.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Location not available yet.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -813,9 +911,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
         selectedTitleId!.isEmpty ||
         titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a title'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a title'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -827,22 +929,19 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
-      // 'due_date':
-      //     dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
-      // 'priority': priority,
-      // 'assigned_to': assignedTo,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      if (widget.workId != "") 'attendance_id': widget.workId,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
           'task_id': task.taskId,
           'description': task.controller.text,
           'status': task.status,
-          'remarks': task.remarksControllers
+          'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
-              .toList(),
+              .join('\n'),
         };
       }).toList(),
     };
@@ -861,35 +960,39 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     : widget.Restart == 1
                         ? 'Work Restarted successfully!'
                         : 'Work started successfully!'),
-            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
 
         ProjectDashboardPermission == "true"
-            ? Navigator.pushAndRemoveUntil(
+            ? Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  //   builder: (context) => ProjectDashboard(),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               )
-            : Navigator.pushAndRemoveUntil(
+            : Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  //builder: (context) => Dashboard(token),
                   builder: (context) =>
                       ViewWorkPage(staffId: userId, selectedDate: currentDate),
                 ),
-                (route) => false,
               );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response.message ?? 'Operation failed'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -897,7 +1000,11 @@ class _AddWorkPageState extends State<AddWorkPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -906,20 +1013,27 @@ class _AddWorkPageState extends State<AddWorkPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: widget.isPaused != 1 && widget.Restart != 1
-            ? Text(widget.existingWork != null ? 'Stop Work' : 'Start Work')
-            : widget.Restart != 1
-                ? const Text('Pause Work')
-                : assignedWorks != ""
-                    ? const Text('Start Work')
-                    : const Text('Restart Work'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
+        elevation: 0,
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        title: Text(
+          widget.isPaused != 1 && widget.Restart != 1
+              ? (widget.existingWork != null ? 'Stop Work' : 'Start Work')
+              : (widget.Restart != 1
+                  ? 'Pause Work'
+                  : (assignedWorks != "" ? 'Start Work' : 'Restart Work')),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
-        ],
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [
@@ -928,14 +1042,23 @@ class _AddWorkPageState extends State<AddWorkPage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          controller: selectedProjectController,
-                          readOnly: true,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Project Field
+                        InkWell(
                           onTap: () async {
                             final selected =
                                 await dropDialogExisting(context, "Projects");
@@ -948,370 +1071,417 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               await _loadTitle();
                             }
                           },
-                          decoration: const InputDecoration(
-                            labelText: 'Project',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.work_outline),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Project',
+                              labelStyle:
+                                  TextStyle(color: Colors.blue.shade700),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              prefixIcon: Icon(Icons.work_outline,
+                                  color: Colors.blue.shade700, size: 20),
+                              suffixIcon: const Icon(Icons.arrow_drop_down,
+                                  color: Colors.grey),
+                            ),
+                            child: Text(
+                              selectedProjectController.text.isEmpty
+                                  ? 'Select Project'
+                                  : selectedProjectController.text,
+                              style: TextStyle(
+                                color: selectedProjectController.text.isEmpty
+                                    ? Colors.grey.shade600
+                                    : Colors.black87,
+                              ),
+                            ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please select a project';
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      // SizedBox(
-                      //   width: 180,
-                      //   child: TextFormField(
-                      //     controller: titleController,
-                      //     readOnly: true,
-                      //     onTap: () async {
-                      //       final selected =
-                      //           await dropTitleDialog(context, titleList);
-                      //       if (selected != null) {
-                      //         setState(() {
-                      //           selectedTitleId = selected['id'];
-                      //           titleController.text = selected['name']!;
-                      //         });
-                      //       }
-                      //     },
-                      //     decoration: InputDecoration(
-                      //       labelText: 'Module',
-                      //       border: const OutlineInputBorder(),
-                      //       prefixIcon: IconButton(
-                      //         icon: const Icon(Icons.add),
-                      //         onPressed: () async {
-                      //           final newTitle =
-                      //               await showProjectTitleDialog(context);
-                      //           if (newTitle != null) {
-                      //             setState(() {
-                      //               titleList.add(newTitle);
-                      //               selectedTitleId = newTitle.id;
-                      //               titleController.text = newTitle.name;
-                      //             });
-                      //           }
-                      //         },
-                      //       ),
-                      //     ),
-                      //     validator: (value) {
-                      //       if (value == null || value.isEmpty) {
-                      //         return 'Please select a Module';
-                      //       }
-                      //       return null;
-                      //     },
-                      //   ),
-                      // ),
-                      SizedBox(
-                        width: 180,
-                        child: TextFormField(
-                          controller: titleController,
-                          readOnly: true,
-                          onTap: () async {
-                            final selected =
-                                await dropTitleDialog(context, titleList);
-                            if (selected != null) {
-                              setState(() {
-                                selectedTitleId = selected['id'];
-                                titleController.text = selected['name']!;
-                              });
-                            }
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Module',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: addWorkModule.toString() == "true"
-                                ? IconButton(
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () async {
-                                      final newTitle =
-                                          await showProjectTitleDialog(context);
-                                      if (newTitle != null) {
-                                        setState(() {
-                                          titleList.add(newTitle);
-                                          selectedTitleId = newTitle.id;
-                                          titleController.text = newTitle.name;
-                                        });
-                                      }
-                                    },
-                                  )
-                                : null,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please select a Module';
-                            }
-                            return null;
-                          },
+                        const SizedBox(height: 12),
+
+                        // Module Field
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final selected =
+                                      await dropTitleDialog(context, titleList);
+                                  if (selected != null) {
+                                    setState(() {
+                                      selectedTitleId = selected['id'];
+                                      titleController.text = selected['name']!;
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Module',
+                                    labelStyle:
+                                        TextStyle(color: Colors.blue.shade700),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey.shade50,
+                                    prefixIcon: Icon(Icons.category_outlined,
+                                        color: Colors.blue.shade700, size: 20),
+                                    suffixIcon: const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.grey),
+                                  ),
+                                  child: Text(
+                                    titleController.text.isEmpty
+                                        ? 'Select Module'
+                                        : titleController.text,
+                                    style: TextStyle(
+                                      color: titleController.text.isEmpty
+                                          ? Colors.grey.shade600
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (addWorkModule.toString() == "true")
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(Icons.add,
+                                      color: Colors.blue.shade700),
+                                  onPressed: () async {
+                                    final newTitle =
+                                        await showProjectTitleDialog(context);
+                                    if (newTitle != null) {
+                                      setState(() {
+                                        titleList.add(newTitle);
+                                        selectedTitleId = newTitle.id;
+                                        titleController.text = newTitle.name;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                          ],
                         ),
-                      )
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   ...List.generate(tasks.length, (taskIndex) {
                     final now = DateTime.now();
                     final formattedTime = DateFormat('hh:mm a').format(now);
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: tasks[taskIndex].isChecked ||
-                                tasks[taskIndex].status == '4'
-                            ? Colors.lightBlue.shade50
-                            : Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              // Checkbox(
-                              //   value: tasks[taskIndex].status == '4'
-                              //       ? true
-                              //       : tasks[taskIndex].isChecked,
-                              //   onChanged: (value) {
-                              //     setState(() {
-                              //       // for (var i = 0; i < tasks.length; i++) {
-                              //       //   if (i != taskIndex) {
-                              //       //     tasks[i].isChecked = false;
-                              //       //     final toDoStatus =
-                              //       //         allTaskStates.firstWhere(
-                              //       //       (status) =>
-                              //       //           status.status
-                              //       //               .toLowerCase()
-                              //       //               .contains('to-do') ||
-                              //       //           status.status
-                              //       //               .toLowerCase()
-                              //       //               .contains('todo'),
-                              //       //       orElse: () => allTaskStates.first,
-                              //       //     );
-                              //       //     tasks[i].status = toDoStatus.id;
-                              //       //   }
-                              //       // }
-
-                              //       tasks[taskIndex].isChecked = value ?? false;
-                              //       if (value == true) {
-                              //         final targetStatus =
-                              //             allTaskStates.firstWhere(
-                              //           (status) =>
-                              //               status.id == '4' ||
-                              //               status.status
-                              //                   .toLowerCase()
-                              //                   .contains('progress'),
-                              //           orElse: () => allTaskStates.first,
-                              //         );
-                              //         tasks[taskIndex].status = targetStatus.id;
-                              //       }
-                              //     });
-                              //   },
-                              // ),
-                              Checkbox(
-                                value: tasks[taskIndex].isChecked,
-                                onChanged: (value) {
-                                  setState(() {
-                                    if (value == true) {
-                                      for (var i = 0; i < tasks.length; i++) {
-                                        if (i != taskIndex) {
-                                          tasks[i].isChecked = false;
-                                          final toDoStatus =
-                                              allTaskStates.firstWhere(
-                                            (status) =>
-                                                status.status
-                                                    .toLowerCase()
-                                                    .contains('to-do') ||
-                                                status.status
-                                                    .toLowerCase()
-                                                    .contains('todo'),
-                                            orElse: () => allTaskStates.first,
-                                          );
-                                          tasks[i].status = toDoStatus.id;
-                                        }
-                                      }
-                                      tasks[taskIndex].isChecked = true;
-                                      final completedStatus =
-                                          allTaskStates.firstWhere(
-                                        (status) => status.id == '4',
-                                        orElse: () => allTaskStates.firstWhere(
-                                          (status) => status.status
-                                              .toLowerCase()
-                                              .contains('complete'),
-                                          orElse: () => allTaskStates.first,
-                                        ),
-                                      );
-                                      tasks[taskIndex].status =
-                                          completedStatus.id;
-                                    } else {
-                                      tasks[taskIndex].isChecked = false;
-                                    }
-                                  });
-                                },
-                              ),
-
-                              Expanded(
-                                flex: 5,
-                                child: TextField(
-                                  controller: tasks[taskIndex].controller,
-                                  minLines: 1,
-                                  maxLines: null,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Task Title',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                flex: 2,
-                                child: DropdownButtonFormField<String>(
-                                  isExpanded: true,
-                                  value: tasks[taskIndex].status?.isNotEmpty ==
-                                          true
-                                      ? tasks[taskIndex].status
-                                      : (allTaskStates.isNotEmpty
-                                          ? allTaskStates.first.id
-                                          : null),
-                                  items: allTaskStates.isNotEmpty
-                                      ? allTaskStates
-                                          .map((status) => DropdownMenuItem(
-                                                value: status.id,
-                                                child: Text(
-                                                  status.status,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                ),
-                                              ))
-                                          .toList()
-                                      : [], // Empty list if no task states
-                                  selectedItemBuilder: (context) {
-                                    return allTaskStates.map((status) {
-                                      return Text(
-                                        status.status,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      );
-                                    }).toList();
-                                  },
-                                  onChanged: (value) => setState(() {
-                                    tasks[taskIndex].status = value;
-                                  }),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Status',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  icon: const SizedBox.shrink(),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                children: [
-                                  if (taskIndex != 0)
-                                    IconButton(
-                                      icon: const Icon(Icons.close,
-                                          color: Colors.red),
-                                      onPressed: () {
-                                        setState(() {
-                                          tasks.removeAt(taskIndex);
-                                        });
-                                      },
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        ' $formattedTime',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
-                          const SizedBox(height: 16),
-                          ...List.generate(
-                              tasks[taskIndex].remarksControllers.length,
-                              (remarkIndex) {
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade200),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        TextField(
-                                          controller: tasks[taskIndex]
-                                              .remarksControllers[remarkIndex],
-                                          minLines: 1,
-                                          maxLines: 3,
-                                          decoration: InputDecoration(
-                                            labelText:
-                                                'Remark ${remarkIndex + 1}',
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: Icon(
-                                      remarkIndex == 0
-                                          ? Icons.add
-                                          : Icons.remove,
-                                      color: remarkIndex == 0
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      if (remarkIndex == 0) {
-                                        _addRemarkField(taskIndex);
-                                      } else {
-                                        _removeRemarkField(
-                                            taskIndex, remarkIndex);
-                                      }
+                        ],
+                        border: tasks[taskIndex].isChecked
+                            ? Border.all(color: Colors.blue.shade200, width: 1)
+                            : null,
+                      ),
+                      child: Container(
+                        decoration: tasks[taskIndex].isChecked
+                            ? BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              )
+                            : null,
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 40,
+                                  child: Checkbox(
+                                    value: tasks[taskIndex].isChecked,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          for (var i = 0;
+                                              i < tasks.length;
+                                              i++) {
+                                            if (i != taskIndex) {
+                                              tasks[i].isChecked = false;
+                                              final toDoStatus =
+                                                  allTaskStates.firstWhere(
+                                                (status) =>
+                                                    status.status
+                                                        .toLowerCase()
+                                                        .contains('to-do') ||
+                                                    status.status
+                                                        .toLowerCase()
+                                                        .contains('todo'),
+                                                orElse: () =>
+                                                    allTaskStates.first,
+                                              );
+                                              tasks[i].status = toDoStatus.id;
+                                            }
+                                          }
+                                          tasks[taskIndex].isChecked = true;
+                                          final completedStatus =
+                                              allTaskStates.firstWhere(
+                                            (status) => status.id == '4',
+                                            orElse: () =>
+                                                allTaskStates.firstWhere(
+                                              (status) => status.status
+                                                  .toLowerCase()
+                                                  .contains('complete'),
+                                              orElse: () => allTaskStates.first,
+                                            ),
+                                          );
+                                          tasks[taskIndex].status =
+                                              completedStatus.id;
+                                        } else {
+                                          tasks[taskIndex].isChecked = false;
+                                        }
+                                      });
                                     },
                                   ),
-                                ],
-                              ),
-                            );
-                          }),
-                          if (taskIndex == 0)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                icon: const Icon(Icons.add_circle_outline,
-                                    color: Colors.green),
-                                label: const Text(
-                                  "Add Task",
-                                  style: TextStyle(color: Colors.green),
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    tasks.add(TaskForm(
-                                      controller: TextEditingController(),
-                                      status: allTaskStates.isNotEmpty
-                                          ? allTaskStates.first.id
-                                          : '',
-                                      taskId: null,
-                                      remarks: [TextEditingController()],
-                                    ));
-                                  });
-                                },
-                              ),
+
+                                const SizedBox(width: 8),
+
+                                Expanded(
+                                  flex: 2,
+                                  child: TextField(
+                                    controller: tasks[taskIndex].controller,
+                                    minLines: 1,
+                                    maxLines: 2,
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter task title',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade50,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                // Status Dropdown
+                                Container(
+                                  width: 110,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.grey.shade50,
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value:
+                                        tasks[taskIndex].status?.isNotEmpty ==
+                                                true
+                                            ? tasks[taskIndex].status
+                                            : (allTaskStates.isNotEmpty
+                                                ? allTaskStates.first.id
+                                                : null),
+                                    items: allTaskStates
+                                        .map((status) => DropdownMenuItem(
+                                              value: status.id,
+                                              child: Text(
+                                                status.status,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontSize: 12),
+                                              ),
+                                            ))
+                                        .toList(),
+                                    onChanged: (value) => setState(() {
+                                      tasks[taskIndex].status = value;
+                                    }),
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                    ),
+                                    icon: const Icon(Icons.arrow_drop_down,
+                                        size: 20),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                // Time and Delete
+                                Column(
+                                  children: [
+                                    if (taskIndex != 0)
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(Icons.close,
+                                              color: Colors.red, size: 16),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 30, maxHeight: 30),
+                                          onPressed: () {
+                                            setState(() {
+                                              tasks.removeAt(taskIndex);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        formattedTime,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                        ],
+
+                            const SizedBox(height: 12),
+
+                            ...List.generate(
+                                tasks[taskIndex].remarksControllers.length,
+                                (remarkIndex) {
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 6),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: tasks[taskIndex]
+                                            .remarksControllers[remarkIndex],
+                                        minLines: 1,
+                                        maxLines: 2,
+                                        decoration: InputDecoration(
+                                          hintText:
+                                              '${widget.Restart == 1 ? "Remark" : "Description"} ${remarkIndex + 1}',
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: remarkIndex == 0
+                                            ? Colors.green.shade50
+                                            : Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          remarkIndex == 0
+                                              ? Icons.add
+                                              : Icons.remove,
+                                          color: remarkIndex == 0
+                                              ? Colors.green.shade700
+                                              : Colors.red.shade700,
+                                          size: 18,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(
+                                            maxWidth: 32, maxHeight: 32),
+                                        onPressed: () {
+                                          if (remarkIndex == 0) {
+                                            _addDescriptionField(taskIndex);
+                                          } else {
+                                            _removeDescriptionField(
+                                                taskIndex, remarkIndex);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+
+                            // Add Task Button (only for last task)
+                            if (taskIndex == tasks.length - 1)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  icon: const Icon(Icons.add_circle_outline,
+                                      size: 18),
+                                  label: const Text(
+                                    "Add Task",
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.green.shade700,
+                                    backgroundColor: Colors.green.shade50,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      tasks.add(TaskForm(
+                                        controller: TextEditingController(),
+                                        status: allTaskStates.isNotEmpty
+                                            ? allTaskStates.first.id
+                                            : '',
+                                        taskId: null,
+                                        remarks: [TextEditingController()],
+                                      ));
+                                    });
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     );
                   }),
@@ -1319,127 +1489,171 @@ class _AddWorkPageState extends State<AddWorkPage> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: InkWell(
-              onTap: _isGettingLocation
-                  ? null
-                  : () async {
-                      setState(() {
-                        isLocationEnabled = !isLocationEnabled;
-                        _isGettingLocation = true;
-                      });
 
-                      if (isLocationEnabled) {
-                        await _getCurrentLocation();
-                      } else {
-                        currentLatitude = null;
-                        currentLongitude = null;
-                      }
-
-                      setState(() {
-                        _isGettingLocation = false;
-                      });
-                    },
-              borderRadius: BorderRadius.circular(4),
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: isLocationEnabled,
-                    onChanged: _isGettingLocation
-                        ? null
-                        : (value) async {
-                            setState(() {
-                              isLocationEnabled = value ?? false;
-                              _isGettingLocation = true;
-                            });
-
-                            if (isLocationEnabled) {
-                              await _getCurrentLocation();
-                            } else {
-                              currentLatitude = null;
-                              currentLongitude = null;
-                            }
-
-                            setState(() {
-                              _isGettingLocation = false;
-                            });
-                          },
-                  ),
-                  const Text(
-                    'Update Location',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  if (_isGettingLocation) ...[
-                    const SizedBox(width: 8),
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ],
-                ],
+          // Bottom Action Bar
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, -3),
+                ),
+              ],
             ),
-          ),
-          widget.existingWork != null &&
-                  widget.isPaused != 1 &&
-                  widget.Restart != 1
-              ? Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.existingWork != null
-                          ? Colors.green
-                          : Colors.green,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    onPressed: _savework,
-                    child: Text(
-                      widget.existingWork != null ? 'SAVE WORK' : '',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                )
-              : const SizedBox(),
-          Padding(
             padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    widget.existingWork != null && widget.Restart != 1
-                        ? Colors.red
-                        : Colors.green,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              onPressed: widget.isPaused == 1 && widget.Restart != 1
-                  ? _pauseWork
-                  : widget.Restart == 1
-                      ? _restartWork
-                      : _submitWork,
-              child: widget.isPaused == 1
-                  ? const Text(
-                      "Pause Work",
-                      style: TextStyle(fontSize: 16),
-                    )
-                  : widget.Restart == 1
-                      ? const Text(
-                          "Restart Work",
+            child: Column(
+              children: [
+                // Location Toggle
+                InkWell(
+                  onTap: _isGettingLocation
+                      ? null
+                      : () async {
+                          setState(() {
+                            isLocationEnabled = !isLocationEnabled;
+                            _isGettingLocation = true;
+                          });
+
+                          if (isLocationEnabled) {
+                            await _getCurrentLocation();
+                          } else {
+                            currentLatitude = null;
+                            currentLongitude = null;
+                          }
+
+                          setState(() {
+                            _isGettingLocation = false;
+                          });
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: isLocationEnabled,
+                          activeColor: Colors.blue.shade700,
+                          onChanged: _isGettingLocation
+                              ? null
+                              : (value) async {
+                                  setState(() {
+                                    isLocationEnabled = value ?? false;
+                                    _isGettingLocation = true;
+                                  });
+
+                                  if (isLocationEnabled) {
+                                    await _getCurrentLocation();
+                                  } else {
+                                    currentLatitude = null;
+                                    currentLongitude = null;
+                                  }
+
+                                  setState(() {
+                                    _isGettingLocation = false;
+                                  });
+                                },
+                        ),
+                        Text(
+                          'Update Location',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          widget.existingWork != null
-                              ? 'STOP WORK'
-                              : 'START WORK',
-                          style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
+                            color: Colors.grey.shade800,
                           ),
                         ),
+                        if (_isGettingLocation) ...[
+                          const SizedBox(width: 8),
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Save Work Button (if applicable)
+                if (widget.existingWork != null &&
+                    widget.isPaused != 1 &&
+                    widget.Restart != 1)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade600,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 45),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        onPressed: _savework,
+                        child: const Text(
+                          'SAVE WORK',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Primary Action Button
+                if (!(widget.existingWork != null &&
+                    widget.isPaused != 1 &&
+                    widget.Restart != 1 &&
+                    !tasks.any((task) => task.status == '4')))
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.isPaused == 1
+                            ? Colors.orange.shade600
+                            : (widget.Restart == 1
+                                ? Colors.green.shade600
+                                : (widget.existingWork != null
+                                    ? Colors.red.shade600
+                                    : Colors.green.shade600)),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      onPressed: widget.isPaused == 1 && widget.Restart != 1
+                          ? _pauseWork
+                          : (widget.Restart == 1
+                              ? _restartWork
+                              : (widget.existingWork != null
+                                  ? _savework
+                                  : _submitWork)),
+                      child: Text(
+                        widget.isPaused == 1
+                            ? "PAUSE WORK"
+                            : (widget.Restart == 1
+                                ? "RESTART WORK"
+                                : (widget.existingWork != null
+                                    ? 'STOP WORK'
+                                    : 'START WORK')),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -1447,161 +1661,99 @@ class _AddWorkPageState extends State<AddWorkPage> {
     );
   }
 
+  // Dialog Methods
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
     return showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              scrollable: true,
-              title: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          search.clear();
-                          Navigator.pop(context);
-                        },
-                        child: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: TextField(
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Select $title',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            search.clear();
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: search,
-                      autocorrect: false,
-                      keyboardType: TextInputType.text,
-                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
                       onChanged: (value) {
                         setState(() {
                           if (title == "Projects") {
                             filterProjectsDialog(value);
-                          } else if (title == "Customers") {
-                            filterCustomers(value);
-                          } else if (title == "Template") {
-                            filterTemplates(value);
-                          } else {
-                            filterProducts(value);
                           }
                         });
                       },
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.only(left: 8),
-                        labelStyle: TextStyle(color: Colors.grey),
-                        labelText: 'Search...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                        ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount:
+                            title == "Projects" ? filteredProjects.length : 0,
+                        itemBuilder: (context, index) {
+                          final project = filteredProjects[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            leading: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.blue.shade100,
+                              child: Text(
+                                project.name.substring(0, 1).toUpperCase(),
+                                style: TextStyle(
+                                  color: Colors.blue.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              project.name,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context, {
+                                'id': project.id,
+                                'name': project.name,
+                              });
+                              search.clear();
+                            },
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: ListView.builder(
-                  itemCount: title == "Projects"
-                      ? filteredProjects.length
-                      : title == "Customers"
-                          ? filteredNames.length
-                          : title == "Template"
-                              ? filteredTemplates.length
-                              : filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final project =
-                        title == "Projects" ? filteredProjects[index] : null;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: const Color(0xFFFCFBFA),
-                        ),
-                        child: ListTile(
-                          onTap: () {
-                            if (title == "Projects") {
-                              final project = filteredProjects[index];
-                              selectedProjectId = project.id;
-                              selectedProjectName = project.name;
-                              selectedProjectController.text = project.name;
-                            } else if (title == "Customers") {
-                              customerIdExisting = filteredNames[index].id;
-                              customerNameExisting.text =
-                                  filteredNames[index].name;
-                            } else if (title == "Template") {
-                              templateIdExisting = filteredTemplates[index].id;
-                              remindMeExisting.text =
-                                  filteredTemplates[index].templateName;
-                            } else {
-                              final p = filteredProducts[index];
-                              productIdExisting = p.id;
-                              productNameExisting.text = p.productName;
-                              prodRateExisting.text = p.sellingPrice;
-                              prodTaxExisting.text = p.taxPercent;
-                              typeDuration = p.noOfDays;
-                              calculateTotalExisting();
-                            }
-                            Navigator.pop(context, {
-                              'id': project!.id,
-                              'name': project.name,
-                            });
-                            setState(() {});
-                            search.clear();
-                            return;
-                          },
-                          title: Text(
-                            title == "Projects"
-                                ? filteredProjects[index].name
-                                : title == "Customers"
-                                    ? filteredNames[index].name
-                                    : title == "Template"
-                                        ? filteredTemplates[index].templateName
-                                        : filteredProducts[index].productName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.black,
-                            ),
-                          ),
-                          leading: CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: (title == "Projects" &&
-                                        filteredProjects.isEmpty) ||
-                                    (title == "Customers" &&
-                                        filteredNames.isEmpty) ||
-                                    (title == "Template" &&
-                                        filteredTemplates.isEmpty) ||
-                                    (title == "Products" &&
-                                        filteredProducts.isEmpty)
-                                ? const Center(child: Text('No items found'))
-                                : ListView.builder(
-                                    itemCount: title == "Projects"
-                                        ? filteredProjects.length
-                                        : title == "Customers"
-                                            ? filteredNames.length
-                                            : title == "Template"
-                                                ? filteredTemplates.length
-                                                : filteredProducts.length,
-                                    itemBuilder: (context, index) {
-                                      return null;
-                                    },
-                                  ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  ],
                 ),
               ),
             );
@@ -1614,7 +1766,6 @@ class _AddWorkPageState extends State<AddWorkPage> {
   Future<Map<String, String>?> dropTitleDialog(
       BuildContext context, List<TitleListDet> titleList) async {
     TextEditingController searchController = TextEditingController();
-    final FocusNode searchFocusNode = FocusNode();
     List<TitleListDet> filteredTitles = List.from(titleList);
 
     return showDialog<Map<String, String>>(
@@ -1622,62 +1773,89 @@ class _AddWorkPageState extends State<AddWorkPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!searchFocusNode.hasFocus) {
-                FocusScope.of(context).requestFocus(searchFocusNode);
-              }
-            });
-
-            return AlertDialog(
-              scrollable: true,
-              title: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    focusNode: searchFocusNode,
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Search Modules...',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        filteredTitles = titleList
-                            .where((t) => t.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                  ),
-                ],
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              content: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: ListView.builder(
-                  itemCount: filteredTitles.length,
-                  itemBuilder: (context, index) {
-                    final title = filteredTitles[index];
-                    return ListTile(
-                      title: Text(title.name),
-                      onTap: () {
-                        Navigator.pop(context, {
-                          'id': title.id,
-                          'name': title.name,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Module',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search Modules...',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTitles = titleList
+                              .where((t) => t.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
                         });
                       },
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredTitles.length,
+                        itemBuilder: (context, index) {
+                          final title = filteredTitles[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            leading: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.blue.shade100,
+                              child: Text(
+                                title.name.substring(0, 1).toUpperCase(),
+                                style: TextStyle(
+                                  color: Colors.blue.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              title.name,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context, {
+                                'id': title.id,
+                                'name': title.name,
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -1691,198 +1869,112 @@ class _AddWorkPageState extends State<AddWorkPage> {
     TextEditingController titleController = TextEditingController();
     TextEditingController projectController = TextEditingController();
     projectController.text = selectedProjectName ?? '';
+
     return showDialog<TitleListDet>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Add Module'),
-              content: SingleChildScrollView(
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    GestureDetector(
+                    const Text(
+                      'Add New Module',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
                       onTap: () async {
                         await dropDialogExisting(context, "Projects");
                         setState(() {
                           projectController.text = selectedProjectName ?? '';
                         });
                       },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: projectController,
-                          decoration: const InputDecoration(
-                            labelText: 'Select Project',
-                            border: OutlineInputBorder(),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Project',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
+                          suffixIcon: const Icon(Icons.arrow_drop_down),
+                        ),
+                        child: Text(
+                          projectController.text.isEmpty
+                              ? 'Select Project'
+                              : projectController.text,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Module',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (selectedProjectId == null ||
-                        titleController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text('Please select a project and enter a title'),
+                      decoration: InputDecoration(
+                        labelText: 'Module Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      );
-                      return;
-                    }
-
-                    final newTitle = await HttpService.submitTitle(
-                      context: context,
-                      projectId: selectedProjectId!,
-                      title: titleController.text.trim(),
-                    );
-
-                    if (newTitle != null) {
-                      Navigator.pop(context, newTitle);
-                    }
-                  },
-                  child: const Text('Submit'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Add this method to your _AddWorkPageState class
-  // Future<Map<String, String>?> _showStaffSearchDialog(
-  //     BuildContext context) async {
-  //   TextEditingController searchController = TextEditingController();
-  //   List<Staff> filteredStaff = List.from(staffList);
-
-  //   return showDialog<Map<String, String>>(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return AlertDialog(
-  //             title: const Text('Select Staff'),
-  //             content: SizedBox(
-  //               width: double.maxFinite,
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   TextField(
-  //                     controller: searchController,
-  //                     decoration: const InputDecoration(
-  //                       labelText: 'Search Staff',
-  //                       prefixIcon: Icon(Icons.search),
-  //                     ),
-  //                     onChanged: (value) {
-  //                       setState(() {
-  //                         filteredStaff = staffList
-  //                             .where((staff) => staff.name
-  //                                 .toLowerCase()
-  //                                 .contains(value.toLowerCase()))
-  //                             .toList();
-  //                       });
-  //                     },
-  //                   ),
-  //                   const SizedBox(height: 16),
-  //                   Expanded(
-  //                     child: ListView.builder(
-  //                       shrinkWrap: true,
-  //                       itemCount: filteredStaff.length,
-  //                       itemBuilder: (context, index) {
-  //                         final staff = filteredStaff[index];
-  //                         return ListTile(
-  //                           title: Text(staff.name),
-  //                           onTap: () {
-  //                             Navigator.pop(context, {
-  //                               'id': staff.id,
-  //                               'name': staff.name,
-  //                             });
-  //                           },
-  //                         );
-  //                       },
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-  Future<Map<String, String>?> _showStaffSearchDialog(
-      BuildContext context) async {
-    TextEditingController searchController = TextEditingController();
-    List<Staff> filteredStaff = List.from(staffList);
-
-    return showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Select Staff'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        labelText: 'Search Staff',
-                        prefixIcon: Icon(Icons.search),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          filteredStaff = staffList
-                              .where((staff) => staff.name
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
                     ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: filteredStaff.length,
-                        itemBuilder: (context, index) {
-                          final staff = filteredStaff[index];
-                          return ListTile(
-                            title: Text(staff.name),
-                            onTap: () {
-                              Navigator.pop(context, {
-                                'id': staff
-                                    .userIdStaff, // Use userIdStaff instead of id
-                                'name': staff.name,
-                              });
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (selectedProjectId == null ||
+                                  titleController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                        'Please select a project and enter module name'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.red.shade400,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final newTitle = await HttpService.submitTitle(
+                                context: context,
+                                projectId: selectedProjectId!,
+                                title: titleController.text.trim(),
+                              );
+
+                              if (newTitle != null) {
+                                Navigator.pop(context, newTitle);
+                              }
                             },
-                          );
-                        },
-                      ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Submit'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -190,371 +190,964 @@ class _WorkListPageState extends State<WorkListPage>
   }
 
   Future<void> _confirmAction(
-  String title,
-  WorkOrder work,
-  String action,
-) async {
-  final String? workId = work.workOrderId;
-  if (workId == null) return;
+    String title,
+    WorkOrder work,
+    String action,
+  ) async {
+    final String? workId = work.workOrderId;
+    if (workId == null) return;
 
-  String? selectedProduct;
-  String? selectedStatus = "New";
-  String? selectedMilestone;
-  String? selectedCustomerId;
-  final List<String> statusOptions = [
-    "New",
-    "In Progress",
-    "Completed",
-    "On Hold",
-    "Cancelled",
-  ];
+    String? selectedProduct;
+    String? selectedStatus = "New";
+    String? selectedMilestone;
+    String? selectedCustomerId;
+    final List<String> statusOptions = [
+      "New",
+      "In Progress",
+      "Completed",
+      "On Hold",
+      "Cancelled",
+    ];
 
-  List<WorkType> workTypes = [];
-  List<MaterialData> materialsList = [];
-  
-  // Initialize selectedMaterials with existing add_products if available
-  List<Map<String, dynamic>> selectedMaterials = work.addProducts?.map((product) {
-    return {
-      "material_id": product.productName, // Using productName as ID
-      "material_name": product.productName ?? "",
-      "unit_price": product.rate ?? "0",
-      "quantity": product.quantity ?? "1",
-      "total_price": product.amount ?? "0",
-      "stock": "999", // Set high stock for existing materials to allow editing
-      "is_existing": true,
-    };
-  }).toList() ?? [];
+    List<WorkType> workTypes = [];
+    List<MaterialData> materialsList = [];
 
-  bool isLoadingWorkTypes = true;
-  bool isLoadingMaterials = true;
+    // Initialize selectedMaterials with existing add_products if available
+    List<Map<String, dynamic>> selectedMaterials =
+        work.addProducts?.map((product) {
+              return {
+                "material_id": product.productName, // Using productName as ID
+                "material_name": product.productName ?? "",
+                "unit_price": product.rate ?? "0",
+                "quantity": product.quantity ?? "1",
+                "total_price": product.amount ?? "0",
+                "stock":
+                    "999", // Set high stock for existing materials to allow editing
+                "is_existing": true,
+              };
+            }).toList() ??
+            [];
 
-  final latestHistory = work.history?.isNotEmpty == true
-      ? work.history!.last
-      : null;
-  PipelineProgress? firstPendingMilestone;
+    bool isLoadingWorkTypes = true;
+    bool isLoadingMaterials = true;
 
-  if (latestHistory?.pipelineProgress != null &&
-      latestHistory!.pipelineProgress!.isNotEmpty) {
-    try {
-      firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
-        (p) => p.status == 0,
-        orElse: () => PipelineProgress(),
-      );
-    } catch (e) {
-      firstPendingMilestone = null;
-    }
-  }
+    final latestHistory =
+        work.history?.isNotEmpty == true ? work.history!.last : null;
+    PipelineProgress? firstPendingMilestone;
 
-  if (firstPendingMilestone != null &&
-      (firstPendingMilestone.name?.isNotEmpty ?? false)) {
-    selectedMilestone = firstPendingMilestone.name!;
-  }
-  selectedCustomerId = work.custId ?? work.custId;
-
-  final TextEditingController remarkController = TextEditingController();
-
-  Future<void> _loadWorkTypes() async {
-    try {
-      final httpService = HttpService();
-      final workTypeModel = await httpService.getWorkType();
-      if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
-        workTypes = workTypeModel.data;
+    if (latestHistory?.pipelineProgress != null &&
+        latestHistory!.pipelineProgress!.isNotEmpty) {
+      try {
+        firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
+          (p) => p.status == 0,
+          orElse: () => PipelineProgress(),
+        );
+      } catch (e) {
+        firstPendingMilestone = null;
       }
-    } catch (e) {
-      log("❌ Error loading work types: $e");
-    } finally {
-      isLoadingWorkTypes = false;
     }
-  }
 
-  Future<void> _loadMaterials() async {
-    try {
-      final httpService = HttpService();
-      final materialModel = await httpService.getMaterials();
-      if (materialModel != null && materialModel.status == true) {
-        materialsList = materialModel.data ?? [];
+    if (firstPendingMilestone != null &&
+        (firstPendingMilestone.name?.isNotEmpty ?? false)) {
+      selectedMilestone = firstPendingMilestone.name!;
+    }
+    selectedCustomerId = work.custId ?? work.custId;
+
+    final TextEditingController remarkController = TextEditingController();
+
+    Future<void> _loadWorkTypes() async {
+      try {
+        final httpService = HttpService();
+        final workTypeModel = await httpService.getWorkType();
+        if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
+          workTypes = workTypeModel.data;
+        }
+      } catch (e) {
+        log("❌ Error loading work types: $e");
+      } finally {
+        isLoadingWorkTypes = false;
       }
-    } catch (e) {
-      log("❌ Error loading materials: $e");
-    } finally {
-      isLoadingMaterials = false;
     }
-  }
 
-  await Future.wait([_loadWorkTypes(), _loadMaterials()]);
-  if (workTypes.isNotEmpty) {
-    selectedProduct = workTypes.first.id;
-  }
-  
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          void addMaterial(MaterialData material) {
-            if (!selectedMaterials.any(
-              (m) => m["material_id"] == material.materialId,
-            )) {
-              selectedMaterials.add({
-                "material_id": material.materialId,
-                "material_name": material.materialName,
-                "unit_price": material.unitPrice ?? "0",
-                "quantity": "1",
-                "total_price": material.unitPrice ?? "0",
-                "stock": material.currentStock ?? "0",
-                "is_existing": false,
-              });
-            }
-            setState(() {});
-          }
+    Future<void> _loadMaterials() async {
+      try {
+        final httpService = HttpService();
+        final materialModel = await httpService.getMaterials();
+        if (materialModel != null && materialModel.status == true) {
+          materialsList = materialModel.data ?? [];
+        }
+      } catch (e) {
+        log("❌ Error loading materials: $e");
+      } finally {
+        isLoadingMaterials = false;
+      }
+    }
 
-          void updateQuantity(int index, bool increase) {
-            final stock =
-                int.tryParse(selectedMaterials[index]["stock"].toString()) ??
-                0;
-            int quantity =
-                int.tryParse(
-                  selectedMaterials[index]["quantity"].toString(),
-                ) ??
-                0;
-            final double unitPrice =
-                double.tryParse(
-                  selectedMaterials[index]["unit_price"].toString(),
-                ) ??
-                0.0;
+    await Future.wait([_loadWorkTypes(), _loadMaterials()]);
+    if (workTypes.isNotEmpty) {
+      selectedProduct = workTypes.first.id;
+    }
 
-            if (increase) {
-              if (quantity >= stock && !selectedMaterials[index]["is_existing"]) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Cannot exceed available stock ($stock)."),
-                  ),
-                );
-                return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void addMaterial(MaterialData material) {
+              if (!selectedMaterials.any(
+                (m) => m["material_id"] == material.materialId,
+              )) {
+                selectedMaterials.add({
+                  "material_id": material.materialId,
+                  "material_name": material.materialName,
+                  "unit_price": material.unitPrice ?? "0",
+                  "quantity": "1",
+                  "total_price": material.unitPrice ?? "0",
+                  "stock": material.currentStock ?? "0",
+                  "is_existing": false,
+                });
               }
-              quantity++;
-            } else {
-              if (quantity > 1) quantity--;
+              setState(() {});
             }
-            selectedMaterials[index]["quantity"] = quantity.toString();
-            selectedMaterials[index]["total_price"] = (unitPrice * quantity)
-                .toStringAsFixed(2);
-            setState(() {});
-          }
 
-          return AlertDialog(
-            title: Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3A2F87),
+            void updateQuantity(int index, bool increase) {
+              final stock =
+                  int.tryParse(selectedMaterials[index]["stock"].toString()) ??
+                      0;
+              int quantity = int.tryParse(
+                    selectedMaterials[index]["quantity"].toString(),
+                  ) ??
+                  0;
+              final double unitPrice = double.tryParse(
+                    selectedMaterials[index]["unit_price"].toString(),
+                  ) ??
+                  0.0;
+
+              if (increase) {
+                if (quantity >= stock &&
+                    !selectedMaterials[index]["is_existing"]) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Cannot exceed available stock ($stock)."),
+                    ),
+                  );
+                  return;
+                }
+                quantity++;
+              } else {
+                if (quantity > 1) quantity--;
+              }
+              selectedMaterials[index]["quantity"] = quantity.toString();
+              selectedMaterials[index]["total_price"] =
+                  (unitPrice * quantity).toStringAsFixed(2);
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3A2F87),
+                ),
               ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Are you sure you want to proceed?"),
-                  const SizedBox(height: 16),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Are you sure you want to proceed?"),
+                    const SizedBox(height: 16),
 
-                  if (isLoadingWorkTypes)
-                    const Center(child: CircularProgressIndicator())
-                  else if (selectedProduct != null && workTypes.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Product",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                    if (isLoadingWorkTypes)
+                      const Center(child: CircularProgressIndicator())
+                    else if (selectedProduct != null && workTypes.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Product",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              "${workTypes.first.productName} (${workTypes.first.productType})",
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           ),
-                          child: Text(
-                            "${workTypes.first.productName} (${workTypes.first.productType})",
-                            style: const TextStyle(fontSize: 14),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    if (selectedMilestone != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Milestone",
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 12),
-                  if (selectedMilestone != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Milestone",
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              selectedMilestone!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           ),
-                          child: Text(
-                            selectedMilestone!,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 16),
-                  
-                  // Show existing materials info if available
-                  if (work.addProducts?.isNotEmpty == true)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Existing Materials",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "${work.addProducts!.length} material(s) already added - You can edit or remove them",
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                        ],
+                      ),
+                    const SizedBox(height: 16),
 
-                  const Text(
-                    "Select Materials",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<MaterialData>(
-                    hint: const Text("Add a Material"),
-                    items: materialsList.map((mat) {
-                      final stock =
-                          int.tryParse(mat.currentStock ?? "0") ?? 0;
-                      return DropdownMenuItem(
-                        enabled: stock > 0,
-                        value: stock > 0 ? mat : null,
-                        child: Text(
-                          "${mat.materialName} (Stock: $stock)",
-                          style: TextStyle(
-                            color: stock > 0 ? Colors.black : Colors.grey,
+                    // Show existing materials info if available
+                    if (work.addProducts?.isNotEmpty == true)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Existing Materials",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.green,
+                            ),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "${work.addProducts!.length} material(s) already added - You can edit or remove them",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+
+                    const Text(
+                      "Select Materials",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<MaterialData>(
+                      hint: const Text("Add a Material"),
+                      items: materialsList.map((mat) {
+                        final stock =
+                            int.tryParse(mat.currentStock ?? "0") ?? 0;
+                        return DropdownMenuItem(
+                          enabled: stock > 0,
+                          value: stock > 0 ? mat : null,
+                          child: Text(
+                            "${mat.materialName} (Stock: $stock)",
+                            style: TextStyle(
+                              color: stock > 0 ? Colors.black : Colors.grey,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (mat) {
+                        if (mat != null) addMaterial(mat);
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (mat) {
-                      if (mat != null) addMaterial(mat);
-                    },
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  
-                  if (selectedMaterials.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...selectedMaterials
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) {
-                                final index = entry.key;
-                                final mat = entry.value;
-                                final isExisting = mat["is_existing"] == true;
-                                
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 6,
+                    const SizedBox(height: 10),
+
+                    if (selectedMaterials.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...selectedMaterials.asMap().entries.map(
+                            (entry) {
+                              final index = entry.key;
+                              final mat = entry.value;
+                              final isExisting = mat["is_existing"] == true;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isExisting
+                                          ? Colors.green.shade50
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isExisting
+                                            ? Colors.green.shade200
+                                            : Colors.grey.shade300,
                                       ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isExisting 
-                                            ? Colors.green.shade50 
-                                            : Colors.grey.shade50,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: isExisting 
-                                              ? Colors.green.shade200 
-                                              : Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                mat["material_name"] ?? "",
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isExisting 
-                                                      ? Colors.green.shade800 
-                                                      : Colors.black87,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              mat["material_name"] ?? "",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: isExisting
+                                                    ? Colors.green.shade800
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            if (isExisting) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade100,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  "Existing",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.green,
+                                                  ),
                                                 ),
                                               ),
-                                              if (isExisting) ...[
-                                                const SizedBox(width: 6),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.remove_circle_outline,
+                                                    size: 22,
                                                   ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green.shade100,
-                                                    borderRadius: BorderRadius.circular(4),
+                                                  color: Colors.redAccent,
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  onPressed: () =>
+                                                      updateQuantity(
+                                                    index,
+                                                    false,
                                                   ),
-                                                  child: const Text(
-                                                    "Existing",
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.green,
-                                                    ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  mat["quantity"].toString(),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.add_circle_outline,
+                                                    size: 22,
+                                                  ),
+                                                  color: Colors.green,
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  onPressed: () =>
+                                                      updateQuantity(
+                                                    index,
+                                                    true,
                                                   ),
                                                 ),
                                               ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  "₹${mat["total_price"]}",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isExisting
+                                                        ? Colors.green.shade800
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  onPressed: () {
+                                                    selectedMaterials.removeAt(
+                                                      index,
+                                                    );
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Divider(
+                                    color: Colors.grey,
+                                    height: 10,
+                                    thickness: 0.6,
+                                  ),
+                                ],
+                              );
+                            },
+                          ).toList(),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Total Amount",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Text(
+                                  "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Status",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      items: statusOptions.map((status) {
+                        return DropdownMenuItem(
+                          value: status,
+                          child: Text(status),
+                        );
+                      }).toList(),
+                      onChanged: (value) =>
+                          setState(() => selectedStatus = value),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Remarks",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: remarkController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: "Enter remarks...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Cancel"),
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3A2F87),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (selectedProduct == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please fill all required fields."),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text("Confirm"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _performWorkAction(
+        workId,
+        action,
+        selectedStatus!,
+        remarkController.text,
+        selectedMilestone,
+        selectedProduct,
+        selectedMaterials,
+        selectedCustomerId,
+      );
+    }
+  }
+
+  Future<void> _confirmActionStop(
+    String title,
+    WorkOrder work,
+    String action,
+  ) async {
+    final String? workId = work.workOrderId;
+    if (workId == null) return;
+
+    String? selectedProduct;
+    String? selectedStatus = "In Progress";
+    String? selectedMilestone;
+    String? selectedCustomerId;
+    final List<String> statusOptions = [
+      "In Progress",
+      "Completed",
+      "On Hold",
+      "Cancelled",
+    ];
+
+    List<WorkType> workTypes = [];
+    List<MaterialData> materialsList = [];
+
+    // Initialize selectedMaterials with existing add_products if available
+    List<Map<String, dynamic>> selectedMaterials =
+        work.addProducts?.map((product) {
+              return {
+                "material_id": product.productName,
+                "material_name": product.productName ?? "",
+                "unit_price": product.rate ?? "0",
+                "quantity": product.quantity ?? "1",
+                "total_price": product.amount ?? "0",
+                "stock": "0",
+                "is_existing": true,
+              };
+            }).toList() ??
+            [];
+
+    bool isLoadingWorkTypes = true;
+    bool isLoadingMaterials = true;
+
+    final latestHistory =
+        work.history?.isNotEmpty == true ? work.history!.last : null;
+    PipelineProgress? firstPendingMilestone;
+
+    if (latestHistory?.pipelineProgress != null &&
+        latestHistory!.pipelineProgress!.isNotEmpty) {
+      try {
+        firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
+          (p) => p.status == 0,
+          orElse: () => PipelineProgress(),
+        );
+      } catch (e) {
+        firstPendingMilestone = null;
+      }
+    }
+
+    if (firstPendingMilestone != null &&
+        (firstPendingMilestone.name?.isNotEmpty ?? false)) {
+      selectedMilestone = firstPendingMilestone.name!;
+    }
+    selectedCustomerId = work.custId ?? work.custId;
+
+    final TextEditingController remarkController = TextEditingController();
+
+    Future<void> _loadWorkTypes() async {
+      try {
+        final httpService = HttpService();
+        final workTypeModel = await httpService.getWorkType();
+        if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
+          workTypes = workTypeModel.data;
+          selectedProduct = workTypes.first.id;
+        }
+      } catch (e) {
+        log("❌ Error loading work types: $e");
+      } finally {
+        isLoadingWorkTypes = false;
+      }
+    }
+
+    Future<void> _loadMaterials() async {
+      try {
+        final httpService = HttpService();
+        final materialModel = await httpService.getMaterials();
+        if (materialModel != null && materialModel.status == true) {
+          materialsList = materialModel.data ?? [];
+        }
+      } catch (e) {
+        log("❌ Error loading materials: $e");
+      } finally {
+        isLoadingMaterials = false;
+      }
+    }
+
+    await Future.wait([_loadWorkTypes(), _loadMaterials()]);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void addMaterial(MaterialData material) {
+              if (!selectedMaterials.any(
+                (m) => m["material_id"] == material.materialId,
+              )) {
+                selectedMaterials.add({
+                  "material_id": material.materialId,
+                  "material_name": material.materialName,
+                  "unit_price": material.unitPrice ?? "0",
+                  "quantity": "1",
+                  "total_price": material.unitPrice ?? "0",
+                  "stock": material.currentStock ?? "0",
+                  "is_existing": false,
+                });
+              }
+              setState(() {});
+            }
+
+            void updateQuantity(int index, bool increase) {
+              final stock =
+                  int.tryParse(selectedMaterials[index]["stock"].toString()) ??
+                      0;
+              int quantity = int.tryParse(
+                    selectedMaterials[index]["quantity"].toString(),
+                  ) ??
+                  0;
+              final double unitPrice = double.tryParse(
+                    selectedMaterials[index]["unit_price"].toString(),
+                  ) ??
+                  0.0;
+
+              if (increase) {
+                if (quantity >= stock &&
+                    !selectedMaterials[index]["is_existing"]) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Cannot exceed available stock ($stock)."),
+                    ),
+                  );
+                  return;
+                }
+                quantity++;
+              } else {
+                if (quantity > 1) quantity--;
+              }
+              selectedMaterials[index]["quantity"] = quantity.toString();
+              selectedMaterials[index]["total_price"] =
+                  (unitPrice * quantity).toStringAsFixed(2);
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3A2F87),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Are you sure you want to proceed?"),
+                    const SizedBox(height: 16),
+
+                    if (isLoadingWorkTypes)
+                      const Center(child: CircularProgressIndicator())
+                    else if (workTypes.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Product",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              "${workTypes.first.productName} (${workTypes.first.productType})",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      const Text(
+                        "No products available",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    if (selectedMilestone != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Milestone",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              selectedMilestone!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          "No pending milestones",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    // Show existing materials info if available
+                    if (work.addProducts?.isNotEmpty == true)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Existing Materials",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "${work.addProducts!.length} material(s) already added",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+
+                    const Text(
+                      "Select Materials",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    if (isLoadingMaterials)
+                      const Center(child: CircularProgressIndicator())
+                    else if (materialsList.isNotEmpty)
+                      DropdownButtonFormField<MaterialData>(
+                        hint: const Text("Add a Material"),
+                        items: materialsList.map((mat) {
+                          final stock =
+                              int.tryParse(mat.currentStock ?? "0") ?? 0;
+                          return DropdownMenuItem(
+                            enabled: stock > 0,
+                            value: stock > 0 ? mat : null,
+                            child: Text(
+                              "${mat.materialName} (Stock: $stock)",
+                              style: TextStyle(
+                                color: stock > 0 ? Colors.black : Colors.grey,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (mat) {
+                          if (mat != null) addMaterial(mat);
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      )
+                    else
+                      const Text(
+                        "No materials available",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+
+                    const SizedBox(height: 10),
+
+                    if (selectedMaterials.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...selectedMaterials.asMap().entries.map(
+                            (entry) {
+                              final index = entry.key;
+                              final mat = entry.value;
+                              final isExisting = mat["is_existing"] == true;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isExisting
+                                          ? Colors.green.shade50
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isExisting
+                                            ? Colors.green.shade200
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              mat["material_name"] ?? "",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: isExisting
+                                                    ? Colors.green.shade800
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            if (isExisting) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade100,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  "Existing",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.green,
+                                                  ),
+                                                ),
+                                              ),
                                             ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Row(
-                                                children: [
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                if (!isExisting) ...[
                                                   IconButton(
                                                     icon: const Icon(
-                                                      Icons.remove_circle_outline,
+                                                      Icons
+                                                          .remove_circle_outline,
                                                       size: 22,
                                                     ),
                                                     color: Colors.redAccent,
@@ -563,19 +1156,20 @@ class _WorkListPageState extends State<WorkListPage>
                                                         const BoxConstraints(),
                                                     onPressed: () =>
                                                         updateQuantity(
-                                                          index,
-                                                          false,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    mat["quantity"].toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15,
+                                                      index,
+                                                      false,
                                                     ),
                                                   ),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                Text(
+                                                  mat["quantity"].toString(),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                if (!isExisting) ...[
                                                   const SizedBox(width: 4),
                                                   IconButton(
                                                     icon: const Icon(
@@ -588,26 +1182,27 @@ class _WorkListPageState extends State<WorkListPage>
                                                         const BoxConstraints(),
                                                     onPressed: () =>
                                                         updateQuantity(
-                                                          index,
-                                                          true,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    "₹${mat["total_price"]}",
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: isExisting 
-                                                          ? Colors.green.shade800 
-                                                          : Colors.black87,
+                                                      index,
+                                                      true,
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 6),
+                                                ],
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  "₹${mat["total_price"]}",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isExisting
+                                                        ? Colors.green.shade800
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                if (!isExisting)
                                                   IconButton(
                                                     icon: const Icon(
                                                       Icons.delete_outline,
@@ -617,1352 +1212,749 @@ class _WorkListPageState extends State<WorkListPage>
                                                     constraints:
                                                         const BoxConstraints(),
                                                     onPressed: () {
-                                                      selectedMaterials.removeAt(
+                                                      selectedMaterials
+                                                          .removeAt(
                                                         index,
                                                       );
                                                       setState(() {});
                                                     },
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    const Divider(
-                                      color: Colors.grey,
-                                      height: 10,
-                                      thickness: 0.6,
-                                    ),
-                                  ],
-                                );
-                              },
-                            )
-                            .toList(),
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Total Amount",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  ),
+                                  const Divider(
+                                    color: Colors.grey,
+                                    height: 10,
+                                    thickness: 0.6,
+                                  ),
+                                ],
+                              );
+                            },
+                          ).toList(),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Total Amount",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Colors.black87,
+                                Text(
+                                  "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Status",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: selectedStatus,
-                    items: statusOptions.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(status),
-                      );
-                    }).toList(),
-                    onChanged: (value) =>
-                        setState(() => selectedStatus = value),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Remarks",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: remarkController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: "Enter remarks...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3A2F87),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  if (selectedProduct == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please fill all required fields."),
-                      ),
-                    );
-                    return;
-                  }
-                  Navigator.pop(context, true);
-                },
-                child: const Text("Confirm"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-
-  if (confirmed == true) {
-    await _performWorkAction(
-      workId,
-      action,
-      selectedStatus!,
-      remarkController.text,
-      selectedMilestone,
-      selectedProduct,
-      selectedMaterials,
-      selectedCustomerId,
-    );
-  }
-}
-
- Future<void> _confirmActionStop(
-  String title,
-  WorkOrder work,
-  String action,
-) async {
-  final String? workId = work.workOrderId;
-  if (workId == null) return;
-
-  String? selectedProduct;
-  String? selectedStatus = "In Progress";
-  String? selectedMilestone;
-  String? selectedCustomerId;
-  final List<String> statusOptions = [
-    "In Progress",
-    "Completed",
-    "On Hold",
-    "Cancelled",
-  ];
-
-  List<WorkType> workTypes = [];
-  List<MaterialData> materialsList = [];
-  
-  // Initialize selectedMaterials with existing add_products if available
-  List<Map<String, dynamic>> selectedMaterials = work.addProducts?.map((product) {
-    return {
-      "material_id": product.productName,
-      "material_name": product.productName ?? "",
-      "unit_price": product.rate ?? "0",
-      "quantity": product.quantity ?? "1",
-      "total_price": product.amount ?? "0",
-      "stock": "0",
-      "is_existing": true,
-    };
-  }).toList() ?? [];
-
-  bool isLoadingWorkTypes = true;
-  bool isLoadingMaterials = true;
-
-  final latestHistory = work.history?.isNotEmpty == true
-      ? work.history!.last
-      : null;
-  PipelineProgress? firstPendingMilestone;
-
-  if (latestHistory?.pipelineProgress != null &&
-      latestHistory!.pipelineProgress!.isNotEmpty) {
-    try {
-      firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
-        (p) => p.status == 0,
-        orElse: () => PipelineProgress(),
-      );
-    } catch (e) {
-      firstPendingMilestone = null;
-    }
-  }
-
-  if (firstPendingMilestone != null &&
-      (firstPendingMilestone.name?.isNotEmpty ?? false)) {
-    selectedMilestone = firstPendingMilestone.name!;
-  }
-  selectedCustomerId = work.custId ?? work.custId;
-
-  final TextEditingController remarkController = TextEditingController();
-
-  Future<void> _loadWorkTypes() async {
-    try {
-      final httpService = HttpService();
-      final workTypeModel = await httpService.getWorkType();
-      if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
-        workTypes = workTypeModel.data;
-        selectedProduct = workTypes.first.id;
-      }
-    } catch (e) {
-      log("❌ Error loading work types: $e");
-    } finally {
-      isLoadingWorkTypes = false;
-    }
-  }
-
-  Future<void> _loadMaterials() async {
-    try {
-      final httpService = HttpService();
-      final materialModel = await httpService.getMaterials();
-      if (materialModel != null && materialModel.status == true) {
-        materialsList = materialModel.data ?? [];
-      }
-    } catch (e) {
-      log("❌ Error loading materials: $e");
-    } finally {
-      isLoadingMaterials = false;
-    }
-  }
-
-  await Future.wait([_loadWorkTypes(), _loadMaterials()]);
-
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          void addMaterial(MaterialData material) {
-            if (!selectedMaterials.any(
-              (m) => m["material_id"] == material.materialId,
-            )) {
-              selectedMaterials.add({
-                "material_id": material.materialId,
-                "material_name": material.materialName,
-                "unit_price": material.unitPrice ?? "0",
-                "quantity": "1",
-                "total_price": material.unitPrice ?? "0",
-                "stock": material.currentStock ?? "0",
-                "is_existing": false,
-              });
-            }
-            setState(() {});
-          }
-
-          void updateQuantity(int index, bool increase) {
-            final stock =
-                int.tryParse(selectedMaterials[index]["stock"].toString()) ??
-                0;
-            int quantity =
-                int.tryParse(
-                  selectedMaterials[index]["quantity"].toString(),
-                ) ??
-                0;
-            final double unitPrice =
-                double.tryParse(
-                  selectedMaterials[index]["unit_price"].toString(),
-                ) ??
-                0.0;
-
-            if (increase) {
-              if (quantity >= stock && !selectedMaterials[index]["is_existing"]) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Cannot exceed available stock ($stock)."),
-                  ),
-                );
-                return;
-              }
-              quantity++;
-            } else {
-              if (quantity > 1) quantity--;
-            }
-            selectedMaterials[index]["quantity"] = quantity.toString();
-            selectedMaterials[index]["total_price"] = (unitPrice * quantity)
-                .toStringAsFixed(2);
-            setState(() {});
-          }
-
-          return AlertDialog(
-            title: Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3A2F87),
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Are you sure you want to proceed?"),
-                  const SizedBox(height: 16),
-
-                  if (isLoadingWorkTypes)
-                    const Center(child: CircularProgressIndicator())
-                  else if (workTypes.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Product",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Text(
-                            "${workTypes.first.productName} (${workTypes.first.productType})",
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    const Text(
-                      "No products available",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-
-                  const SizedBox(height: 12),
-
-                  if (selectedMilestone != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Milestone",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Text(
-                            selectedMilestone!,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text(
-                        "No pending milestones",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-
-                  const SizedBox(height: 16),
-
-                  // Show existing materials info if available
-                  if (work.addProducts?.isNotEmpty == true)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Existing Materials",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "${work.addProducts!.length} material(s) already added",
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-
-                  const Text(
-                    "Select Materials",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  if (isLoadingMaterials)
-                    const Center(child: CircularProgressIndicator())
-                  else if (materialsList.isNotEmpty)
-                    DropdownButtonFormField<MaterialData>(
-                      hint: const Text("Add a Material"),
-                      items: materialsList.map((mat) {
-                        final stock =
-                            int.tryParse(mat.currentStock ?? "0") ?? 0;
-                        return DropdownMenuItem(
-                          enabled: stock > 0,
-                          value: stock > 0 ? mat : null,
-                          child: Text(
-                            "${mat.materialName} (Stock: $stock)",
-                            style: TextStyle(
-                              color: stock > 0 ? Colors.black : Colors.grey,
+                              ],
                             ),
                           ),
+                        ],
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      "Status",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      hint: const Text("Select Status"),
+                      items: statusOptions.map((status) {
+                        return DropdownMenuItem(
+                          value: status,
+                          child: Text(status),
                         );
                       }).toList(),
-                      onChanged: (mat) {
-                        if (mat != null) addMaterial(mat);
-                      },
+                      onChanged: (value) =>
+                          setState(() => selectedStatus = value),
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    )
-                  else
+                    ),
+
+                    const SizedBox(height: 16),
+
                     const Text(
-                      "No materials available",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-
-                  const SizedBox(height: 10),
-
-                  if (selectedMaterials.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...selectedMaterials
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) {
-                                final index = entry.key;
-                                final mat = entry.value;
-                                final isExisting = mat["is_existing"] == true;
-                                
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 6,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isExisting 
-                                            ? Colors.green.shade50 
-                                            : Colors.grey.shade50,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: isExisting 
-                                              ? Colors.green.shade200 
-                                              : Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                mat["material_name"] ?? "",
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isExisting 
-                                                      ? Colors.green.shade800 
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                              if (isExisting) ...[
-                                                const SizedBox(width: 6),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green.shade100,
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: const Text(
-                                                    "Existing",
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.green,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  if (!isExisting) ...[
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.remove_circle_outline,
-                                                        size: 22,
-                                                      ),
-                                                      color: Colors.redAccent,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () =>
-                                                          updateQuantity(
-                                                            index,
-                                                            false,
-                                                          ),
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                  ],
-                                                  Text(
-                                                    mat["quantity"].toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15,
-                                                    ),
-                                                  ),
-                                                  if (!isExisting) ...[
-                                                    const SizedBox(width: 4),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.add_circle_outline,
-                                                        size: 22,
-                                                      ),
-                                                      color: Colors.green,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () =>
-                                                          updateQuantity(
-                                                            index,
-                                                            true,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    "₹${mat["total_price"]}",
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: isExisting 
-                                                          ? Colors.green.shade800 
-                                                          : Colors.black87,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  if (!isExisting)
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.delete_outline,
-                                                        color: Colors.redAccent,
-                                                      ),
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () {
-                                                        selectedMaterials.removeAt(
-                                                          index,
-                                                        );
-                                                        setState(() {});
-                                                      },
-                                                    ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Divider(
-                                      color: Colors.grey,
-                                      height: 10,
-                                      thickness: 0.6,
-                                    ),
-                                  ],
-                                );
-                              },
-                            )
-                            .toList(),
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Total Amount",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    "Status",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  DropdownButtonFormField<String>(
-                    value: selectedStatus,
-                    hint: const Text("Select Status"),
-                    items: statusOptions.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(status),
-                      );
-                    }).toList(),
-                    onChanged: (value) =>
-                        setState(() => selectedStatus = value),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      "Remarks",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
 
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    "Remarks",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  TextField(
-                    controller: remarkController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: "Enter remarks...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3A2F87),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  if (selectedProduct == null || selectedStatus == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please fill all required fields."),
-                      ),
-                    );
-                    return;
-                  }
-                  Navigator.pop(context, true);
-                },
-                child: const Text("Confirm"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-
-  if (confirmed == true) {
-    await _performWorkActionStop(
-      workId,
-      action,
-      selectedStatus!,
-      remarkController.text,
-      selectedMilestone,
-      selectedProduct,
-      selectedMaterials,
-      selectedCustomerId,
-    );
-  }
-}
-
- Future<void> _confirmActionRestart(
-  String title,
-  WorkOrder work,
-  String action,
-) async {
-  final String? workId = work.workOrderId;
-  if (workId == null) return;
-
-  String? selectedStatus = "On Hold";
-  String? selectedMilestone;
-  String? selectedProduct;
-  
-  // Initialize selectedMaterials with existing add_products if available
-  List<Map<String, dynamic>> selectedMaterials = work.addProducts?.map((product) {
-    return {
-      "material_id": product.productName,
-      "material_name": product.productName ?? "",
-      "unit_price": product.rate ?? "0",
-      "quantity": product.quantity ?? "1",
-      "total_price": product.amount ?? "0",
-      "stock": "0",
-      "is_existing": true,
-    };
-  }).toList() ?? [];
-  
-  String? selectedCustomerId;
-  final List<String> statusOptions = [
-    "New",
-    "In Progress",
-    "Completed",
-    "On Hold",
-    "Cancelled",
-  ];
-
-  List<WorkType> workTypes = [];
-  List<MaterialData> materialsList = [];
-  bool isLoadingWorkTypes = true;
-  bool isLoadingMaterials = true;
-
-  final latestHistory = work.history?.isNotEmpty == true
-      ? work.history!.last
-      : null;
-  PipelineProgress? firstPendingMilestone;
-
-  if (latestHistory?.pipelineProgress != null &&
-      latestHistory!.pipelineProgress!.isNotEmpty) {
-    try {
-      firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
-        (p) => p.status == 0,
-        orElse: () => PipelineProgress(),
-      );
-    } catch (e) {
-      firstPendingMilestone = null;
-    }
-  }
-
-  if (firstPendingMilestone != null &&
-      (firstPendingMilestone.name?.isNotEmpty ?? false)) {
-    selectedMilestone = firstPendingMilestone.name!;
-  }
-  selectedCustomerId = work.custId ?? work.custId;
-
-  final TextEditingController remarkController = TextEditingController();
-
-  Future<void> _loadWorkTypes() async {
-    try {
-      final httpService = HttpService();
-      final workTypeModel = await httpService.getWorkType();
-      if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
-        workTypes = workTypeModel.data;
-        selectedProduct = workTypes.first.id;
-      }
-    } catch (e) {
-      log("Error loading work types: $e");
-    } finally {
-      isLoadingWorkTypes = false;
-    }
-  }
-
-  Future<void> _loadMaterials() async {
-    try {
-      final httpService = HttpService();
-      final materialModel = await httpService.getMaterials();
-      if (materialModel != null && materialModel.status == true) {
-        materialsList = materialModel.data ?? [];
-      }
-    } catch (e) {
-      log("Error loading materials: $e");
-    } finally {
-      isLoadingMaterials = false;
-    }
-  }
-
-  await Future.wait([_loadWorkTypes(), _loadMaterials()]);
-
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          void addMaterial(MaterialData material) {
-            if (!selectedMaterials.any(
-              (m) => m["material_id"] == material.materialId,
-            )) {
-              selectedMaterials.add({
-                "material_id": material.materialId,
-                "material_name": material.materialName,
-                "unit_price": material.unitPrice ?? "0",
-                "quantity": "1",
-                "total_price": material.unitPrice ?? "0",
-                "stock": material.currentStock ?? "0",
-                "is_existing": false,
-              });
-            }
-            setState(() {});
-          }
-
-          void updateQuantity(int index, bool increase) {
-            final stock =
-                int.tryParse(selectedMaterials[index]["stock"].toString()) ??
-                0;
-            int quantity =
-                int.tryParse(
-                  selectedMaterials[index]["quantity"].toString(),
-                ) ??
-                0;
-            final double unitPrice =
-                double.tryParse(
-                  selectedMaterials[index]["unit_price"].toString(),
-                ) ??
-                0.0;
-
-            if (increase) {
-              if (quantity >= stock && !selectedMaterials[index]["is_existing"]) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Cannot exceed available stock ($stock)."),
-                  ),
-                );
-                return;
-              }
-              quantity++;
-            } else {
-              if (quantity > 1) quantity--;
-            }
-            selectedMaterials[index]["quantity"] = quantity.toString();
-            selectedMaterials[index]["total_price"] = (unitPrice * quantity)
-                .toStringAsFixed(2);
-            setState(() {});
-          }
-
-          return AlertDialog(
-            title: Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3A2F87),
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Are you sure you want to proceed?"),
-                  const SizedBox(height: 16),
-
-                  if (isLoadingWorkTypes)
-                    const Center(child: CircularProgressIndicator())
-                  else if (selectedProduct != null && workTypes.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Product",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Text(
-                            "${workTypes.first.productName} (${workTypes.first.productType})",
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    const Text(
-                      "No products available",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-
-                  const SizedBox(height: 12),
-
-                  if (selectedMilestone != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Milestone",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Text(
-                            selectedMilestone!,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text(
-                        "No pending milestones",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-
-                  const SizedBox(height: 12),
-
-                  DropdownButtonFormField<String>(
-                    value: selectedStatus,
-                    hint: const Text("Select Status"),
-                    items: statusOptions
-                        .map(
-                          (status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) => setState(() => selectedStatus = val),
-                    decoration: InputDecoration(
-                      labelText: "Work Status",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Show existing materials info if available
-                  if (work.addProducts?.isNotEmpty == true)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Existing Materials",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "${work.addProducts!.length} material(s) already added",
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-
-                  const Text(
-                    "Select Materials",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  if (isLoadingMaterials)
-                    const Center(child: CircularProgressIndicator())
-                  else if (materialsList.isNotEmpty)
-                    DropdownButtonFormField<MaterialData>(
-                      hint: const Text("Add a Material"),
-                      items: materialsList.map((mat) {
-                        final stock =
-                            int.tryParse(mat.currentStock ?? "0") ?? 0;
-                        return DropdownMenuItem(
-                          enabled: stock > 0,
-                          value: stock > 0 ? mat : null,
-                          child: Text(
-                            "${mat.materialName} (Stock: $stock)",
-                            style: TextStyle(
-                              color: stock > 0 ? Colors.black : Colors.grey,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (mat) {
-                        if (mat != null) addMaterial(mat);
-                      },
+                    TextField(
+                      controller: remarkController,
+                      maxLines: 3,
                       decoration: InputDecoration(
+                        hintText: "Enter remarks...",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    )
-                  else
-                    const Text(
-                      "No materials available",
-                      style: TextStyle(color: Colors.grey),
                     ),
-
-                  const SizedBox(height: 10),
-
-                  if (selectedMaterials.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...selectedMaterials
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) {
-                                final index = entry.key;
-                                final mat = entry.value;
-                                final isExisting = mat["is_existing"] == true;
-                                
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 6,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isExisting 
-                                            ? Colors.green.shade50 
-                                            : Colors.grey.shade50,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: isExisting 
-                                              ? Colors.green.shade200 
-                                              : Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                mat["material_name"] ?? "",
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isExisting 
-                                                      ? Colors.green.shade800 
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                              if (isExisting) ...[
-                                                const SizedBox(width: 6),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green.shade100,
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: const Text(
-                                                    "Existing",
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.green,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  if (!isExisting) ...[
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.remove_circle_outline,
-                                                        size: 22,
-                                                      ),
-                                                      color: Colors.redAccent,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () =>
-                                                          updateQuantity(
-                                                            index,
-                                                            false,
-                                                          ),
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                  ],
-                                                  Text(
-                                                    mat["quantity"].toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15,
-                                                    ),
-                                                  ),
-                                                  if (!isExisting) ...[
-                                                    const SizedBox(width: 4),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.add_circle_outline,
-                                                        size: 22,
-                                                      ),
-                                                      color: Colors.green,
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () =>
-                                                          updateQuantity(
-                                                            index,
-                                                            true,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    "₹${mat["total_price"]}",
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: isExisting 
-                                                          ? Colors.green.shade800 
-                                                          : Colors.black87,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  if (!isExisting)
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.delete_outline,
-                                                        color: Colors.redAccent,
-                                                      ),
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      onPressed: () {
-                                                        selectedMaterials.removeAt(
-                                                          index,
-                                                        );
-                                                        setState(() {});
-                                                      },
-                                                    ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Divider(
-                                      color: Colors.grey,
-                                      thickness: 0.6,
-                                      height: 10,
-                                    ),
-                                  ],
-                                );
-                              },
-                            )
-                            .toList(),
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Total Amount",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: remarkController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: "Enter remarks...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text("Cancel"),
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3A2F87),
+                    foregroundColor: Colors.white,
                   ),
-                ],
+                  onPressed: () {
+                    if (selectedProduct == null || selectedStatus == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please fill all required fields."),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text("Confirm"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _performWorkActionStop(
+        workId,
+        action,
+        selectedStatus!,
+        remarkController.text,
+        selectedMilestone,
+        selectedProduct,
+        selectedMaterials,
+        selectedCustomerId,
+      );
+    }
+  }
+
+  Future<void> _confirmActionRestart(
+    String title,
+    WorkOrder work,
+    String action,
+  ) async {
+    final String? workId = work.workOrderId;
+    if (workId == null) return;
+
+    String? selectedStatus = "On Hold";
+    String? selectedMilestone;
+    String? selectedProduct;
+
+    // Initialize selectedMaterials with existing add_products if available
+    List<Map<String, dynamic>> selectedMaterials =
+        work.addProducts?.map((product) {
+              return {
+                "material_id": product.productName,
+                "material_name": product.productName ?? "",
+                "unit_price": product.rate ?? "0",
+                "quantity": product.quantity ?? "1",
+                "total_price": product.amount ?? "0",
+                "stock": "0",
+                "is_existing": true,
+              };
+            }).toList() ??
+            [];
+
+    String? selectedCustomerId;
+    final List<String> statusOptions = [
+      "New",
+      "In Progress",
+      "Completed",
+      "On Hold",
+      "Cancelled",
+    ];
+
+    List<WorkType> workTypes = [];
+    List<MaterialData> materialsList = [];
+    bool isLoadingWorkTypes = true;
+    bool isLoadingMaterials = true;
+
+    final latestHistory =
+        work.history?.isNotEmpty == true ? work.history!.last : null;
+    PipelineProgress? firstPendingMilestone;
+
+    if (latestHistory?.pipelineProgress != null &&
+        latestHistory!.pipelineProgress!.isNotEmpty) {
+      try {
+        firstPendingMilestone = latestHistory.pipelineProgress!.firstWhere(
+          (p) => p.status == 0,
+          orElse: () => PipelineProgress(),
+        );
+      } catch (e) {
+        firstPendingMilestone = null;
+      }
+    }
+
+    if (firstPendingMilestone != null &&
+        (firstPendingMilestone.name?.isNotEmpty ?? false)) {
+      selectedMilestone = firstPendingMilestone.name!;
+    }
+    selectedCustomerId = work.custId ?? work.custId;
+
+    final TextEditingController remarkController = TextEditingController();
+
+    Future<void> _loadWorkTypes() async {
+      try {
+        final httpService = HttpService();
+        final workTypeModel = await httpService.getWorkType();
+        if (workTypeModel != null && workTypeModel.data.isNotEmpty) {
+          workTypes = workTypeModel.data;
+          selectedProduct = workTypes.first.id;
+        }
+      } catch (e) {
+        log("Error loading work types: $e");
+      } finally {
+        isLoadingWorkTypes = false;
+      }
+    }
+
+    Future<void> _loadMaterials() async {
+      try {
+        final httpService = HttpService();
+        final materialModel = await httpService.getMaterials();
+        if (materialModel != null && materialModel.status == true) {
+          materialsList = materialModel.data ?? [];
+        }
+      } catch (e) {
+        log("Error loading materials: $e");
+      } finally {
+        isLoadingMaterials = false;
+      }
+    }
+
+    await Future.wait([_loadWorkTypes(), _loadMaterials()]);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void addMaterial(MaterialData material) {
+              if (!selectedMaterials.any(
+                (m) => m["material_id"] == material.materialId,
+              )) {
+                selectedMaterials.add({
+                  "material_id": material.materialId,
+                  "material_name": material.materialName,
+                  "unit_price": material.unitPrice ?? "0",
+                  "quantity": "1",
+                  "total_price": material.unitPrice ?? "0",
+                  "stock": material.currentStock ?? "0",
+                  "is_existing": false,
+                });
+              }
+              setState(() {});
+            }
+
+            void updateQuantity(int index, bool increase) {
+              final stock =
+                  int.tryParse(selectedMaterials[index]["stock"].toString()) ??
+                      0;
+              int quantity = int.tryParse(
+                    selectedMaterials[index]["quantity"].toString(),
+                  ) ??
+                  0;
+              final double unitPrice = double.tryParse(
+                    selectedMaterials[index]["unit_price"].toString(),
+                  ) ??
+                  0.0;
+
+              if (increase) {
+                if (quantity >= stock &&
+                    !selectedMaterials[index]["is_existing"]) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Cannot exceed available stock ($stock)."),
+                    ),
+                  );
+                  return;
+                }
+                quantity++;
+              } else {
+                if (quantity > 1) quantity--;
+              }
+              selectedMaterials[index]["quantity"] = quantity.toString();
+              selectedMaterials[index]["total_price"] =
+                  (unitPrice * quantity).toStringAsFixed(2);
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3A2F87),
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedStatus == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Please select status.",
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Are you sure you want to proceed?"),
+                    const SizedBox(height: 16),
+
+                    if (isLoadingWorkTypes)
+                      const Center(child: CircularProgressIndicator())
+                    else if (selectedProduct != null && workTypes.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Product",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              "${workTypes.first.productName} (${workTypes.first.productType})",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      const Text(
+                        "No products available",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    if (selectedMilestone != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Milestone",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              selectedMilestone!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          "No pending milestones",
+                          style: TextStyle(color: Colors.grey),
                         ),
                       ),
-                    );
-                    return;
-                  }
-                  Navigator.pop(context, true);
-                },
-                child: const Text("Confirm"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
 
-  if (confirmed == true) {
-    await _performWorkActionRestart(
-      workId,
-      action,
-      selectedStatus!,
-      remarkController.text,
-      selectedMilestone,
-      selectedProduct,
-      selectedMaterials,
-      selectedCustomerId
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      hint: const Text("Select Status"),
+                      items: statusOptions
+                          .map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) => setState(() => selectedStatus = val),
+                      decoration: InputDecoration(
+                        labelText: "Work Status",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Show existing materials info if available
+                    if (work.addProducts?.isNotEmpty == true)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Existing Materials",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "${work.addProducts!.length} material(s) already added",
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+
+                    const Text(
+                      "Select Materials",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    if (isLoadingMaterials)
+                      const Center(child: CircularProgressIndicator())
+                    else if (materialsList.isNotEmpty)
+                      DropdownButtonFormField<MaterialData>(
+                        hint: const Text("Add a Material"),
+                        items: materialsList.map((mat) {
+                          final stock =
+                              int.tryParse(mat.currentStock ?? "0") ?? 0;
+                          return DropdownMenuItem(
+                            enabled: stock > 0,
+                            value: stock > 0 ? mat : null,
+                            child: Text(
+                              "${mat.materialName} (Stock: $stock)",
+                              style: TextStyle(
+                                color: stock > 0 ? Colors.black : Colors.grey,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (mat) {
+                          if (mat != null) addMaterial(mat);
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      )
+                    else
+                      const Text(
+                        "No materials available",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+
+                    const SizedBox(height: 10),
+
+                    if (selectedMaterials.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...selectedMaterials.asMap().entries.map(
+                            (entry) {
+                              final index = entry.key;
+                              final mat = entry.value;
+                              final isExisting = mat["is_existing"] == true;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isExisting
+                                          ? Colors.green.shade50
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isExisting
+                                            ? Colors.green.shade200
+                                            : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              mat["material_name"] ?? "",
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: isExisting
+                                                    ? Colors.green.shade800
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            if (isExisting) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade100,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  "Existing",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.green,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                if (!isExisting) ...[
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .remove_circle_outline,
+                                                      size: 22,
+                                                    ),
+                                                    color: Colors.redAccent,
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(),
+                                                    onPressed: () =>
+                                                        updateQuantity(
+                                                      index,
+                                                      false,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                Text(
+                                                  mat["quantity"].toString(),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                if (!isExisting) ...[
+                                                  const SizedBox(width: 4),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.add_circle_outline,
+                                                      size: 22,
+                                                    ),
+                                                    color: Colors.green,
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(),
+                                                    onPressed: () =>
+                                                        updateQuantity(
+                                                      index,
+                                                      true,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  "₹${mat["total_price"]}",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isExisting
+                                                        ? Colors.green.shade800
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                if (!isExisting)
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.delete_outline,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(),
+                                                    onPressed: () {
+                                                      selectedMaterials
+                                                          .removeAt(
+                                                        index,
+                                                      );
+                                                      setState(() {});
+                                                    },
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Divider(
+                                    color: Colors.grey,
+                                    thickness: 0.6,
+                                    height: 10,
+                                  ),
+                                ],
+                              );
+                            },
+                          ).toList(),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Total Amount",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Text(
+                                  "₹${selectedMaterials.fold<double>(0.0, (sum, mat) => sum + (double.tryParse(mat["total_price"].toString()) ?? 0.0)).toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: remarkController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: "Enter remarks...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedStatus == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please select status.",
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text("Confirm"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
+
+    if (confirmed == true) {
+      await _performWorkActionRestart(
+          workId,
+          action,
+          selectedStatus!,
+          remarkController.text,
+          selectedMilestone,
+          selectedProduct,
+          selectedMaterials,
+          selectedCustomerId);
+    }
   }
-}
 
   Future<void> _performWorkAction(
     String workId,
@@ -1971,7 +1963,6 @@ class _WorkListPageState extends State<WorkListPage>
     String remarks,
     String? milestone,
     String? productId,
-
     List<Map<String, dynamic>> selectedMaterials,
     String? selectedCustomerId,
   ) async {
@@ -1989,7 +1980,8 @@ class _WorkListPageState extends State<WorkListPage>
           selectedCustomerId,
         );
       } else if (action == "pause") {
-        response = await http.pauseWorkService(workId, status, remarks, milestone);
+        response =
+            await http.pauseWorkService(workId, status, remarks, milestone);
       } else if (action == "stop") {
         response = await http.stopWorkService(
           workId,
@@ -2049,7 +2041,8 @@ class _WorkListPageState extends State<WorkListPage>
           selectedCustomerId,
         );
       } else if (action == "pause") {
-        response = await http.pauseWorkService(workId, status, remarks, milestone);
+        response =
+            await http.pauseWorkService(workId, status, remarks, milestone);
       }
 
       if (response["status"] == true) {
@@ -2099,7 +2092,8 @@ class _WorkListPageState extends State<WorkListPage>
           selectedCustomerId,
         );
       } else if (action == "pause") {
-        response = await http.pauseWorkService(workId, status, remarks, milestone);
+        response =
+            await http.pauseWorkService(workId, status, remarks, milestone);
       } else if (action == "stop") {
         response = await http.stopWorkService(
           workId,
@@ -2189,7 +2183,6 @@ class _WorkListPageState extends State<WorkListPage>
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2223,7 +2216,6 @@ class _WorkListPageState extends State<WorkListPage>
                   ),
                 ],
               ),
-
               const Divider(height: 22),
               work.issueDescription != ""
                   ? _buildInfoRow(
@@ -2252,7 +2244,6 @@ class _WorkListPageState extends State<WorkListPage>
                       Colors.deepOrangeAccent,
                     )
                   : SizedBox(),
-
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2270,10 +2261,10 @@ class _WorkListPageState extends State<WorkListPage>
                                   color: work.priority == "Low"
                                       ? Colors.blue.shade100
                                       : work.priority == "Medium"
-                                      ? Colors.orange.shade100
-                                      : work.priority == "High"
-                                      ? Colors.red.shade100
-                                      : Colors.green.shade100,
+                                          ? Colors.orange.shade100
+                                          : work.priority == "High"
+                                              ? Colors.red.shade100
+                                              : Colors.green.shade100,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -2283,10 +2274,10 @@ class _WorkListPageState extends State<WorkListPage>
                                     color: work.priority == "Low"
                                         ? Colors.blue.shade800
                                         : work.priority == "Medium"
-                                        ? Colors.orange.shade800
-                                        : work.priority == "High"
-                                        ? Colors.red.shade800
-                                        : Colors.green.shade800,
+                                            ? Colors.orange.shade800
+                                            : work.priority == "High"
+                                                ? Colors.red.shade800
+                                                : Colors.green.shade800,
                                   ),
                                 ),
                               )
@@ -2295,7 +2286,6 @@ class _WorkListPageState extends State<WorkListPage>
                     )
                   else
                     const SizedBox(),
-
                   if ((work.status == "New") && roleId != null && roleId == "3")
                     ElevatedButton.icon(
                       onPressed: () {
@@ -2320,8 +2310,7 @@ class _WorkListPageState extends State<WorkListPage>
                       ),
                     ),
                   const SizedBox(width: 6),
-
-                  if (roleId == "2" && work.status !="Completed") ...[
+                  if (roleId == "2" && work.status != "Completed") ...[
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.push(
@@ -2353,7 +2342,6 @@ class _WorkListPageState extends State<WorkListPage>
                         minimumSize: const Size(0, 36),
                       ),
                     ),
-
                     ElevatedButton.icon(
                       onPressed: () async {
                         final confirm = await showDialog<bool>(
@@ -2545,9 +2533,8 @@ class _WorkListPageState extends State<WorkListPage>
           const SizedBox(width: 8),
           Expanded(
             child: GestureDetector(
-              onTap: isPhone && value != null
-                  ? () => _launchPhone(value)
-                  : null,
+              onTap:
+                  isPhone && value != null ? () => _launchPhone(value) : null,
               child: Text(
                 value ?? '-',
                 style: TextStyle(
@@ -2599,9 +2586,8 @@ class _WorkListPageState extends State<WorkListPage>
   }
 
   void _showViewDialog(WorkOrder work) {
-    final latestHistory = work.history?.isNotEmpty == true
-        ? work.history!.last
-        : null;
+    final latestHistory =
+        work.history?.isNotEmpty == true ? work.history!.last : null;
     showDialog(
       context: context,
       builder: (context) {
@@ -2687,7 +2673,6 @@ class _WorkListPageState extends State<WorkListPage>
                             work.preferredDateTime,
                             Colors.redAccent,
                           ),
-
                           const SizedBox(height: 16),
                           const Divider(thickness: 1.2),
                           const SizedBox(height: 8),
@@ -2751,17 +2736,15 @@ class _WorkListPageState extends State<WorkListPage>
                                             ],
                                           ),
                                           if (i !=
-                                              latestHistory
-                                                      .pipelineProgress!
+                                              latestHistory.pipelineProgress!
                                                       .length -
                                                   1)
                                             Container(
                                               width: 40,
                                               height: 2,
-                                              color:
-                                                  latestHistory
-                                                          .pipelineProgress![i +
-                                                              1]
+                                              color: latestHistory
+                                                          .pipelineProgress![
+                                                              i + 1]
                                                           .status ==
                                                       1
                                                   ? Colors.green
@@ -2777,7 +2760,6 @@ class _WorkListPageState extends State<WorkListPage>
                             const SizedBox(height: 16),
                             const Divider(thickness: 1.2),
                           ],
-
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -2790,7 +2772,6 @@ class _WorkListPageState extends State<WorkListPage>
                                 ),
                               ),
                               const SizedBox(height: 4),
-
                               SizedBox(
                                 height: 140,
                                 child: SingleChildScrollView(
@@ -2828,7 +2809,6 @@ class _WorkListPageState extends State<WorkListPage>
                                                   fontSize: 14,
                                                 ),
                                               ),
-
                                               const SizedBox(height: 6),
                                               Text(
                                                 step.actionTime ?? "-",
@@ -2843,21 +2823,20 @@ class _WorkListPageState extends State<WorkListPage>
                                       },
                                       indicatorBuilder: (_, i) =>
                                           const DotIndicator(
-                                            color: Color(0xFF3A2F87),
-                                            size: 14,
-                                          ),
+                                        color: Color(0xFF3A2F87),
+                                        size: 14,
+                                      ),
                                       connectorBuilder: (_, i, __) =>
                                           const SolidLineConnector(
-                                            color: Color(0xFF3A2F87),
-                                            thickness: 2,
-                                          ),
+                                        color: Color(0xFF3A2F87),
+                                        thickness: 2,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 30),
                         ],
                       ),
@@ -2939,21 +2918,21 @@ class _WorkListPageState extends State<WorkListPage>
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : workOrders.isEmpty
-          ? const Center(
-              child: Text(
-                "No works found.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchWorkList,
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                itemCount: workOrders.length,
-                itemBuilder: (context, index) =>
-                    _buildWorkCard(workOrders[index]),
-              ),
-            ),
+              ? const Center(
+                  child: Text(
+                    "No works found.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchWorkList,
+                  child: ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: workOrders.length,
+                    itemBuilder: (context, index) =>
+                        _buildWorkCard(workOrders[index]),
+                  ),
+                ),
     );
   }
 }

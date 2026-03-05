@@ -110,14 +110,15 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
       ),
     );
   }
-    void _addRentalReturns() {
+
+  void _addRentalReturns() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddRentalReturnPage(),
       ),
     );
-    }
+  }
 
   void _openFilterSheet() {
     showModalBottomSheet(
@@ -884,7 +885,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('Rental Returns'),
+        title: const Text('Rental Returns', style: TextStyle(fontSize: 18)),
         backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
         actions: [
@@ -898,7 +899,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
           //   tooltip: 'Refresh',
           //   onPressed: _loadRentalReturns,
           // ),
-           IconButton(
+          IconButton(
             icon: const Icon(Icons.add, size: 26, color: Colors.white),
             tooltip: 'Add Rental Return',
             onPressed: _addRentalReturns,

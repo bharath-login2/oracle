@@ -67,10 +67,12 @@ class RentItem {
   final String fromDate;
   final String toDate;
   final String customerName;
+  final String customerId;
+  final String locationId;
   final int totalQty;
-  final int grandTotal;
-  final int amountPaid;
-  final int balance;
+  final double grandTotal;
+  final double amountPaid;
+  final double balance;
   final String status;
   final int daysLeft;
   final String daysLabel;
@@ -83,6 +85,8 @@ class RentItem {
     required this.fromDate,
     required this.toDate,
     required this.customerName,
+    required this.customerId,
+    required this.locationId,
     required this.totalQty,
     required this.grandTotal,
     required this.amountPaid,
@@ -100,10 +104,12 @@ class RentItem {
         fromDate: json["from_date"] ?? "",
         toDate: json["to_date"] ?? "",
         customerName: json["customer_name"] ?? "",
+        customerId: json["customer_id"]?.toString() ?? "",
+        locationId: json["location_id"]?.toString() ?? "",
         totalQty: json["total_qty"] ?? 0,
-        grandTotal: json["grand_total"] ?? 0,
-        amountPaid: json["amount_paid"] ?? 0,
-        balance: json["balance"] ?? 0,
+        grandTotal: (json["grand_total"] ?? 0).toDouble(),
+        amountPaid: (json["amount_paid"] ?? 0).toDouble(),
+        balance: (json["balance"] ?? 0).toDouble(),
         status: json["status"] ?? "",
         daysLeft: json["days_left"] ?? 0,
         daysLabel: json["days_label"] ?? "",
@@ -117,6 +123,8 @@ class RentItem {
         "from_date": fromDate,
         "to_date": toDate,
         "customer_name": customerName,
+        "customer_id": customerId,
+        "location_id": locationId,
         "total_qty": totalQty,
         "grand_total": grandTotal,
         "amount_paid": amountPaid,

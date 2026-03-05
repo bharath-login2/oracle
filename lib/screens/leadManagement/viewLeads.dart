@@ -489,8 +489,8 @@ class _ViewLeadsState extends State<ViewLeads>
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      
-        if (connectivityResult.contains(ConnectivityResult.mobile) &&
+
+      if (connectivityResult.contains(ConnectivityResult.mobile) &&
           connectivityResult.contains(ConnectivityResult.wifi)) {
         setState(() {
           result = false;
@@ -541,19 +541,19 @@ class _ViewLeadsState extends State<ViewLeads>
   }
 
   Future<void> _loadUserPreferences() async {
-    statusWise = await Common.getSharedPref("statusWise");
-    roleId = await Common.getSharedPref("roleId");
-    multiBranch = await Common.getSharedPref("multiBranch");
-    transferPermission = await Common.getSharedPref("transferLeads");
-    userId = await Common.getSharedPref("userId");
-    name = await Common.getSharedPref("name");
+    statusWise = (await Common.getSharedPref("statusWise")) ?? '';
+    roleId = (await Common.getSharedPref("roleId")) ?? '';
+    multiBranch = (await Common.getSharedPref("multiBranch")) ?? '';
+    transferPermission = (await Common.getSharedPref("transferLeads")) ?? '';
+    userId = (await Common.getSharedPref("userId")) ?? '';
+    name = (await Common.getSharedPref("name")) ?? '';
     phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission");
+        (await Common.getSharedPref("phoneCallLogPermission")) ?? '';
 
     if (statusWise == 'yes') {
-      statusWiseId = await Common.getSharedPref("statusWisId");
-      statusCatId = await Common.getSharedPref("statusCatId");
-      type = await Common.getSharedPref("type");
+      statusWiseId = (await Common.getSharedPref("statusWisId")) ?? '';
+      statusCatId = (await Common.getSharedPref("statusCatId")) ?? '';
+      type = (await Common.getSharedPref("type")) ?? '';
     }
 
     if (commonDetails == null) {
@@ -847,11 +847,11 @@ class _ViewLeadsState extends State<ViewLeads>
                                         if (direction ==
                                             DismissDirection.endToStart) {
                                           return await _handleFollowupAction(
-                                              itemIndex);
+                                              displayItems[itemIndex]);
                                         } else if (direction ==
                                             DismissDirection.startToEnd) {
                                           return await _handleCallAction(
-                                              itemIndex);
+                                              displayItems[itemIndex]);
                                         }
                                         return false;
                                       },
@@ -865,17 +865,20 @@ class _ViewLeadsState extends State<ViewLeads>
                                         }
                                       },
                                       child: InkWell(
-                                        onLongPress: () =>
-                                            _handleLongPress(itemIndex),
+                                        onLongPress: () => _handleLongPress(
+                                            displayItems[itemIndex]),
                                         onTap: () {
                                           if (selectedIUsers.isNotEmpty) {
-                                            _handleLongPress(itemIndex);
+                                            _handleLongPress(
+                                                displayItems[itemIndex]);
                                           } else {
-                                            _navigateToLeadDetails(itemIndex);
+                                            _navigateToLeadDetailsWithItem(
+                                                displayItems[itemIndex],
+                                                itemIndex);
                                           }
                                         },
-                                        child:
-                                            leadListWidget(context, itemIndex),
+                                        child: leadListWidget(context,
+                                            displayItems[itemIndex], itemIndex),
                                       ),
                                     );
                                   },
@@ -928,9 +931,9 @@ class _ViewLeadsState extends State<ViewLeads>
       secondaryBackground: _buildDismissibleBackground(false),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
-          return await _handleFollowupAction(index);
+          return await _handleFollowupAction(items[index]);
         } else if (direction == DismissDirection.startToEnd) {
-          return await _handleCallAction(index);
+          return await _handleCallAction(items[index]);
         }
         return false;
       },
@@ -942,15 +945,15 @@ class _ViewLeadsState extends State<ViewLeads>
         }
       },
       child: InkWell(
-        onLongPress: () => _handleLongPress(index),
+        onLongPress: () => _handleLongPress(items[index]),
         onTap: () {
           if (selectedIUsers.isNotEmpty) {
-            _handleLongPress(index);
+            _handleLongPress(items[index]);
           } else {
-            _navigateToLeadDetails(index);
+            _navigateToLeadDetailsWithItem(items[index], index);
           }
         },
-        child: leadListWidget(context, index),
+        child: leadListWidget(context, items[index], index),
       ),
     );
   }
@@ -976,8 +979,8 @@ class _ViewLeadsState extends State<ViewLeads>
     );
   }
 
-  Future<bool?> _handleFollowupAction(int index) {
-    if (items[index].callResult != "Confirmed") {
+  Future<bool?> _handleFollowupAction(Detail item) {
+    if (item.callResult != "Confirmed") {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -986,7 +989,7 @@ class _ViewLeadsState extends State<ViewLeads>
                   widget.editLead,
                   widget.deleteLead,
                   widget.cloudCall,
-                  items[index].callMasterId,
+                  item.callMasterId,
                   pageName: widget.pageName,
                   status: widget.status,
                   staff: widget.staff,
@@ -994,14 +997,14 @@ class _ViewLeadsState extends State<ViewLeads>
                   fromDate: widget.fromDate,
                   toDate: widget.toDate,
                   category: widget.category,
-                  leadType: items[index].leadCategory,
-                  leadTypeId: items[index].leadCategoryId,
-                  leadSubType: items[index].leadSubCategory,
-                  leadSubTypeId: items[index].leadSubCategoryId,
-                  priorityId: items[index].priority,
-                  priority: items[index].priorityName,
-                  cost: items[index].cost,
-                  address: items[index].address,
+                  leadType: item.leadCategory,
+                  leadTypeId: item.leadCategoryId,
+                  leadSubType: item.leadSubCategory,
+                  leadSubTypeId: item.leadSubCategoryId,
+                  priorityId: item.priority,
+                  priority: item.priorityName,
+                  cost: item.cost,
+                  address: item.address,
                   leadType1: widget.leadType,
                   preservedFromDate: fromdate,
                   preservedToDate: todate,
@@ -1026,19 +1029,22 @@ class _ViewLeadsState extends State<ViewLeads>
     return Future.value(false);
   }
 
-  Future<bool?> _handleCallAction(int index) async {
-    if (index >= items.length) return false;
-
+  Future<bool?> _handleCallAction(Detail item) async {
     try {
       if (viewLeads!.data.callPermission == false) {
-        _showCallPermissionDialog(index);
+        // Find index of item for dialog context (if needed), or pass item
+        // _showCallPermissionDialog(index); // This used index
+        // We need to use new dialog
+        int index = items.indexOf(item);
+        _showCallPermissionDialogWithItem(item, index);
         return false;
       } else {
         if (widget.cloudCall == true) {
-          await chooseCallDialog(context, index);
+          int index = items.indexOf(item);
+          await chooseCallDialogWithItem(context, item, index);
           return true;
         } else {
-          Common.dialPad(items[index].contactNumber1);
+          Common.dialPad(item.contactNumber1);
           return true;
         }
       }
@@ -1065,18 +1071,17 @@ class _ViewLeadsState extends State<ViewLeads>
   //     }
   //   });
   // }
-  void _handleLongPress(int index) {
-    if (index >= items.length) return;
+  void _handleLongPress(Detail item) {
     setState(() {
-      items[index].isSelected = !items[index].isSelected;
-      if (items[index].isSelected) {
-        if (!selectedIUsers.contains(items[index].callMasterId)) {
-          selectedIUsers.add(items[index].callMasterId);
-          selectedUserNumbers.add(items[index].contactNumber1);
+      item.isSelected = !item.isSelected;
+      if (item.isSelected) {
+        if (!selectedIUsers.contains(item.callMasterId)) {
+          selectedIUsers.add(item.callMasterId);
+          selectedUserNumbers.add(item.contactNumber1);
         }
       } else {
-        selectedIUsers.remove(items[index].callMasterId);
-        selectedUserNumbers.remove(items[index].contactNumber1);
+        selectedIUsers.remove(item.callMasterId);
+        selectedUserNumbers.remove(item.contactNumber1);
       }
       _updateSelectAllState();
     });
@@ -1091,45 +1096,6 @@ class _ViewLeadsState extends State<ViewLeads>
     final allSelected = visibleItems.every((item) => item.isSelected);
     setState(() {
       _isSelectAll = allSelected;
-    });
-  }
-
-  void _navigateToLeadDetails(int index) {
-    if (index >= items.length) return;
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MinimalLeadDetails(
-          widget.token!,
-          widget.editLead,
-          widget.deleteLead,
-          widget.cloudCall,
-          items[index].callMasterId.toString(),
-          pageName: widget.pageName.toString(),
-          status: widget.status,
-          staff: widget.staff,
-          isCalled: widget.isCalled,
-          fromDate: widget.fromDate,
-          toDate: widget.toDate,
-          category: widget.category,
-          scrollToIndex: index,
-          page: page,
-          pageSize: page * pageSize,
-          leadType: widget.leadType,
-          preservedFromDate: fromdate,
-          preservedToDate: todate,
-          preservedSortOrder: currentSortOrder,
-          preservedSortAscending: sortAscending,
-          preservedCategoryItems: List<String>.from(checkedCategoryItems),
-          preservedPriorityItems: List<String>.from(checkedPriorityItems),
-          preservedAssignedStaffItems:
-              List<String>.from(checkedAssignedStaffItems),
-          preservedResponseItems: List<String>.from(checkedResponseItems),
-        ),
-      ),
-    ).then((returnedData) {
-      _handleReturnedData(returnedData);
     });
   }
 
@@ -1166,51 +1132,6 @@ class _ViewLeadsState extends State<ViewLeads>
       _isDataLoaded = false;
     });
     getData(currentSortOrder, true, status);
-  }
-
-  void _showCallPermissionDialog(int index) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Alert !!!'),
-            content: Text(viewLeads!.data.warningMessage.toString()),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => LeadDetails(
-                              widget.token!,
-                              widget.editLead,
-                              widget.deleteLead,
-                              widget.cloudCall,
-                              viewLeads!.data.callLeadId.toString(),
-                              pageName: widget.pageName.toString(),
-                              status: widget.status,
-                              staff: widget.staff,
-                              isCalled: widget.isCalled,
-                              fromDate: widget.fromDate,
-                              toDate: widget.toDate,
-                              category: widget.category,
-                              scrollToIndex: index,
-                              page: page,
-                              pageSize: page * pageSize,
-                              leadType: widget.leadType)),
-                    ).then((r) {
-                      items.clear();
-                      page = 1;
-                      getData('desc', true, status);
-                    });
-                  },
-                  child: const Text('followup')),
-            ],
-          );
-        });
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -1397,6 +1318,339 @@ class _ViewLeadsState extends State<ViewLeads>
         child: const Icon(Icons.delete, color: Colors.red),
       ),
     ];
+  }
+
+  void _navigateToLeadDetailsWithItem(Detail item, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MinimalLeadDetails(
+          widget.token!,
+          widget.editLead,
+          widget.deleteLead,
+          widget.cloudCall,
+          item.callMasterId.toString(), // Use the actual item's ID
+          pageName: widget.pageName.toString(),
+          status: widget.status,
+          staff: widget.staff,
+          isCalled: widget.isCalled,
+          fromDate: widget.fromDate,
+          toDate: widget.toDate,
+          category: widget.category,
+          scrollToIndex: index,
+          page: page,
+          pageSize: page * pageSize,
+          leadType: widget.leadType,
+          preservedFromDate: fromdate,
+          preservedToDate: todate,
+          preservedSortOrder: currentSortOrder,
+          preservedSortAscending: sortAscending,
+          preservedCategoryItems: List<String>.from(checkedCategoryItems),
+          preservedPriorityItems: List<String>.from(checkedPriorityItems),
+          preservedAssignedStaffItems:
+              List<String>.from(checkedAssignedStaffItems),
+          preservedResponseItems: List<String>.from(checkedResponseItems),
+        ),
+      ),
+    ).then((returnedData) {
+      _handleReturnedData(returnedData);
+    });
+  }
+
+  void _showCallPermissionDialogWithItem(Detail item, int index) {
+    showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return AlertDialog(
+            title: const Text('Alert !!!'),
+            content: Text(viewLeads!.data.warningMessage.toString()),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => LeadDetails(
+                              widget.token!,
+                              widget.editLead,
+                              widget.deleteLead,
+                              widget.cloudCall,
+                              viewLeads!.data.callLeadId.toString(),
+                              pageName: widget.pageName.toString(),
+                              status: widget.status,
+                              staff: widget.staff,
+                              isCalled: widget.isCalled,
+                              fromDate: widget.fromDate,
+                              toDate: widget.toDate,
+                              category: widget.category,
+                              scrollToIndex: index,
+                              page: page,
+                              pageSize: page * pageSize,
+                              leadType: widget.leadType)),
+                    ).then((r) {
+                      items.clear();
+                      page = 1;
+                      getData('desc', true, status);
+                    });
+                  },
+                  child: const Text('followup')),
+            ],
+          );
+        });
+  }
+
+  Future<dynamic> chooseCallDialogWithItem(
+      BuildContext context, Detail item, int index) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Choose Call Type'),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    CloudCallModel object1 = await HttpService.addCloudCall(
+                        widget.token,
+                        item.callMasterId.toString(),
+                        item.contactNumber1);
+                    if (object1.data == true) {
+                      if (context.mounted) {
+                        Common.toastMessaage(object1.message, Colors.green);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      Common.toastMessaage(object1.message, Colors.red);
+                      if (context.mounted) Navigator.pop(context);
+                    }
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Icon(Icons.cloud_circle_rounded,
+                              color: Colors.black),
+                        ),
+                        const SizedBox(width: 20),
+                        const Text('Cloud Call',
+                            style: TextStyle(fontSize: 18)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    Common.dialPad(item.contactNumber1);
+                  },
+                  child: SizedBox(
+                      height: 50,
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(5)),
+                            child: const Icon(Icons.call, color: Colors.black),
+                          ),
+                          const SizedBox(width: 20),
+                          const Text('Phone Call',
+                              style: TextStyle(fontSize: 18)),
+                        ],
+                      )),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  void _showCategoriesDialog(List<LeadCategories> categories) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          insetPadding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Lead Categories",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const Divider(thickness: 1, height: 16),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: categories.length,
+                    separatorBuilder: (context, _) =>
+                        const Divider(color: Colors.grey, height: 12),
+                    itemBuilder: (context, i) {
+                      final category = categories[i];
+                      return Card(
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () {
+                            Navigator.pop(context);
+                            callMasterId = category.callMasterId.toString();
+                            getData('desc', true, status);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    category.isSelected == true
+                                        ? const Icon(Icons.check_circle,
+                                            size: 20, color: Colors.green)
+                                        : const Icon(Icons.circle_outlined,
+                                            size: 20, color: Colors.grey),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        category.leadCategory ?? "-",
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: (category.leadStatus ?? "") ==
+                                                "New"
+                                            ? Colors.blue
+                                            : (category.leadStatus ?? "") ==
+                                                    "Follow Up"
+                                                ? Colors.orange
+                                                : (category.leadStatus ?? "") ==
+                                                        "Rejected"
+                                                    ? Colors.red
+                                                    : Colors.purple,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        category.leadStatus ?? "-",
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        "👤 ${category.staffName ?? "-"}",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black54,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        "📅 ${category.createdDate ?? "-"}",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black54,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, size: 18),
+                    label: const Text("Close"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildHeader() {
@@ -1898,743 +2152,511 @@ class _ViewLeadsState extends State<ViewLeads>
       },
     );
   }
-Padding leadListWidget(BuildContext context, int index) {
-  // Get the correct item based on search
-  final displayItem = _searchQuery.isEmpty ? items[index] : _filteredItems[index];
-  
-  return Padding(
-    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-    child: Container(
-      width: MediaQuery.of(context).size.width * 1,
-      decoration: BoxDecoration(
-        color: displayItem.isSelected == false
-            ? Colors.white
-            : Colors.blue.shade100,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.grey,
-            offset: Offset(2.0, 2.0),
-          )
-        ],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (selectedIUsers.isNotEmpty)
-                  Row(
-                    children: [
-                      // Checkbox(
-                      //   value: displayItem.isSelected,
-                      //   onChanged: (bool? value) {
-                      //     _handleLongPress(index);
-                      //   },
-                      // ),
-                      Expanded(
-                      
-                        child: _buildLeadContent(displayItem, context, index),
-                      ),
-                    ],
-                  )
-                else
-                  _buildLeadContent(displayItem, context, index),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
-// Extract the lead content to a separate method - ADD INDEX PARAMETER
-Widget _buildLeadContent(Detail displayItem, BuildContext context, int index) {
-  return Column(
-    children: [
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * .88,
-          child: Stack(
-            children: [
-              Row(
+  Padding leadListWidget(BuildContext context, Detail displayItem, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 1,
+        decoration: BoxDecoration(
+          color: displayItem.isSelected == false
+              ? Colors.white
+              : Colors.blue.shade100,
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.grey,
+              offset: Offset(2.0, 2.0),
+            )
+          ],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (displayItem.priority == '1')
-                    Container(
-                      width: 10.0,
-                      height: 10.0,
-                      decoration: const BoxDecoration(
-                        color: Colors.grey,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  if (displayItem.priority == '2')
-                    Container(
-                      width: 10.0,
-                      height: 10.0,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  if (displayItem.priority == '3')
-                    Container(
-                      width: 10.0,
-                      height: 10.0,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  if (displayItem.priority == '4')
-                    Container(
-                      width: 10.0,
-                      height: 10.0,
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  const SizedBox(width: 5),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * .46,
-                    child: Text(
-                      displayItem.clientName == "null"
-                          ? "Unknown"
-                          : displayItem.clientName.toString(),
-                      style: TextStyle(
-                          fontSize: 16,
-                          decoration: displayItem.priority == "4"
-                              ? TextDecoration.lineThrough
-                              : null,
-                          decorationThickness: 1.5,
-                          decorationColor: Colors.red,
-                          color: displayItem.isCustomer
-                              ? Colors.green
-                              : Colors.black,
-                          fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: Colors.pink.shade100,
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            left: 5, right: 5, top: 2, bottom: 2),
-                        child: Text(
-                          displayItem.leadCategory.toString(),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
+                  if (selectedIUsers.isNotEmpty)
+                    Row(
+                      children: [
+                        // Checkbox(
+                        //   value: displayItem.isSelected,
+                        //   onChanged: (bool? value) {
+                        //     _handleLongPress(index);
+                        //   },
+                        // ),
+                        Expanded(
+                          child: _buildLeadContent(displayItem, context, index),
                         ),
-                      ),
-                    ),
-                  ),
+                      ],
+                    )
+                  else
+                    _buildLeadContent(displayItem, context, index),
                 ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Visibility(
-                    visible: displayItem.categoryCount.toString() != "1" &&
-                        displayItem.categoryCount.toString() != "",
-                    child: GestureDetector(
-                      onTap: () async {
-                        Common.showProgressDialog(
-                            context, "Loading categories...");
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                        try {
-                          await _loadLeadDetails(
-                              displayItem.callMasterId.toString());
-                          if (context.mounted) Navigator.pop(context);
-                          if (leadDetails == null ||
-                              leadDetails!.data?.leadCategories == null) {
-                            if (context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text("No Data"),
-                                    content: const Text(
-                                        "Lead categories are not available yet."),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text("OK"),
-                                      )
-                                    ],
-                                  );
-                                },
-                              );
-                            }
-                            return;
-                          }
-                          if (context.mounted) {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                final categories = leadDetails!
-                                    .data!.leadCategories!;
-                                return Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  insetPadding: const EdgeInsets.all(20),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    constraints: BoxConstraints(
-                                      maxHeight:
-                                          MediaQuery.of(context).size.height *
-                                              0.75,
-                                      maxWidth:
-                                          MediaQuery.of(context).size.width *
-                                              0.9,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Header
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              "Lead Categories",
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blueAccent,
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.close,
-                                                  color: Colors.grey),
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(
-                                            thickness: 1, height: 16),
-                                        Expanded(
-                                          child: ListView.separated(
-                                            itemCount: categories.length,
-                                            separatorBuilder: (context, _) =>
-                                                const Divider(
-                                                    color: Colors.grey,
-                                                    height: 12),
-                                            itemBuilder: (context, i) {
-                                              final category = categories[i];
-                                              return Card(
-                                                elevation: 1,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                child: InkWell(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  onTap: () {
-                                                    Navigator.pop(context);
-                                                    callMasterId = category
-                                                        .callMasterId
-                                                        .toString();
-                                                    getData('desc', true,
-                                                        status);
-                                                  },
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            12),
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            category.isSelected ==
-                                                                    true
-                                                                ? const Icon(
-                                                                    Icons
-                                                                        .check_circle,
-                                                                    size: 20,
-                                                                    color: Colors
-                                                                        .green)
-                                                                : const Icon(
-                                                                    Icons
-                                                                        .circle_outlined,
-                                                                    size: 20,
-                                                                    color: Colors
-                                                                        .grey),
-                                                            const SizedBox(
-                                                                width: 8),
-                                                            Expanded(
-                                                              child: Text(
-                                                                category
-                                                                        .leadCategory ??
-                                                                    "-",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 15,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
-                                                                maxLines: 2,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                            Container(
-                                                              padding: const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      8,
-                                                                  vertical: 4),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: (category.leadStatus ??
-                                                                            "") ==
-                                                                        "New"
-                                                                    ? Colors.blue
-                                                                    : (category.leadStatus ??
-                                                                                "") ==
-                                                                            "Follow Up"
-                                                                        ? Colors.orange
-                                                                        : (category.leadStatus ??
-                                                                                    "") ==
-                                                                                "Rejected"
-                                                                            ? Colors.red
-                                                                            : Colors.purple,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            6),
-                                                              ),
-                                                              child: Text(
-                                                                category
-                                                                        .leadStatus ??
-                                                                    "-",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 11,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 8),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Flexible(
-                                                              child: Text(
-                                                                "👤 ${category.staffName ?? "-"}",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 12,
-                                                                  color: Colors
-                                                                      .black54,
-                                                                ),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                width: 10),
-                                                            Flexible(
-                                                              child: Text(
-                                                                "📅 ${category.createdDate ?? "-"}",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 12,
-                                                                  color: Colors
-                                                                      .black54,
-                                                                ),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: ElevatedButton.icon(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            icon: const Icon(Icons.close,
-                                                size: 18),
-                                            label: const Text("Close"),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  Colors.blueAccent,
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 10,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        } catch (error) {
-                          if (context.mounted) Navigator.pop(context);
-                          if (context.mounted) {
-                            Common.toastMessaage(
-                                "Failed to load categories", Colors.red);
-                          }
-                        }
-                      },
-                      child: Container(
-                        height: 20,
-                        width: 20,
+// Extract the lead content to a separate method - ADD INDEX PARAMETER
+  Widget _buildLeadContent(
+      Detail displayItem, BuildContext context, int index) {
+    return Column(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * .88,
+            child: Stack(
+              children: [
+                Row(
+                  children: [
+                    if (displayItem.priority == '1')
+                      Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    if (displayItem.priority == '2')
+                      Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    if (displayItem.priority == '3')
+                      Container(
+                        width: 10.0,
+                        height: 10.0,
                         decoration: const BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
-                        child: Center(
+                      ),
+                    if (displayItem.priority == '4')
+                      Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    const SizedBox(width: 5),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * .46,
+                      child: Text(
+                        displayItem.clientName == "null"
+                            ? "Unknown"
+                            : displayItem.clientName.toString(),
+                        style: TextStyle(
+                            fontSize: 16,
+                            decoration: displayItem.priority == "4"
+                                ? TextDecoration.lineThrough
+                                : null,
+                            decorationThickness: 1.5,
+                            decorationColor: Colors.red,
+                            color: displayItem.isCustomer
+                                ? Colors.green
+                                : Colors.black,
+                            fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.pink.shade100,
+                            borderRadius: BorderRadius.circular(5)),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: 5, right: 5, top: 2, bottom: 2),
                           child: Text(
-                            displayItem.categoryCount.toString(),
+                            displayItem.leadCategory.toString(),
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            softWrap: false,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
-      const SizedBox(height: 3),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.68,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayItem.contactNumber1.toString(),
-                        style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(
-                            width: 150,
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Visibility(
+                      visible: displayItem.categoryCount.toString() != "1" &&
+                          displayItem.categoryCount.toString() != "",
+                      child: GestureDetector(
+                        onTap: () async {
+                          Common.showProgressDialog(
+                              context, "Loading categories...");
+
+                          try {
+                            await _loadLeadDetails(
+                                displayItem.callMasterId.toString());
+                            if (context.mounted) Navigator.pop(context);
+                            if (leadDetails == null ||
+                                leadDetails!.data?.leadCategories == null) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("No Data"),
+                                      content: const Text(
+                                          "Lead categories are not available yet."),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text("OK"),
+                                        )
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                              return;
+                            }
+                            if (context.mounted) {
+                              _showCategoriesDialog(
+                                  leadDetails!.data!.leadCategories!);
+                            }
+                          } catch (error) {
+                            if (context.mounted) Navigator.pop(context);
+                            if (context.mounted) {
+                              Common.toastMessaage(
+                                  "Failed to load categories", Colors.red);
+                            }
+                          }
+                        },
+                        child: Container(
+                          height: 20,
+                          width: 20,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
                             child: Text(
-                              'Assigned to : ${displayItem.staffName}',
+                              displayItem.categoryCount.toString(),
                               style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500),
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                                color: displayItem.callResultId >= 0 &&
-                                        displayItem.callResultId <
-                                            _colors.length
-                                    ? _colors[displayItem.callResultId]
-                                    : const Color.fromARGB(255, 245, 160, 34),
-                                borderRadius: BorderRadius.circular(5)),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 5, right: 5, top: 2, bottom: 2),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.68,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayItem.contactNumber1.toString(),
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: 150,
                               child: Text(
-                                displayItem.callResult.toString(),
+                                'Assigned to : ${displayItem.staffName}',
                                 style: const TextStyle(
                                     fontSize: 13,
-                                    color: Colors.white,
+                                    color: Colors.black54,
                                     fontWeight: FontWeight.w500),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      displayItem.callResultId == 1
-                          ? Container(
+                            Container(
                               decoration: BoxDecoration(
-                                  color: const Color(0xFFd5f5f4),
+                                  color: displayItem.callResultId >= 0 &&
+                                          displayItem.callResultId <
+                                              _colors.length
+                                      ? _colors[displayItem.callResultId]
+                                      : const Color.fromARGB(255, 245, 160, 34),
                                   borderRadius: BorderRadius.circular(5)),
                               child: Padding(
                                 padding: const EdgeInsets.only(
-                                    left: 5, right: 5, top: 5, bottom: 5),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Image.asset("assets/icons/calendar.png",
-                                        width: 20),
-                                    const SizedBox(width: 15),
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Created Time',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black54,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          displayItem.createdDate.toString(),
-                                          style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    left: 5, right: 5, top: 2, bottom: 2),
+                                child: Text(
+                                  displayItem.callResult.toString(),
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500),
                                 ),
                               ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                      color: const Color(0xFFd5f5f4),
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 5, right: 5, top: 5, bottom: 5),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                            "assets/icons/calendar.png",
-                                            width: 20),
-                                        const SizedBox(width: 5),
-                                        Column(
-                                          children: [
-                                            const Text(
-                                              'Called Date',
-                                              style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              displayItem.isCalled == false
-                                                  ? '--'
-                                                  : displayItem.calledDate
-                                                      .toString(),
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                      color: const Color(0xFFd5f5f4),
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 5, right: 5, top: 5, bottom: 5),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                            "assets/icons/calendar.png",
-                                            width: 20),
-                                        const SizedBox(width: 5),
-                                        Column(
-                                          children: [
-                                            const Text(
-                                              'Followup Date',
-                                              style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                              fontWeight: FontWeight.w500),
-                                            ),
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              displayItem.scheduledDate
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              Container(
-                constraints: const BoxConstraints(maxHeight: 60),
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minHeight: 20,
-                    minWidth: 20,
-                    maxHeight: 50,
-                    maxWidth: 50,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 0),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 5,
-                          offset: Offset(1, 1)),
-                    ],
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image:
-                            NetworkImage(displayItem.profilePic.toString())),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: () async {
-                  // FIXED: Now using the index parameter
-                  if (viewLeads!.data.callPermission == false) {
-                    _showCallPermissionDialog(index);
-                  } else {
-                    if (widget.cloudCall == true) {
-                      chooseCallDialog(context, index);
-                    } else {
-                      Common.dialPad(displayItem.contactNumber1);
-                    }
-                  }
-                },
-                child: Container(
-                  width: 65,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.call, color: Colors.white, size: 15),
-                        SizedBox(width: 5),
-                        Text('Call',
-                            style: TextStyle(
-                                fontFamily: "MontserratMedium",
-                                fontSize: 14,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        displayItem.callResultId == 1
+                            ? Container(
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFFd5f5f4),
+                                    borderRadius: BorderRadius.circular(5)),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 5, right: 5, top: 5, bottom: 5),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Image.asset("assets/icons/calendar.png",
+                                          width: 20),
+                                      const SizedBox(width: 15),
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Created Time',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black54,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            displayItem.createdDate.toString(),
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                        color: const Color(0xFFd5f5f4),
+                                        borderRadius: BorderRadius.circular(5)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 5, right: 5, top: 5, bottom: 5),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                              "assets/icons/calendar.png",
+                                              width: 20),
+                                          const SizedBox(width: 5),
+                                          Column(
+                                            children: [
+                                              const Text(
+                                                'Called Date',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                displayItem.isCalled == false
+                                                    ? '--'
+                                                    : displayItem.calledDate
+                                                        .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                        color: const Color(0xFFd5f5f4),
+                                        borderRadius: BorderRadius.circular(5)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 5, right: 5, top: 5, bottom: 5),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                              "assets/icons/calendar.png",
+                                              width: 20),
+                                          const SizedBox(width: 5),
+                                          Column(
+                                            children: [
+                                              const Text(
+                                                'Followup Date',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                displayItem.scheduledDate
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-    ],
-  );
-}
+              ],
+            ),
+            Column(
+              children: [
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 60),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: 20,
+                      minWidth: 20,
+                      maxHeight: 50,
+                      maxWidth: 50,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 0),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 5,
+                            offset: Offset(1, 1)),
+                      ],
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                          fit: BoxFit.cover,
+                          image:
+                              NetworkImage(displayItem.profilePic.toString())),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () async {
+                    // FIXED: Now using the index parameter
+                    if (viewLeads!.data.callPermission == false) {
+                      _showCallPermissionDialogWithItem(displayItem, index);
+                    } else {
+                      if (widget.cloudCall == true) {
+                        chooseCallDialogWithItem(context, displayItem, index);
+                      } else {
+                        Common.dialPad(displayItem.contactNumber1);
+                      }
+                    }
+                  },
+                  child: Container(
+                    width: 65,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.call, color: Colors.white, size: 15),
+                          SizedBox(width: 5),
+                          Text('Call',
+                              style: TextStyle(
+                                  fontFamily: "MontserratMedium",
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
 
   // Padding leadListWidget(BuildContext context, int index) {
   //   return Padding(
@@ -4881,85 +4903,6 @@ Widget _buildLeadContent(Detail displayItem, BuildContext context, int index) {
         ],
       ),
     );
-  }
-
-  Future<dynamic> chooseCallDialog(BuildContext context, int index) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Choose Call Type'),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () async {
-                    Common.showProgressDialog(context, "Loading..");
-                    CloudCallModel object1 = await HttpService.addCloudCall(
-                        widget.token,
-                        items[index].callMasterId.toString(),
-                        items[index].contactNumber1);
-                    if (object1.data == true) {
-                      if (context.mounted) {
-                        Common.toastMessaage(object1.message, Colors.green);
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      }
-                    } else {
-                      Common.toastMessaage(object1.message, Colors.red);
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  child: SizedBox(
-                    height: 50,
-                    child: Row(
-                      children: [
-                        Container(
-                          height: 30,
-                          width: 30,
-                          decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(5)),
-                          child: const Icon(Icons.cloud_circle_rounded,
-                              color: Colors.black),
-                        ),
-                        const SizedBox(width: 20),
-                        const Text('Cloud Call',
-                            style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                InkWell(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    Common.dialPad(items[index].contactNumber1);
-                  },
-                  child: SizedBox(
-                      height: 50,
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 30,
-                            width: 30,
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(5)),
-                            child: const Icon(Icons.call, color: Colors.black),
-                          ),
-                          const SizedBox(width: 20),
-                          const Text('Phone Call',
-                              style: TextStyle(fontSize: 18)),
-                        ],
-                      )),
-                ),
-              ],
-            ),
-          );
-        });
   }
 
   Widget _buildLoaderListItem() {

@@ -62,6 +62,8 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
     'todo': 0,
     'all': 0,
   };
+
+  Count? _totalCounts;
   bool _isCalculatingCounts = false;
 
   // @override
@@ -92,11 +94,21 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
           _selectedFilters.add('pending');
         } else if (trimmedStatus == 'todo' || trimmedStatus == 'to do') {
           _selectedFilters.add('todo');
+        } else if (trimmedStatus == 'in-progress' ||
+            trimmedStatus == 'inprogress' ||
+            trimmedStatus == 'running') {
+          _selectedFilters.add('in-progress');
         }
       }
       currentFilters['status_names'] = statusList
           .map((s) => s.trim().toLowerCase())
-          .where((s) => s == 'pending' || s == 'todo' || s == 'to do')
+          .where((s) =>
+              s == 'pending' ||
+              s == 'todo' ||
+              s == 'to do' ||
+              s == 'in-progress' ||
+              s == 'inprogress' ||
+              s == 'running')
           .toList();
       _initialStatus = widget.selectedStatus!.toLowerCase();
     }
@@ -261,6 +273,10 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
           statusIds.add('2');
         } else if (status == 'todo' || status == 'to do') {
           statusIds.add('1');
+        } else if (status == 'in-progress' ||
+            status == 'inprogress' ||
+            status == 'running') {
+          statusIds.add('4');
         }
       }
 
@@ -298,6 +314,7 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
         .then((data) {
       if (data != null && data.status && data.summary.isNotEmpty) {
         staffwiseData = data.summary;
+        _totalCounts = data.count;
         _calculateFilterCounts(data.summary);
 
         if (widget.staffId.isNotEmpty) {
@@ -487,6 +504,7 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
         'todo': 0,
         'all': 0,
       };
+      _totalCounts = null;
     });
     _loadData({});
   }
@@ -958,13 +976,20 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredStaffData!.length,
-                    itemBuilder: (context, index) {
-                      final staff = filteredStaffData![index];
-                      return _buildStaffCard(staff);
-                    },
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredStaffData!.length,
+                          itemBuilder: (context, index) {
+                            final staff = filteredStaffData![index];
+                            return _buildStaffCard(staff);
+                          },
+                        ),
+                      ),
+                      _buildBottomCountSummary(),
+                    ],
                   );
                 },
               ),
@@ -993,6 +1018,92 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
               },
             )
           : null,
+    );
+  }
+
+  Widget _buildBottomCountSummary() {
+    if (_totalCounts == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+        ),
+        child: const SizedBox.shrink(),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.assignment_outlined,
+            color: Colors.blue,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Work :',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 17, 17, 17),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _totalCounts!.workCount,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 25),
+                  const Icon(
+                    Icons.assignment_outlined,
+                    color: Colors.blue,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Task:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 22, 22, 22),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _totalCounts!.taskCount,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1336,9 +1447,9 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AssignReport(
-                        preselectedWorkId: selectedWorkId,
-                        workId: widget.workId,
-                        sectionId: "",
+                        // preselectedWorkId: selectedWorkId,
+                        workId: selectedWorkId,
+                        sectionId: widget.sectionId,
                       ),
                     ),
                   );
@@ -1412,7 +1523,6 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
 
   Widget _buildTaskItem(Task task) {
     final isTaskExpanded = _expandedTasks[task.workDetailsId] ?? true;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -1427,7 +1537,6 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Status indicator
               Container(
                 width: 6,
                 height: 40,
@@ -1441,19 +1550,35 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Task header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
-                            task.taskName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          child: GestureDetector(
+                            onTap: () {
+                              String? selectedWorkId = task.workId;
+                              if (selectedWorkId != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AssignReport(
+                                      // preselectedWorkId: selectedWorkId,
+                                      workId: selectedWorkId,
+                                      sectionId: widget.sectionId,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              task.taskName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Container(
@@ -2246,7 +2371,7 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
         return Colors.green;
       case '4': // Completed
       case 'Running':
-        return Colors.orange;
+        return const Color.fromARGB(255, 210, 255, 47);
       case '5': // Overdue
       case 'Cancelled':
         return Colors.red;

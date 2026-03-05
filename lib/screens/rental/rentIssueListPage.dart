@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/rental/rentalIssueModel.dart';
 import 'package:login2/screens/rental/addRentalIssuePage.dart';
+import 'package:login2/screens/rental/addRentalReturnPage.dart';
+import 'package:login2/screens/rental/rentIssueDetailsPage.dart';
 import 'package:login2/service/service.dart';
 
 class RentalIssueListPage extends StatefulWidget {
@@ -79,15 +81,14 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
     });
   }
 
-
   void _addRentalIssue() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const AddRentalIssuePage()),
-  ).then((_) {
-    _loadRentalIssues();
-  });
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddRentalIssuePage()),
+    ).then((_) {
+      _loadRentalIssues();
+    });
+  }
 
   Future<void> _loadCustomers() async {
     final data = await HttpService.getCustomers();
@@ -665,7 +666,12 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
   Widget _buildRentalCard(RentItem item) {
     return InkWell(
       onTap: () {
-        // Handle card tap - show details or edit
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RentIssueDetailsPage(rentId: item.rentId),
+          ),
+        ).then((_) => _loadRentalIssues());
       },
       borderRadius: BorderRadius.circular(18),
       child: Container(
@@ -806,6 +812,56 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                       ),
                       const SizedBox(height: 6),
                       _buildStatusChip(item.status, item.daysLeft),
+                      const SizedBox(height: 4),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert,
+                            size: 20, color: Colors.grey),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AddRentalIssuePage(rentId: item.rentId),
+                              ),
+                            ).then((_) => _loadRentalIssues());
+                          } else if (value == 'details') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    RentIssueDetailsPage(rentId: item.rentId),
+                              ),
+                            ).then((_) => _loadRentalIssues());
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'details',
+                            child: Row(
+                              children: [
+                                Icon(Icons.visibility_outlined,
+                                    size: 18, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text('View Details'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined,
+                                    size: 18, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -831,7 +887,7 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                   //   Colors.red,
                   // ),
                   item.isExpired
-                      ? SizedBox()
+                      ? const SizedBox()
                       : Text(
                           item.daysLabel,
                           style: TextStyle(
@@ -840,6 +896,37 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddRentalReturnPage(
+                            customerId: item.customerId,
+                            customerName: item.customerName,
+                            locationId: item.locationId,
+                            rentId: item.rentId,
+                          ),
+                        ),
+                      ).then((_) {
+                        _loadRentalIssues();
+                      });
+                    },
+                    icon: const Icon(Icons.keyboard_return, size: 14),
+                    label: const Text('Return', style: TextStyle(fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 0,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -973,7 +1060,7 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('Rental Issues'),
+        title: const Text('Rental Issues', style: TextStyle(fontSize: 18)),
         backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
         actions: [
@@ -991,42 +1078,42 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
       ),
       body: Column(
         children: [
-          if (!_isLoading && _rentData != null)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildSummaryItem(
-                    'Total',
-                    _rentData!.data.recordsTotal.toString(),
-                    Icons.list,
-                  ),
-                  _buildSummaryItem(
-                    'Active',
-                    filteredList
-                        .where((item) => !item.isExpired)
-                        .length
-                        .toString(),
-                    Icons.check_circle,
-                  ),
-                  _buildSummaryItem(
-                    'Expired',
-                    filteredList
-                        .where((item) => item.isExpired)
-                        .length
-                        .toString(),
-                    Icons.warning,
-                  ),
-                  _buildSummaryItem(
-                    'Balance',
-                    '₹${filteredList.fold<int>(0, (sum, item) => sum + item.balance)}',
-                    Icons.money,
-                  ),
-                ],
-              ),
-            ),
+          //  if (!_isLoading && _rentData != null)
+          // Container(
+          //   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          //   color: Colors.white,
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       _buildSummaryItem(
+          //         'Total',
+          //         _rentData!.data.recordsTotal.toString(),
+          //         Icons.list,
+          //       ),
+          //       _buildSummaryItem(
+          //         'Active',
+          //         filteredList
+          //             .where((item) => !item.isExpired)
+          //             .length
+          //             .toString(),
+          //         Icons.check_circle,
+          //       ),
+          //       _buildSummaryItem(
+          //         'Expired',
+          //         filteredList
+          //             .where((item) => item.isExpired)
+          //             .length
+          //             .toString(),
+          //         Icons.warning,
+          //       ),
+          //       _buildSummaryItem(
+          //         'Balance',
+          //         '₹${filteredList.fold<int>(0, (sum, item) => sum + item.balance)}',
+          //         Icons.money,
+          //       ),
+          //     ],
+          //   ),
+          // ),
 
           const SizedBox(height: 8),
 

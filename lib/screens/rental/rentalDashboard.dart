@@ -10,6 +10,7 @@ import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/rental/paymentReportListPage.dart';
 import 'package:login2/screens/rental/rentIssueListPage.dart';
 import 'package:login2/screens/rental/rentalReturnList.dart';
 import 'package:login2/service/service.dart';
@@ -394,7 +395,7 @@ class _RentalDashboardState extends State<RentalDashboard> {
           children: [
             Expanded(
               child: GestureDetector(
-                 onTap: () {
+                onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => RentalReturnListPage(),
@@ -439,14 +440,25 @@ class _RentalDashboardState extends State<RentalDashboard> {
         Row(
           children: [
             Expanded(
-              child: _statCardNew(
-                title: 'Todays Payment (${data?.todayPayment ?? 0})',
-                total: todayCash.toString(),
-                totalLabel: 'Cash Collection',
-                sub: 'Bank Collection',
-                subValue: todayBank.toString(),
-                icon: Icons.attach_money_rounded,
-                color: const Color(0xFFf093fb),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PaymentReportListPage(
+                        initialDate: _apiDateFormat.format(_selectedDate),
+                      ),
+                    ),
+                  );
+                },
+                child: _statCardNew(
+                  title: 'Todays Payment (${data?.todayPayment ?? 0})',
+                  total: todayCash.toString(),
+                  totalLabel: 'Cash Collection',
+                  sub: 'Bank Collection',
+                  subValue: todayBank.toString(),
+                  icon: Icons.attach_money_rounded,
+                  color: const Color(0xFFf093fb),
+                ),
               ),
             ),
           ],

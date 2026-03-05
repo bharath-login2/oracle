@@ -1,8 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'dart:developer';
 import 'package:app_links/app_links.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:login2/key.dart';
+import 'package:login2/screens/leadManagement/AssignReport.dart';
+import 'package:get/get.dart';
+import 'package:login2/service/service.dart';
+import 'package:login2/screens/leadManagement/leadDetails.dart';
 
 enum DeepLinkType { task, lead, unknown }
 
@@ -26,7 +32,13 @@ class DeepLinkData {
 class DeepLinkHandler {
   static final DeepLinkHandler _instance = DeepLinkHandler._internal();
   factory DeepLinkHandler() => _instance;
-  DeepLinkHandler._internal();
+  DeepLinkHandler._internal() {
+    log('[DEEPLINK] DeepLinkHandler: Instance created');
+  }
+
+  String? _lastHandledLink;
+  DateTime? _lastHandledTime;
+  static const Duration _debounceDuration = Duration(seconds: 2);
 
   final AppLinks _appLinks = AppLinks();
   static String _typeToString(DeepLinkType type) {
@@ -35,6 +47,8 @@ class DeepLinkHandler {
         return 'task';
       case DeepLinkType.lead:
         return 'lead';
+      //  case DeepLinkType.leave_request:
+      // return 'leave_request';
       case DeepLinkType.unknown:
         return 'unknown';
     }
@@ -46,6 +60,8 @@ class DeepLinkHandler {
         return DeepLinkType.task;
       case 'lead':
         return DeepLinkType.lead;
+      // case 'leave_request':
+      //   return DeepLinkType.leave_request;
       default:
         return DeepLinkType.unknown;
     }
@@ -87,6 +103,18 @@ class DeepLinkHandler {
           );
         }
       }
+      // else if (path.startsWith('/redirect/leave_request/')) {
+      //   final segments = path.split('/redirect/leave_request/');
+      //   if (segments.length > 1) {
+      //     final id = segments[1].split('?').first;
+      //     print('Parsed leave_request deep link with ID: $id');
+      //     return DeepLinkData(
+      //       type: DeepLinkType.leave_request,
+      //       id: id,
+      //       decodedId: _decodeBase64(id),
+      //     );
+      //   }
+      // }
 
       print('No matching deep link pattern found');
       return null;
@@ -137,13 +165,13 @@ class DeepLinkHandler {
   Future<bool> isUserLoggedIn() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final userId = prefs.getString('user_id');
+      final token = prefs.getString('token');
+      final userId = prefs.getString('userId');
       final isLoggedIn = token != null &&
           token.isNotEmpty &&
           userId != null &&
           userId.isNotEmpty;
-      print('User login status: $isLoggedIn');
+      log('User login status: $isLoggedIn (token present: ${token != null}, userId present: ${userId != null})');
       return isLoggedIn;
     } catch (e) {
       print('Error checking login status: $e');
@@ -224,27 +252,179 @@ class DeepLinkHandler {
   // Method to handle app link from anywhere in the app
   Future<void> handleAppLink(String? link) async {
     if (link == null) {
-      print('No link to handle');
+      log('[DEEPLINK] DeepLinkHandler: No link to handle');
       return;
     }
 
-    print('Handling app link: $link');
+    // De-duplication logic
+    final now = DateTime.now();
+    if (_lastHandledLink == link &&
+        _lastHandledTime != null &&
+        now.difference(_lastHandledTime!) < _debounceDuration) {
+      log('[DEEPLINK] DeepLinkHandler: Ignoring duplicate link within debounce period: $link');
+      return;
+    }
+
+    _lastHandledLink = link;
+    _lastHandledTime = now;
+
+    log('[DEEPLINK] DeepLinkHandler: Handling app link: $link');
 
     final data = parseDeepLink(link);
     if (data == null) {
-      print('Could not parse deep link from URL');
+      log('[DEEPLINK] DeepLinkHandler: Could not parse deep link from URL');
       return;
     }
 
     final isLoggedIn = await isUserLoggedIn();
+    log('[DEEPLINK] DeepLinkHandler: User logged in: $isLoggedIn');
 
     if (isLoggedIn) {
-      print('User is logged in, deep link can be processed immediately');
-      await storePendingDeepLink(data);
-      // The app should check for pending links and navigate
+      log('[DEEPLINK] DeepLinkHandler: User is logged in, validating and navigating');
+      final context = NoomiKeys.navKey.currentContext;
+      if (context != null) {
+        validateAndNavigate(context, data);
+      } else {
+        log('[DEEPLINK] DeepLinkHandler: Context is null, storing pending');
+        await storePendingDeepLink(data);
+      }
     } else {
-      print('User is not logged in, storing deep link for later');
+      log('[DEEPLINK] DeepLinkHandler: User not logged in, storing deep link');
       await storePendingDeepLink(data);
+    }
+  }
+
+  Future<void> validateAndNavigate(
+      BuildContext context, DeepLinkData data) async {
+    print('Validating deep link: $data');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+    bool isValid = false;
+    try {
+      if (data.type == DeepLinkType.task) {
+        final status =
+            await HttpService.getAssinedWorkStatus(data.decodedId, "");
+        if (status != null && status.data != null && status.data!.isNotEmpty) {
+          isValid = true;
+        }
+      } else if (data.type == DeepLinkType.lead) {
+        final prefs = await SharedPreferences.getInstance();
+        String? token = prefs.getString('token');
+        if (token != null) {
+          final details = await HttpService.leadDetails(token, data.decodedId);
+          if (details != null && details.data != null) {
+            isValid = true;
+          }
+        }
+      }
+      // else if (data.type == DeepLinkType.leave_request) {
+      //   final prefs = await SharedPreferences.getInstance();
+      //   String? token = prefs.getString('token');
+      //   if (token != null) {
+      //     final details = await HttpService.leadDetails(token, data.decodedId);
+      //     if (details != null && details.data != null) {
+      //       isValid = true;
+      //     }
+      //   }
+      // }
+    } catch (e) {
+      print('Error validating deep link: $e');
+    }
+
+    // Hide loading indicator
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+
+    if (isValid) {
+      handleDeepLinkNavigation(data);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Url is not valid for the current login'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void handleDeepLinkNavigation(DeepLinkData data) {
+    print('Handling deep link navigation for: $data');
+    if (data.type == DeepLinkType.task) {
+      final context = NoomiKeys.navKey.currentContext;
+      if (context != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AssignReport(
+              workId: data.decodedId,
+              sectionId: "",
+            ),
+          ),
+        );
+      } else {
+        print(
+            'Navigation context is null, attempting Get.to fallback for task');
+        Get.to(() => AssignReport(
+              workId: data.decodedId,
+              sectionId: "",
+            ));
+      }
+    } else if (data.type == DeepLinkType.lead) {
+      _handleLeadNavigation(data);
+    }
+  }
+
+  Future<void> _handleLeadNavigation(DeepLinkData data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+      String? editLead = prefs.getString("updateLeadPermission");
+      String? deleteLead = prefs.getString("deleteLeadPermission");
+      String? cloudCall = prefs.getString("cloudCallPermission");
+
+      if (token == null) {
+        print('Cannot navigate to lead: Token is null');
+        return;
+      }
+
+      bool canEdit = (editLead?.toLowerCase() == "true");
+      bool canDelete = (deleteLead?.toLowerCase() == "true");
+      bool canCloudCall = (cloudCall?.toLowerCase() == "true");
+
+      final context = NoomiKeys.navKey.currentContext;
+      if (context != null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => LeadDetails(
+              token,
+              canEdit,
+              canDelete,
+              canCloudCall,
+              data.decodedId,
+              fromDate: DateTime.now().toString(),
+              toDate: DateTime.now().toString(),
+              pageName: "notification",
+            ),
+          ),
+        );
+      } else {
+        print('Navigation context is null, attempting Get.to');
+        Get.to(() => LeadDetails(
+              token,
+              canEdit,
+              canDelete,
+              canCloudCall,
+              data.decodedId,
+              fromDate: DateTime.now().toString(),
+              toDate: DateTime.now().toString(),
+              pageName: "notification",
+            ));
+      }
+    } catch (e) {
+      print('Error navigating to lead details: $e');
     }
   }
 
@@ -252,7 +432,10 @@ class DeepLinkHandler {
   StreamSubscription<String>? _subscription;
 
   void startListening(Function(String) onLinkReceived) {
-    // In app_links 3.2.1, stringLinkStream returns String
+    if (_subscription != null) {
+      log('[DEEPLINK] DeepLinkHandler: Listener already active, skipping');
+      return;
+    }
     _subscription = _appLinks.stringLinkStream.listen((link) {
       print('Received app link via stream: $link');
       onLinkReceived(link);
@@ -260,7 +443,7 @@ class DeepLinkHandler {
       print('Error in app link stream: $error');
     });
 
-    print('Started listening to app links');
+    log('[DEEPLINK] DeepLinkHandler: Started listening to app links');
   }
 
   void stopListening() {

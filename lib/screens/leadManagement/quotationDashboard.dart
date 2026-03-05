@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,9 +21,9 @@ import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/quotationRequestPage.dart';
 import 'package:login2/service/service.dart';
-import 'package:login2/widgets/togglebutton_start.dart'; 
-import 'package:shared_preferences/shared_preferences.dart'; 
-import 'package:firebase_messaging/firebase_messaging.dart'; 
+import 'package:login2/widgets/togglebutton_start.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class QuotationDashboard extends StatefulWidget {
   const QuotationDashboard({super.key});
@@ -55,8 +56,8 @@ class _QuotationDashboardState extends State<QuotationDashboard>
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
-    String? adminCheckPermission;
-     String? firebaseToken;
+  String? adminCheckPermission;
+  String? firebaseToken;
   @override
   void initState() {
     super.initState();
@@ -79,23 +80,23 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     );
     _loadData();
     _loadDashboard();
-    _loadUserData(); 
+    _loadUserData();
     loadPrefs();
   }
 
- Future<void> loadPrefs() async {
-  firebaseToken = await FirebaseMessaging.instance.getToken();
-      LoginCheckModel? loginCheck =
-          await HttpService.loginCheck(token, firebaseToken!);
-      log(firebaseToken.toString());
-      if (loginCheck!.data == false) {
-        Common.toastMessaage('Token Expired', Colors.red);
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const Login()),
-              (Route<dynamic> route) => false);
-        }
+  Future<void> loadPrefs() async {
+    firebaseToken = await FirebaseMessaging.instance.getToken();
+    LoginCheckModel? loginCheck =
+        await HttpService.loginCheck(token, firebaseToken!);
+    log(firebaseToken.toString());
+    if (loginCheck!.data == false) {
+      Common.toastMessaage('Token Expired', Colors.red);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const Login()),
+            (Route<dynamic> route) => false);
       }
+    }
     final value = await Common.getSharedPref("multipleWorks");
     userId = await Common.getSharedPref("userId");
     token = await Common.getSharedPref("token");
@@ -109,8 +110,8 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     NewleadDashboardPermission =
         await Common.getSharedPref("NewleadDashboardPermission");
     adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
-
   }
+
   Future<void> _loadDashboard() async {
     quotationPermission =
         await Common.getSharedPref("QuotationDashboardPermission");
@@ -139,8 +140,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
 
   Future<void> _loadUserDashboard() async {
     try {
-      if (token != null) {
-      }
+      if (token != null) {}
     } catch (e) {
       print("Error loading user dashboard: $e");
     }
@@ -169,7 +169,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>  AddQuotationPage(),
+        builder: (_) => AddQuotationPage(),
       ),
     ).then((_) => _loadData());
   }
@@ -204,23 +204,24 @@ class _QuotationDashboardState extends State<QuotationDashboard>
 
   Future<bool> _showExitConfirmation() async {
     return (await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Exit App'),
-        content: const Text('Do you want to exit the application?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Do you want to exit the application?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Exit'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Exit'),
-          ),
-        ],
-      ),
-    )) ?? false;
+        )) ??
+        false;
   }
 
   void logout(BuildContext context) async {
@@ -278,8 +279,6 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -289,7 +288,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
           if (!shouldExit) {
             return false;
           }
-          SystemNavigator.pop();
+          exit(0);
           return false;
         }
         return true;
@@ -313,7 +312,7 @@ class _QuotationDashboardState extends State<QuotationDashboard>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Add user profile section
-                            //  _buildUserProfileSection(),
+                              //  _buildUserProfileSection(),
                               const SizedBox(height: 10),
                               _summaryHeader(),
                               const SizedBox(height: 20),
@@ -439,57 +438,54 @@ class _QuotationDashboardState extends State<QuotationDashboard>
             ),
           ],
         ),
-     endDrawer: DraweScreen(token!),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: Colors.black,
-            onPressed: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
-              // );
-              ProjectDashboardPermission == "true"
-                  ? Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ProjectDashboard()),
-                    )
-                  : AccountsDashboardPermission == "true"
-                      ? Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  AccountsDashboard(token: token!)),
-                        )
-                      : MenuDashboard == "true"
-                          ? Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HomePage(token)),
-                            )
-                          : RenewalDashboardPermission == "true"
-                              ? Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => RenewalDashboard()),
-                                )
-                              : NewleadDashboardPermission == "true"
-                                  ? Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              MinimalDashboard(token)),
-                                    )
-                                  : Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              Dashboard(token)),
-                                    );
-            },
-            child: Image.asset("assets/icons/menu.png", width: 25),
-          ),
+        endDrawer: DraweScreen(token!),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.black,
+          onPressed: () {
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => ProjectDashboard()),
+            // );
+            ProjectDashboardPermission == "true"
+                ? Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProjectDashboard()),
+                  )
+                : AccountsDashboardPermission == "true"
+                    ? Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                AccountsDashboard(token: token!)),
+                      )
+                    : MenuDashboard == "true"
+                        ? Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomePage(token)),
+                          )
+                        : RenewalDashboardPermission == "true"
+                            ? Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => RenewalDashboard()),
+                              )
+                            : NewleadDashboardPermission == "true"
+                                ? Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            MinimalDashboard(token)),
+                                  )
+                                : Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Dashboard(token)),
+                                  );
+          },
+          child: Image.asset("assets/icons/menu.png", width: 25),
+        ),
         bottomNavigationBar: token != null && name != null && userId != null
             ? BottomNavigation(
                 token!,

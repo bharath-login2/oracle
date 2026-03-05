@@ -15,7 +15,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/officialWhatsapp/audioPlayer.dart';
-import 'package:login2/screens/officialWhatsapp/chat_home_screen.dart';
+
 import 'package:login2/screens/officialWhatsapp/imageviewscreenBottom.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
@@ -313,23 +313,17 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: widget.nav != "Notification",
       onPopInvoked: (pop) async {
+        if (pop) return;
         if (widget.nav == "Notification") {
           token = await Common.getSharedPref("token");
-          Navigator.push(
+          Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => Dashboard(token),
-              ));
-        } else if (widget.nav == "Notification") {
-          Navigator.pop(context);
-        } else {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ChatHomeScreen(),
-              ));
+              ),
+              (route) => false);
         }
       },
       child: Scaffold(
@@ -350,18 +344,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           onTap: () async {
                             if (widget.nav == "Notification") {
                               token = await Common.getSharedPref("token");
-                              Navigator.push(
+                              Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => Dashboard(token),
-                                  ));
+                                  ),
+                                  (route) => false);
                             } else {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ChatHomeScreen(),
-                                  ));
+                              Navigator.pop(context);
                             }
                           },
                           child: const Icon(
@@ -1036,135 +1026,136 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
- Future<void> _handleMultipleImageSelection(
-    BuildContext context, String groupId) async {
-  try {
-    final pickedFiles = await ImagePicker().pickMultiImage(
-      imageQuality: 85,
-      maxWidth: 1920,
-      maxHeight: 1080,
-    );
+  Future<void> _handleMultipleImageSelection(
+      BuildContext context, String groupId) async {
+    try {
+      final pickedFiles = await ImagePicker().pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
 
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
-      List<XFile> selectedFiles = pickedFiles.toList();
-      _navigateToImageView(context, selectedFiles, groupId);
-    }
-  } catch (e) {
-    log('Error selecting images: $e');
-    Common.toastMessaage('Error selecting images', Colors.red);
-  }
-}
-
- Future<void> _handleMultipleVideoSelection(
-    BuildContext context, String groupId) async {
-  try {
-    final pickedFiles = await FilePicker.platform.pickFiles(
-      type: FileType.video,
-      allowMultiple: true,
-    );
-
-    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
-      List<XFile> selectedFiles = [];
-      
-      for (var platformFile in pickedFiles.files) {
-        if (platformFile.path != null) {
-          selectedFiles.add(XFile(platformFile.path!));
-        } else if (platformFile.bytes != null) {
-          final tempDir = Directory.systemTemp;
-          final tempFile = File('${tempDir.path}/${platformFile.name}');
-          await tempFile.writeAsBytes(platformFile.bytes!);
-          selectedFiles.add(XFile(tempFile.path));
-        }
-      }
-
-      if (selectedFiles.isNotEmpty) {
+      if (pickedFiles != null && pickedFiles.isNotEmpty) {
+        List<XFile> selectedFiles = pickedFiles.toList();
         _navigateToImageView(context, selectedFiles, groupId);
       }
+    } catch (e) {
+      log('Error selecting images: $e');
+      Common.toastMessaage('Error selecting images', Colors.red);
     }
-  } catch (e) {
-    log('Error selecting videos: $e');
-    Common.toastMessaage('Error selecting videos', Colors.red);
   }
-}
 
-Future<void> _handleMultipleAudioSelection(
-    BuildContext context, String groupId) async {
-  try {
-    final pickedFiles = await FilePicker.platform.pickFiles(
-      type: FileType.audio,
-      allowMultiple: true,
-    );
+  Future<void> _handleMultipleVideoSelection(
+      BuildContext context, String groupId) async {
+    try {
+      final pickedFiles = await FilePicker.platform.pickFiles(
+        type: FileType.video,
+        allowMultiple: true,
+      );
 
-    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
-      List<XFile> selectedFiles = [];
-      
-      for (var platformFile in pickedFiles.files) {
-        if (platformFile.path != null) {
-          selectedFiles.add(XFile(platformFile.path!));
-        } else if (platformFile.bytes != null) {
-          final tempDir = Directory.systemTemp;
-          final tempFile = File('${tempDir.path}/${platformFile.name}');
-          await tempFile.writeAsBytes(platformFile.bytes!);
-          selectedFiles.add(XFile(tempFile.path));
+      if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+        List<XFile> selectedFiles = [];
+
+        for (var platformFile in pickedFiles.files) {
+          if (platformFile.path != null) {
+            selectedFiles.add(XFile(platformFile.path!));
+          } else if (platformFile.bytes != null) {
+            final tempDir = Directory.systemTemp;
+            final tempFile = File('${tempDir.path}/${platformFile.name}');
+            await tempFile.writeAsBytes(platformFile.bytes!);
+            selectedFiles.add(XFile(tempFile.path));
+          }
+        }
+
+        if (selectedFiles.isNotEmpty) {
+          _navigateToImageView(context, selectedFiles, groupId);
         }
       }
-
-      if (selectedFiles.isNotEmpty) {
-        _navigateToImageView(context, selectedFiles, groupId);
-      }
+    } catch (e) {
+      log('Error selecting videos: $e');
+      Common.toastMessaage('Error selecting videos', Colors.red);
     }
-  } catch (e) {
-    log('Error selecting audio files: $e');
-    Common.toastMessaage('Error selecting audio files', Colors.red);
   }
-}
+
+  Future<void> _handleMultipleAudioSelection(
+      BuildContext context, String groupId) async {
+    try {
+      final pickedFiles = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: true,
+      );
+
+      if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+        List<XFile> selectedFiles = [];
+
+        for (var platformFile in pickedFiles.files) {
+          if (platformFile.path != null) {
+            selectedFiles.add(XFile(platformFile.path!));
+          } else if (platformFile.bytes != null) {
+            final tempDir = Directory.systemTemp;
+            final tempFile = File('${tempDir.path}/${platformFile.name}');
+            await tempFile.writeAsBytes(platformFile.bytes!);
+            selectedFiles.add(XFile(tempFile.path));
+          }
+        }
+
+        if (selectedFiles.isNotEmpty) {
+          _navigateToImageView(context, selectedFiles, groupId);
+        }
+      }
+    } catch (e) {
+      log('Error selecting audio files: $e');
+      Common.toastMessaage('Error selecting audio files', Colors.red);
+    }
+  }
 
   Future<void> _handleMultipleDocumentSelection(
-    BuildContext context, String groupId) async {
-  try {
-    final pickedFiles = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowMultiple: true,
-      allowedExtensions: [
-        'pdf',
-        'doc',
-        'docx',
-        'txt',
-        'rtf',
-        'odt',
-        'xls',
-        'xlsx',
-        'ppt',
-        'pptx'
-      ],
-    );
+      BuildContext context, String groupId) async {
+    try {
+      final pickedFiles = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowMultiple: true,
+        allowedExtensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'txt',
+          'rtf',
+          'odt',
+          'xls',
+          'xlsx',
+          'ppt',
+          'pptx'
+        ],
+      );
 
-    if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
-      List<XFile> selectedFiles = [];
-      
-      for (var platformFile in pickedFiles.files) {
-        if (platformFile.path != null) {
-          // Create XFile from the file path
-          selectedFiles.add(XFile(platformFile.path!));
-        } else if (platformFile.bytes != null) {
-          final tempDir = Directory.systemTemp;
-          final tempFile = File('${tempDir.path}/${platformFile.name}');
-          await tempFile.writeAsBytes(platformFile.bytes!);
-          selectedFiles.add(XFile(tempFile.path));
+      if (pickedFiles != null && pickedFiles.files.isNotEmpty) {
+        List<XFile> selectedFiles = [];
+
+        for (var platformFile in pickedFiles.files) {
+          if (platformFile.path != null) {
+            // Create XFile from the file path
+            selectedFiles.add(XFile(platformFile.path!));
+          } else if (platformFile.bytes != null) {
+            final tempDir = Directory.systemTemp;
+            final tempFile = File('${tempDir.path}/${platformFile.name}');
+            await tempFile.writeAsBytes(platformFile.bytes!);
+            selectedFiles.add(XFile(tempFile.path));
+          }
+        }
+
+        if (selectedFiles.isNotEmpty) {
+          _navigateToImageView(context, selectedFiles, groupId);
+        } else {
+          Common.toastMessaage('No valid files selected', Colors.red);
         }
       }
-
-      if (selectedFiles.isNotEmpty) {
-        _navigateToImageView(context, selectedFiles, groupId);
-      } else {
-        Common.toastMessaage('No valid files selected', Colors.red);
-      }
+    } catch (e) {
+      log('Error selecting documents: $e');
+      Common.toastMessaage(
+          'Error selecting documents: ${e.toString()}', Colors.red);
     }
-  } catch (e) {
-    log('Error selecting documents: $e');
-    Common.toastMessaage('Error selecting documents: ${e.toString()}', Colors.red);
   }
-}
 
   // Future<void> _handleMultipleAudioSelection(
   //     BuildContext context, String groupId) async {

@@ -1,0 +1,24 @@
+﻿Analyzing dashboardLeadsNewUpdated.dart...
+
+  error - dashboardLeadsNewUpdated.dart:171:8 - The name 'Staff' is defined in the libraries 'package:login2/models/expense/staffListModel.dart' and 'package:login2/models/lead_management/addLeadCommonDataModel.dart'. Try using 'as prefix' for one of the import directives, or hiding the name from all but one of the imports. - ambiguous_import
+  error - dashboardLeadsNewUpdated.dart:1323:66 - Invalid constant value. - invalid_constant
+warning - dashboardLeadsNewUpdated.dart:74:7 - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: DashboardLeadNewUpdated.token - must_be_immutable
+warning - dashboardLeadsNewUpdated.dart:110:8 - The value of the field '_isTabControllerInitialized' isn't used. Try removing the field, or using it. - unused_field
+warning - dashboardLeadsNewUpdated.dart:5164:33 - The '!' will have no effect because the receiver can't be null. Try removing the '!' operator. - unnecessary_non_null_assertion
+   info - dashboardLeadsNewUpdated.dart:547:30 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:696:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - dashboardLeadsNewUpdated.dart:885:15 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:899:20 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:903:32 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:1335:24 - Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList'. - unnecessary_to_list_in_spreads
+   info - dashboardLeadsNewUpdated.dart:1349:64 - Unnecessary use of 'toList' in a spread. Try removing the invocation of 'toList'. - unnecessary_to_list_in_spreads
+   info - dashboardLeadsNewUpdated.dart:1700:9 - Use a 'SizedBox' to add whitespace to a layout. Try using a 'SizedBox' rather than a 'Container'. - sized_box_for_whitespace
+   info - dashboardLeadsNewUpdated.dart:2954:11 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:3357:22 - The local variable '_formatter' starts with an underscore. Try renaming the variable to not start with an underscore. - no_leading_underscores_for_local_identifiers
+   info - dashboardLeadsNewUpdated.dart:3748:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - dashboardLeadsNewUpdated.dart:3880:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - dashboardLeadsNewUpdated.dart:4075:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - dashboardLeadsNewUpdated.dart:5170:35 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - dashboardLeadsNewUpdated.dart:5172:23 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+
+20 issues found.

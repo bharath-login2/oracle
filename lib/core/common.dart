@@ -28,17 +28,16 @@ class Common {
   }
 
   static String trimCountryCode({
-  required String mobileNumber,
-  required String countryCode,
-}) {
-  if (mobileNumber.isEmpty) return mobileNumber;
-  final cleanNumber = mobileNumber.replaceAll('+', '');
-  if (cleanNumber.startsWith(countryCode)) {
-    return cleanNumber.substring(countryCode.length);
+    required String mobileNumber,
+    required String countryCode,
+  }) {
+    if (mobileNumber.isEmpty) return mobileNumber;
+    final cleanNumber = mobileNumber.replaceAll('+', '');
+    if (cleanNumber.startsWith(countryCode)) {
+      return cleanNumber.substring(countryCode.length);
+    }
+    return cleanNumber;
   }
-  return cleanNumber;
-}
-
 
   static addPlus(String number) async {
     if (number.length == 12) {
@@ -75,17 +74,17 @@ class Common {
   //   final prefs = await SharedPreferences.getInstance();
   //   prefs.clear();
   // }
-  static Future<void> clearSharedPref({List<String> excludeKeys = const []}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final allKeys = prefs.getKeys();
+  static Future<void> clearSharedPref(
+      {List<String> excludeKeys = const []}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final allKeys = prefs.getKeys();
 
-  for (String key in allKeys) {
-    if (!excludeKeys.contains(key)) {
-      await prefs.remove(key);
+    for (String key in allKeys) {
+      if (!excludeKeys.contains(key)) {
+        await prefs.remove(key);
+      }
     }
   }
-}
-
 
   static getSharedPref(String key) async {
     final prefs = await SharedPreferences.getInstance();
@@ -124,6 +123,16 @@ class Common {
       if (kDebugMode) {
         print(e.toString());
       }
+    }
+  }
+
+  static openWhatsApp(String number) async {
+    final whatsappUrl = "whatsapp://send?phone=$number";
+    if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+      await launchUrl(Uri.parse(whatsappUrl));
+    } else {
+      await launchUrl(Uri.parse("https://wa.me/$number"),
+          mode: LaunchMode.externalApplication);
     }
   }
 }

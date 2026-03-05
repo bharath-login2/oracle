@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
@@ -8,14 +7,14 @@ class Config {
   static getUrl() async {
     String? url = await Common.getSharedPref("url");
     log("SharedPref URL = $url");
-     String baseUrl;
-    String? api = '/version2_0_5/Api/';
+    String baseUrl;
+    String? api = '/version2_0_6/Api/';
     if (url != null) {
-     baseUrl = url.toString() + api;
-    //  baseUrl = 'https://mentorbee.login2.co.in/index.php/v1_1_9/api/';
-   } else {
-     baseUrl = '';
-   }
+      baseUrl = url.toString() + api;
+      //  baseUrl = 'https://mentorbee.login2.co.in/index.php/v1_1_9/api/';
+    } else {
+      baseUrl = '';
+    }
     return baseUrl;
   }
 

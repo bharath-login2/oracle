@@ -1,19 +1,12 @@
-import 'dart:collection';
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:login2/models/clients/postalCodeModel.dart';
-import 'package:login2/models/expense/expense_post.dart';
-import 'package:login2/models/lead_management/districtModel.dart';
-import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
-import 'package:login2/models/lead_management/leadDetailsModel.dart';
-import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
-import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
-import 'package:login2/models/lead_management/leadSubTypeModel.dart';
-import 'package:login2/models/lead_management/listFolderName.dart';
-import 'package:login2/models/lead_management/stateModel.dart';
-import 'package:login2/screens/leadManagement/add_followup.dart';
-import 'package:login2/screens/leadManagement/editLead.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
@@ -25,11 +18,21 @@ import '../../models/lead_management/viewLeadsModel.dart';
 import '../bottom_navigation_bar.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
-import 'package:date_time_picker/date_time_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'lead_details_popup.dart'; // We'll create this file
+import '../../models/lead_management/leadFollowupAdd.dart';
+import '../../models/lead_management/leadDetailsModel.dart';
+import '../../models/lead_management/leadDetailsModelAdd.dart';
+import '../../models/lead_management/listFolderName.dart';
+import '../../models/lead_management/leadMileStoneListModel.dart';
+import '../../models/lead_management/districtModel.dart';
+import '../../models/lead_management/stateModel.dart';
+import '../../models/lead_management/fileManagerPermissionModel.dart';
+import '../../models/lead_management/leadSubTypeModel.dart';
+import '../../models/clients/postalCodeModel.dart';
+import '../../models/expense/expense_post.dart';
+import 'add_followup.dart';
+import 'lead_details_popup.dart';
+import '../../widgets/viewLeadsFilterWidget.dart';
+import 'product_details_popup.dart';
 
 // ignore: must_be_immutable
 class ViewLeadsNew extends StatefulWidget {
@@ -64,7 +67,7 @@ class ViewLeadsNew extends StatefulWidget {
   final List<String>? preservedResponseItems;
   final List<StateList>? stateDetails;
 
-  ViewLeadsNew(
+  const ViewLeadsNew(
     this.token,
     this.editLead,
     this.deleteLead,
@@ -115,6 +118,19 @@ class ViewLeadsNew extends StatefulWidget {
 
 class _ViewLeadsNewState extends State<ViewLeadsNew>
     with AutomaticKeepAliveClientMixin {
+  // Original color scheme preserved
+  static const Color appBarStart = Color(0xFF2a86c9);
+  static const Color appBarEnd = Color(0xFF406dbe);
+  static const Color callGreen = Color(0xFF4CAF50);
+  static const Color followupBlue = Color(0xFF2196F3);
+  static const Color accentOrange = Color(0xFFFF9800);
+  static const Color accentRed = Color(0xFFF44336);
+  static const Color textPrimary = Color(0xFF2C3E50);
+  static const Color textSecondary = Color(0xFF7F8C8D);
+  static const Color borderLight = Color(0xFFECF0F1);
+  static const Color backgroundLight = Color.fromARGB(255, 247, 249, 252);
+
+  // Data models
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
   LeadSubTypeModel? leadSubTypeList;
@@ -126,42 +142,46 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   ListFolderNameModel? listFolder;
   FileManagerPermissionModel? fileManagerPermission;
   PostalCodeModel? postalCodeModel;
+
+  // State variables
   bool? result = true;
   bool? result1 = true;
   DateTime? fromdate;
   DateTime? todate;
   String currentSortOrder = 'desc';
   bool sortAscending = false;
-  var outputFormat = DateFormat('yyyy-MM-dd');
+  final outputFormat = DateFormat('yyyy-MM-dd');
   dynamic status;
   dynamic staff;
   dynamic priority;
   bool? isCalled = true;
-  List selectedIUsers = [];
-  List selectedUserNumbers = [];
+  List<String> selectedIUsers = [];
+  List<String> selectedUserNumbers = [];
   bool searchField = false;
   String callMasterId = "";
   String whatsappNo = '';
   String whatsappNo1 = '';
   bool _isSelectAll = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isSearching = false;
   List<Detail> _filteredItems = [];
-  TextEditingController contactFName = TextEditingController();
-  TextEditingController contactLName = TextEditingController();
-  TextEditingController contactMobile = TextEditingController();
-  TextEditingController stateVal = TextEditingController();
-  TextEditingController pinCode = TextEditingController();
-  TextEditingController districtVal = TextEditingController();
+  final TextEditingController contactFName = TextEditingController();
+  final TextEditingController contactLName = TextEditingController();
+  final TextEditingController contactMobile = TextEditingController();
+  final TextEditingController stateVal = TextEditingController();
+  final TextEditingController pinCode = TextEditingController();
+  final TextEditingController districtVal = TextEditingController();
   List<PostOffice> postOffices = [];
   List<DistrictList> districtList = [];
   PostOffice? selectedPostOffice;
   bool isDistrictLoading = false;
   bool _isLoading = false;
   bool isFilterApplied = false;
+  bool _isCompactView = true;
+  final Set<String> _expandedLeadIds = {};
   String? StateId;
   String? DistrictId;
+
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -188,6 +208,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     Colors.green.shade800,
     Colors.blueAccent,
   ];
+
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
@@ -197,14 +218,14 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   bool isLoading = false;
   bool isInitialLoad = true;
   bool timeOut = false;
-  List checkedResponseItems = [];
-  List checkedresponseItemsName = [];
-  List checkedCategoryItems = [];
-  List checkedCategoryItemsName = [];
-  List checkedPriorityItems = [];
-  List checkedPriorityItemsName = [];
-  List checkedAssignedStaffItems = [];
-  List checkedAssignedStaffItemsName = [];
+  List<String> checkedResponseItems = [];
+  List<String> checkedresponseItemsName = [];
+  List<String> checkedCategoryItems = [];
+  List<String> checkedCategoryItemsName = [];
+  List<String> checkedPriorityItems = [];
+  List<String> checkedPriorityItemsName = [];
+  List<String> checkedAssignedStaffItems = [];
+  List<String> checkedAssignedStaffItemsName = [];
   List<String> checkedSubCategoryItems = [];
   List<String> checkedSubCategoryItemsName = [];
   List<TransferStaff> filteredStaff = [];
@@ -228,7 +249,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   bool _isDataLoaded = false;
   String? _currentCacheKey;
   final Map<String, List<dynamic>> _categorySubcategories = {};
-  Set<String> _loadedLeadIds = {};
+  final Set<String> _loadedLeadIds = {};
 
   @override
   void initState() {
@@ -236,6 +257,18 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     _initializeData();
     initListner();
     loadStates();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    contactFName.dispose();
+    contactLName.dispose();
+    contactMobile.dispose();
+    stateVal.dispose();
+    pinCode.dispose();
+    districtVal.dispose();
+    super.dispose();
   }
 
   void _initializeData() {
@@ -259,7 +292,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     staff = widget.staff;
     _handlePageSpecificLogic();
     _isDataLoaded = false;
-    _searchController = TextEditingController();
     _searchController.addListener(_onSearchChanged);
 
     getData(currentSortOrder, true, status);
@@ -280,20 +312,22 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         final name = item.clientName?.toLowerCase() ?? '';
         final phone = item.contactNumber1?.toLowerCase() ?? '';
         final staffName = item.staffName?.toLowerCase() ?? '';
+        final category = item.leadCategory?.toLowerCase() ?? '';
 
         return name.contains(_searchQuery) ||
             phone.contains(_searchQuery) ||
-            staffName.contains(_searchQuery);
+            staffName.contains(_searchQuery) ||
+            category.contains(_searchQuery);
       }).toList();
     }
   }
 
   void _showFollowupSuccessMessage() {
-    Common.toastMessaage("Followup initiated", Colors.green);
+    Common.toastMessaage("Followup initiated", followupBlue);
   }
 
   void _showCallInitiatedMessage() {
-    Common.toastMessaage("Call initiated", Colors.green);
+    Common.toastMessaage("Call initiated", callGreen);
   }
 
   void _initializeFilterItems() {
@@ -388,22 +422,20 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
 
-      // FIXED: Check if there's ANY connectivity (either mobile OR wifi)
       if (connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.wifi) ||
           connectivityResult.contains(ConnectivityResult.ethernet)) {
         setState(() {
-          result = true; // Set to true when connected
+          result = true;
         });
       } else {
         setState(() {
-          result = false; // No connectivity
+          result = false;
           isLoading = false;
         });
         return;
       }
 
-      // Load user preferences
       await _loadUserPreferences();
 
       ViewLeadsModel? apiResponse;
@@ -441,19 +473,19 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   }
 
   Future<void> _loadUserPreferences() async {
-    statusWise = await Common.getSharedPref("statusWise");
-    roleId = await Common.getSharedPref("roleId");
-    multiBranch = await Common.getSharedPref("multiBranch");
-    transferPermission = await Common.getSharedPref("transferLeads");
-    userId = await Common.getSharedPref("userId");
-    name = await Common.getSharedPref("name");
+    statusWise = await Common.getSharedPref("statusWise") ?? "";
+    roleId = await Common.getSharedPref("roleId") ?? "";
+    multiBranch = await Common.getSharedPref("multiBranch") ?? "";
+    transferPermission = await Common.getSharedPref("transferLeads") ?? "";
+    userId = await Common.getSharedPref("userId") ?? "";
+    name = await Common.getSharedPref("name") ?? "";
     phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission");
+        await Common.getSharedPref("phoneCallLogPermission") ?? "";
 
     if (statusWise == 'yes') {
-      statusWiseId = await Common.getSharedPref("statusWisId");
-      statusCatId = await Common.getSharedPref("statusCatId");
-      type = await Common.getSharedPref("type");
+      statusWiseId = await Common.getSharedPref("statusWisId") ?? "";
+      statusCatId = await Common.getSharedPref("statusCatId") ?? "";
+      type = await Common.getSharedPref("type") ?? "";
     }
 
     if (commonDetails == null) {
@@ -509,10 +541,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     final newItems = apiResponse.data.details;
     final totalLeads = apiResponse.data.totalLeads;
 
-    // Calculate if there are more items to load
     hasMore = items.length + newItems.length < totalLeads;
-
-    // Process items for display
     final itemsToAdd = _getUniqueItems(newItems, items);
 
     setState(() {
@@ -523,7 +552,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         for (var item in itemsToAdd) {
           _loadedLeadIds.add(item.callMasterId);
         }
-        page = 2; // Reset to page 2 since we just loaded page 1
+        page = 2;
       } else {
         items.addAll(itemsToAdd);
         page = currentPage + 1;
@@ -532,6 +561,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       isLoading = false;
       _isDataLoaded = true;
       isInitialLoad = false;
+      _filterItems();
     });
   }
 
@@ -646,66 +676,54 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   @override
   bool get wantKeepAlive => true;
 
-  // New method to show lead details as popup
   Future<void> _showLeadDetailsPopup(int index) async {
     if (index >= items.length) return;
 
     final displayItem =
         _searchQuery.isEmpty ? items[index] : _filteredItems[index];
 
-    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return const Center(
-          child: CircularProgressIndicator(),
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: CircularProgressIndicator(
+              color: appBarStart,
+              strokeWidth: 3,
+            ),
+          ),
         );
       },
     );
 
     try {
-      // Fetch lead details
-      final leadDetails = await HttpService.leadDetails(
-        widget.token!,
-        displayItem.callMasterId,
-      );
+      final results = await Future.wait([
+        HttpService.leadDetails(widget.token!, displayItem.callMasterId),
+        HttpService.listAddonDet(widget.token!, displayItem.callMasterId),
+        HttpService.listFolderAndFiles(
+            widget.token!, displayItem.callMasterId, ''),
+        HttpService.leadMileStone(widget.token!, displayItem.callMasterId),
+        HttpService.leadFollowupData(widget.token!, displayItem.callMasterId),
+      ]);
 
       if (!mounted) return;
 
-      // Close loading dialog
       Navigator.pop(context);
 
+      final leadDetails = results[0] as LeadDeatailsModel?;
       if (leadDetails == null) {
-        Common.toastMessaage("Failed to load lead details", Colors.red);
+        Common.toastMessaage("Failed to load lead details", accentRed);
         return;
       }
 
-      // Fetch additional data
-      final leadDetailsAdditional = await HttpService.listAddonDet(
-        widget.token!,
-        displayItem.callMasterId,
-      );
+      final leadDetailsAdditional = results[1] as LeadDeatailsModelAdd?;
+      final listFolder = results[2] as ListFolderNameModel?;
+      final mileStone = results[3] as LeadMileStoneListModel?;
+      final leadDetailsFollowup = results[4] as LeadFollowupData?;
 
-      final listFolder = await HttpService.listFolderAndFiles(
-        widget.token!,
-        displayItem.callMasterId,
-        '',
-      );
-
-      final mileStone = await HttpService.leadMileStone(
-        widget.token!,
-        displayItem.callMasterId,
-      );
-
-      final leadDetailsFollowup = await HttpService.leadFollowupData(
-        widget.token!,
-        displayItem.callMasterId,
-      );
-
-      if (!mounted) return;
-
-      // Show the popup with all data
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -731,16 +749,16 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           category: widget.category,
           leadType: widget.leadType,
           onDataChanged: () {
-            // Refresh the list when data changes
-            _refreshList();
+            _updateSingleLead(
+                index, displayItem.callMasterId, _searchQuery.isNotEmpty);
           },
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
+      Navigator.pop(context);
       Common.toastMessaage(
-          "Error loading lead details: ${e.toString()}", Colors.red);
+          "Error loading lead details: ${e.toString()}", accentRed);
     }
   }
 
@@ -753,6 +771,151 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       _isDataLoaded = false;
     });
     getData(currentSortOrder, true, status);
+  }
+
+  Future<void> _updateSingleLead(
+      int index, String callMasterId, bool isFiltered) async {
+    try {
+      final updatedDetails =
+          await HttpService.leadDetails(widget.token!, callMasterId);
+      if (updatedDetails != null && updatedDetails.data != null) {
+        final data = updatedDetails.data!;
+        setState(() {
+          bool removed = false;
+
+          bool shouldRemove = false;
+          String newStatusIdStr = data.callResultId ?? '';
+
+          if (statusWise == 'yes' && statusWiseId.isNotEmpty) {
+            if (newStatusIdStr != statusWiseId) {
+              shouldRemove = true;
+            }
+          } else if (status != null && status != "0") {
+            if (newStatusIdStr != status.toString()) {
+              shouldRemove = true;
+            }
+          } else if (checkedResponseItems.isNotEmpty) {
+            if (!checkedResponseItems.contains(newStatusIdStr)) {
+              shouldRemove = true;
+            }
+          }
+
+          if (!shouldRemove && fromdate != null && todate != null) {
+            String? nextFollowupStr = data.nextFollowupDate;
+            if (nextFollowupStr != null && nextFollowupStr.isNotEmpty) {
+              try {
+                DateTime nextDt;
+                if (nextFollowupStr.contains('-')) {
+                  if (nextFollowupStr.split('-')[0].length == 4) {
+                    nextDt = DateTime.parse(nextFollowupStr);
+                  } else {
+                    nextDt =
+                        DateFormat('dd-MM-yyyy HH:mm').parse(nextFollowupStr);
+                  }
+                } else {
+                  nextDt = DateTime.parse(nextFollowupStr);
+                }
+
+                DateTime begin =
+                    DateTime(fromdate!.year, fromdate!.month, fromdate!.day);
+                DateTime end = DateTime(
+                    todate!.year, todate!.month, todate!.day, 23, 59, 59);
+
+                if (nextDt.isBefore(begin) || nextDt.isAfter(end)) {
+                  shouldRemove = true;
+                }
+              } catch (e) {
+                log("Error parsing date in _updateSingleLead: $e");
+              }
+            }
+          }
+
+          if (shouldRemove) {
+            items.removeWhere((it) => it.callMasterId == callMasterId);
+            _filteredItems.removeWhere((it) => it.callMasterId == callMasterId);
+
+            if (viewLeads != null) {
+              viewLeads!.data.totalLeads =
+                  (viewLeads!.data.totalLeads - 1).clamp(0, 999999);
+            }
+            removed = true;
+          }
+
+          if (!removed) {
+            _updateLeadInList(items, callMasterId, data);
+            _updateLeadInList(_filteredItems, callMasterId, data);
+            _sortItemsLocally();
+          }
+        });
+      }
+    } catch (e) {
+      log("Error updating single lead: $e");
+      _refreshList();
+    }
+  }
+
+  void _updateLeadInList(List<Detail> list, String callMasterId, var data) {
+    int idx = list.indexWhere((it) => it.callMasterId == callMasterId);
+    if (idx != -1) {
+      final item = list[idx];
+      item.callResult = data.callResult ?? item.callResult;
+      item.callResultId =
+          int.tryParse(data.callResultId ?? '') ?? item.callResultId;
+      item.clientName = data.clientName ?? item.clientName;
+      item.contactNumber1 = data.contactNumber1 ?? item.contactNumber1;
+      item.staffName = data.staffName ?? item.staffName;
+      item.leadCategory = data.leadCategory ?? item.leadCategory;
+      item.leadCategoryId = data.leadCategoryId ?? item.leadCategoryId;
+      item.leadSubCategory = data.leadSubCategory ?? item.leadSubCategory;
+      item.leadSubCategoryId = data.leadSubCategoryId ?? item.leadSubCategoryId;
+      item.priority = data.priorityId ?? item.priority;
+      item.priorityName = data.priority ?? item.priorityName;
+      item.cost = data.cost ?? item.cost;
+      item.address = data.address ?? item.address;
+      item.followupDate = data.nextFollowupDate ?? item.followupDate;
+      item.calledDate = data.calledDate ?? item.calledDate;
+    }
+  }
+
+  void _sortItemsLocally() {
+    Comparator<Detail> comparator = (a, b) {
+      DateTime dateA =
+          _parseDate(a.followupDate.isNotEmpty ? a.followupDate : a.calledDate);
+      DateTime dateB =
+          _parseDate(b.followupDate.isNotEmpty ? b.followupDate : b.calledDate);
+
+      if (currentSortOrder == 'asc') {
+        return dateA.compareTo(dateB);
+      } else {
+        return dateB.compareTo(dateA);
+      }
+    };
+
+    items.sort(comparator);
+    if (_searchQuery.isNotEmpty) {
+      _filteredItems.sort(comparator);
+    }
+  }
+
+  DateTime _parseDate(String dateStr) {
+    if (dateStr.isEmpty) return DateTime(1900);
+    try {
+      if (dateStr.contains('-')) {
+        List<String> parts = dateStr.split(' ');
+        List<String> dateParts = parts[0].split('-');
+        if (dateParts[0].length == 4) {
+          return DateTime.parse(dateStr);
+        } else {
+          String formatted = "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}";
+          if (parts.length > 1) formatted += " ${parts[1]}";
+          return DateTime.parse(formatted);
+        }
+      }
+      return DateTime.parse(dateStr);
+    } catch (e) {
+      log("Error parsing date: $dateStr -> $e");
+      return DateTime(1900);
+    }
   }
 
   @override
@@ -774,17 +937,19 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
         await getData(currentSortOrder, true, status);
       },
+      color: appBarStart,
       child: result == true && timeOut == false
           ? Scaffold(
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: backgroundLight,
               appBar: _buildAppBar(),
               body: viewLeads != null && configure != null
                   ? Column(
                       children: [
                         _buildHeader(),
-                        viewLeads!.data.details.isNotEmpty
-                            ? Expanded(
-                                child: ScrollablePositionedList.builder(
+                        Expanded(
+                          child: viewLeads!.data.details.isNotEmpty
+                              ? ScrollablePositionedList.builder(
+                                  padding: const EdgeInsets.all(12),
                                   initialScrollIndex: (widget.scrollToIndex !=
                                               null &&
                                           widget.scrollToIndex! < items.length)
@@ -802,7 +967,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                       return _buildLoaderListItem();
                                     }
 
-                                    // Use filtered items when searching
                                     final itemIndex =
                                         _searchQuery.isEmpty ? index : index;
                                     final displayItems = _searchQuery.isEmpty
@@ -815,7 +979,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
                                     return Dismissible(
                                       key: Key(
-                                          '${displayItems[itemIndex].callMasterId}_${index}_${displayItems[itemIndex].hashCode}'),
+                                          '${displayItems[itemIndex].callMasterId}_$index'),
                                       background:
                                           _buildDismissibleBackground(true),
                                       secondaryBackground:
@@ -858,16 +1022,17 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                   },
                                   itemScrollController: itemScrollController,
                                   itemPositionsListener: itemPositionsListener,
-                                ),
-                              )
-                            : _buildEmptyState(),
+                                )
+                              : _buildEmptyState(),
+                        ),
                       ],
                     )
                   : _buildLoadingState(),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerDocked,
               floatingActionButton: FloatingActionButton(
-                backgroundColor: Colors.black,
+                backgroundColor: appBarStart,
+                elevation: 4,
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -875,7 +1040,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                         builder: (context) => Dashboard(widget.token)),
                   );
                 },
-                child: Image.asset("assets/icons/menu.png", width: 25),
+                child: Image.asset("assets/icons/menu.png",
+                    width: 25, color: Colors.white),
               ),
               bottomNavigationBar: configure != null
                   ? BottomNavigation(
@@ -891,20 +1057,34 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
   Widget _buildDismissibleBackground(bool isCall) {
     return Container(
-      color: isCall ? Colors.green : Colors.blue,
+      decoration: BoxDecoration(
+        color: isCall ? callGreen : followupBlue,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       child: Align(
         alignment: isCall ? Alignment.centerLeft : Alignment.centerRight,
-        child: Row(
-          mainAxisAlignment:
-              isCall ? MainAxisAlignment.start : MainAxisAlignment.end,
-          children: <Widget>[
-            SizedBox(width: isCall ? 20 : 0),
-            Icon(isCall ? Icons.call : Icons.add, color: Colors.white),
-            Text(isCall ? " Call" : "Add Followup",
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                isCall ? Icons.call : Icons.add_comment,
+                color: Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isCall ? " Call" : "Add Followup",
                 style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
-            SizedBox(width: isCall ? 0 : 20),
-          ],
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -913,57 +1093,61 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   Future<bool?> _handleFollowupAction(int index) {
     if (index >= items.length) return Future.value(false);
 
-    if (items[index].callResult != "Confirmed") {
+    final displayItem =
+        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+
+    if (displayItem.callResult != "Confirmed") {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => AddFollowup(
-                  widget.token,
-                  widget.editLead,
-                  widget.deleteLead,
-                  widget.cloudCall,
-                  items[index].callMasterId,
-                  pageName: widget.pageName,
-                  status: widget.status,
-                  staff: widget.staff,
-                  isCalled: widget.isCalled,
-                  fromDate: widget.fromDate,
-                  toDate: widget.toDate,
-                  category: widget.category,
-                  leadType: items[index].leadCategory,
-                  leadTypeId: items[index].leadCategoryId,
-                  leadSubType: items[index].leadSubCategory,
-                  leadSubTypeId: items[index].leadSubCategoryId,
-                  priorityId: items[index].priority,
-                  priority: items[index].priorityName,
-                  cost: items[index].cost,
-                  address: items[index].address,
-                  leadType1: widget.leadType,
-                  preservedFromDate: fromdate,
-                  preservedToDate: todate,
-                  preservedSortOrder: currentSortOrder,
-                  preservedSortAscending: sortAscending,
-                  preservedCategoryItems:
-                      List<String>.from(checkedCategoryItems),
-                  preservedPriorityItems:
-                      List<String>.from(checkedPriorityItems),
-                  preservedAssignedStaffItems:
-                      List<String>.from(checkedAssignedStaffItems),
-                  preservedResponseItems:
-                      List<String>.from(checkedResponseItems),
-                )),
+          builder: (context) => AddFollowup(
+            widget.token,
+            widget.editLead,
+            widget.deleteLead,
+            widget.cloudCall,
+            displayItem.callMasterId,
+            pageName: widget.pageName,
+            status: widget.status,
+            staff: widget.staff,
+            isCalled: widget.isCalled,
+            fromDate: widget.fromDate,
+            toDate: widget.toDate,
+            category: widget.category,
+            leadType: displayItem.leadCategory,
+            leadTypeId: displayItem.leadCategoryId,
+            leadSubType: displayItem.leadSubCategory,
+            leadSubTypeId: displayItem.leadSubCategoryId,
+            priorityId: displayItem.priority,
+            priority: displayItem.priorityName,
+            cost: displayItem.cost,
+            address: displayItem.address,
+            leadType1: widget.leadType,
+            preservedFromDate: fromdate,
+            preservedToDate: todate,
+            preservedSortOrder: currentSortOrder,
+            preservedSortAscending: sortAscending,
+            preservedCategoryItems: List<String>.from(checkedCategoryItems),
+            preservedPriorityItems: List<String>.from(checkedPriorityItems),
+            preservedAssignedStaffItems:
+                List<String>.from(checkedAssignedStaffItems),
+            preservedResponseItems: List<String>.from(checkedResponseItems),
+          ),
+        ),
       ).then((value) {
         _handleReturnedData(value);
       });
     } else {
       Common.toastMessaage(
-          "You can't follow up on confirmed leads", Colors.red);
+          "You can't follow up on confirmed leads", accentOrange);
     }
     return Future.value(false);
   }
 
   Future<bool?> _handleCallAction(int index) async {
     if (index >= items.length) return false;
+
+    final displayItem =
+        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
 
     try {
       if (viewLeads!.data.callPermission == false) {
@@ -974,29 +1158,33 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           await chooseCallDialog(context, index);
           return true;
         } else {
-          Common.dialPad(items[index].contactNumber1);
+          Common.dialPad(displayItem.contactNumber1);
           return true;
         }
       }
     } catch (e) {
       log("Error in call action: $e");
-      Common.toastMessaage("Failed to initiate call", Colors.red);
+      Common.toastMessaage("Failed to initiate call", accentRed);
       return false;
     }
   }
 
   void _handleLongPress(int index) {
     if (index >= items.length) return;
+
+    final displayItem =
+        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+
     setState(() {
-      items[index].isSelected = !items[index].isSelected;
-      if (items[index].isSelected) {
-        if (!selectedIUsers.contains(items[index].callMasterId)) {
-          selectedIUsers.add(items[index].callMasterId);
-          selectedUserNumbers.add(items[index].contactNumber1);
+      displayItem.isSelected = !displayItem.isSelected;
+      if (displayItem.isSelected) {
+        if (!selectedIUsers.contains(displayItem.callMasterId)) {
+          selectedIUsers.add(displayItem.callMasterId);
+          selectedUserNumbers.add(displayItem.contactNumber1);
         }
       } else {
-        selectedIUsers.remove(items[index].callMasterId);
-        selectedUserNumbers.remove(items[index].contactNumber1);
+        selectedIUsers.remove(displayItem.callMasterId);
+        selectedUserNumbers.remove(displayItem.contactNumber1);
       }
       _updateSelectAllState();
     });
@@ -1036,48 +1224,62 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   }
 
   void _showCallPermissionDialog(int index) {
+    final displayItem =
+        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+
     showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Alert !!!'),
-            content: Text(viewLeads!.data.warningMessage.toString()),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => AddFollowup(
-                              widget.token!,
-                              widget.editLead,
-                              widget.deleteLead,
-                              widget.cloudCall,
-                              viewLeads!.data.callLeadId.toString(),
-                              pageName: widget.pageName.toString(),
-                              status: widget.status,
-                              staff: widget.staff,
-                              isCalled: widget.isCalled,
-                              fromDate: widget.fromDate,
-                              toDate: widget.toDate,
-                              category: widget.category,
-                              scrollToIndex: index,
-                              // page: page,
-                              //  pageSize: page * pageSize,
-                              leadType: widget.leadType)),
-                    ).then((r) {
-                      items.clear();
-                      page = 1;
-                      getData('desc', true, status);
-                    });
-                  },
-                  child: const Text('followup')),
-            ],
-          );
-        });
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          title: const Text(
+            'Alert !!!',
+            style: TextStyle(color: accentOrange),
+          ),
+          content: Text(viewLeads!.data.warningMessage.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: appBarStart,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddFollowup(
+                      widget.token!,
+                      widget.editLead,
+                      widget.deleteLead,
+                      widget.cloudCall,
+                      viewLeads!.data.callLeadId.toString(),
+                      pageName: widget.pageName.toString(),
+                      status: widget.status,
+                      staff: widget.staff,
+                      isCalled: widget.isCalled,
+                      fromDate: widget.fromDate,
+                      toDate: widget.toDate,
+                      category: widget.category,
+                      scrollToIndex: index,
+                      leadType: widget.leadType,
+                    ),
+                  ),
+                ).then((r) {
+                  items.clear();
+                  page = 1;
+                  getData('desc', true, status);
+                });
+              },
+              child: const Text('Followup'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -1086,8 +1288,11 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       child: Container(
         padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         decoration: const BoxDecoration(
-          gradient:
-              LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [appBarStart, appBarEnd],
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.only(
@@ -1125,9 +1330,14 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
               ),
               Row(
                 children: [
-                  if (!_isSearching && selectedIUsers.isEmpty)
+                  if (selectedIUsers.isEmpty) ...[
+                    // View Toggle Button
                     InkWell(
-                      onTap: _toggleSortOrder,
+                      onTap: () {
+                        setState(() {
+                          _isCompactView = !_isCompactView;
+                        });
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 6),
@@ -1138,63 +1348,58 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                           border:
                               Border.all(color: Colors.white.withOpacity(0.3)),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              sortAscending ? 'Oldest' : 'Newest',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              sortAscending
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ],
+                        child: Icon(
+                          _isCompactView
+                              ? Icons.view_agenda_outlined
+                              : Icons.view_headline_rounded,
+                          color: Colors.white,
+                          size: 18,
                         ),
                       ),
                     ),
+                  ],
+                  InkWell(
+                    onTap: _toggleSortOrder,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            sortAscending ? 'Oldest' : 'Newest',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   if (selectedIUsers.isNotEmpty) ..._buildSelectionActions(),
                 ],
-              )
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  void _toggleSelectAll() {
-    setState(() {
-      _isSelectAll = !_isSelectAll;
-
-      if (_isSelectAll) {
-        // Select all visible items (considering search filter)
-        final itemsToSelect = _searchQuery.isEmpty ? items : _filteredItems;
-        for (var item in itemsToSelect) {
-          if (!item.isSelected) {
-            item.isSelected = true;
-            if (!selectedIUsers.contains(item.callMasterId)) {
-              selectedIUsers.add(item.callMasterId);
-              selectedUserNumbers.add(item.contactNumber1);
-            }
-          }
-        }
-      } else {
-        // Deselect all
-        for (var item in items) {
-          item.isSelected = false;
-        }
-        selectedIUsers.clear();
-        selectedUserNumbers.clear();
-      }
-    });
   }
 
   List<Widget> _buildSelectionActions() {
@@ -1213,12 +1418,12 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
               Icon(
                 _isSelectAll ? Icons.check_box : Icons.check_box_outline_blank,
                 color: Colors.white,
-                size: 20,
+                size: 18,
               ),
-              const SizedBox(width: 4),
-              Text(
+              const SizedBox(width: 2),
+              const Text(
                 'All',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -1228,120 +1433,1323 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           ),
         ),
       ),
-
-      // Selected count
-      CircleAvatar(
-        radius: 13,
-        backgroundColor: Colors.white,
-        child: Text(
-          selectedIUsers.length.toString(),
-          style: const TextStyle(color: Colors.blue, fontSize: 17),
+      const SizedBox(width: 8),
+      Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: CircleAvatar(
+          radius: 12,
+          backgroundColor: Colors.white,
+          child: Text(
+            selectedIUsers.length.toString(),
+            style: const TextStyle(color: appBarStart, fontSize: 14),
+          ),
         ),
       ),
-      const SizedBox(width: 15),
-
-      // Transfer icon
-      InkWell(
-        onTap: () {
-          if (transferPermission == "true") {
-            transferLeads(context);
-          } else {
-            _dialogue(context, "transfer permission");
-          }
-        },
-        child: const Icon(Icons.compare_arrows_rounded, color: Colors.white),
-      ),
-      const SizedBox(width: 15),
-      InkWell(
-        onTap: () {
-          if (widget.deleteLead == true) {
-            _showDeleteConfirmationDialog();
-          } else {
-            Common.toastMessaage(
-                "You don't have permission to delete", Colors.red);
-          }
-        },
-        child: const Icon(Icons.delete, color: Colors.red),
-      ),
+      const SizedBox(width: 12),
+      if (transferPermission == "true")
+        InkWell(
+          onTap: () => transferLeads(context),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child:
+                const Icon(Icons.compare_arrows_rounded, color: Colors.white),
+          ),
+        ),
+      const SizedBox(width: 8),
+      if (widget.deleteLead)
+        InkWell(
+          onTap: _showDeleteConfirmationDialog,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Icon(Icons.delete_outline_rounded, color: accentRed),
+          ),
+        ),
     ];
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      _isSelectAll = !_isSelectAll;
+
+      if (_isSelectAll) {
+        final itemsToSelect = _searchQuery.isEmpty ? items : _filteredItems;
+        for (var item in itemsToSelect) {
+          if (!item.isSelected) {
+            item.isSelected = true;
+            if (!selectedIUsers.contains(item.callMasterId)) {
+              selectedIUsers.add(item.callMasterId);
+              selectedUserNumbers.add(item.contactNumber1);
+            }
+          }
+        }
+      } else {
+        for (var item in items) {
+          item.isSelected = false;
+        }
+        selectedIUsers.clear();
+        selectedUserNumbers.clear();
+      }
+    });
   }
 
   Widget _buildHeader() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 15, right: 10, top: 15),
+        Container(
+          padding: const EdgeInsets.all(12),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                children: [
-                  const SizedBox(height: 5),
-                  Text('Total Leads : ${viewLeads!.data.totalLeads}',
+              // Total Leads Section
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.people_rounded,
+                        color: appBarStart, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Total Leads : ${viewLeads?.data.totalLeads ?? 0}',
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action Buttons Section (Filter and Search)
+              Row(
+                children: [
+                  // Filter Button
+                  InkWell(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => ViewLeadsFilterWidget(
+                          commonDetails: commonDetails,
+                          initialFilters: {
+                            'fromDate': fromdate,
+                            'toDate': todate,
+                            'statusIds':
+                                (status != null) ? [status.toString()] : [],
+                            'staffIds': checkedAssignedStaffItems,
+                            'categoryIds': checkedCategoryItems,
+                            'priorityIds': checkedPriorityItems,
+                          },
+                          onApplyFilters: (filters) {
+                            setState(() {
+                              fromdate = filters['fromDate'];
+                              todate = filters['toDate'];
+                              checkedAssignedStaffItems =
+                                  List<String>.from(filters['staffIds']);
+                              checkedCategoryItems =
+                                  List<String>.from(filters['categoryIds']);
+                              checkedPriorityItems =
+                                  List<String>.from(filters['priorityIds']);
+
+                              final statusIds =
+                                  List<String>.from(filters['statusIds']);
+                              status =
+                                  statusIds.isNotEmpty ? statusIds.first : null;
+
+                              isFilterApplied = true;
+                              _isDataLoaded = false;
+                              items.clear();
+                              page = 1;
+                            });
+                            getData(currentSortOrder, true, status);
+                          },
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: borderLight, width: 1.5),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.filter_alt_outlined,
+                          size: 22,
+                          color: Colors.blue, // change if needed
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Search Toggle Button
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        searchField = !searchField;
+                        if (!searchField) {
+                          _searchController.clear();
+                          _searchQuery = '';
+                          _filterItems();
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: searchField ? appBarStart : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: searchField ? appBarStart : borderLight,
+                            width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          searchField
+                              ? Icons.close_rounded
+                              : Icons.search_rounded,
+                          color: searchField
+                              ? Colors.white
+                              : appBarStart.withOpacity(0.8),
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              InkWell(
-                onTap: () => filtrationSheet(context),
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      color: const Color(0xFFd5f5f4),
-                      borderRadius: BorderRadius.circular(5)),
-                  child: Center(
-                      child: Image.asset("assets/icons/filter.png", width: 20)),
-                ),
-              )
             ],
           ),
         ),
-        // Add search field
-        Padding(
-          padding:
-              const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
-          child: FractionallySizedBox(
-            widthFactor: 0.97,
-            child: TextFormField(
-              controller: _searchController,
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val.toLowerCase();
-                  _filterItems();
-                });
-              },
-              style: const TextStyle(color: Colors.black),
-              decoration: InputDecoration(
-                hintText: 'Search by Customer Name, Phone, or Staff',
-                hintStyle: const TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+
+        // Expandable Search Bar
+        if (searchField)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search by name, phone or staff...',
+                  hintStyle: TextStyle(
+                      color: textSecondary.withOpacity(0.5), fontSize: 14),
+                  prefixIcon:
+                      const Icon(Icons.search, color: appBarStart, size: 20),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
               ),
             ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget leadListWidget(BuildContext context, int index) {
+    final displayItem =
+        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+
+    // Determine if this specific item should show compact or detailed view
+    // If the ID is in _expandedLeadIds, it toggles the global _isCompactView state for this item
+    bool isDetailed = _isCompactView
+        ? _expandedLeadIds.contains(displayItem.callMasterId.toString())
+        : !_expandedLeadIds.contains(displayItem.callMasterId.toString());
+
+    if (!isDetailed) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: displayItem.isSelected
+                ? appBarStart.withOpacity(0.08)
+                : backgroundLight,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: displayItem.isSelected ? appBarStart : borderLight,
+              width: displayItem.isSelected ? 2 : 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Row(
+              children: [
+                // Left Priority Indicator Bar
+                Container(
+                  width: 5,
+                  height: 75, // Approximate height for compact view
+                  color: displayItem.priority == '1'
+                      ? Colors.grey.shade300
+                      : displayItem.priority == '2'
+                          ? callGreen
+                          : displayItem.priority == '3'
+                              ? accentRed
+                              : displayItem.priority == '4'
+                                  ? textSecondary
+                                  : Colors.grey.shade300,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                displayItem.clientName == "null" ||
+                                        displayItem.clientName.isEmpty
+                                    ? "Unknown"
+                                    : displayItem.clientName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: displayItem.isCustomer
+                                      ? callGreen
+                                      : textPrimary,
+                                  decoration: displayItem.priority == "4"
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: accentRed.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: accentRed.withOpacity(0.2)),
+                              ),
+                              child: Text(
+                                displayItem.leadCategory.isEmpty
+                                    ? "General"
+                                    : displayItem.leadCategory,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: accentRed,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            if (int.tryParse(displayItem.categoryCount) !=
+                                    null &&
+                                int.parse(displayItem.categoryCount) > 1)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Container(
+                                  height: 18,
+                                  width: 18,
+                                  decoration: const BoxDecoration(
+                                    color: accentOrange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      displayItem.categoryCount.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  String id =
+                                      displayItem.callMasterId.toString();
+                                  if (_expandedLeadIds.contains(id)) {
+                                    _expandedLeadIds.remove(id);
+                                  } else {
+                                    _expandedLeadIds.add(id);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: backgroundLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.keyboard_arrow_down_rounded,
+                                    color: textSecondary, size: 20),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: displayItem.callResultId >= 0 &&
+                                        displayItem.callResultId <
+                                            _colors.length
+                                    ? _colors[displayItem.callResultId]
+                                        .withOpacity(0.1)
+                                    : accentOrange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: displayItem.callResultId >= 0 &&
+                                              displayItem.callResultId <
+                                                  _colors.length
+                                          ? _colors[displayItem.callResultId]
+                                          : accentOrange,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    displayItem.callResult.isEmpty
+                                        ? "Pending"
+                                        : displayItem.callResult,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: displayItem.callResultId >= 0 &&
+                                              displayItem.callResultId <
+                                                  _colors.length
+                                          ? _colors[displayItem.callResultId]
+                                          : accentOrange,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                _buildMiniActionButton(
+                                  icon: Icons.call,
+                                  color: callGreen,
+                                  onTap: () async {
+                                    if (viewLeads!.data.callPermission ==
+                                        false) {
+                                      _showCallPermissionDialog(index);
+                                    } else {
+                                      if (widget.cloudCall == true) {
+                                        chooseCallDialog(context, index);
+                                      } else {
+                                        Common.dialPad(
+                                            displayItem.contactNumber1);
+                                      }
+                                    }
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                _buildMiniActionButton(
+                                  icon: FontAwesomeIcons.whatsapp,
+                                  color: const Color(0xFF25D366),
+                                  onTap: () {
+                                    if (displayItem.contactNumber1.isNotEmpty) {
+                                      Common.openWhatsApp(
+                                          displayItem.contactNumber1);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                _buildMiniActionButton(
+                                  icon: Icons.inventory_2_rounded,
+                                  color: Colors.blue,
+                                  onTap: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) =>
+                                          const ProductDetailsPopup(),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: displayItem.isSelected
+              ? appBarStart.withOpacity(0.05)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+              spreadRadius: 1,
+            ),
+          ],
+          border: Border.all(
+            color: displayItem.isSelected ? appBarStart : borderLight,
+            width: displayItem.isSelected ? 2.5 : 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            // Header section
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: borderLight, width: 1.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: displayItem.priority == '1'
+                          ? Colors.grey
+                          : displayItem.priority == '2'
+                              ? callGreen
+                              : displayItem.priority == '3'
+                                  ? accentRed
+                                  : displayItem.priority == '4'
+                                      ? textSecondary
+                                      : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      displayItem.clientName == "null" ||
+                              displayItem.clientName.isEmpty
+                          ? "Unknown"
+                          : displayItem.clientName,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        decoration: displayItem.priority == "4"
+                            ? TextDecoration.lineThrough
+                            : null,
+                        decorationColor: accentRed,
+                        color: displayItem.isCustomer ? callGreen : textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      displayItem.leadCategory.isEmpty
+                          ? "General"
+                          : displayItem.leadCategory,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: accentRed,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (int.tryParse(displayItem.categoryCount) != null &&
+                      int.parse(displayItem.categoryCount) > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: GestureDetector(
+                        onTap: () async {
+                          Common.showProgressDialog(
+                              context, "Loading categories...");
+                          try {
+                            await _loadLeadDetails(
+                                displayItem.callMasterId.toString());
+                            if (context.mounted) Navigator.pop(context);
+                            if (leadDetails == null ||
+                                leadDetails!.data?.leadCategories == null) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("No Data"),
+                                      content: const Text(
+                                          "Lead categories are not available yet."),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text("OK"),
+                                        )
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                              return;
+                            }
+                            if (context.mounted) {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  final categories =
+                                      leadDetails!.data!.leadCategories!;
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    insetPadding: const EdgeInsets.all(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      constraints: BoxConstraints(
+                                        maxHeight:
+                                            MediaQuery.of(context).size.height *
+                                                0.7,
+                                        maxWidth:
+                                            MediaQuery.of(context).size.width *
+                                                0.9,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                "Lead Categories",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: appBarStart,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.close,
+                                                    color: textSecondary,
+                                                    size: 20),
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                              ),
+                                            ],
+                                          ),
+                                          const Divider(
+                                              thickness: 1, height: 12),
+                                          Expanded(
+                                            child: ListView.separated(
+                                              itemCount: categories.length,
+                                              separatorBuilder: (context, _) =>
+                                                  const Divider(
+                                                      color: borderLight,
+                                                      height: 8),
+                                              itemBuilder: (context, i) {
+                                                final category = categories[i];
+                                                return InkWell(
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                    callMasterId = category
+                                                        .callMasterId
+                                                        .toString();
+                                                    getData(
+                                                        'desc', true, status);
+                                                  },
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: borderLight),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                              category.isSelected ==
+                                                                      true
+                                                                  ? Icons
+                                                                      .check_circle
+                                                                  : Icons
+                                                                      .circle_outlined,
+                                                              size: 18,
+                                                              color: category
+                                                                          .isSelected ==
+                                                                      true
+                                                                  ? callGreen
+                                                                  : textSecondary,
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 6),
+                                                            Expanded(
+                                                              child: Text(
+                                                                category.leadCategory ??
+                                                                    "-",
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                ),
+                                                                maxLines: 1,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          6,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: (category.leadStatus ??
+                                                                            "") ==
+                                                                        "New"
+                                                                    ? appBarStart
+                                                                        .withOpacity(
+                                                                            0.1)
+                                                                    : (category.leadStatus ??
+                                                                                "") ==
+                                                                            "Follow Up"
+                                                                        ? accentOrange.withOpacity(
+                                                                            0.1)
+                                                                        : (category.leadStatus ?? "") ==
+                                                                                "Rejected"
+                                                                            ? accentRed.withOpacity(0.1)
+                                                                            : accentOrange.withOpacity(0.1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            4),
+                                                              ),
+                                                              child: Text(
+                                                                category.leadStatus ??
+                                                                    "-",
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                  color: (category.leadStatus ??
+                                                                              "") ==
+                                                                          "New"
+                                                                      ? appBarStart
+                                                                      : (category.leadStatus ?? "") ==
+                                                                              "Follow Up"
+                                                                          ? accentOrange
+                                                                          : (category.leadStatus ?? "") == "Rejected"
+                                                                              ? accentRed
+                                                                              : accentOrange,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 6),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "👤 ${category.staffName ?? "-"}",
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 11,
+                                                                color:
+                                                                    textSecondary,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              "📅 ${category.createdDate ?? "-"}",
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 11,
+                                                                color:
+                                                                    textSecondary,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          } catch (error) {
+                            if (context.mounted) Navigator.pop(context);
+                            if (context.mounted) {
+                              Common.toastMessaage(
+                                  "Failed to load categories", accentRed);
+                            }
+                          }
+                        },
+                        child: Container(
+                          height: 18,
+                          width: 18,
+                          decoration: const BoxDecoration(
+                            color: accentOrange,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              displayItem.categoryCount.toString(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        String id = displayItem.callMasterId.toString();
+                        if (_expandedLeadIds.contains(id)) {
+                          _expandedLeadIds.remove(id);
+                        } else {
+                          _expandedLeadIds.add(id);
+                        }
+                      });
+                    },
+                    child: Icon(Icons.keyboard_arrow_up_rounded,
+                        color: textSecondary, size: 22),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                children: [
+                  // Date section at top
+                  if (displayItem.callResultId == 1)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: backgroundLight,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Image.asset("assets/icons/calendar.png",
+                              width: 14, color: appBarStart),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Created: ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            displayItem.createdDate.isEmpty
+                                ? "--"
+                                : displayItem.createdDate,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: backgroundLight,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                    color: borderLight.withOpacity(0.5)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Image.asset("assets/icons/calendar.png",
+                                      width: 14, color: appBarStart),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Called: ',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      displayItem.isCalled == false
+                                          ? '--'
+                                          : (displayItem.calledDate.isEmpty
+                                              ? "--"
+                                              : displayItem.calledDate),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: backgroundLight,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                    color: borderLight.withOpacity(0.5)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Image.asset("assets/icons/calendar.png",
+                                      width: 14, color: appBarStart),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Next: ',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      displayItem.scheduledDate.isEmpty
+                                          ? "--"
+                                          : displayItem.scheduledDate,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.phone_rounded,
+                                    size: 16,
+                                    color: appBarStart.withOpacity(0.8)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  displayItem.contactNumber1.isEmpty
+                                      ? "No phone"
+                                      : displayItem.contactNumber1,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary.withOpacity(0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(Icons.person_outline_rounded,
+                                    size: 16,
+                                    color: appBarStart.withOpacity(0.8)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Assigned to : ${displayItem.staffName.isEmpty ? "Unassigned" : displayItem.staffName}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: textPrimary.withOpacity(0.7),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Profile image
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: borderLight, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          image: displayItem.profilePic.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(displayItem.profilePic),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: displayItem.profilePic.isEmpty
+                            ? const Icon(Icons.person,
+                                color: textSecondary, size: 20)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Action Buttons Row with Status
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Status Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: displayItem.callResultId >= 0 &&
+                                  displayItem.callResultId < _colors.length
+                              ? _colors[displayItem.callResultId]
+                                  .withOpacity(0.12)
+                              : accentOrange.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                              color: displayItem.callResultId >= 0 &&
+                                      displayItem.callResultId < _colors.length
+                                  ? _colors[displayItem.callResultId]
+                                      .withOpacity(0.3)
+                                  : accentOrange.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          displayItem.callResult.isEmpty
+                              ? "Pending"
+                              : displayItem.callResult,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: displayItem.callResultId >= 0 &&
+                                    displayItem.callResultId < _colors.length
+                                ? _colors[displayItem.callResultId]
+                                : accentOrange,
+                          ),
+                        ),
+                      ),
+
+                      Row(
+                        children: [
+                          // Call button
+                          InkWell(
+                            onTap: () async {
+                              if (viewLeads!.data.callPermission == false) {
+                                _showCallPermissionDialog(index);
+                              } else {
+                                if (widget.cloudCall == true) {
+                                  chooseCallDialog(context, index);
+                                } else {
+                                  Common.dialPad(displayItem.contactNumber1);
+                                }
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: callGreen,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: callGreen.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.call,
+                                      color: Colors.white, size: 14),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Call',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // WhatsApp button
+                          InkWell(
+                            onTap: () {
+                              if (displayItem.contactNumber1.isNotEmpty) {
+                                Common.openWhatsApp(displayItem.contactNumber1);
+                              }
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF25D366),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF25D366)
+                                        .withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(FontAwesomeIcons.whatsapp,
+                                    color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // View Products button
+                          InkWell(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) =>
+                                    const ProductDetailsPopup(),
+                              );
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.inventory_2_rounded,
+                                    color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: 18),
+      ),
     );
   }
 
   Widget _buildLoadingState() {
     return Center(
-      child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
+      child: Lottie.asset('assets/main/loading.json',
+          width: 350, height: 150, fit: BoxFit.fill),
     );
   }
 
@@ -1350,36 +2758,36 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       height: MediaQuery.of(context).size.height * 0.6,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 200,
-            height: 200,
+            width: 150,
+            height: 150,
             child: Image.asset("assets/icons/nodatafound.png"),
           ),
           const Text('Result Not Found',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
           const Text(
-              'Whoops... this information is \n not available for a moment',
-              style: TextStyle(fontSize: 15)),
-          const SizedBox(height: 25),
+            'No leads match your current filters',
+            style: TextStyle(fontSize: 13, color: textSecondary),
+          ),
+          const SizedBox(height: 20),
           InkWell(
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => Dashboard(widget.token)));
             },
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.4,
-              height: 40,
+              width: MediaQuery.of(context).size.width * 0.3,
+              height: 36,
               decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(10),
+                color: appBarStart,
+                borderRadius: BorderRadius.circular(4),
               ),
               child: const Center(
                 child: Text('Go Back',
                     style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         color: Colors.white,
                         fontWeight: FontWeight.w500)),
               ),
@@ -1393,63 +2801,63 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   Widget _buildErrorState() {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SizedBox(
-        width: MediaQuery.of(context).size.width * 1,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 300,
-              height: 300,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/icons/noNetwork.jpg'),
-                  fit: BoxFit.cover,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(timeOut == true
+                        ? 'assets/icons/server_error.png'
+                        : 'assets/icons/noNetwork.jpg'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
-            Text(
-              textAlign: TextAlign.center,
-              timeOut == true
-                  ? "There seems to be a temporary issue !, \n Please retry to continue"
-                  : 'No Network Found !',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            InkWell(
-              onTap: () {
-                setState(() {
-                  _isDataLoaded = false;
-                });
-                page = 1;
-                items.clear();
-                getData('desc', true, status);
-              },
-              child: SizedBox(
-                width: 120,
-                height: 35,
-                child: Padding(
-                  padding: const EdgeInsets.all(1.5),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Try Again',
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold),
-                      ),
+              const SizedBox(height: 16),
+              Text(
+                textAlign: TextAlign.center,
+                timeOut == true
+                    ? "Temporary issue!\nPlease retry"
+                    : 'No Network Found',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isDataLoaded = false;
+                    page = 1;
+                    items.clear();
+                  });
+                  getData('desc', true, status);
+                },
+                child: Container(
+                  width: 100,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: appBarStart,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Try Again',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1457,26 +2865,27 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
   void _showDeleteConfirmationDialog() {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: Text(
-                'Are you sure you want to delete ${selectedIUsers.length} selected leads?'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel')),
-              TextButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await _performBulkDelete();
-                  },
-                  child: const Text('Delete',
-                      style: TextStyle(color: Colors.red))),
-            ],
-          );
-        });
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Please Confirm'),
+          content: Text(
+              'Are you sure you want to delete ${selectedIUsers.length} selected leads?'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _performBulkDelete();
+                },
+                child:
+                    const Text('Delete', style: TextStyle(color: accentRed))),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _performBulkDelete() async {
@@ -1496,17 +2905,16 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
       if (deleteBulk.data == true) {
         Common.toastMessaage(
-            '${selectedIUsers.length} lead(s) deleted successfully',
-            Colors.green);
+            '${selectedIUsers.length} lead(s) deleted successfully', callGreen);
         _refreshListAfterDelete();
       } else {
-        Common.toastMessaage(deleteBulk.message, Colors.red);
+        Common.toastMessaage(deleteBulk.message, accentRed);
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
       }
-      Common.toastMessaage("Delete failed: ${e.toString()}", Colors.red);
+      Common.toastMessaage("Delete failed: ${e.toString()}", accentRed);
     }
   }
 
@@ -1548,54 +2956,49 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
   Future<dynamic> transferLeads(BuildContext context) {
     return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return StatefulBuilder(builder: (context, setState) {
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
             return AlertDialog(
               backgroundColor: Colors.white,
               title: const Text('Transfer'),
               content: FormField<String>(
                 builder: (FormFieldState<String> state) {
                   return Container(
-                    height: 50,
-                    width: MediaQuery.of(context).size.width * 0.43,
+                    height: 45,
+                    width: MediaQuery.of(context).size.width * 0.4,
                     decoration: BoxDecoration(
-                        border:
-                            Border.all(color: Colors.grey.shade900, width: 0),
+                        border: Border.all(color: borderLight),
                         color: Colors.white,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(5))),
+                        borderRadius: BorderRadius.circular(4)),
                     child: GestureDetector(
                       onTap: () {
                         collectedStaffDialog(context);
                       },
                       child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Center(
-                            child: Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.38,
-                                  child: Text(
-                                    staffName,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  )),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.grey.shade600,
-                              )
-                            ],
-                          ),
-                        )),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                staffName,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: textSecondary,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -1610,7 +3013,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                 TextButton(
                   onPressed: () async {
                     if (staffId.isEmpty) {
-                      Common.toastMessaage("Please select a staff", Colors.red);
+                      Common.toastMessaage("Please select a staff", accentRed);
                       return;
                     }
 
@@ -1627,8 +3030,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                           await HttpService.bulkTransferLead(body);
 
                       if (bulkTransfer.data == true) {
-                        Common.toastMessaage(
-                            bulkTransfer.message, Colors.green);
+                        Common.toastMessaage(bulkTransfer.message, callGreen);
 
                         if (context.mounted) {
                           Navigator.pop(context);
@@ -1636,7 +3038,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                           _nuclearReset();
                         }
                       } else {
-                        Common.toastMessaage(bulkTransfer.message, Colors.red);
+                        Common.toastMessaage(bulkTransfer.message, accentRed);
                         if (context.mounted) {
                           Navigator.pop(context);
                         }
@@ -1644,7 +3046,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     } catch (e) {
                       if (context.mounted) {
                         Navigator.pop(context);
-                        Common.toastMessaage("Transfer failed: $e", Colors.red);
+                        Common.toastMessaage("Transfer failed: $e", accentRed);
                       }
                     }
                   },
@@ -1652,8 +3054,10 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                 ),
               ],
             );
-          });
-        });
+          },
+        );
+      },
+    );
   }
 
   void _nuclearReset() {
@@ -1668,7 +3072,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       _filteredItems.clear();
       _searchController.clear();
       _searchQuery = '';
-      _isSearching = false;
       page = 1;
       hasMore = true;
       _isDataLoaded = false;
@@ -1696,42 +3099,46 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     return showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredStaff = commonDetails!.data.transferStaffs
-                            .where((item) => item.tranStaffName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredStaff = commonDetails!.data.transferStaffs
+                              .where((item) => item.tranStaffName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .3,
-                  width: MediaQuery.of(context).size.width * .8,
-                  child: ListView.builder(
-                    itemCount: filteredStaff.length,
-                    physics: const ScrollPhysics(),
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      return ListTile(
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .3,
+                    width: MediaQuery.of(context).size.width * .7,
+                    child: ListView.builder(
+                      itemCount: filteredStaff.length,
+                      physics: const ScrollPhysics(),
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          dense: true,
                           onTap: () {
                             staffName = filteredStaff[index].tranStaffName;
                             staffId = filteredStaff[index].tranStaffId;
@@ -1743,2547 +3150,145 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                               Navigator.pop(context);
                             }
                           },
-                          title: Text(filteredStaff[index].tranStaffName));
-                    },
-                  ),
-                )
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    filteredStaff.clear();
-                    filteredStaff.addAll(commonDetails!.data.transferStaffs);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
-            ],
-          );
-        });
-      },
-    );
-  }
-
-  Widget leadListWidget(BuildContext context, int index) {
-    // Get the correct item based on search
-    final displayItem =
-        _searchQuery.isEmpty ? items[index] : _filteredItems[index];
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 1,
-        decoration: BoxDecoration(
-          color: displayItem.isSelected == false
-              ? Colors.white
-              : Colors.blue.shade100,
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.grey,
-              offset: Offset(2.0, 2.0),
-            )
-          ],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (selectedIUsers.isNotEmpty)
-                    Row(
-                      children: [
-                        // Checkbox can be added here if needed
-                        // Checkbox(
-                        //   value: displayItem.isSelected,
-                        //   onChanged: (bool? value) {
-                        //     _handleLongPress(index);
-                        //   },
-                        // ),
-                        Expanded(
-                          child: _buildLeadContent(displayItem, context, index),
-                        ),
-                      ],
-                    )
-                  else
-                    _buildLeadContent(displayItem, context, index),
+                          title: Text(filteredStaff[index].tranStaffName,
+                              style: const TextStyle(fontSize: 13)),
+                        );
+                      },
+                    ),
+                  )
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Extract the lead content to a separate method
-  Widget _buildLeadContent(
-      Detail displayItem, BuildContext context, int index) {
-    return Column(
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * .88,
-            child: Stack(
-              children: [
-                Row(
-                  children: [
-                    if (displayItem.priority == '1')
-                      Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.grey,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    if (displayItem.priority == '2')
-                      Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    if (displayItem.priority == '3')
-                      Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    if (displayItem.priority == '4')
-                      Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    const SizedBox(width: 5),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * .46,
-                      child: Text(
-                        displayItem.clientName == "null"
-                            ? "Unknown"
-                            : displayItem.clientName.toString(),
-                        style: TextStyle(
-                            fontSize: 16,
-                            decoration: displayItem.priority == "4"
-                                ? TextDecoration.lineThrough
-                                : null,
-                            decorationThickness: 1.5,
-                            decorationColor: Colors.red,
-                            color: displayItem.isCustomer
-                                ? Colors.green
-                                : Colors.black,
-                            fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.pink.shade100,
-                            borderRadius: BorderRadius.circular(5)),
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 5, right: 5, top: 2, bottom: 2),
-                          child: Text(
-                            displayItem.leadCategory.toString(),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.red,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Visibility(
-                      visible: displayItem.categoryCount.toString() != "1" &&
-                          displayItem.categoryCount.toString() != "",
-                      child: GestureDetector(
-                        onTap: () async {
-                          Common.showProgressDialog(
-                              context, "Loading categories...");
-
-                          try {
-                            await _loadLeadDetails(
-                                displayItem.callMasterId.toString());
-                            if (context.mounted) Navigator.pop(context);
-                            if (leadDetails == null ||
-                                leadDetails!.data?.leadCategories == null) {
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("No Data"),
-                                      content: const Text(
-                                          "Lead categories are not available yet."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text("OK"),
-                                        )
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  final categories =
-                                      leadDetails!.data!.leadCategories!;
-                                  return Dialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    insetPadding: const EdgeInsets.all(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.of(context).size.height *
-                                                0.75,
-                                        maxWidth:
-                                            MediaQuery.of(context).size.width *
-                                                0.9,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Header
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text(
-                                                "Lead Categories",
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blueAccent,
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.close,
-                                                    color: Colors.grey),
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                              ),
-                                            ],
-                                          ),
-                                          const Divider(
-                                              thickness: 1, height: 16),
-                                          Expanded(
-                                            child: ListView.separated(
-                                              itemCount: categories.length,
-                                              separatorBuilder: (context, _) =>
-                                                  const Divider(
-                                                      color: Colors.grey,
-                                                      height: 12),
-                                              itemBuilder: (context, i) {
-                                                final category = categories[i];
-                                                return Card(
-                                                  elevation: 1,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: InkWell(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                    onTap: () {
-                                                      Navigator.pop(context);
-                                                      callMasterId = category
-                                                          .callMasterId
-                                                          .toString();
-                                                      getData(
-                                                          'desc', true, status);
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              12),
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Row(
-                                                            children: [
-                                                              category.isSelected ==
-                                                                      true
-                                                                  ? const Icon(
-                                                                      Icons
-                                                                          .check_circle,
-                                                                      size: 20,
-                                                                      color: Colors
-                                                                          .green)
-                                                                  : const Icon(
-                                                                      Icons
-                                                                          .circle_outlined,
-                                                                      size: 20,
-                                                                      color: Colors
-                                                                          .grey),
-                                                              const SizedBox(
-                                                                  width: 8),
-                                                              Expanded(
-                                                                child: Text(
-                                                                  category.leadCategory ??
-                                                                      "-",
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                  ),
-                                                                  maxLines: 2,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                ),
-                                                              ),
-                                                              Container(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        8,
-                                                                    vertical:
-                                                                        4),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: (category.leadStatus ??
-                                                                              "") ==
-                                                                          "New"
-                                                                      ? Colors
-                                                                          .blue
-                                                                      : (category.leadStatus ?? "") ==
-                                                                              "Follow Up"
-                                                                          ? Colors
-                                                                              .orange
-                                                                          : (category.leadStatus ?? "") == "Rejected"
-                                                                              ? Colors.red
-                                                                              : Colors.purple,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              6),
-                                                                ),
-                                                                child: Text(
-                                                                  category.leadStatus ??
-                                                                      "-",
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    color: Colors
-                                                                        .white,
-                                                                    fontSize:
-                                                                        11,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                              height: 8),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Flexible(
-                                                                child: Text(
-                                                                  "👤 ${category.staffName ?? "-"}",
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    color: Colors
-                                                                        .black54,
-                                                                  ),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                  width: 10),
-                                                              Flexible(
-                                                                child: Text(
-                                                                  "📅 ${category.createdDate ?? "-"}",
-                                                                  style:
-                                                                      const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    color: Colors
-                                                                        .black54,
-                                                                  ),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Align(
-                                            alignment: Alignment.centerRight,
-                                            child: ElevatedButton.icon(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              icon: const Icon(Icons.close,
-                                                  size: 18),
-                                              label: const Text("Close"),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Colors.blueAccent,
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 10,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          } catch (error) {
-                            if (context.mounted) Navigator.pop(context);
-                            if (context.mounted) {
-                              Common.toastMessaage(
-                                  "Failed to load categories", Colors.red);
-                            }
-                          }
-                        },
-                        child: Container(
-                          height: 20,
-                          width: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              displayItem.categoryCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.68,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayItem.contactNumber1.toString(),
-                          style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w500),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(
-                              width: 150,
-                              child: Text(
-                                'Assigned to : ${displayItem.staffName}',
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black54,
-                                    fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                  color: displayItem.callResultId >= 0 &&
-                                          displayItem.callResultId <
-                                              _colors.length
-                                      ? _colors[displayItem.callResultId]
-                                      : const Color.fromARGB(255, 245, 160, 34),
-                                  borderRadius: BorderRadius.circular(5)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, top: 2, bottom: 2),
-                                child: Text(
-                                  displayItem.callResult.toString(),
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        displayItem.callResultId == 1
-                            ? Container(
-                                decoration: BoxDecoration(
-                                    color: const Color(0xFFd5f5f4),
-                                    borderRadius: BorderRadius.circular(5)),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 5, right: 5, top: 5, bottom: 5),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Image.asset("assets/icons/calendar.png",
-                                          width: 20),
-                                      const SizedBox(width: 15),
-                                      Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Created Time',
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            displayItem.createdDate.toString(),
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                        color: const Color(0xFFd5f5f4),
-                                        borderRadius: BorderRadius.circular(5)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 5, right: 5, top: 5, bottom: 5),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                              "assets/icons/calendar.png",
-                                              width: 20),
-                                          const SizedBox(width: 5),
-                                          Column(
-                                            children: [
-                                              const Text(
-                                                'Called Date',
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                displayItem.isCalled == false
-                                                    ? '--'
-                                                    : displayItem.calledDate
-                                                        .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                        color: const Color(0xFFd5f5f4),
-                                        borderRadius: BorderRadius.circular(5)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 5, right: 5, top: 5, bottom: 5),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                              "assets/icons/calendar.png",
-                                              width: 20),
-                                          const SizedBox(width: 5),
-                                          Column(
-                                            children: [
-                                              const Text(
-                                                'Followup Date',
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                displayItem.scheduledDate
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              children: [
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 60),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minHeight: 20,
-                      minWidth: 20,
-                      maxHeight: 50,
-                      maxWidth: 50,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 0),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.grey,
-                            blurRadius: 5,
-                            offset: Offset(1, 1)),
-                      ],
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                          fit: BoxFit.cover,
-                          image:
-                              NetworkImage(displayItem.profilePic.toString())),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                InkWell(
-                  onTap: () async {
-                    if (viewLeads!.data.callPermission == false) {
-                      _showCallPermissionDialog(index);
-                    } else {
-                      if (widget.cloudCall == true) {
-                        chooseCallDialog(context, index);
-                      } else {
-                        Common.dialPad(displayItem.contactNumber1);
-                      }
-                    }
-                  },
-                  child: Container(
-                    width: 65,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.call, color: Colors.white, size: 15),
-                          SizedBox(width: 5),
-                          Text('Call',
-                              style: TextStyle(
-                                  fontFamily: "MontserratMedium",
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-
-  Future<Object?> filtrationSheet(BuildContext context) {
-    return showGeneralDialog(
-      barrierLabel: "showGeneralDialog",
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.6),
-      transitionDuration: const Duration(milliseconds: 400),
-      context: context,
-      pageBuilder: (context, _, __) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Align(
-              alignment: Alignment.bottomCenter,
-              child: IntrinsicHeight(
-                child: Container(
-                  width: double.maxFinite,
-                  clipBehavior: Clip.antiAlias,
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.white,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Filtration',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('From Date',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  const SizedBox(height: 5),
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.43,
-                                    child: Center(
-                                      child: DateTimePicker(
-                                        decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            prefixIcon: const Icon(
-                                              Icons.arrow_right,
-                                              color: Colors.grey,
-                                            ),
-                                            counterText: "",
-                                            hintText: 'From Date',
-                                            isDense: true,
-                                            border: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.purple.shade100),
-                                                borderRadius:
-                                                    BorderRadius.circular(5))),
-                                        initialValue: fromdate.toString(),
-                                        type: DateTimePickerType.date,
-                                        firstDate: DateTime(1995),
-                                        lastDate: DateTime.now()
-                                            .add(const Duration(days: 365)),
-                                        validator: (value) => null,
-                                        onChanged: (value) {
-                                          if (value.isNotEmpty) {
-                                            setState(() {
-                                              fromdate = DateTime.parse(value);
-                                            });
-                                          }
-                                        },
-                                        onSaved: (value) {
-                                          if (value!.isNotEmpty) {
-                                            fromdate = DateTime.parse(value);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('To Date',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  const SizedBox(height: 5),
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.43,
-                                    child: Center(
-                                      child: DateTimePicker(
-                                        decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            prefixIcon: const Icon(
-                                              Icons.arrow_right,
-                                              color: Colors.grey,
-                                            ),
-                                            counterText: "",
-                                            hintText: 'To Date',
-                                            isDense: true,
-                                            border: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.purple.shade100),
-                                                borderRadius:
-                                                    BorderRadius.circular(5))),
-                                        initialValue: todate.toString(),
-                                        type: DateTimePickerType.date,
-                                        firstDate: DateTime(1995),
-                                        lastDate: DateTime.now()
-                                            .add(const Duration(days: 365)),
-                                        validator: (value) => null,
-                                        onChanged: (value) {
-                                          if (value.isNotEmpty) {
-                                            setState(() {
-                                              todate = DateTime.parse(value);
-                                            });
-                                          }
-                                        },
-                                        onSaved: (value) {
-                                          if (value!.isNotEmpty) {
-                                            todate = DateTime.parse(value);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (multiBranch == 'true' && roleId == '2')
-                            _buildBranchFilter(setState),
-                          if (widget.pageName == "Total Called" ||
-                              widget.pageName == "Missed Leads")
-                            _buildStatusFilter(setState),
-                          _buildCategoryFilter(setState),
-                          _buildPriorityFilter(setState),
-                          _buildStateDistrictFilter(setState),
-                          _buildAssignedStaffFilter(setState),
-                          if (widget.pageName == "Total Called")
-                            _buildCallResponseFilter(setState),
-                          const SizedBox(height: 25),
-                          Container(
-                            height: 40,
-                            width: double.maxFinite,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3375e0),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(8)),
-                            ),
-                            child: RawMaterialButton(
-                              onPressed: () {
-                                setState(() {
-                                  isFilterApplied = true;
-                                  _isDataLoaded = false;
-                                });
-                                items.clear();
-                                page = 1;
-                                pageSize = 20;
-                                getData('desc', true, status);
-                                Navigator.of(context, rootNavigator: true)
-                                    .pop();
-                              },
-                              child: const Center(
-                                child: Text(
-                                  'Continue',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-      transitionBuilder: (_, animation1, __, child) {
-        return SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
-              .animate(animation1),
-          child: child,
-        );
-      },
-    );
-  }
-
-  Widget _buildBranchFilter(StateSetter setState) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 13),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Branch',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 5),
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.95,
-            child: FormField<String>(
-              builder: (FormFieldState<String> state) {
-                return Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade900, width: 1),
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.all(Radius.circular(5))),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: const Padding(
-                          padding: EdgeInsets.only(left: 20),
-                          child: Text('Branch')),
-                      value: branch,
-                      items: commonDetails?.data.branch.map((data) {
-                        return DropdownMenuItem(
-                          value: data.branchId.toString(),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 20),
-                            child: Text(data.branchName.toString()),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (newValue1) async {
-                        setState(() {
-                          branch = newValue1;
-                        });
-                        commonDetails = await HttpService.addLeadCommonData(
-                            widget.token,
-                            branchId: branch);
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusFilter(StateSetter setState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 13),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Status',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 5),
-            FormField<String>(
-              builder: (FormFieldState<String> state) {
-                return Container(
-                  width: MediaQuery.of(context).size.width * 1,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade900, width: 0),
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.all(Radius.circular(5))),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: const Padding(
-                          padding: EdgeInsets.only(left: 20),
-                          child: Text('Status')),
-                      value: status,
-                      items: commonDetails?.data.callResult.map((data) {
-                        return DropdownMenuItem(
-                          value: data.callResultId.toString(),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 20),
-                            child: Text(data.callResult.toString()),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          status = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryFilter(StateSetter setState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 13),
-        const Text('Lead Category'),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: () {
-            _showCategorySelectionDialog(setState);
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width * 1,
-            height: 50,
-            decoration: BoxDecoration(
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: checkedCategoryItems.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-                    child: Text('Lead Category'))
-                : Padding(
-                    padding: const EdgeInsets.only(right: 40),
-                    child: SizedBox(
-                      height: 35,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: checkedCategoryItemsName.length,
-                        itemBuilder: (context, i) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {});
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey, width: 0),
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(6),
-                                            bottomLeft: Radius.circular(6))),
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                              checkedCategoryItemsName[i],
-                                              style: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  const Text('Please Confirm'),
-                                              content: const Text(
-                                                  'Are you sure to Remove this Category?'),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(),
-                                                    child: const Text('No')),
-                                                TextButton(
-                                                    onPressed: () async {
-                                                      setState(() {
-                                                        checkedCategoryItemsName
-                                                            .remove(
-                                                                checkedCategoryItemsName[
-                                                                    i]);
-                                                        checkedCategoryItems.remove(
-                                                            checkedCategoryItems[
-                                                                i]);
-                                                      });
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('Yes')),
-                                              ],
-                                            );
-                                          });
-                                    },
-                                    child: Container(
-                                      height: 35,
-                                      width: 30,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey, width: 0),
-                                          color: Colors.grey.shade100,
-                                          borderRadius: const BorderRadius.only(
-                                              topRight: Radius.circular(6),
-                                              bottomRight: Radius.circular(6))),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-        if (_hasSelectedCategoriesWithSubcategories())
-          _buildSubCategoryFilter(setState),
-      ],
-    );
-  }
-
-  bool _hasSelectedCategoriesWithSubcategories() {
-    return checkedCategoryItems.isNotEmpty;
-  }
-
-  Widget _buildSubCategoryFilter(StateSetter setState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 13),
-        const Text('Lead Sub Category'),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: () {
-            _showSubCategorySelectionDialog(setState);
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width * 1,
-            height: 50,
-            decoration: BoxDecoration(
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: checkedSubCategoryItems.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-                    child: Text('Lead Sub Category'))
-                : Padding(
-                    padding: const EdgeInsets.only(right: 40),
-                    child: SizedBox(
-                      height: 35,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: checkedSubCategoryItemsName.length,
-                        itemBuilder: (context, i) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {});
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey, width: 0),
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(6),
-                                            bottomLeft: Radius.circular(6))),
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                              checkedSubCategoryItemsName[i],
-                                              style: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  const Text('Please Confirm'),
-                                              content: const Text(
-                                                  'Are you sure to Remove this Sub Category?'),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(),
-                                                    child: const Text('No')),
-                                                TextButton(
-                                                    onPressed: () async {
-                                                      setState(() {
-                                                        checkedSubCategoryItemsName
-                                                            .remove(
-                                                                checkedSubCategoryItemsName[
-                                                                    i]);
-                                                        checkedSubCategoryItems
-                                                            .remove(
-                                                                checkedSubCategoryItems[
-                                                                    i]);
-                                                      });
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('Yes')),
-                                              ],
-                                            );
-                                          });
-                                    },
-                                    child: Container(
-                                      height: 35,
-                                      width: 30,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey, width: 0),
-                                          color: Colors.grey.shade100,
-                                          borderRadius: const BorderRadius.only(
-                                              topRight: Radius.circular(6),
-                                              bottomRight: Radius.circular(6))),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showCategorySelectionDialog(StateSetter setState) {
-    TextEditingController searchController = TextEditingController();
-    List<LeadCategory> filteredList =
-        List.from(commonDetails!.data.leadCategory);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, dialogSetState) {
-            return AlertDialog(
-              scrollable: true,
-              title: const Text('Lead Category'),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.55,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchController,
-                      onChanged: (value) {
-                        dialogSetState(() {
-                          filteredList = commonDetails!.data.leadCategory
-                              .where((cat) => cat.leadCategory
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Search",
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 10),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: filteredList.length,
-                        itemBuilder: (context, ind) {
-                          final category = filteredList[ind];
-                          final isSelected = checkedCategoryItems
-                              .contains(category.leadCategoryId.toString());
-                          return InkWell(
-                            onTap: () async {
-                              if (!isSelected) {
-                                final subTypeResponse =
-                                    await HttpService.leadSubType(
-                                        category.leadCategoryId.toString());
-
-                                dialogSetState(() {
-                                  checkedCategoryItems
-                                      .add(category.leadCategoryId.toString());
-                                  checkedCategoryItemsName
-                                      .add(category.leadCategory);
-                                  _categorySubcategories[
-                                          category.leadCategoryId.toString()] =
-                                      subTypeResponse?.data ?? [];
-                                });
-                              } else {
-                                dialogSetState(() {
-                                  checkedCategoryItems.remove(
-                                      category.leadCategoryId.toString());
-                                  checkedCategoryItemsName
-                                      .remove(category.leadCategory);
-                                  _removeSubcategoriesForCategory(
-                                      category.leadCategoryId.toString());
-                                });
-                              }
-                            },
-                            child: Container(
-                              height: 45,
-                              alignment: Alignment.centerLeft,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.blue.shade50
-                                    : Colors.transparent,
-                                border: Border(
-                                  left: BorderSide(
-                                    color: isSelected
-                                        ? Colors.blue
-                                        : Colors.transparent,
-                                    width: 3,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    isSelected
-                                        ? Icons.check_circle
-                                        : Icons.radio_button_unchecked,
-                                    color:
-                                        isSelected ? Colors.blue : Colors.grey,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      category.leadCategory,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w500
-                                            : FontWeight.normal,
-                                        color: isSelected
-                                            ? Colors.blue.shade800
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {});
-                  },
-                  child: const Text('Apply'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showSubCategorySelectionDialog(StateSetter setState) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, dialogSetState) {
-            return AlertDialog(
-              scrollable: true,
-              title: const Text('Lead Sub Category'),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.5,
-                child: ListView.builder(
-                  itemCount: _getAllSubcategories().length,
-                  itemBuilder: (context, index) {
-                    final subCategory = _getAllSubcategories()[index];
-                    final isSelected = checkedSubCategoryItems
-                        .contains(subCategory.leadSubCategoryId.toString());
-
-                    return CheckboxListTile(
-                      title: SizedBox(
-                        width: 200,
-                        child: Text(
-                          subCategory.leadSubCategory!,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      value: isSelected,
-                      onChanged: (bool? value) {
-                        dialogSetState(() {
-                          if (value == true) {
-                            checkedSubCategoryItems
-                                .add(subCategory.leadSubCategoryId.toString());
-                            checkedSubCategoryItemsName
-                                .add(subCategory.leadSubCategory!);
-                          } else {
-                            checkedSubCategoryItems.remove(
-                                subCategory.leadSubCategoryId.toString());
-                            checkedSubCategoryItemsName
-                                .remove(subCategory.leadSubCategory!);
-                          }
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
-                    );
-                  },
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {});
-                  },
-                  child: const Text('Apply'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  List<dynamic> _getAllSubcategories() {
-    List<dynamic> allSubcategories = [];
-    for (var categoryId in checkedCategoryItems) {
-      if (_categorySubcategories.containsKey(categoryId)) {
-        allSubcategories.addAll(_categorySubcategories[categoryId]!);
-      }
-    }
-    return allSubcategories;
-  }
-
-  void _removeSubcategoriesForCategory(String categoryId) {
-    final subcategoriesToRemove = _categorySubcategories[categoryId] ?? [];
-    for (var subCategory in subcategoriesToRemove) {
-      checkedSubCategoryItems.remove(subCategory.leadSubCategoryId.toString());
-      checkedSubCategoryItemsName.remove(subCategory.leadSubCategory);
-    }
-  }
-
-  Widget _buildPriorityFilter(StateSetter setState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 13),
-        const Text('Priority'),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: () {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    scrollable: true,
-                    title: const Text('Priority'),
-                    content: SizedBox(
-                      height: MediaQuery.of(context).size.height * .23,
-                      width: MediaQuery.of(context).size.height * .8,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: commonDetails?.data.priority.length ?? 0,
-                        itemBuilder: (context, ind) {
-                          return CheckboxListTile(
-                            title: SizedBox(
-                              width: 200,
-                              child: Text(
-                                commonDetails!.data.priority[ind].priority
-                                    .toString(),
-                                style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 14),
-                              ),
-                            ),
-                            value: checkedPriorityItems.contains(commonDetails!
-                                .data.priority[ind].priorityId
-                                .toString()),
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                setState(() {
-                                  checkedPriorityItems.add(commonDetails!
-                                      .data.priority[ind].priorityId
-                                      .toString());
-                                  checkedPriorityItemsName.add(commonDetails!
-                                      .data.priority[ind].priority
-                                      .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              } else {
-                                setState(() {
-                                  checkedPriorityItems.remove(commonDetails!
-                                      .data.priority[ind].priorityId
-                                      .toString());
-                                  checkedPriorityItemsName.remove(commonDetails!
-                                      .data.priority[ind].priority
-                                      .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              }
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                });
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width * 1,
-            height: 50,
-            decoration: BoxDecoration(
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: checkedPriorityItems.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-                    child: Text('Priority'))
-                : Padding(
-                    padding: const EdgeInsets.only(right: 40),
-                    child: SizedBox(
-                      height: 35,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: checkedPriorityItemsName.length,
-                        itemBuilder: (context, i) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {});
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey, width: 0),
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(6),
-                                            bottomLeft: Radius.circular(6))),
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                              checkedPriorityItemsName[i],
-                                              style: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  const Text('Please Confirm'),
-                                              content: const Text(
-                                                  'Are you sure to Remove this Number?'),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(),
-                                                    child: const Text('No')),
-                                                TextButton(
-                                                    onPressed: () async {
-                                                      setState(() {
-                                                        checkedPriorityItemsName
-                                                            .remove(
-                                                                checkedPriorityItemsName[
-                                                                    i]);
-                                                        checkedPriorityItems.remove(
-                                                            checkedPriorityItems[
-                                                                i]);
-                                                      });
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('Yes')),
-                                              ],
-                                            );
-                                          });
-                                    },
-                                    child: Container(
-                                      height: 35,
-                                      width: 30,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey, width: 0),
-                                          color: Colors.grey.shade100,
-                                          borderRadius: const BorderRadius.only(
-                                              topRight: Radius.circular(6),
-                                              bottomRight: Radius.circular(6))),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStateDistrictFilter(StateSetter setState) {
-    return Column(
-      children: [
-        const SizedBox(height: 10),
-        SizedBox(
-          width: 337,
-          child: TextFormField(
-            controller: stateVal,
-            readOnly: true,
-            onTap: () async {
-              final selectedState = await selectStateDialog(context);
-              if (selectedState != null) {
-                setState(() {
-                  stateVal.text = selectedState.name;
-                  StateId = selectedState.id;
-                  districtVal.clear();
-                  districtList = [];
-                  isDistrictLoading = true;
-                });
-
-                final result = await HttpService.getDistrict(StateId!);
-                setState(() {
-                  districtList = result?.data ?? [];
-                  isDistrictLoading = false;
-                  if (districtList.isNotEmpty) {
-                    DistrictId = districtList.first.id;
-                    districtVal.text = districtList.first.name;
-                  }
-                });
-              }
-            },
-            decoration: const InputDecoration(
-              labelText: 'State',
-              prefixIcon: Icon(Icons.arrow_drop_down_circle_outlined,
-                  color: Colors.grey),
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (!isDistrictLoading && districtList.isNotEmpty)
-          SizedBox(
-            width: 337,
-            child: DropdownButtonFormField<DistrictList>(
-              value: districtList.firstWhere((d) => d.id == DistrictId,
-                  orElse: () => districtList.first),
-              decoration: const InputDecoration(
-                  labelText: 'Select District', border: OutlineInputBorder()),
-              items: districtList.map((d) {
-                return DropdownMenuItem<DistrictList>(
-                  value: d,
-                  child: Text(d.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  DistrictId = value?.id;
-                  districtVal.text = value?.name ?? '';
-                });
-              },
-            ),
-          ),
-        if (isDistrictLoading) const Center(child: CircularProgressIndicator()),
-      ],
-    );
-  }
-
-  Widget _buildAssignedStaffFilter(StateSetter setState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 13),
-        const Text('Assigned Staff'),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: () {
-            showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    scrollable: true,
-                    title: const Text('Assign Staff'),
-                    content: SizedBox(
-                      height: MediaQuery.of(context).size.height * .32,
-                      width: MediaQuery.of(context).size.height * .8,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: commonDetails?.data.staff.length ?? 0,
-                        itemBuilder: (context, ind) {
-                          return CheckboxListTile(
-                            title: SizedBox(
-                              width: 200,
-                              child: Text(
-                                commonDetails!.data.staff[ind].staffName
-                                    .toString(),
-                                style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 14),
-                              ),
-                            ),
-                            value: checkedAssignedStaffItems.contains(
-                                commonDetails!.data.staff[ind].userId
-                                    .toString()),
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                setState(() {
-                                  checkedAssignedStaffItems.add(commonDetails!
-                                      .data.staff[ind].userId
-                                      .toString());
-                                  checkedAssignedStaffItemsName.add(
-                                      commonDetails!.data.staff[ind].staffName
-                                          .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              } else {
-                                setState(() {
-                                  checkedAssignedStaffItems.remove(
-                                      commonDetails!.data.staff[ind].userId
-                                          .toString());
-                                  checkedAssignedStaffItemsName.remove(
-                                      commonDetails!.data.staff[ind].staffName
-                                          .toString());
-                                  Navigator.pop(context, true);
-                                });
-                              }
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                });
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width * 1,
-            height: 50,
-            decoration: BoxDecoration(
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: checkedAssignedStaffItems.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-                    child: Text('Assigned Staff'))
-                : Padding(
-                    padding: const EdgeInsets.only(right: 40),
-                    child: SizedBox(
-                      height: 35,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: checkedAssignedStaffItemsName.length,
-                        itemBuilder: (context, i) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {});
-                              },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey, width: 0),
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(6),
-                                            bottomLeft: Radius.circular(6))),
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Text(
-                                              checkedAssignedStaffItemsName[i],
-                                              style: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  const Text('Please Confirm'),
-                                              content: const Text(
-                                                  'Are you sure to Remove this Number?'),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(),
-                                                    child: const Text('No')),
-                                                TextButton(
-                                                    onPressed: () async {
-                                                      setState(() {
-                                                        checkedAssignedStaffItemsName
-                                                            .remove(
-                                                                checkedAssignedStaffItemsName[
-                                                                    i]);
-                                                        checkedAssignedStaffItems
-                                                            .remove(
-                                                                checkedAssignedStaffItems[
-                                                                    i]);
-                                                      });
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('Yes')),
-                                              ],
-                                            );
-                                          });
-                                    },
-                                    child: Container(
-                                      height: 35,
-                                      width: 30,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey, width: 0),
-                                          color: Colors.grey.shade100,
-                                          borderRadius: const BorderRadius.only(
-                                              topRight: Radius.circular(6),
-                                              bottomRight: Radius.circular(6))),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCallResponseFilter(StateSetter setState) {
-    return Visibility(
-      visible: widget.pageName == "Total Called",
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 13),
-          const Text('Call Response',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 5),
-          InkWell(
-            onTap: () {
-              showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      scrollable: true,
-                      title: const Text('Call Response'),
-                      content: SizedBox(
-                        height: MediaQuery.of(context).size.height * .32,
-                        width: MediaQuery.of(context).size.width * .8,
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount:
-                              commonDetails?.data.callResponseStatus.length ??
-                                  0,
-                          itemBuilder: (context, ind) {
-                            return CheckboxListTile(
-                              title: SizedBox(
-                                width: 200,
-                                child: Text(
-                                  commonDetails!
-                                      .data.callResponseStatus[ind].callResponse
-                                      .toString(),
-                                  style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 14),
-                                ),
-                              ),
-                              value: checkedResponseItems.contains(
-                                  commonDetails!.data.callResponseStatus[ind]
-                                      .callResponseId
-                                      .toString()),
-                              onChanged: (bool? value) {
-                                if (value == true) {
-                                  setState(() {
-                                    checkedResponseItems.add(commonDetails!.data
-                                        .callResponseStatus[ind].callResponseId
-                                        .toString());
-                                    checkedresponseItemsName.add(commonDetails!
-                                        .data
-                                        .callResponseStatus[ind]
-                                        .callResponse
-                                        .toString());
-                                    Navigator.pop(context, true);
-                                  });
-                                } else {
-                                  setState(() {
-                                    checkedResponseItems.remove(commonDetails!
-                                        .data
-                                        .callResponseStatus[ind]
-                                        .callResponseId
-                                        .toString());
-                                    checkedresponseItemsName.remove(
-                                        commonDetails!
-                                            .data
-                                            .callResponseStatus[ind]
-                                            .callResponse
-                                            .toString());
-                                    Navigator.pop(context, true);
-                                  });
-                                }
-                              },
-                              controlAffinity: ListTileControlAffinity.leading,
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  });
-            },
-            child: Container(
-              width: MediaQuery.of(context).size.width * 1,
-              height: 50,
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: checkedResponseItems.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.only(left: 10, top: 15, bottom: 10),
-                      child: Text('Call Response'))
-                  : Padding(
-                      padding: const EdgeInsets.only(right: 40),
-                      child: SizedBox(
-                        height: 35,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: checkedresponseItemsName.length,
-                          itemBuilder: (context, i) {
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 5, right: 5),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {});
-                                },
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey, width: 0),
-                                          color: Colors.white,
-                                          borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(6),
-                                              bottomLeft: Radius.circular(6))),
-                                      child: Center(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.all(10),
-                                              child: Text(
-                                                checkedresponseItemsName[i],
-                                                style: const TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: const Text(
-                                                    'Please Confirm'),
-                                                content: const Text(
-                                                    'Are you sure to Remove this Number?'),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.of(context)
-                                                              .pop(),
-                                                      child: const Text('No')),
-                                                  TextButton(
-                                                      onPressed: () async {
-                                                        setState(() {
-                                                          checkedresponseItemsName
-                                                              .remove(
-                                                                  checkedresponseItemsName[
-                                                                      i]);
-                                                          checkedResponseItems
-                                                              .remove(
-                                                                  checkedResponseItems[
-                                                                      i]);
-                                                        });
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child: const Text('Yes')),
-                                                ],
-                                              );
-                                            });
-                                      },
-                                      child: Container(
-                                        height: 35,
-                                        width: 30,
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Colors.grey, width: 0),
-                                            color: Colors.grey.shade100,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                                    topRight:
-                                                        Radius.circular(6),
-                                                    bottomRight:
-                                                        Radius.circular(6))),
-                                        child: const Icon(Icons.close,
-                                            color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<dynamic> chooseCallDialog(BuildContext context, int index) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Choose Call Type'),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () async {
-                    Common.showProgressDialog(context, "Loading..");
-                    CloudCallModel object1 = await HttpService.addCloudCall(
-                        widget.token,
-                        items[index].callMasterId.toString(),
-                        items[index].contactNumber1);
-                    if (object1.data == true) {
+                    onPressed: () {
+                      filteredStaff.clear();
+                      filteredStaff.addAll(commonDetails!.data.transferStaffs);
                       if (context.mounted) {
-                        Common.toastMessaage(object1.message, Colors.green);
-                        Navigator.pop(context);
                         Navigator.pop(context);
                       }
-                    } else {
-                      Common.toastMessaage(object1.message, Colors.red);
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  child: SizedBox(
-                    height: 50,
-                    child: Row(
-                      children: [
-                        Container(
-                          height: 30,
-                          width: 30,
-                          decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(5)),
-                          child: const Icon(Icons.cloud_circle_rounded,
-                              color: Colors.black),
-                        ),
-                        const SizedBox(width: 20),
-                        const Text('Cloud Call',
-                            style: TextStyle(fontSize: 18)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                InkWell(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    Common.dialPad(items[index].contactNumber1);
-                  },
-                  child: SizedBox(
-                      height: 50,
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 30,
-                            width: 30,
-                            decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(5)),
-                            child: const Icon(Icons.call, color: Colors.black),
-                          ),
-                          const SizedBox(width: 20),
-                          const Text('Phone Call',
-                              style: TextStyle(fontSize: 18)),
-                        ],
-                      )),
-                ),
+                    },
+                    child: const Text("Close")),
               ],
-            ),
-          );
-        });
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildLoaderListItem() {
     return Shimmer.fromColors(
-        enabled: true,
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
+      enabled: true,
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: List.generate(
+            2,
+            (index) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  // New filter implementation integrated via ViewLeadsFilterWidget
+  // Legacy filtrationSheet and related builders removed for professional UI upgrade.
+
+  Future<dynamic> chooseCallDialog(BuildContext context, int index) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final item =
+            _searchQuery.isEmpty ? items[index] : _filteredItems[index];
+        return AlertDialog(
+          title: const Text('Choose Call Type'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        width: double.infinity,
-                        height: 12.0,
-                        color: Colors.white),
-                    const SizedBox(height: 8.0),
-                    Container(
-                        width: double.infinity,
-                        height: 12.0,
-                        color: Colors.white),
-                  ],
-                ),
+              ListTile(
+                dense: true,
+                leading:
+                    const Icon(Icons.cloud_circle_rounded, color: appBarStart),
+                title: const Text('Cloud Call'),
+                onTap: () async {
+                  Common.showProgressDialog(context, "Loading..");
+                  CloudCallModel object1 = await HttpService.addCloudCall(
+                      widget.token, item.callMasterId, item.contactNumber1);
+                  if (object1.data == true) {
+                    if (context.mounted) {
+                      Common.toastMessaage(object1.message, callGreen);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    }
+                  } else {
+                    Common.toastMessaage(object1.message, accentRed);
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                },
               ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                              width: double.infinity,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: double.infinity,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: 100.0, height: 10.0, color: Colors.white)
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        width: double.infinity,
-                        height: 12.0,
-                        color: Colors.white),
-                    const SizedBox(height: 8.0),
-                    Container(
-                        width: double.infinity,
-                        height: 12.0,
-                        color: Colors.white),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                              width: 200,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: double.infinity,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: 100.0, height: 10.0, color: Colors.white)
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(width: 200, height: 12.0, color: Colors.white),
-                    const SizedBox(height: 8.0),
-                    Container(
-                        width: double.infinity,
-                        height: 12.0,
-                        color: Colors.white),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                              width: double.infinity,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: double.infinity,
-                              height: 10.0,
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 8.0)),
-                          Container(
-                              width: 100.0, height: 10.0, color: Colors.white)
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+              const Divider(height: 1),
+              ListTile(
+                dense: true,
+                leading:
+                    const Icon(Icons.phone_android_rounded, color: callGreen),
+                title: const Text('Phone Call'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  Common.dialPad(item.contactNumber1);
+                },
               ),
             ],
           ),
-        ));
-  }
-
-  void _dialogue(BuildContext context, title) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Alert !!!'),
-            content: const Text(
-                'You have no permission to access the feature please contact the support team'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'))
-            ],
-          );
-        });
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
 class MessageViewWidget extends StatelessWidget {
-  const MessageViewWidget({
-    super.key,
-    required this.label,
-  });
+  const MessageViewWidget({super.key, required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade100,
-          borderRadius: const BorderRadius.all(Radius.circular(10.0)),
-        ),
-        child: Text(label));
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: _ViewLeadsNewState.appBarStart.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded,
+              color: _ViewLeadsNewState.appBarStart, size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: _ViewLeadsNewState.textPrimary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

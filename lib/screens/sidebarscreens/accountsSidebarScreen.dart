@@ -14,21 +14,17 @@ import 'package:login2/screens/accounts/expense/pendingExpenseHistory.dart';
 import 'package:login2/screens/accounts/expense/unverifiedReponsePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login2/core/common.dart';
-import 'package:login2/screens/callLogs/callLogs.dart';
-import 'package:login2/screens/leadManagement/AssignReport.dart';
-import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
-import 'package:login2/screens/leadManagement/allReport.dart';
-import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
-import 'package:login2/screens/leadManagement/callHistoryPage.dart';
-import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
-import 'package:login2/screens/leadManagement/salaryReportPage.dart';
-import 'package:login2/screens/leadManagement/viewLeadCategory.dart';
-import 'package:login2/screens/leadManagement/viewLeads.dart';
-import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
+import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
+import 'package:login2/screens/rental/addRentalReturnPage.dart';
+import 'package:login2/screens/rental/rentIssueListPage.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/staff_reports/timeline_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/screens/accounts/dashboard/account_head.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/deletedProformaInvoiceListPage.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/deletedInvoiceListPage.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/deletedReceiptListPage.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/deletedGstInvoiceListPage.dart';
 
 class AccountsMenuWidget extends StatefulWidget {
   final String token;
@@ -104,6 +100,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         "Customers",
         "Account Head",
         if (proformaInvoiceMenu == "true") "Proforma Invoices",
+        if (proformaInvoiceMenu == "true") "Proforma Deleted",
         if (gstInvoiceMenu == "true") "GST Invoices",
         //  "Updated Invoice",
       ];
@@ -242,73 +239,80 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         return SafeArea(
           child: Align(
             alignment: Alignment.topRight,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: MediaQuery.of(context).size.height,
-              margin: const EdgeInsets.only(top: 0, right: 0),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  topLeft: Radius.circular(20),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 0),
-                  ),
-                ],
+            child: Material(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                topLeft: Radius.circular(20),
               ),
-              child: Column(
-                children: [
-                  // Header with gradient like in example
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 16),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFF406dbe),
-                          Colors.white,
-                          Color(0xFF406dbe),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height,
+                margin: const EdgeInsets.only(top: 0, right: 0),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Header with gradient like in example
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20, horizontal: 16),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF406dbe),
+                            Colors.white,
+                            Color(0xFF406dbe),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.settings,
+                              color: Colors.white, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Center(
+                              child: Image.asset('assets/main/logo.png',
+                                  height: 130, fit: BoxFit.contain),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                      ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.settings,
-                            color: Colors.white, size: 24),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Center(
-                            child: Image.asset('assets/main/logo.png',
-                                height: 130, fit: BoxFit.contain),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _buildMenuItemsList(context),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _buildMenuItemsList(context),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -354,6 +358,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           _handleMenuItemTap(context, 9);
         },
       ),
+
       _buildMenuItem(
         icon: Icons.pending_actions,
         title: 'Pending Invoices',
@@ -482,11 +487,50 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
       ),
       _buildMenuItem(
         icon: Icons.pending_actions_rounded,
-        title: 'Archieved Invoices',
+        title: 'Archived Invoices',
         onTap: () {
           // Navigator.pop(context);
           //  _handleMenuItemTap(context, 2);
         },
+      ),
+      _buildExpansionMenuItem(
+        icon: Icons.delete_outline,
+        title: 'Deleted List',
+        children: [
+          if (proformaInvoiceMenu == "true")
+            _buildSubMenuItem(
+              icon: Icons.description_outlined,
+              title: 'Deleted Proforma',
+              onTap: () {
+                Navigator.pop(context);
+                _handleMenuItemTap(context, 111);
+              },
+            ),
+          _buildSubMenuItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'Deleted Invoice',
+            onTap: () {
+              Navigator.pop(context);
+              _handleMenuItemTap(context, 112);
+            },
+          ),
+          _buildSubMenuItem(
+            icon: Icons.receipt_outlined,
+            title: 'Deleted Receipt',
+            onTap: () {
+              Navigator.pop(context);
+              _handleMenuItemTap(context, 113);
+            },
+          ),
+          _buildSubMenuItem(
+            icon: Icons.assessment_outlined,
+            title: 'Deleted Gst Invoice',
+            onTap: () {
+              Navigator.pop(context);
+              _handleMenuItemTap(context, 114);
+            },
+          ),
+        ],
       ),
     ]);
     menuItems.add(_buildDivider());
@@ -634,6 +678,45 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           context,
           MaterialPageRoute(
             builder: (context) => ReceiptList(widget.token.toString()),
+          ),
+        );
+        break;
+
+      case 111: // Proforma Deleted
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DeletedProformaInvoiceListPage(widget.token.toString()),
+          ),
+        );
+        break;
+
+      case 112: // Deleted Invoices
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DeletedInvoiceListPage(widget.token.toString()),
+          ),
+        );
+        break;
+      case 113: // Deleted Receipts
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DeletedReceiptListPage(widget.token.toString()),
+          ),
+        );
+        break;
+
+      case 114: // Deleted GST Invoices
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DeletedGstInvoiceListPage(widget.token.toString()),
           ),
         );
         break;
@@ -795,5 +878,82 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
 
   Future<void> getSharedData() async {
     // Implement your shared data fetching logic here
+  }
+  Widget _buildExpansionMenuItem({
+    required IconData icon,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: Container(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Icon(
+              icon,
+              size: 22,
+              color: const Color.fromARGB(255, 1, 4, 10),
+            ),
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black87,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey,
+          size: 20,
+        ),
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSubMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            children: [
+              const SizedBox(width: 44),
+              Icon(
+                icon,
+                size: 18,
+                color: Colors.black54,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: Colors.grey,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

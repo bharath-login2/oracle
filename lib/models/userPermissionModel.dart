@@ -31,7 +31,7 @@ class Data {
   String? NewleadDashboard;
   String? QuotationDashboard;
   String? RoomDashboard;
-    String? JobCard;
+  String? JobCard;
   String? adminCheck;
   String? createStaff;
   String? viewStaff;
@@ -103,6 +103,11 @@ class Data {
   String? quotationModule;
   String? roomModule;
   String? workWithoutLogin;
+  String? addApproveLeave;
+  String? rejectRequestLeave;
+  String? editLeaveRequest;
+  String? deleteLeaveRequest;
+
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -112,7 +117,7 @@ class Data {
     this.NewleadDashboard,
     this.QuotationDashboard,
     this.RoomDashboard,
-     this.JobCard,
+    this.JobCard,
     this.adminCheck,
     this.createStaff,
     this.viewStaff,
@@ -183,7 +188,11 @@ class Data {
     this.workModule,
     this.quotationModule,
     this.roomModule,
-     this.workWithoutLogin,
+    this.workWithoutLogin,
+    this.addApproveLeave,
+    this.rejectRequestLeave,
+    this.editLeaveRequest,
+    this.deleteLeaveRequest,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -259,15 +268,18 @@ class Data {
     gstInvoiceMenu = json['gst_invoices_menu'];
     receiptMenu = json['receipts_menu'];
     pendingInvoiceMenu = json['pending_invoices_menu'];
-     addLeadSource = json['add_lead_source'];
-     leadModule = json['lead_management_module'];
-     accountsModule = json['accounts_module'];
-      renewalModule = json['renewal_management_module'];
-       workModule = json['work_management_module'];
-        quotationModule = json['quotations_module'];
-         roomModule = json['room_management_module'];
-          workWithoutLogin = json['work_without_login'];
-         
+    addLeadSource = json['add_lead_source'];
+    leadModule = json['lead_management_module'];
+    accountsModule = json['accounts_module'];
+    renewalModule = json['renewal_management_module'];
+    workModule = json['work_management_module'];
+    quotationModule = json['quotations_module'];
+    roomModule = json['room_management_module'];
+    workWithoutLogin = json['work_without_login'];
+    addApproveLeave = json['add_approve_leave'];
+    rejectRequestLeave = json['reject_leave_request'];
+    editLeaveRequest = json['edit_leave_request'];
+    deleteLeaveRequest = json['delete_leave_request'];
   }
 
   Map<String, dynamic> toJson() {
@@ -280,7 +292,7 @@ class Data {
     data['dashboard_new_lead'] = NewleadDashboard;
     data['dashboard_quotation'] = QuotationDashboard;
     data['dashboard_room_booking'] = RoomDashboard;
-     data['dashboard_job_card'] = JobCard;
+    data['dashboard_job_card'] = JobCard;
     data['admin_check'] = adminCheck;
     data['create_staff'] = createStaff;
     data['view_staff'] = viewStaff;
@@ -346,7 +358,12 @@ class Data {
     data['work_management_module'] = workModule;
     data['quotations_module'] = quotationModule;
     data['room_management_module'] = roomModule;
-     data['work_without_login'] = workWithoutLogin;
+    data['work_without_login'] = workWithoutLogin;
+    data['add_approve_leave'] = addApproveLeave;
+    data['reject_leave_request'] = rejectRequestLeave;
+    data['edit_leave_request'] = editLeaveRequest;
+    data['delete_leave_request'] = deleteLeaveRequest;
+
     return data;
   }
 }

@@ -453,7 +453,7 @@ class _EditClientsState extends State<EditClients> {
                                           : stateId.text.isNotEmpty
                                               ? stateId.text
                                               : null,
-                                      hint: const Text("Select State *"),
+                                      hint: const Text("Select State"),
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
                                           borderRadius:
@@ -493,7 +493,7 @@ class _EditClientsState extends State<EditClients> {
                                       : districtId.text.isNotEmpty
                                           ? districtId.text
                                           : null,
-                                  hint: const Text("Choose District *"),
+                                  hint: const Text("Choose District"),
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
@@ -1117,15 +1117,17 @@ class _EditClientsState extends State<EditClients> {
                                 Common.toastMessaage(
                                     'PhoneNumber is already exists',
                                     Colors.red);
-                              } else if (selectedStateId == null ||
-                                  selectedStateId!.isEmpty) {
-                                Common.toastMessaage(
-                                    'Please select a State', Colors.red);
-                              } else if (selectedDistrictId == null ||
-                                  selectedDistrictId!.isEmpty) {
-                                Common.toastMessaage(
-                                    'Please select a District', Colors.red);
-                              } else {
+                              }
+                              // else if (selectedStateId == null ||
+                              //     selectedStateId!.isEmpty) {
+                              //   Common.toastMessaage(
+                              //       'Please select a State', Colors.red);
+                              // } else if (selectedDistrictId == null ||
+                              //     selectedDistrictId!.isEmpty) {
+                              //   Common.toastMessaage(
+                              //       'Please select a District', Colors.red);
+                              // }
+                              else {
                                 if (context.mounted) {
                                   Common.showProgressDialog(
                                       context, "Loading..");

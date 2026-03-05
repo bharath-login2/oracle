@@ -48,6 +48,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
           'Room Booking': permissionRes['RoomModule'] == 'true',
           'Menu': true,
           'New Lead': permissionRes['leadModule'] == 'true',
+          'Job Card': permissionRes['JobCard'] == 'true',
         };
       }
 
@@ -71,7 +72,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
           allDashboards.where((dash) => dash['enabled'] == true).toList();
       setState(() {
         dashboards = enabledDashboards;
-        if (selectedRes?['data'].isNotEmpty ?? false) {
+        if (selectedRes?['data']?.isNotEmpty ?? false) {
           final selectedId = selectedRes!['data'].first['id'].toString();
           if (enabledDashboards.any((dash) => dash['id'] == selectedId)) {
             selectedDashboardId = selectedId;
@@ -92,14 +93,15 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
       final token = await Common.getSharedPref("token");
       if (token != null) {
         final object1 = await HttpService.userPermissionCheck(token);
-        if (object1.status == true) {
+        if (object1 != null && object1.status == true && object1.data != null) {
           return {
             'renewalModule': object1.data!.renewalModule.toString(),
             'leadModule': object1.data!.leadModule.toString(),
             'accountsModule': object1.data!.accountsModule.toString(),
             'workModule': object1.data!.workModule.toString(),
             'quotationModule': object1.data!.quotationModule.toString(),
-            'RoomModule': object1.data!.RoomModule.toString(),
+            'RoomModule': object1.data!.roomModule.toString(),
+            'JobCard': object1.data!.JobCard.toString(),
           };
         }
       }
@@ -120,7 +122,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
     final token = await Common.getSharedPref("token");
     if (token != null) {
       final object1 = await HttpService.userPermissionCheck(token);
-      if (object1.status == true) {
+      if (object1 != null && object1.status == true && object1.data != null) {
         final permissionMap = {
           'Renewal': object1.data!.renewalModule == 'true',
           'Lead': object1.data!.leadModule == 'true',
@@ -130,7 +132,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
           'Room Booking': object1.data!.roomModule == 'true',
           'Menu': true,
           'New Lead': object1.data!.leadModule == 'true',
-            'Job Card': object1.data!.JobCard == 'true',
+          'Job Card': object1.data!.JobCard == 'true',
         };
 
         final hasPermission = permissionMap[selectedDashboardName] ?? false;
@@ -175,7 +177,9 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
         if (token != null) {
           final object1 = await HttpService.userPermissionCheck(token);
 
-          if (object1.status == true) {
+          if (object1 != null &&
+              object1.status == true &&
+              object1.data != null) {
             Common.saveSharedPref("ProjectDashboardPermission",
                 object1.data!.ProjectDashboard.toString());
             Common.saveSharedPref(
@@ -192,8 +196,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
                 object1.data!.QuotationDashboard.toString());
             Common.saveSharedPref(
                 "RoomDashboard", object1.data!.RoomDashboard.toString());
-                 Common.saveSharedPref(
-                "JobCard", object1.data!.JobCard.toString());
+            Common.saveSharedPref("JobCard", object1.data!.JobCard.toString());
             Common.saveSharedPref(
                 "RoomModule", object1.data!.roomModule.toString());
             Common.saveSharedPref(
@@ -206,6 +209,14 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
                 "accountsModule", object1.data!.accountsModule.toString());
             Common.saveSharedPref(
                 "leadModule", object1.data!.leadModule.toString());
+            Common.saveSharedPref("addApproveLeavePermission",
+                object1.data!.addApproveLeave.toString());
+            Common.saveSharedPref("rejectRequestLeavePermission",
+                object1.data!.rejectRequestLeave.toString());
+            Common.saveSharedPref("editLeaveRequestPermission",
+                object1.data!.editLeaveRequest.toString());
+            Common.saveSharedPref("deleteLeaveRequestPermission",
+                object1.data!.deleteLeaveRequest.toString());
 
             if (object1.data!.ProjectDashboard == "true" &&
                 object1.data!.workModule == "true") {
@@ -271,7 +282,7 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
               );
               return;
             }
-             if (object1.data!.JobCard == "true" ) {
+            if (object1.data!.JobCard == "true") {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => MinimalDashboard(token)),

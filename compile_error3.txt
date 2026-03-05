@@ -1,0 +1,24 @@
+Analyzing add_leads_new.dart...
+
+warning - add_leads_new.dart:18:8 - Unused import: 'dart:io'. Try removing the import directive. - unused_import
+warning - add_leads_new.dart:20:7 - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: AddLeadsNew.token, AddLeadsNew.page, AddLeadsNew.leadMasterId, AddLeadsNew.clientName, AddLeadsNew.phoneNumber, AddLeadsNew.fromDate, AddLeadsNew.toDate, AddLeadsNew.editLead, AddLeadsNew.deleteLead, AddLeadsNew.cloudCall, AddLeadsNew.countryCode, AddLeadsNew.address - must_be_immutable
+warning - add_leads_new.dart:142:9 - Unnecessary type check; the result is always 'true'. Try correcting the type check, or removing the type check. - unnecessary_type_check
+warning - add_leads_new.dart:788:62 - The '!' will have no effect because the receiver can't be null. Try removing the '!' operator. - unnecessary_non_null_assertion
+   info - add_leads_new.dart:93:21 - The private field _selectedProducts could be 'final'. Try making the field 'final'. - prefer_final_fields
+   info - add_leads_new.dart:94:25 - The private field _productSearchCtrl could be 'final'. Try making the field 'final'. - prefer_final_fields
+   info - add_leads_new.dart:136:40 - Statements in a for should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:708:19 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:713:84 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1085:43 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1392:27 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1393:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1399:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1419:27 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1421:34 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1512:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:1514:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - add_leads_new.dart:1544:21 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1606:19 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - add_leads_new.dart:1609:21 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+
+20 issues found.

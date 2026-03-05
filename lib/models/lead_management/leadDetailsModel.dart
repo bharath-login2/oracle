@@ -44,50 +44,68 @@ class Data {
   String? callLeadId;
   String? leadSource;
   String? leadSourceId;
-    String? postOffice;
-    String? pinCode;
-    String? stateId;
-    String? districtId;
- String? stateName;
+  String? postOffice;
+  String? pinCode;
+  String? stateId;
+  String? districtId;
+  String? stateName;
   String? districtName;
-  Data(
-      {this.callMasterId,
-      this.leadCategoryId,
-      this.leadSubCategoryId,
-      this.clientName,
-      this.address,
-      this.cost,
-      this.assignedUserId,
-      this.callResultId,
-      this.calledDate,
-      this.createdDate,
-      this.nextFollowupDate,
-      this.remarks,
-      this.leadMethod,
-      this.leadCategory,
-      this.leadSubCategory,
-      this.callResult,
-      this.staffName,
-      this.priorityId,
-      this.priority,
-      this.countryCode,
-      this.contactNumber1,
-      this.branchId,
-      this.callHistoryPermission,
-      this.fileManagerPermission,
-      this.leadCategories,
-      this.callPermission,
-      this.warningMessage,
-      this.callLeadId,
-      this.leadSource,
-      this.leadSourceId,
-        this.postOffice,
-        this.pinCode,
-        this.stateId,
-        this.districtId,
-          this.stateName,
-            this.districtName,
-       });
+  String? productsOnAdd;
+  String? whatsaAppNumber;
+  String? emailId;
+  String? whatsappNumber;
+  String? email;
+  String? products;
+  String? state;
+  String? district;
+  String? whatsappNumberCountryCode;
+  Data({
+    this.callMasterId,
+    this.leadCategoryId,
+    this.leadSubCategoryId,
+    this.clientName,
+    this.address,
+    this.cost,
+    this.assignedUserId,
+    this.callResultId,
+    this.calledDate,
+    this.createdDate,
+    this.nextFollowupDate,
+    this.remarks,
+    this.leadMethod,
+    this.leadCategory,
+    this.leadSubCategory,
+    this.callResult,
+    this.staffName,
+    this.priorityId,
+    this.priority,
+    this.countryCode,
+    this.contactNumber1,
+    this.branchId,
+    this.callHistoryPermission,
+    this.fileManagerPermission,
+    this.leadCategories,
+    this.callPermission,
+    this.warningMessage,
+    this.callLeadId,
+    this.leadSource,
+    this.leadSourceId,
+    this.postOffice,
+    this.pinCode,
+    this.stateId,
+    this.districtId,
+    this.stateName,
+    this.districtName,
+    this.productsOnAdd,
+    this.whatsaAppNumber,
+    this.emailId,
+    this.whatsappNumber,
+    this.email,
+    this.products,
+    this.state,
+    this.district,
+    this.whatsappNumberCountryCode,
+  });
 
   Data.fromJson(Map<String, dynamic> json) {
     callMasterId = json['call_master_id'] ?? "";
@@ -120,7 +138,7 @@ class Data {
         leadCategories!.add(LeadCategories.fromJson(v));
       });
     }
-      if (json['calleddata'] != null) {
+    if (json['calleddata'] != null) {
       calleddata = <Calleddata>[];
       json['calleddata'].forEach((v) {
         calleddata!.add(Calleddata.fromJson(v));
@@ -132,12 +150,21 @@ class Data {
     callLeadId = json['callLeadId'] ?? "";
     leadSource = json['lead_source'] ?? "";
     leadSourceId = json['lead_source_id'] ?? "";
-     postOffice = json['post_office'] ?? "";
-      pinCode = json['pincode'] ?? "";
-       stateId = json['state_id'] ?? "";
-        districtId = json['district_id'] ?? "";
-           stateName = json['state_name'] ?? "";
-              districtName = json['district_name'] ?? "";
+    postOffice = json['post_office'] ?? "";
+    pinCode = json['pincode'] ?? "";
+    stateId = json['state_id'] ?? "";
+    districtId = json['district_id'] ?? "";
+    stateName = json['state_name'] ?? "";
+    districtName = json['district_name'] ?? "";
+    productsOnAdd = json['products_lead'] ?? "";
+    whatsaAppNumber = json['whatsapp_number_lead'] ?? "";
+    emailId = json['email_lead'] ?? "";
+    whatsappNumber = json['whatsapp_number'] ?? "";
+    email = json['email'] ?? "";
+    products = json['products'] ?? "";
+    state = json['state'] ?? "";
+    district = json['district'] ?? "";
+    whatsappNumberCountryCode = json['whatsapp_number_country_code'] ?? "";
   }
 }
 
@@ -146,7 +173,7 @@ class LeadCategories {
   String? leadCategoryId;
   String? leadCategory;
   String? leadSubCategory;
-   String? createdDate;
+  String? createdDate;
   String? leadStatus;
   String? staffName;
   bool? isSelected;
@@ -156,9 +183,9 @@ class LeadCategories {
       this.leadCategoryId,
       this.leadCategory,
       this.leadSubCategory,
-        this.createdDate,
-        this.leadStatus,
-        this.staffName,
+      this.createdDate,
+      this.leadStatus,
+      this.staffName,
       this.isSelected});
 
   LeadCategories.fromJson(Map<String, dynamic> json) {
@@ -166,26 +193,24 @@ class LeadCategories {
     leadCategoryId = json['lead_category_id'];
     leadCategory = json['lead_category'];
     leadSubCategory = json['lead_sub_category'];
-      createdDate = json['created_date'];
-     leadStatus = json['lead_status'];
-       staffName = json['staff_name'];
+    createdDate = json['created_date'];
+    leadStatus = json['lead_status'];
+    staffName = json['staff_name'];
     isSelected = json['is_selected'];
   }
 }
-
 
 class Calleddata {
   String? name;
   String? phoneNum;
   String? callType;
   String? durationTime;
- String? simName;
+  String? simName;
   String? dateTime;
-   String? formatteddateTime;
-   String? companyName;
-   String? proPic;
-    String? formattedDuration;
-
+  String? formatteddateTime;
+  String? companyName;
+  String? proPic;
+  String? formattedDuration;
 
   Calleddata(
       {this.name,
@@ -193,23 +218,22 @@ class Calleddata {
       this.callType,
       this.durationTime,
       this.simName,
-       this.dateTime,
-       this.formatteddateTime,
-       this.companyName,
-       this.proPic,
-       this.formattedDuration});
-       
+      this.dateTime,
+      this.formatteddateTime,
+      this.companyName,
+      this.proPic,
+      this.formattedDuration});
 
   Calleddata.fromJson(Map<String, dynamic> json) {
-    name = json['name']??"";
-    phoneNum = json['phone_number']??"";
-    callType = json['callType']??"";
-    durationTime = json['duration']??"";
-    simName = json['SimName']??"";
-     dateTime = json['date_time']??"";
-        formatteddateTime = json['formatted_date_time']??"";
-       companyName = json['company_name']??"";
-        proPic = json['pro_pic'] ??"";
-         formattedDuration = json['formatted_duration'] ??"";
+    name = json['name'] ?? "";
+    phoneNum = json['phone_number'] ?? "";
+    callType = json['callType'] ?? "";
+    durationTime = json['duration'] ?? "";
+    simName = json['SimName'] ?? "";
+    dateTime = json['date_time'] ?? "";
+    formatteddateTime = json['formatted_date_time'] ?? "";
+    companyName = json['company_name'] ?? "";
+    proPic = json['pro_pic'] ?? "";
+    formattedDuration = json['formatted_duration'] ?? "";
   }
 }

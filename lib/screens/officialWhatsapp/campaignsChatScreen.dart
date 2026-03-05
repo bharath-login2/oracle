@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
-import 'package:login2/screens/officialWhatsapp/chat_home_screen.dart';
+
 import 'package:login2/screens/officialWhatsapp/status_view.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -145,22 +145,17 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: widget.nav != "Notification",
       onPopInvoked: (pop) async {
+        if (pop) return;
         if (widget.nav == "Notification") {
           token = await Common.getSharedPref("token");
-          Navigator.push(
+          Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => Dashboard(token),
-              ));
-        } else {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ChatHomeScreen(),
-              ));
-          Navigator.pop(context);
+              ),
+              (route) => false);
         }
       },
       child: Scaffold(
@@ -181,18 +176,13 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                           onTap: () async {
                             if (widget.nav == "Notification") {
                               token = await Common.getSharedPref("token");
-                              Navigator.push(
+                              Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => Dashboard(token),
-                                  ));
+                                  ),
+                                  (route) => false);
                             } else {
-                              Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ChatHomeScreen(),
-                                  ));
                               Navigator.pop(context);
                             }
                           },
