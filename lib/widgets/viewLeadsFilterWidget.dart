@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/lead_management/addLeadCommonDataModel.dart';
+import 'package:login2/models/lead_management/leadProductsModel.dart';
 
 class ViewLeadsFilterWidget extends StatefulWidget {
   final Function(Map<String, dynamic>) onApplyFilters;
   final AddLeadCommonDataModel? commonDetails;
+  final LeadProductSectionModel? productSectionModel;
+  final String? currentTab;
   final Map<String, dynamic>? initialFilters;
 
   const ViewLeadsFilterWidget({
     super.key,
     required this.onApplyFilters,
     this.commonDetails,
+    this.productSectionModel,
+    this.currentTab,
     this.initialFilters,
   });
 
@@ -28,6 +33,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   Set<String> selectedStaffIds = {};
   Set<String> selectedCategoryIds = {};
   Set<String> selectedPriorityIds = {};
+  Set<String> selectedProductIds = {};
 
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
@@ -64,6 +70,9 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       }
       if (filters['priorityIds'] != null) {
         selectedPriorityIds = Set<String>.from(filters['priorityIds']);
+      }
+      if (filters['productIds'] != null) {
+        selectedProductIds = Set<String>.from(filters['productIds']);
       }
     }
 
@@ -140,10 +149,12 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
               child: Column(
                 children: [
                   _buildCategoryItem('Leads Date', Icons.calendar_today),
-                  _buildCategoryItem('Stages', Icons.info_outline),
+                  if (widget.currentTab != 'New')
+                    _buildCategoryItem('Stages', Icons.info_outline),
                   _buildCategoryItem('Assigned Staff', Icons.people_outline),
                   _buildCategoryItem('Category', Icons.category_outlined),
                   _buildCategoryItem('Priority', Icons.low_priority),
+                  _buildCategoryItem('Products', Icons.shopping_bag_outlined),
                 ],
               ),
             ),
@@ -225,6 +236,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         return selectedCategoryIds.isNotEmpty;
       case 'Priority':
         return selectedPriorityIds.isNotEmpty;
+      case 'Products':
+        return selectedProductIds.isNotEmpty;
       default:
         return false;
     }
@@ -242,6 +255,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         return _buildLeadCategoryOptions();
       case 'Priority':
         return _buildPriorityOptions();
+      case 'Products':
+        return _buildProductOptions();
       default:
         return const Center(child: Text('Select a category'));
     }
@@ -438,6 +453,21 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     );
   }
 
+  Widget _buildProductOptions() {
+    if (widget.productSectionModel == null)
+      return const Center(child: Text('Loading...'));
+    final items = widget.productSectionModel!.data ?? [];
+    return _buildSelectionList(
+      items: items
+          .map((e) => {'id': e.id.toString(), 'name': e.productName ?? ''})
+          .toList(),
+      selectedIds: selectedProductIds,
+      onToggle: (id) => setState(() => selectedProductIds.contains(id)
+          ? selectedProductIds.remove(id)
+          : selectedProductIds.add(id)),
+    );
+  }
+
   Widget _buildSelectionList({
     required List<Map<String, String>> items,
     required Set<String> selectedIds,
@@ -505,6 +535,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 selectedStaffIds.clear();
                 selectedCategoryIds.clear();
                 selectedPriorityIds.clear();
+                selectedProductIds.clear();
                 fromDate = DateTime.now().subtract(const Duration(days: 30));
                 toDate = DateTime.now();
               });
@@ -530,6 +561,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 'staffIds': selectedStaffIds.toList(),
                 'categoryIds': selectedCategoryIds.toList(),
                 'priorityIds': selectedPriorityIds.toList(),
+                'productIds': selectedProductIds.toList(),
               });
               Navigator.pop(context);
             },

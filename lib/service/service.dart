@@ -12094,6 +12094,8 @@ class HttpService {
       {String? fromDate,
       String? toDate,
       String? leaveType,
+      String? staffId,
+      String? status,
       String? search}) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -12109,6 +12111,8 @@ class HttpService {
           "to_date": toDate ?? "",
           "leave_type": leaveType ?? "",
           "search": search ?? "",
+          "staff_id": staffId ?? "",
+          "status": status ?? "",
         }),
       );
       if (response.statusCode == 200) {
@@ -12133,6 +12137,8 @@ class HttpService {
       {String? fromDate,
       String? toDate,
       String? leaveType,
+      String? staffId,
+      String? status,
       String? search}) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -12148,6 +12154,8 @@ class HttpService {
           "to_date": toDate ?? "",
           "leave_type": leaveType ?? "",
           "search": search ?? "",
+          "staff_id": staffId ?? "",
+          "status": status ?? "",
         }),
       );
       if (response.statusCode == 200) {

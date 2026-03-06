@@ -479,6 +479,9 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         labelStyle: const TextStyle(color: Colors.grey),
       ),
       validator: (v) {
+        if (whatsappCode == '91' && v != null && v.isNotEmpty && v.length != 10) {
+          return 'Enter 10 digit number';
+        }
         return null;
       },
     );

@@ -44,10 +44,12 @@ class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
     required this.groupId,
+   // required this.chatType,
     required this.nav,
   });
 
   final String groupId;
+  //final String chatType;
   final String nav;
 
   @override

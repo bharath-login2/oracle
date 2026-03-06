@@ -339,6 +339,9 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                             index]
                                                                         .groupId,
                                                                     nav: "",
+                                                                    // chatType: items[
+                                                                    //         index]
+                                                                    //     .chatType,
                                                                   ),
                                                                 )).then((v) async {
                                                               try {

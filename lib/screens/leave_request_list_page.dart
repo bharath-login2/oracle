@@ -5,6 +5,14 @@ import 'package:login2/models/lead_management/approvedListLeaveModel.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
+import 'package:login2/models/expense/staffListModel.dart';
+import 'dart:async';
+
+class LeaveRequestFilter {
+  bool isPending = false;
+  bool isApproved = false;
+  bool isRejected = false;
+}
 
 class LeaveRequestListPage extends StatefulWidget {
   const LeaveRequestListPage({super.key});
@@ -17,6 +25,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   List<PendingLeaveData> _pendingLeaves = [];
   List<ApprovedLeaveData> _approvedLeaves = [];
@@ -31,14 +40,20 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
   String? _selectedLeaveType;
   DateTime? _fromDate;
   DateTime? _toDate;
+  List<Staff> _allStaffList = [];
+  List<String> _selectedStaffIds = [];
+  bool _filterPending = false;
+  bool _filterApproved = false;
+  bool _filterRejected = false;
+  bool _filterPartial = false;
 
   final List<String> _leaveTypeFilters = [
     'Casual Leave',
     'Sick Leave',
-    'Paid Leave',
-    'Unpaid Leave',
+    // 'Paid Leave',
+    // 'Unpaid Leave',
     // 'Paternity Leave',
-    // 'Loss of Pay (LOP)',
+    'Loss of Pay (LOP)',
   ];
 
   // Color palette
@@ -82,6 +97,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -116,9 +132,25 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
     } catch (e) {
       debugPrint("Error fetching permissions from sharedPref: $e");
     }
+
+    try {
+      final data = await HttpService.getStaffs();
+      if (data != null && data.status == true) {
+        setState(() {
+          _allStaffList = data.data;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching staffs: $e");
+    }
   }
 
   Future<void> _fetchPendingLeaves() async {
+    List<String> statuses = [];
+    if (_filterPending) statuses.add("Pending");
+    if (_filterApproved) statuses.add("Approved");
+    if (_filterRejected) statuses.add("Rejected");
+
     final data = await HttpService.pendingLeaveList(
       fromDate: _fromDate != null
           ? DateFormat('dd-MM-yyyy').format(_fromDate!)
@@ -127,15 +159,30 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
           _toDate != null ? DateFormat('dd-MM-yyyy').format(_toDate!) : null,
       leaveType: _selectedLeaveType,
       search: _searchQuery,
+      staffId:
+          _selectedStaffIds.isNotEmpty ? _selectedStaffIds.join(',') : null,
+      status: statuses.isNotEmpty ? statuses.join(',') : null,
     );
     if (data != null) {
       setState(() {
         _pendingLeaves = data.data;
+        if (_searchQuery.isNotEmpty) {
+          _pendingLeaves = _pendingLeaves
+              .where((e) => (e.staffName ?? '')
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
+              .toList();
+        }
       });
     }
   }
 
   Future<void> _fetchApprovedLeaves() async {
+    List<String> statuses = [];
+    if (_filterPending) statuses.add("Pending");
+    if (_filterApproved) statuses.add("Approved");
+    if (_filterRejected) statuses.add("Rejected");
+    if (_filterPartial) statuses.add("Partial");
     final data = await HttpService.approvedLeaveList(
       fromDate: _fromDate != null
           ? DateFormat('dd-MM-yyyy').format(_fromDate!)
@@ -144,10 +191,20 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
           _toDate != null ? DateFormat('dd-MM-yyyy').format(_toDate!) : null,
       leaveType: _selectedLeaveType,
       search: _searchQuery,
+      staffId:
+          _selectedStaffIds.isNotEmpty ? _selectedStaffIds.join(',') : null,
+      status: statuses.isNotEmpty ? statuses.join(',') : null,
     );
     if (data != null) {
       setState(() {
         _approvedLeaves = data.data;
+        if (_searchQuery.isNotEmpty) {
+          _approvedLeaves = _approvedLeaves
+              .where((e) => (e.staffName ?? '')
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
+              .toList();
+        }
       });
     }
   }
@@ -409,6 +466,283 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    // Staff Multiple Selection Filters
+                    if (_allStaffList.isNotEmpty)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: lightBlue,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Select Staff",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: InkWell(
+                                onTap: () async {
+                                  await showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return StatefulBuilder(
+                                        builder: (context, setDialogState) {
+                                          return AlertDialog(
+                                            title: const Text("Select Staff"),
+                                            content: SizedBox(
+                                              width: double.maxFinite,
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: _allStaffList.length,
+                                                itemBuilder: (context, index) {
+                                                  final staff =
+                                                      _allStaffList[index];
+                                                  final isSelected =
+                                                      _selectedStaffIds
+                                                          .contains(staff
+                                                              .userIdStaff);
+                                                  return CheckboxListTile(
+                                                    title: Text(staff.name),
+                                                    value: isSelected,
+                                                    activeColor: primaryBlue,
+                                                    onChanged: (bool? val) {
+                                                      setDialogState(() {
+                                                        if (val == true) {
+                                                          _selectedStaffIds.add(
+                                                              staff
+                                                                  .userIdStaff);
+                                                        } else {
+                                                          _selectedStaffIds
+                                                              .remove(staff
+                                                                  .userIdStaff);
+                                                        }
+                                                      });
+                                                      setSheetState(() {});
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text("Done",
+                                                    style: TextStyle(
+                                                        color: primaryBlue)),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.people_outline,
+                                          color: primaryBlue),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedStaffIds.isEmpty
+                                              ? "Select Staff"
+                                              : "${_selectedStaffIds.length} Staff Selected",
+                                          style: TextStyle(
+                                            color: _selectedStaffIds.isEmpty
+                                                ? darkGrey
+                                                : Colors.black87,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(Icons.keyboard_arrow_down,
+                                          color: darkGrey),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    // Status filters
+                    Container(
+                      decoration: BoxDecoration(
+                        color: lightBlue,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Status",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: primaryBlue,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: InkWell(
+                              onTap: () async {
+                                await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return StatefulBuilder(
+                                      builder: (context, setDialogState) {
+                                        return AlertDialog(
+                                          title: const Text("Select Status"),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CheckboxListTile(
+                                                title: const Text("Pending"),
+                                                value: _filterPending,
+                                                activeColor: softOrange,
+                                                onChanged: (val) {
+                                                  setDialogState(() =>
+                                                      _filterPending =
+                                                          val ?? false);
+                                                  setSheetState(() {});
+                                                },
+                                              ),
+                                              CheckboxListTile(
+                                                title: const Text("Approved"),
+                                                value: _filterApproved,
+                                                activeColor: softGreen,
+                                                onChanged: (val) {
+                                                  setDialogState(() =>
+                                                      _filterApproved =
+                                                          val ?? false);
+                                                  setSheetState(() {});
+                                                },
+                                              ),
+                                              CheckboxListTile(
+                                                title: const Text("Rejected"),
+                                                value: _filterRejected,
+                                                activeColor: softRed,
+                                                onChanged: (val) {
+                                                  setDialogState(() =>
+                                                      _filterRejected =
+                                                          val ?? false);
+                                                  setSheetState(() {});
+                                                },
+                                              ),
+                                              CheckboxListTile(
+                                                title: const Text("Partial"),
+                                                value: _filterRejected,
+                                                activeColor:
+                                                    const Color.fromARGB(
+                                                        255, 240, 238, 133),
+                                                onChanged: (val) {
+                                                  setDialogState(() =>
+                                                      _filterPartial =
+                                                          val ?? false);
+                                                  setSheetState(() {});
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text("Done",
+                                                  style: TextStyle(
+                                                      color: primaryBlue)),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.filter_list,
+                                        color: primaryBlue),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        [
+                                          if (_filterPending) "Pending",
+                                          if (_filterApproved) "Approved",
+                                          if (_filterRejected) "Rejected",
+                                          if (_filterPartial) "Partial"
+                                        ].isEmpty
+                                            ? "Select Status"
+                                            : [
+                                                if (_filterPending) "Pending",
+                                                if (_filterApproved) "Approved",
+                                                if (_filterRejected) "Rejected",
+                                                if (_filterPartial) "Partial"
+                                              ].join(", "),
+                                        style: TextStyle(
+                                          color: (!(_filterPending ||
+                                                  _filterApproved ||
+                                                  _filterRejected ||
+                                                  _filterPartial))
+                                              ? darkGrey
+                                              : Colors.black87,
+                                          fontSize: 16,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.keyboard_arrow_down,
+                                        color: darkGrey),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     if (_selectedLeaveType != null ||
                         _fromDate != null ||
@@ -430,6 +764,11 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                     _selectedLeaveType = null;
                                     _fromDate = null;
                                     _toDate = null;
+                                    _selectedStaffIds.clear();
+                                    _filterPending = false;
+                                    _filterApproved = false;
+                                    _filterRejected = false;
+                                    _filterPartial = false;
                                   });
                                 },
                                 icon: const Icon(Icons.refresh,
@@ -534,6 +873,10 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                     controller: _searchController,
                     onChanged: (val) {
                       setState(() => _searchQuery = val);
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 500), () {
+                        _loadData();
+                      });
                     },
                     onSubmitted: (_) => _loadData(),
                     decoration: InputDecoration(
@@ -904,28 +1247,49 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                         ),
                       ),
                       Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           _buildStatusChip(item.status ?? 'Pending'),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: lightBlue,
-                              borderRadius: BorderRadius.circular(12),
+                          if (isPending) ...[
+                            const SizedBox(height: 12),
+                            InkWell(
+                              onTap: () => _showActionSheet(item, isPending),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.more_horiz,
+                                    size: 20, color: darkGrey),
+                              ),
                             ),
-                            child: IconButton(
-                              icon: const Icon(Icons.more_vert,
-                                  size: 20, color: primaryBlue),
-                              onPressed: () =>
-                                  _showActionSheet(item, isPending),
-                            ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
-                  const Divider(height: 1, thickness: 1, color: lightGrey),
-                  const SizedBox(height: 18),
+                  if (!isPending) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: lightGrey,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text("Applied Section",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: darkGrey)),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Row(
                     children: [
                       Expanded(
@@ -1235,136 +1599,146 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  !isPending && item.approvedDates != ""
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 255, 245, 185),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.date_range_outlined,
-                                  size: 16,
-                                  color:
-                                      const Color.fromARGB(255, 250, 210, 80)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
-                                  'Approved Dates:${item.approvedDates}',
+                  if (!isPending) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: lightBlue.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: primaryBlue.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.verified_outlined,
+                                  size: 18, color: primaryBlue),
+                              SizedBox(width: 8),
+                              Text("Approved Section",
                                   style: TextStyle(
-                                    color:
-                                        const Color.fromARGB(255, 15, 15, 15),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                      fontSize: 15)),
                             ],
                           ),
-                        )
-                      : SizedBox(),
+                          const SizedBox(height: 12),
+                          if (item.approvedDates != "")
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.date_range_outlined,
+                                      size: 16,
+                                      color: Color.fromARGB(255, 61, 133, 19)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                      child: Text(
+                                          'Approved Dates: ${item.approvedDates}',
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color.fromARGB(
+                                                  255, 61, 133, 19),
+                                              fontWeight: FontWeight.w500))),
+                                ],
+                              ),
+                            ),
+                          if (item.approvedBy != "")
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.person_outline,
+                                      size: 16,
+                                      color: Color.fromARGB(255, 61, 133, 19)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                      child: Text(
+                                          'Approved By: ${item.approvedBy}',
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color.fromARGB(
+                                                  255, 61, 133, 19),
+                                              fontWeight: FontWeight.w500))),
+                                ],
+                              ),
+                            ),
+                          if (item.remarks != null && item.remarks!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.notes,
+                                      size: 16,
+                                      color:
+                                          Color.fromARGB(255, 253, 192, 192)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                      child: Text('Notes: ${item.remarks!}',
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color.fromARGB(
+                                                  221, 182, 43, 43)))),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
-                  !isPending && item.approvedBy != ""
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 197, 255, 185),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.date_range_outlined,
-                                  size: 16,
-                                  color:
-                                      const Color.fromARGB(255, 206, 245, 155)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
-                                  'Approved By:${item.approvedBy}',
-                                  style: TextStyle(
-                                    color:
-                                        const Color.fromARGB(255, 15, 15, 15),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                  const Divider(height: 1, thickness: 1, color: lightGrey),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StaffCalendarPage(
+                                  staffId: item.userId,
+                                  selectedDate: DateTime.now(),
+                                  staffName: item.staffName,
                                 ),
                               ),
-                            ],
-                          ),
-                        )
-                      : SizedBox(),
-                  if (item.reason != null && item.reason.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: primaryBlue.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.notes_rounded,
+                            );
+                          },
+                          icon: const Icon(Icons.calendar_month,
                               size: 16, color: primaryBlue),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Reason :${item.reason!}',
-                              style: TextStyle(
-                                color: primaryBlue,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          label: const Text("Attendance",
+                              style: TextStyle(color: primaryBlue)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: primaryBlue),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                  if (item.remarks != null && item.remarks!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 250, 232, 232),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: const Color.fromARGB(255, 255, 170, 156)
-                                .withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.notes_rounded,
-                              size: 16,
-                              color: const Color.fromARGB(255, 3, 3, 3)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              item.remarks != ""
-                                  ? 'Remarks :${item.remarks!}'
-                                  : 'Reason :${item.reason!}',
-                              style: TextStyle(
-                                color: const Color.fromARGB(255, 17, 17, 17),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showDetails(item),
+                          icon: const Icon(Icons.visibility,
+                              size: 16, color: Colors.white),
+                          label: const Text("View",
+                              style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryBlue,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1407,33 +1781,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                 ),
               ),
               const SizedBox(height: 24),
-              _buildActionItem(
-                icon: Icons.visibility_outlined,
-                label: "View Details",
-                color: primaryBlue,
-                onTap: () {
-                  Navigator.pop(context);
-                  _showDetails(item);
-                },
-              ),
-              _buildActionItem(
-                icon: Icons.calendar_month_outlined,
-                label: "View Attendance",
-                color: primaryBlue,
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StaffCalendarPage(
-                        staffId: item.userId,
-                        selectedDate: DateTime.now(),
-                        staffName: item.staffName,
-                      ),
-                    ),
-                  );
-                },
-              ),
+              // We removed View details and View Attendance from here as they are shown directly now.
               if (isPending && _canApprove)
                 _buildActionItem(
                   icon: Icons.check_circle_outline,
@@ -1545,6 +1893,10 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
     } else if (status.toLowerCase().contains('rejected')) {
       color = softRed;
       bgColor = softRed.withOpacity(0.1);
+      icon = Icons.cancel;
+    } else if (status.toLowerCase().contains('partial')) {
+      color = const Color.fromARGB(255, 240, 222, 124);
+      bgColor = const Color.fromARGB(255, 232, 241, 146).withOpacity(0.1);
       icon = Icons.cancel;
     } else {
       color = primaryBlue;
@@ -2515,13 +2867,37 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Selected Dates",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: primaryBlue,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Selected Dates",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: primaryBlue,
+                                ),
+                              ),
+                              if (selectedDates.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: softOrange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    isHalfDay
+                                        ? "${selectedDates.length / 2} Days"
+                                        : "${selectedDates.length} Days",
+                                    style: const TextStyle(
+                                      color: softOrange,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           if (selectedDates.isEmpty)

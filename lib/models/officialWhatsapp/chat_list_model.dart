@@ -4,7 +4,8 @@
 
 import 'dart:convert';
 
-ChatListModel chatListModelFromJson(String str) => ChatListModel.fromJson(json.decode(str));
+ChatListModel chatListModelFromJson(String str) =>
+    ChatListModel.fromJson(json.decode(str));
 
 String chatListModelToJson(ChatListModel data) => json.encode(data.toJson());
 
@@ -20,16 +21,17 @@ class ChatListModel {
   });
 
   factory ChatListModel.fromJson(Map<String, dynamic> json) => ChatListModel(
-    data: List<ChatData>.from(json["data"].map((x) => ChatData.fromJson(x))),
-    message: json["message"],
-    status: json["status"],
-  );
+        data:
+            List<ChatData>.from(json["data"].map((x) => ChatData.fromJson(x))),
+        message: json["message"],
+        status: json["status"],
+      );
 
   Map<String, dynamic> toJson() => {
-    "data": List<dynamic>.from(data.map((x) => x.toJson())),
-    "message": message,
-    "status": status,
-  };
+        "data": List<dynamic>.from(data.map((x) => x.toJson())),
+        "message": message,
+        "status": status,
+      };
 }
 
 class ChatData {
@@ -43,7 +45,7 @@ class ChatData {
   String lastMessage;
   bool fromMe;
   int unreadMessageCount;
-
+  String chatType;
   ChatData({
     required this.groupId,
     required this.profilePic,
@@ -55,30 +57,33 @@ class ChatData {
     required this.lastMessage,
     required this.fromMe,
     required this.unreadMessageCount,
+    required this.chatType,
   });
 
   factory ChatData.fromJson(Map<String, dynamic> json) => ChatData(
-    groupId: json["group_id"],
-    profilePic: json["profile_pic"],
-    groupName: json["group_name"],
-    phoneNumber: json["phone_number"],
-    lastMsgTime: json["last_msg_time"],
-    canSendMessage: json["canSendMessage"],
-    msgStatus: json["msgStatus"],
-    lastMessage: json["lastMessage"],
-    fromMe: json["fromMe"],
-    unreadMessageCount: json["unreadMessageCount"]??0,
-  );
+        groupId: json["group_id"],
+        profilePic: json["profile_pic"],
+        groupName: json["group_name"],
+        phoneNumber: json["phone_number"],
+        lastMsgTime: json["last_msg_time"],
+        canSendMessage: json["canSendMessage"],
+        msgStatus: json["msgStatus"],
+        lastMessage: json["lastMessage"],
+        fromMe: json["fromMe"],
+        unreadMessageCount: json["unreadMessageCount"] ?? 0,
+        chatType: json["chat_type"],
+      );
 
   Map<String, dynamic> toJson() => {
-    "group_id": groupId,
-    "profile_pic": profilePic,
-    "group_name": groupName,
-    "phone_number": phoneNumber,
-    "last_msg_time": lastMsgTime,
-    "canSendMessage": canSendMessage,
-    "msgStatus": msgStatus,
-    "lastMessage": lastMessage,
-    "fromMe": fromMe,
-  };
+        "group_id": groupId,
+        "profile_pic": profilePic,
+        "group_name": groupName,
+        "phone_number": phoneNumber,
+        "last_msg_time": lastMsgTime,
+        "canSendMessage": canSendMessage,
+        "msgStatus": msgStatus,
+        "lastMessage": lastMessage,
+        "fromMe": fromMe,
+        "chat_type": chatType,
+      };
 }

@@ -488,7 +488,12 @@ class _EditLeadNewState extends State<EditLeadNew> {
         focusedBorder: const OutlineInputBorder(),
         labelStyle: const TextStyle(color: Colors.grey),
       ),
-      validator: (v) => null,
+      validator: (v) {
+        if (whatsappCode == '91' && v != null && v.isNotEmpty && v.length != 10) {
+          return 'Enter 10 digit number';
+        }
+        return null;
+      },
     );
   }
 
