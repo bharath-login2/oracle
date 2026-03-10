@@ -18,12 +18,14 @@ class BottomNavigation extends StatefulWidget {
   String? name;
   String? userId;
   GlobalKey<ScaffoldState>? scaffoldKey;
+  bool showMenuIcon;
 
   BottomNavigation(this.token,
       {required this.phoneCallLogPermission,
       this.name,
       this.userId,
       this.scaffoldKey,
+      this.showMenuIcon = true,
       super.key});
 
   @override

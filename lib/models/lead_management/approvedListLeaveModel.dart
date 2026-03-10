@@ -39,12 +39,14 @@ class ApprovedLeaveData {
   final String reason;
   final String status;
   final String createdAt;
+  final String approvedAt;
   final String noOfDays;
   final String staffName;
   final String approvedBy;
   final String? fromDate;
   final String? toDate;
   final String? remarks;
+  final String? session;
 
   ApprovedLeaveData({
     required this.id,
@@ -56,12 +58,14 @@ class ApprovedLeaveData {
     required this.reason,
     required this.status,
     required this.createdAt,
+    required this.approvedAt,
     required this.noOfDays,
     required this.staffName,
     required this.approvedBy,
     this.fromDate,
     this.toDate,
     this.remarks,
+    this.session,
   });
 
   factory ApprovedLeaveData.fromJson(Map<String, dynamic> json) {
@@ -75,12 +79,15 @@ class ApprovedLeaveData {
       reason: json['reason']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
+      approvedAt: json['approved_at']?.toString() ?? '',
       noOfDays: json['no_of_days']?.toString() ?? '0',
       staffName: json['staff_name']?.toString() ?? '',
       approvedBy: json['approved_by']?.toString() ?? '',
       fromDate: json['from_date']?.toString(),
       toDate: json['to_date']?.toString(),
       remarks: json['remarks']?.toString() ?? json['reason']?.toString(),
+      session:
+          json['session']?.toString() ?? json['half_day_session']?.toString(),
     );
   }
 
@@ -95,12 +102,14 @@ class ApprovedLeaveData {
       'reason': reason,
       'status': status,
       'created_at': createdAt,
+      'approved_at': approvedAt,
       'no_of_days': noOfDays,
       'staff_name': staffName,
       'approved_by': approvedBy,
       'from_date': fromDate,
       'to_date': toDate,
       'remarks': remarks,
+      'session': session,
     };
   }
 }

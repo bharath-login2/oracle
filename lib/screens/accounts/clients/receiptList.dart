@@ -135,12 +135,13 @@ class _ReceiptListState extends State<ReceiptList> {
   }
 
   void _onLoadMore() {
-    if (items.length + 15 == page * pageSize &&
+    if (items.length >= pageSize &&
+        items.length % pageSize == 0 &&
         itemPositionsListener.itemPositions.value.last.index ==
             items.length - 1 &&
-        page > add) {
+        page == items.length ~/ pageSize) {
+      page++;
       getList();
-      add++;
     }
   }
 
@@ -995,16 +996,18 @@ class _ReceiptListState extends State<ReceiptList> {
                                             //     .76,
                                             child: ScrollablePositionedList
                                                 .builder(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 20),
+                                              padding: const EdgeInsets.only(
+                                                  bottom: 80),
                                               shrinkWrap: true,
                                               itemScrollController:
                                                   itemScrollController,
                                               itemPositionsListener:
                                                   itemPositionsListener,
                                               itemCount: items.length +
-                                                  (items.length + 15 ==
-                                                          page * pageSize
+                                                  (items.length >= pageSize &&
+                                                          items.length %
+                                                                  pageSize ==
+                                                              0
                                                       ? 1
                                                       : 0),
                                               initialScrollIndex: 0,

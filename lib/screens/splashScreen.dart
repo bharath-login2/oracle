@@ -23,6 +23,7 @@ import '../../models/updateModel.dart';
 import '../../screens/authentication/login.dart';
 import '../../screens/forceUpdate.dart';
 import '../../screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/authentication/deep_link_handler.dart';
 import '../../service/service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -226,7 +227,10 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => dashboardToOpen),
         (route) => false,
-      );
+      ).then((_) {
+        // After transition to dashboard, handle any pending deep links
+        DeepLinkHandler().checkAndHandlePendingDeepLink();
+      });
     }
   }
 

@@ -58,6 +58,15 @@ import '../../models/lead_management/projectList_model.dart';
 import '../../models/lead_management/workstatus_model.dart';
 import '../../models/loginCheckModel.dart';
 import '../../models/renewal/renewal_dashboard_model.dart';
+import '../../models/lead_management/callStatusReportModel.dart' as csr;
+import '../../models/lead_management/callStatusReportOntapModel.dart' as csro;
+import '../../models/lead_management/stagewiseReportModel.dart' as swr;
+import '../../models/lead_management/stagewiseReportOntap.dart' as swro;
+import '../../models/lead_management/lead_source_report_model.dart' as lsr;
+import '../../models/lead_management/leadSourceReportOntapModel.dart' as lsro;
+import '../../models/lead_management/categoryReportModel.dart' as catr;
+import '../../models/lead_management/leadCategoryReportOntapModel.dart'
+    as catro;
 import '../../models/clients/customerListModel.dart';
 import '../authentication/login.dart';
 import '../authentication/deep_link_handler.dart';
@@ -222,30 +231,30 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
   static const Color backgroundLight = Color.fromARGB(255, 247, 249, 252);
 
   final List<Color> _colors = [
-    Colors.black,
+    Colors.blueAccent,
     Colors.teal,
     Colors.orange.shade800,
     Colors.redAccent,
     Colors.green.shade800,
+    Colors.indigoAccent,
     Colors.blueAccent,
-    Colors.black,
     Colors.teal,
     Colors.orange.shade800,
     Colors.redAccent,
     Colors.green.shade800,
+    Colors.indigoAccent,
     Colors.blueAccent,
-    Colors.black,
     Colors.teal,
     Colors.orange.shade800,
     Colors.redAccent,
     Colors.green.shade800,
+    Colors.indigoAccent,
     Colors.blueAccent,
-    Colors.black,
     Colors.teal,
     Colors.orange.shade800,
     Colors.redAccent,
     Colors.green.shade800,
-    Colors.blueAccent,
+    Colors.indigoAccent,
   ];
 
   Map<String, double> reportDataMap = {};
@@ -260,25 +269,50 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
   List<String> callStatusStaffs = [];
   bool isCallStatusLoading = false;
   lp.LeadProgressbarModel? callStatusData;
+  csr.CallStatusReportModel? callStatusReport;
 
   DateTime? stageWiseFromDate;
   DateTime? stageWiseToDate;
   List<String> stageWiseStaffs = [];
   bool isStageWiseLoading = false;
   LeadCategoryStaffWiseModel? stageWiseData;
+  swr.StagewiseReportModel? stagewiseReport;
+  DateTime? stageWiseLastUpdated;
 
   DateTime? leadSourceFromDate;
   DateTime? leadSourceToDate;
   List<String> leadSourceStaffs = [];
+  List<String> leadSourceProducts = [];
+  List<String> leadSourceCategories = [];
   bool isLeadSourceLoading = false;
+  lsr.LeadSourceReportModel? leadSourceReport;
+  DateTime? leadSourceLastUpdated;
+  int leadSourcePage = 1;
+  int leadSourcePageSize = 10;
+  bool hasMoreLeadSource = true;
+  bool isLeadSourceMoreLoading = false;
+  List<lsr.LeadSourceDetail> leadSourceDetails = [];
 
   DateTime? categoryFromDate;
   DateTime? categoryToDate;
   List<String> categoryStaffs = [];
   bool isCategoryLoading = false;
   LeadCategoryStaffWiseModel? categoryData;
+  catr.CategoryReportModel? categoryReport;
+  DateTime? categoryLastUpdated;
+  int categoryPage = 1;
+  int categoryPageSize = 10;
+  bool hasMoreCategory = true;
+  bool isCategoryMoreLoading = false;
+  List<catr.CategoryDetail> categoryDetails = [];
 
   LeadProductSectionModel? productSectionModel;
+  DateTime? callStatusLastUpdated;
+  bool isCallStatusExpanded = false;
+  bool showCallStatusTable = false;
+  bool showStageWiseTable = false;
+  bool showLeadSourceTable = false;
+  bool showCategoryTable = false;
 
   @override
   void initState() {
@@ -298,6 +332,10 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     }
     if (_tabController.index == 2 && !moreloading) {
       getStaffwise();
+      _fetchCallStatusReport();
+      _fetchStageWiseReport();
+      _fetchLeadSourceReport();
+      _fetchCategoryReport();
     }
   }
 
@@ -400,7 +438,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
         isExpired = configure!.data!.isExpired!;
       }
 
-      // Get new dashboard counts
       setState(() => isDashboardCountsLoading = true);
       try {
         final fDate = DateFormat('dd-MM-yyyy').format(fromDate);
@@ -414,7 +451,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
             targetFromDate: targetFDate,
             targetToDate: targetTDate);
 
-        final staffResponse = await HttpService.getStaffs();
+        final staffResponse = await HttpService.getStaffsTelecaller();
         if (staffResponse != null && staffResponse.status) {
           staffList = staffResponse.data;
         }
@@ -442,6 +479,9 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
 
       userDashboard = await HttpService.mainDashboard(widget.token);
       loginOrNot = await HttpService.getLoginorNot(widget.token);
+      _fetchCallStatusReport();
+      _fetchStageWiseReport();
+      _fetchLeadSourceReport();
       if (userDashboard != null) {
         await Common.saveSharedPref(
             "profile_pic", userDashboard!.data.profilePic);
@@ -458,8 +498,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       ]);
       await _checkLoginPrompt();
       await _checkLoginPrompt();
-
-      // Always refresh tab leads when getData is called (including for filters)
       _fetchTabLeads();
 
       setState(() {
@@ -745,6 +783,10 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     staffWise = await HttpService.leadDashboard1(widget.token, fromDate, toDate,
         fromDate1.toString(), toDate1.toString());
     await getLeadProgressbar(widget.token!, fromDate, toDate, "");
+    _fetchCallStatusReport();
+    _fetchStageWiseReport();
+    _fetchLeadSourceReport();
+    _fetchCategoryReport();
     if (staffWise != null) {
       _processReportData();
     }
@@ -790,6 +832,40 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
         token, now.toString(), now.toString(), callStatus);
   }
 
+  Future<void> getLeadProgressbarNew(String token, DateTime fromDate,
+      DateTime toDate, String callStatus) async {
+    final now = DateTime.now();
+    object1 = await HttpService.newleadProgressbar(
+        token, now.toString(), now.toString(), callStatus);
+  }
+
+  Future<void> getLeadProgressbarFollowup(String token, DateTime fromDate,
+      DateTime toDate, String callStatus) async {
+    final now = DateTime.now();
+    object1 = await HttpService.followupleadProgressbar(
+        token, now.toString(), now.toString(), callStatus);
+  }
+
+  Future<void> getLeadProgressbarMissed(String token, DateTime fromDate,
+      DateTime toDate, String callStatus) async {
+    final now = DateTime.now();
+    object1 = await HttpService.missedleadProgressbar(
+        token, now.toString(), now.toString(), callStatus);
+  }
+    Future<void> getLeadProgressbarTransferred(String token, DateTime fromDate,
+      DateTime toDate, String callStatus) async {
+    final now = DateTime.now();
+    object1 = await HttpService.transferredleadProgressbar(
+        token, now.toString(), now.toString(), callStatus);
+  }
+
+  Future<void> getLeadProgressbarCalled(String token, DateTime fromDate,
+      DateTime toDate, String callStatus) async {
+    final now = DateTime.now();
+    object1 = await HttpService.calledleadProgressbar(
+        token, now.toString(), now.toString(), callStatus);
+  }
+
   Future<void> getLeadProgressBarStaffData({
     required String leadStatus,
     required String selectedType,
@@ -825,6 +901,154 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     );
   }
 
+  Future<void> _fetchCallStatusReport() async {
+    setState(() => isCallStatusLoading = true);
+    final data = await HttpService.callStatusReportData(
+      fromDate:
+          DateFormat('dd-MM-yyyy').format(callStatusFromDate ?? DateTime.now()),
+      toDate:
+          DateFormat('dd-MM-yyyy').format(callStatusToDate ?? DateTime.now()),
+      staffId: callStatusStaffs.join(','),
+    );
+    setState(() {
+      callStatusReport = data;
+      isCallStatusLoading = false;
+      if (data != null && data.status == true) {
+        callStatusLastUpdated = DateTime.now();
+      }
+    });
+  }
+
+  Future<void> _fetchStageWiseReport() async {
+    setState(() => isStageWiseLoading = true);
+    final data = await HttpService.stagwWiseReportData(
+      fromDate: stageWiseFromDate != null
+          ? DateFormat('dd-MM-yyyy').format(stageWiseFromDate!)
+          : "",
+      toDate: stageWiseToDate != null
+          ? DateFormat('dd-MM-yyyy').format(stageWiseToDate!)
+          : "",
+      staffId: stageWiseStaffs.join(','),
+    );
+    setState(() {
+      stagewiseReport = data;
+      isStageWiseLoading = false;
+      if (data != null &&
+          (data.status == true || data.status.toString() == "success")) {
+        stageWiseLastUpdated = DateTime.now();
+      }
+    });
+  }
+
+  Future<void> _fetchLeadSourceReport({bool isLoadMore = false}) async {
+    if (isLoadMore) {
+      if (!hasMoreLeadSource || isLeadSourceMoreLoading) return;
+      setState(() => isLeadSourceMoreLoading = true);
+    } else {
+      setState(() {
+        isLeadSourceLoading = true;
+        leadSourcePage = 1;
+        leadSourceDetails.clear();
+        hasMoreLeadSource = true;
+      });
+    }
+
+    DateTime now = DateTime.now();
+    DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
+    DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+
+    String from = leadSourceFromDate != null
+        ? DateFormat('dd-MM-yyyy').format(leadSourceFromDate!)
+        : DateFormat('dd-MM-yyyy').format(firstDayOfMonth);
+    String to = leadSourceToDate != null
+        ? DateFormat('dd-MM-yyyy').format(leadSourceToDate!)
+        : DateFormat('dd-MM-yyyy').format(lastDayOfMonth);
+
+    final data = await HttpService.leadSourceReportData(
+      fromDate: from,
+      toDate: to,
+      staffId: leadSourceStaffs.join(','),
+      page: leadSourcePage.toString(),
+      pageSize: leadSourcePageSize.toString(),
+      leadCategoryId: leadSourceCategories.join(','),
+      productId: leadSourceProducts.join(','),
+    );
+
+    setState(() {
+      if (isLoadMore) {
+        isLeadSourceMoreLoading = false;
+      } else {
+        isLeadSourceLoading = false;
+      }
+
+      if (data != null && data.status == true) {
+        leadSourceReport = data;
+        leadSourceLastUpdated = DateTime.now();
+        var newDetails = data.data.details;
+        leadSourceDetails.addAll(newDetails);
+        if (newDetails.length < leadSourcePageSize) {
+          hasMoreLeadSource = false;
+        } else {
+          leadSourcePage++;
+        }
+      } else {
+        hasMoreLeadSource = false;
+      }
+    });
+  }
+
+  Future<void> _fetchCategoryReport({bool isLoadMore = false}) async {
+    if (isLoadMore) {
+      if (!hasMoreCategory || isCategoryMoreLoading) return;
+      setState(() => isCategoryMoreLoading = true);
+    } else {
+      setState(() {
+        isCategoryLoading = true;
+        categoryPage = 1;
+        categoryDetails.clear();
+        hasMoreCategory = true;
+      });
+    }
+
+    final now = DateTime.now();
+    String from = categoryFromDate != null
+        ? DateFormat('dd-MM-yyyy').format(categoryFromDate!)
+        : DateFormat('dd-MM-yyyy').format(now);
+    String to = categoryToDate != null
+        ? DateFormat('dd-MM-yyyy').format(categoryToDate!)
+        : DateFormat('dd-MM-yyyy').format(now);
+
+    final data = await HttpService.leadCategoryReportData(
+      fromDate: from,
+      toDate: to,
+      staffId: categoryStaffs.join(','),
+      page: categoryPage.toString(),
+      pageSize: categoryPageSize.toString(),
+    );
+
+    setState(() {
+      if (isLoadMore) {
+        isCategoryMoreLoading = false;
+      } else {
+        isCategoryLoading = false;
+      }
+
+      if (data != null && data.status == true) {
+        categoryReport = data;
+        categoryLastUpdated = DateTime.now();
+        var newDetails = data.data.details;
+        categoryDetails.addAll(newDetails);
+        if (newDetails.length < categoryPageSize) {
+          hasMoreCategory = false;
+        } else {
+          categoryPage++;
+        }
+      } else {
+        hasMoreCategory = false;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -843,6 +1067,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 name: name,
                 userId: userId,
                 scaffoldKey: _scaffoldKey,
+                showMenuIcon: false,
               )
             : const SizedBox(),
       ),
@@ -948,6 +1173,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           _buildActionButtons(),
         ],
       ),
+      actions: [const SizedBox.shrink()],
     );
   }
 
@@ -996,7 +1222,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               ],
             ),
             child: CircleAvatar(
-              radius: 24,
+              //radius: 22,
               backgroundColor: Colors.white,
               backgroundImage: userDashboard != null
                   ? NetworkImage(userDashboard!.data.profilePic)
@@ -1014,7 +1240,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               Text(
                 name,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -1023,7 +1249,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               Text(
                 role,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Colors.white70,
                 ),
               ),
@@ -1195,7 +1421,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           ),
         ),
 
-        // DASHBOARD Tab
         RefreshIndicator(
           onRefresh: () =>
               getData(widget.token, fromDate, toDate, isRefresh: true),
@@ -1226,12 +1451,11 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          mainAxisSpacing: 16, // Increased spacing
-          crossAxisSpacing: 16, // Increased spacing
-          childAspectRatio: 1.05, // Slightly adjusted
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.05,
           padding: const EdgeInsets.symmetric(horizontal: 4),
           children: [
-            // New Box
             _buildDashboardBox(
               title: 'New',
               mainValue:
@@ -1294,7 +1518,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 ),
               ),
             ),
-
             _buildDashboardBox(
               title: 'Active',
               mainValue:
@@ -1316,15 +1539,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               color: accentRed,
               child: _buildBoxIcons('Lost', '3', 'Lost Leads'),
             ),
-            // Transferred Box
-            // _buildDashboardBox(
-            //   title: 'Transferred',
-            //   mainValue: dashboardCounts != null
-            //       ? "0"
-            //       : (leadDashboard?.data.transferLeads.toString() ?? '0'),
-            //   color: Colors.teal,
-            //   child: Container(),
-            // ),
           ],
         ),
         const SizedBox(height: 24),
@@ -1333,7 +1547,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           const SizedBox(height: 24),
           _buildModuleCarousel(),
         ],
-        const SizedBox(height: 100), // Spacing for bottom nav
+        const SizedBox(height: 100),
       ],
     );
   }
@@ -3368,86 +3582,35 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildReportSectionHeader(
-              'Call Status Report', Icons.phone_callback_rounded),
+          //  const SizedBox(height: 20),
+          _buildReportSectionHeader('Call Status Report', Icons.call_rounded,
+              onReportTap: () =>
+                  setState(() => showCallStatusTable = !showCallStatusTable)),
           _buildCallStatusReport(),
-          const SizedBox(height: 24),
-
+          //  const SizedBox(height: 40),
           _buildReportSectionHeader(
-              'Stage-wise Report', Icons.stacked_bar_chart_rounded),
+              'Active Lead Summary', Icons.pie_chart_rounded,
+              onReportTap: () =>
+                  setState(() => showStageWiseTable = !showStageWiseTable)),
           _buildStageWiseReport(),
-          const SizedBox(height: 24),
-
-          _buildReportSectionHeader('Lead Source Report', Icons.source_rounded),
+          // const SizedBox(height: 40),
+          _buildReportSectionHeader('Lead Source Report', Icons.source_outlined,
+              onReportTap: () =>
+                  setState(() => showLeadSourceTable = !showLeadSourceTable)),
           _buildLeadSourceReport(),
-          const SizedBox(height: 24),
-
-          _buildReportSectionHeader('Category Report', Icons.category_rounded),
+          //  const SizedBox(height: 40),
+          _buildReportSectionHeader('Category Report', Icons.category_rounded,
+              onReportTap: () =>
+                  setState(() => showCategoryTable = !showCategoryTable)),
           _buildCategoryReport(),
-          const SizedBox(height: 40),
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 4),
-          //   child: Container(
-          //     decoration: BoxDecoration(
-          //       borderRadius: BorderRadius.circular(16),
-          //       gradient: LinearGradient(
-          //         colors: [appBarStart, appBarStart.withOpacity(0.8)],
-          //       ),
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: appBarStart.withOpacity(0.3),
-          //           blurRadius: 12,
-          //           offset: const Offset(0, 6),
-          //         ),
-          //       ],
-          //     ),
-          //     child: ElevatedButton.icon(
-          //       onPressed: () {
-          //         Navigator.push(
-          //           context,
-          //           MaterialPageRoute(
-          //             builder: (context) => DetailedReportsPage(
-          //               token: widget.token!,
-          //               fromDate: fromDate,
-          //               toDate: toDate,
-          //               fromDate1: fromDate1.toString(),
-          //               toDate1: toDate1,
-          //               updateLeadPermission1: updateLeadPermission1,
-          //               deleteLeadPermission1: deleteLeadPermission1,
-          //               cloudCallPermission1: cloudCallPermission1,
-          //               viewLeadPermission: viewLeadPermission,
-          //             ),
-          //           ),
-          //         );
-          //       },
-          //       icon: const Icon(Icons.insert_chart_outlined_rounded,
-          //           color: Colors.white),
-          //       label: const Text(
-          //         'View Full Detailed Reports',
-          //         style: TextStyle(
-          //           color: Colors.white,
-          //           fontWeight: FontWeight.bold,
-          //           fontSize: 15,
-          //         ),
-          //       ),
-          //       style: ElevatedButton.styleFrom(
-          //         backgroundColor: Colors.transparent,
-          //         shadowColor: Colors.transparent,
-          //         minimumSize: const Size(double.infinity, 56),
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(16),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          // const SizedBox(height: 30),
+          //  const SizedBox(height: 40),
         ],
       ),
     );
   }
 
-  Widget _buildReportSectionHeader(String title, IconData icon) {
+  Widget _buildReportSectionHeader(String title, IconData icon,
+      {VoidCallback? onReportTap}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -3458,15 +3621,18 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               color: appBarStart.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: appBarStart, size: 20),
+            child: Icon(icon, color: appBarStart, size: 25),
           ),
           const SizedBox(width: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
+          Transform.translate(
+            offset: Offset(0, -10),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
             ),
           ),
           const Spacer(),
@@ -3474,28 +3640,41 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
             icon: const Icon(Icons.filter_alt_outlined, color: appBarStart),
             onPressed: () => _openFilterForSection(title),
           ),
+          // const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.description, color: appBarStart),
+            onPressed: onReportTap ?? () => _openFilterForSection(title),
+          ),
         ],
       ),
     );
   }
 
-  void _openFilterForSection(String title) {
+  Future<void> _openFilterForSection(String title) async {
+    if (title.contains('Lead Source') && productSectionModel == null) {
+      productSectionModel = await HttpService.leadProductSection();
+    }
     DateTime initialFrom;
     DateTime initialTo;
     List<String> initialStaffs;
+    List<String>? initialProducts;
+    List<String>? initialCategorys;
 
     if (title.contains('Call Status')) {
-      initialFrom = callStatusFromDate ?? fromDate1;
-      initialTo = callStatusToDate ?? toDate1;
+      initialFrom = callStatusFromDate ?? DateTime.now();
+      initialTo = callStatusToDate ?? DateTime.now();
       initialStaffs = callStatusStaffs;
     } else if (title.contains('Stage-wise')) {
-      initialFrom = stageWiseFromDate ?? fromDate1;
-      initialTo = stageWiseToDate ?? toDate1;
+      initialFrom = stageWiseFromDate ?? DateTime.now();
+      initialTo = stageWiseToDate ?? DateTime.now();
       initialStaffs = stageWiseStaffs;
     } else if (title.contains('Lead Source')) {
-      initialFrom = leadSourceFromDate ?? fromDate1;
-      initialTo = leadSourceToDate ?? toDate1;
+      DateTime now = DateTime.now();
+      initialFrom = leadSourceFromDate ?? DateTime(now.year, now.month, 1);
+      initialTo = leadSourceToDate ?? DateTime(now.year, now.month + 1, 0);
       initialStaffs = leadSourceStaffs;
+      initialProducts = leadSourceProducts;
+      initialCategorys = leadSourceCategories;
     } else {
       initialFrom = categoryFromDate ?? fromDate1;
       initialTo = categoryToDate ?? toDate1;
@@ -3507,59 +3686,39 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       initialFromDate: initialFrom,
       initialToDate: initialTo,
       initialStaffIds: initialStaffs,
-      onApply: (from, to, staffIds) async {
+      initialProductIds: initialProducts,
+      initialCategoryIds: initialCategorys,
+      onApply: (from, to, staffIds, productIds, categoryIds) async {
         if (title.contains('Call Status')) {
           setState(() {
             callStatusFromDate = from;
             callStatusToDate = to;
             callStatusStaffs = staffIds;
-            isCallStatusLoading = true;
           });
-          var data = await HttpService.leadProgressbar(
-              widget.token,
-              DateFormat('dd-MM-yyyy').format(from),
-              DateFormat('dd-MM-yyyy').format(to),
-              "",
-              staffIds: staffIds);
-          setState(() {
-            callStatusData = data;
-            isCallStatusLoading = false;
-          });
+          await _fetchCallStatusReport();
         } else if (title.contains('Stage-wise')) {
           setState(() {
             stageWiseFromDate = from;
             stageWiseToDate = to;
             stageWiseStaffs = staffIds;
-            isStageWiseLoading = true;
           });
-          var data = await HttpService.leadDashboard1(
-              widget.token, from, to, from.toString(), to.toString(),
-              staffIds: staffIds);
-          setState(() {
-            stageWiseData = data;
-            isStageWiseLoading = false;
-          });
+          await _fetchStageWiseReport();
         } else if (title.contains('Lead Source')) {
           setState(() {
             leadSourceFromDate = from;
             leadSourceToDate = to;
             leadSourceStaffs = staffIds;
-            // Fake loading since dummy data
+            leadSourceProducts = productIds ?? [];
+            leadSourceCategories = categoryIds ?? [];
           });
+          await _fetchLeadSourceReport();
         } else {
           setState(() {
             categoryFromDate = from;
             categoryToDate = to;
             categoryStaffs = staffIds;
-            isCategoryLoading = true;
           });
-          var data = await HttpService.leadDashboard1(
-              widget.token, from, to, from.toString(), to.toString(),
-              staffIds: staffIds);
-          setState(() {
-            categoryData = data;
-            isCategoryLoading = false;
-          });
+          await _fetchCategoryReport();
         }
       },
     );
@@ -3570,17 +3729,25 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     required DateTime initialFromDate,
     required DateTime initialToDate,
     required List<String> initialStaffIds,
-    required Function(DateTime from, DateTime to, List<String> staffIds)
+    List<String>? initialProductIds,
+    List<String>? initialCategoryIds,
+    required Function(DateTime from, DateTime to, List<String> staffIds,
+            List<String>? productIds, List<String>? categoryIds)
         onApply,
   }) {
     DateTime tempFrom = initialFromDate;
     DateTime tempTo = initialToDate;
     List<String> tempStaffIds = List.from(initialStaffIds);
-    final staffs = commonDetails?.data.staff ?? [];
+    List<String> tempProductIds = List.from(initialProductIds ?? []);
+    List<String> tempCategoryIds = List.from(initialCategoryIds ?? []);
+    final staffs = staffList;
+    final categories = commonDetails?.data.leadCategory ?? [];
 
     String selectedCategory = 'Date Range';
     final DateFormat _formatter = DateFormat('dd-MM-yyyy');
     TextEditingController searchController = TextEditingController();
+    TextEditingController searchProductController = TextEditingController();
+    TextEditingController searchCategoryController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -3590,8 +3757,13 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
         return StatefulBuilder(builder: (context, setModalState) {
           Widget buildCategoryItem(String categoryName, IconData icon) {
             final isSelected = selectedCategory == categoryName;
-            final hasFilters =
-                (categoryName == 'Date Range') ? true : tempStaffIds.isNotEmpty;
+            bool hasFilters = false;
+            if (categoryName == 'Date Range') hasFilters = true;
+            if (categoryName == 'Staff') hasFilters = tempStaffIds.isNotEmpty;
+            if (categoryName == 'Products')
+              hasFilters = tempProductIds.isNotEmpty;
+            if (categoryName == 'Categories')
+              hasFilters = tempCategoryIds.isNotEmpty;
 
             return GestureDetector(
               onTap: () => setModalState(() => selectedCategory = categoryName),
@@ -3808,8 +3980,8 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                     itemCount: staffs.length,
                     itemBuilder: (context, index) {
                       final item = staffs[index];
-                      final name = item.staffName;
-                      final id = item.userId.toString();
+                      final name = item.name;
+                      final id = item.userIdStaff.toString();
 
                       if (searchController.text.isNotEmpty &&
                           !name
@@ -3827,6 +3999,121 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                             tempStaffIds.remove(id);
                           } else {
                             tempStaffIds.add(id);
+                          }
+                        }),
+                        title: Text(name, style: const TextStyle(fontSize: 13)),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+
+          Widget buildProductOptions() {
+            final products = productSectionModel?.data ?? [];
+            return Column(
+              children: [
+                TextField(
+                  controller: searchProductController,
+                  onChanged: (_) => setModalState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search Products...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE4E9F2)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final item = products[index];
+                      final name = item.productName ?? "";
+                      final id = item.id?.toString() ?? "";
+
+                      if (searchProductController.text.isNotEmpty &&
+                          !name.toLowerCase().contains(
+                              searchProductController.text.toLowerCase())) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final isSelected = tempProductIds.contains(id);
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        onChanged: (_) => setModalState(() {
+                          if (isSelected) {
+                            tempProductIds.remove(id);
+                          } else {
+                            tempProductIds.add(id);
+                          }
+                        }),
+                        title: Text(name, style: const TextStyle(fontSize: 13)),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+
+          Widget buildCategoryOptions() {
+            return Column(
+              children: [
+                TextField(
+                  controller: searchCategoryController,
+                  onChanged: (_) => setModalState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search Categories...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE4E9F2)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final item = categories[index];
+                      final name = item.leadCategory;
+                      final id = item.leadCategoryId.toString();
+
+                      if (searchCategoryController.text.isNotEmpty &&
+                          !name.toLowerCase().contains(
+                              searchCategoryController.text.toLowerCase())) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final isSelected = tempCategoryIds.contains(id);
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        onChanged: (_) => setModalState(() {
+                          if (isSelected) {
+                            tempCategoryIds.remove(id);
+                          } else {
+                            tempCategoryIds.add(id);
                           }
                         }),
                         title: Text(name, style: const TextStyle(fontSize: 13)),
@@ -3899,6 +4186,12 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                               buildCategoryItem(
                                   'Date Range', Icons.calendar_today),
                               buildCategoryItem('Staff', Icons.people_outline),
+                              if (initialProductIds != null)
+                                buildCategoryItem(
+                                    'Products', Icons.inventory_2_outlined),
+                              if (initialCategoryIds != null)
+                                buildCategoryItem(
+                                    'Categories', Icons.category_outlined),
                             ],
                           ),
                         ),
@@ -3908,7 +4201,11 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                           padding: const EdgeInsets.all(16),
                           child: selectedCategory == 'Date Range'
                               ? buildDateOptions()
-                              : buildStaffOptions(),
+                              : selectedCategory == 'Staff'
+                                  ? buildStaffOptions()
+                                  : selectedCategory == 'Products'
+                                      ? buildProductOptions()
+                                      : buildCategoryOptions(),
                         ),
                       ),
                     ],
@@ -3943,7 +4240,8 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            onApply(tempFrom, tempTo, tempStaffIds);
+                            onApply(tempFrom, tempTo, tempStaffIds,
+                                tempProductIds, tempCategoryIds);
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -3973,199 +4271,404 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
-    var currentData = callStatusData ?? object1;
-    var statusLeads = currentData?.data?.statusLeads ?? [];
-    if (statusLeads.isEmpty) {
-      statusLeads = [
-        lp.StatusLeads(
-            statusName: 'Connected', statusCount: '24', statusPercentage: '45'),
-        lp.StatusLeads(
-            statusName: 'Pending', statusCount: '15', statusPercentage: '28'),
-        lp.StatusLeads(
-            statusName: 'N/A', statusCount: '8', statusPercentage: '15'),
-        lp.StatusLeads(
-            statusName: 'Interested', statusCount: '6', statusPercentage: '12'),
-      ];
+    var details = callStatusReport?.data?.details ?? [];
+    double totalCount =
+        double.tryParse(callStatusReport?.data?.totalCount ?? '0') ?? 0;
+
+    if (details.isEmpty) {
+      return _buildEmptyReport();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        children: statusLeads.map((item) {
-          int index = statusLeads.indexOf(item);
-          final color = _colors[index % _colors.length];
-          final percentageStr = item.statusPercentage?.toString() ?? '0';
-          final percentage = (double.tryParse(percentageStr) ?? 0) / 100;
+    // Get selected staff names
+    String staffNames = "";
+    if (callStatusStaffs.isNotEmpty && staffList.isNotEmpty) {
+      staffNames = staffList
+          .where((s) => callStatusStaffs.contains(s.userIdStaff.toString()))
+          .map((s) => s.name)
+          .join(", ");
+    }
 
-          return InkWell(
-            onTap: () {
-              final staffList = staffWise?.data?.staffLeads ?? [];
-              final details = staffList.map((s) {
-                String? count;
-                if (item.statusName == 'Pending') {
-                  count = s.pendingCount;
-                } else if (item.statusName == 'Connected' ||
-                    item.statusName == 'Confirmed') {
-                  count = s.confirmedCount;
-                } else if (item.statusName == 'New') {
-                  count = s.newCount;
-                } else {
-                  count = s.staffCount;
-                }
-                return {
-                  'name': s.staffName ?? 'Unknown',
-                  'count': count ?? '0',
-                };
-              }).toList();
-              _showReportDetailsDialog(
-                  item.statusName ?? 'Report', details, color);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 18),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildReportHeader(staffNames, callStatusLastUpdated),
+        showCallStatusTable
+            ? _buildStaffMatrixTable(staffWise?.data?.staffLeads ?? [])
+            : Transform.translate(
+                offset: const Offset(0, -30),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Column(
+                    children: [
+                      ...(isCallStatusExpanded ? details : details.take(6))
+                          .map((item) {
+                        int index = details.indexOf(item);
+                        final color =
+                            _getReportItemColor(item.callResponse, index);
+                        double itemTotal =
+                            double.tryParse(item.total ?? '0') ?? 0;
+                        final percentage =
+                            totalCount > 0 ? itemTotal / totalCount : 0.0;
+
+                        return InkWell(
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                  child: CircularProgressIndicator()),
+                            );
+
+                            final csro.CallStatusReportOntapModel? result =
+                                await HttpService.callStatusReportOntapData(
+                              fromDate: DateFormat('dd-MM-yyyy')
+                                  .format(callStatusFromDate ?? DateTime.now()),
+                              toDate: DateFormat('dd-MM-yyyy')
+                                  .format(callStatusToDate ?? DateTime.now()),
+                              staffId: callStatusStaffs.join(','),
+                              callResponseId: item.callResponseId,
+                            );
+
+                            if (mounted) Navigator.pop(context);
+
+                            if (result != null &&
+                                result.data?.details != null) {
+                              final drillDownDetails = result.data!.details!
+                                  .map((s) => {
+                                        'name': s.staffName ?? 'Unknown',
+                                        'count': s.total ?? '0',
+                                        'staffId': s.userId ?? '',
+                                      })
+                                  .toList();
+                              _showReportDetailsDialog(
+                                  item.callResponse ?? 'Report',
+                                  drillDownDetails,
+                                  color, onStaffTap: (staffItem) {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ViewLeadsNew(
+                                      widget.token,
+                                      updateLeadPermission1,
+                                      deleteLeadPermission1,
+                                      cloudCallPermission1,
+                                      pageName: item.callResponse ?? 'Report',
+                                      fromDate:
+                                          callStatusFromDate?.toString() ??
+                                              DateTime.now().toString(),
+                                      toDate: callStatusToDate?.toString() ??
+                                          DateTime.now().toString(),
+                                      callResId: item.callResponseId,
+                                      callResName: item.callResponse,
+                                      staffName: staffItem['name'],
+                                      staff: staffItem['staffId'],
+                                    ),
+                                  ),
+                                ).then((_) {
+                                  _fetchCallStatusReport();
+                                });
+                              });
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      item.callResponse ?? 'Unknown',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      item.total ?? '0',
+                                      style: TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Stack(
+                                  children: [
+                                    Container(
+                                      height: 10,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 1000),
+                                      height: 10,
+                                      width:
+                                          (MediaQuery.of(context).size.width -
+                                                  72) *
+                                              (percentage > 1 ? 1 : percentage),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            color,
+                                            color.withOpacity(0.7)
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: color.withOpacity(0.3),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      if (details.length > 6)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                isCallStatusExpanded = !isCallStatusExpanded;
+                              });
+                            },
+                            icon: Icon(
+                              isCallStatusExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: appBarStart,
+                            ),
+                            label: Text(
+                              isCallStatusExpanded ? "Show Less" : "Show More",
+                              style: TextStyle(
+                                color: appBarStart,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+      ],
+    );
+  }
+
+  Widget _buildReportHeader(String staffNames, DateTime? lastUpdated,
+      {VoidCallback? onDescriptionTap}) {
+    return Transform.translate(
+      offset: const Offset(0, -40),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 55, bottom: 12, right: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        item.statusName ?? 'Unknown',
+                  if (lastUpdated != null)
+                    Text(
+                      "Last Updated: ${DateFormat('hh:mm a, dd MMM').format(lastUpdated)}",
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  if (staffNames.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        "Staffs: $staffNames",
                         style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: textPrimary,
-                        ),
+                            fontSize: 12,
+                            color: appBarStart,
+                            fontWeight: FontWeight.w600),
                       ),
-                      Text(
-                        item.statusCount ?? '0',
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Stack(
-                    children: [
-                      Container(
-                        height: 10,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 1000),
-                        height: 10,
-                        width: (MediaQuery.of(context).size.width - 72) *
-                            (percentage > 1 ? 1 : percentage),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [color, color.withOpacity(0.7)],
-                          ),
-                          borderRadius: BorderRadius.circular(5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withOpacity(0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
-          );
-        }).toList(),
+            if (onDescriptionTap != null)
+              GestureDetector(
+                onTap: onDescriptionTap,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: appBarStart.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.description_outlined,
+                    color: appBarStart,
+                    size: 20,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  // 2. Stage-wise Report - Modern Circular Progress
+  // 2. Stage-wise Report - Reverted to Old Design with New API
   Widget _buildStageWiseReport() {
     if (isStageWiseLoading)
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
-    var currentData = stageWiseData ?? staffWise;
-    int locNew = 0, locFollowup = 0, locRejected = 0, locClosed = 0;
-    for (int i = 0; i < (currentData?.data?.categoryLeads?.length ?? 0); i++) {
-      locNew += int.tryParse(
-              currentData!.data!.categoryLeads![i].newCount.toString()) ??
-          0;
-      locFollowup += int.tryParse(
-              currentData.data!.categoryLeads![i].followupCount.toString()) ??
-          0;
-      locRejected += int.tryParse(
-              currentData.data!.categoryLeads![i].rejectedCount.toString()) ??
-          0;
-      locClosed += int.tryParse(
-              currentData.data!.categoryLeads![i].confirmedCount.toString()) ??
-          0;
+
+    var details = stagewiseReport?.data.details ?? [];
+    int totalCount = stagewiseReport?.data.totalCount ?? 0;
+
+    if (details.isEmpty) {
+      return _buildEmptyReport();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStageItem('New', locNew, Colors.blue, 0, currentData),
-          _buildStageItem('Follow', locFollowup, Colors.orange, 1, currentData),
-          _buildStageItem('Reject', locRejected, Colors.red, 2, currentData),
-          _buildStageItem('Closed', locClosed, Colors.green, 3, currentData),
-        ],
-      ),
+    // Get selected staff names
+    String staffNames = "";
+    if (stageWiseStaffs.isNotEmpty && staffList.isNotEmpty) {
+      staffNames = staffList
+          .where((s) => stageWiseStaffs.contains(s.userIdStaff.toString()))
+          .map((s) => s.name)
+          .join(", ");
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildReportHeader(staffNames, stageWiseLastUpdated),
+        showStageWiseTable
+            ? _buildStaffMatrixTable(staffWise?.data?.staffLeads ?? [])
+            : Transform.translate(
+                offset: const Offset(0, -30),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: details.map((item) {
+                        int index = details.indexOf(item);
+                        final color =
+                            _getReportItemColor(item.callResult, index);
+                        return Padding(
+                          padding: EdgeInsets.only(
+                              right: index == details.length - 1 ? 0 : 20),
+                          child: _buildStageItem(item.callResult, item.total,
+                              color, totalCount, item.callResultId),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+      ],
     );
   }
 
-  Widget _buildStageItem(String title, int count, Color color, int index,
-      LeadCategoryStaffWiseModel? currentData) {
+  Widget _buildStageItem(String title, int count, Color color, int totalCount,
+      String callResultId) {
     return InkWell(
-      onTap: () {
-        final staffList = currentData?.data?.staffLeads ?? [];
-        final details = staffList.map((s) {
-          String? staffCount;
-          if (title == 'New') staffCount = s.newCount;
-          if (title == 'Follow') staffCount = s.followupCount;
-          if (title == 'Reject') staffCount = s.rejectedCount;
-          if (title == 'Closed') staffCount = s.confirmedCount;
+      onTap: () async {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
+        );
 
-          return {
-            'name': s.staffName ?? 'Unknown',
-            'count': staffCount ?? '0',
-          };
-        }).toList();
-        _showReportDetailsDialog('$title Stage', details, color);
+        final swro.StagewiseReportOntapModel? result =
+            await HttpService.stagwWiseReportOntapData(
+          fromDate: stageWiseFromDate != null
+              ? DateFormat('dd-MM-yyyy').format(stageWiseFromDate!)
+              : "",
+          toDate: stageWiseToDate != null
+              ? DateFormat('dd-MM-yyyy').format(stageWiseToDate!)
+              : "",
+          staffId: stageWiseStaffs.join(','),
+          callResultId: callResultId,
+        );
+
+        if (mounted) Navigator.pop(context);
+
+        if (result != null) {
+          final drillDownDetails = result.data.details
+              .map((s) => {
+                    'name': s.staffName,
+                    'count': s.total.toString(),
+                    'staffId': s.userId,
+                  })
+              .toList();
+          _showReportDetailsDialog('$title Stage', drillDownDetails, color,
+              onStaffTap: (staffItem) {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ViewLeadsNew(
+                  widget.token,
+                  updateLeadPermission1,
+                  deleteLeadPermission1,
+                  cloudCallPermission1,
+                  pageName: '$title Stage',
+                  fromDate: stageWiseFromDate?.toString() ??
+                      DateTime.now().toString(),
+                  toDate:
+                      stageWiseToDate?.toString() ?? DateTime.now().toString(),
+                  leadType: callResultId,
+                  staffName: staffItem['name'],
+                  staff: staffItem['staffId'],
+                ),
+              ),
+            ).then((_) {
+              _fetchStageWiseReport();
+            });
+          });
+        }
       },
       child: Column(
         children: [
@@ -4176,7 +4679,9 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 width: 60,
                 height: 60,
                 child: CircularProgressIndicator(
-                  value: (count / 100).clamp(0.1, 1.0),
+                  value: totalCount > 0
+                      ? (count / totalCount).clamp(0.1, 1.0)
+                      : 0.1,
                   strokeWidth: 6,
                   color: color,
                   backgroundColor: color.withOpacity(0.1),
@@ -4200,98 +4705,233 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               fontSize: 12,
               color: textSecondary,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  // 3. Lead Source Report - Neon Dark Style
+  // 3. Lead Source Report - Real Data Integration
   Widget _buildLeadSourceReport() {
-    final sources = [
-      {'name': 'Google Ads', 'count': 145, 'color': Colors.cyanAccent},
-      {'name': 'Facebook', 'count': 98, 'color': Colors.blueAccent},
-      {'name': 'WhatsApp', 'count': 167, 'color': Colors.greenAccent},
-      {'name': 'Referral', 'count': 42, 'color': Colors.amberAccent},
-    ];
+    if (isLeadSourceLoading)
+      return const Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: CircularProgressIndicator()));
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121212),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: sources.map((source) {
-          final color = source['color'] as Color;
-          final count = source['count'] as int;
-          final percent = (count / 200).clamp(0.0, 1.0);
+    if (leadSourceDetails.isEmpty) {
+      return _buildEmptyReport();
+    }
 
-          return InkWell(
-            onTap: () {
-              final staffList = staffWise?.data?.staffLeads ?? [];
-              final details = staffList.map((s) {
-                return {
-                  'name': s.staffName ?? 'Unknown',
-                  'count': s.staffCount ?? '0',
-                };
-              }).toList();
-              _showReportDetailsDialog(
-                  source['name'] as String, details, color);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        source['name'] as String,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        count.toString(),
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          shadows: [
-                            Shadow(
-                                color: color.withOpacity(0.5), blurRadius: 10),
-                          ],
-                        ),
+    // Get selected staff names
+    String staffNames = "";
+    if (leadSourceStaffs.isNotEmpty && staffList.isNotEmpty) {
+      staffNames = staffList
+          .where((s) => leadSourceStaffs.contains(s.userIdStaff.toString()))
+          .map((s) => s.name)
+          .join(", ");
+    }
+
+    int totalCount = leadSourceReport?.data.totalCount ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildReportHeader(staffNames, leadSourceLastUpdated),
+        showLeadSourceTable
+            ? _buildStaffMatrixTable(staffWise?.data?.staffLeads ?? [])
+            : Transform.translate(
+                offset: const Offset(0, -30),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 14, 14, 14),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
                       ),
                     ],
+                    border: Border.all(color: Colors.grey.shade100),
                   ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: percent,
-                      minHeight: 6,
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
+                  child: Column(
+                    children: [
+                      ...leadSourceDetails.map((item) {
+                        int index = leadSourceDetails.indexOf(item);
+                        final percent = totalCount > 0
+                            ? (item.total / totalCount).clamp(0.0, 1.0)
+                            : 0.0;
+                        final color = _colors[index % _colors.length];
+
+                        return InkWell(
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                  child: CircularProgressIndicator()),
+                            );
+
+                            final lsro.LeadSourceReportOntapModel? result =
+                                await HttpService.leadSourceReportOntapData(
+                              fromDate: leadSourceFromDate != null
+                                  ? DateFormat('dd-MM-yyyy')
+                                      .format(leadSourceFromDate!)
+                                  : DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now()),
+                              toDate: leadSourceToDate != null
+                                  ? DateFormat('dd-MM-yyyy')
+                                      .format(leadSourceToDate!)
+                                  : DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now()),
+                              staffId: leadSourceStaffs.join(','),
+                              leadSourceId: item.leadSourceId.toString(),
+                            );
+
+                            if (mounted) Navigator.pop(context);
+
+                            if (result != null) {
+                              final drillDownDetails = result.data.details
+                                  .map((s) => {
+                                        'name': s.staffName,
+                                        'count': s.total.toString(),
+                                        'staffId': s.userId,
+                                      })
+                                  .toList();
+                              _showReportDetailsDialog(
+                                  '${item.leadSource} Source',
+                                  drillDownDetails,
+                                  color, onStaffTap: (staffItem) {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ViewLeadsNew(
+                                      widget.token,
+                                      updateLeadPermission1,
+                                      deleteLeadPermission1,
+                                      cloudCallPermission1,
+                                      pageName: '${item.leadSource} Source',
+                                      fromDate:
+                                          leadSourceFromDate?.toString() ??
+                                              DateTime.now().toString(),
+                                      toDate: leadSourceToDate?.toString() ??
+                                          DateTime.now().toString(),
+                                      leadSourceId: item.leadSourceId,
+                                      staffName: staffItem['name'],
+                                      staffId: staffItem['staffId'],
+                                    ),
+                                  ),
+                                ).then((_) => _fetchLeadSourceReport());
+                              });
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      item.leadSource,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color:
+                                            Color.fromARGB(255, 245, 245, 245),
+                                      ),
+                                    ),
+                                    Text(
+                                      item.total.toString(),
+                                      style: TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Stack(
+                                  children: [
+                                    Container(
+                                      height: 10,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 1000),
+                                      height: 10,
+                                      width:
+                                          (MediaQuery.of(context).size.width -
+                                                  72) *
+                                              (percent > 1 ? 1 : percent),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            color,
+                                            color.withOpacity(0.7)
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: color.withOpacity(0.3),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      if (hasMoreLeadSource || isLeadSourceMoreLoading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: TextButton.icon(
+                            onPressed: isLeadSourceMoreLoading
+                                ? null
+                                : () {
+                                    leadSourcePage++;
+                                    _fetchLeadSourceReport(isLoadMore: true);
+                                  },
+                            icon: isLeadSourceMoreLoading
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2))
+                                : const Icon(Icons.add, size: 18),
+                            label: Text(
+                              isLeadSourceMoreLoading
+                                  ? "Loading..."
+                                  : "Load More",
+                              style: TextStyle(
+                                color: appBarStart,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        }).toList(),
-      ),
+      ],
     );
   }
 
@@ -4300,113 +4940,512 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
-    var currentData = categoryData ?? staffWise;
-    final catLeads = currentData?.data?.categoryLeads ?? [];
-    if (catLeads.isEmpty) return _buildEmptyReport();
+
+    if (categoryDetails.isEmpty) {
+      return _buildEmptyReport();
+    }
+
+    // Get selected staff names
+    String staffNames = "";
+    if (categoryStaffs.isNotEmpty && staffList.isNotEmpty) {
+      staffNames = staffList
+          .where((s) => categoryStaffs.contains(s.userIdStaff.toString()))
+          .map((s) => s.name)
+          .join(", ");
+    }
+
+    int totalCount = categoryReport?.data.totalCount ?? 0;
 
     return Column(
-      children: catLeads.take(5).map((cat) {
-        final count = int.tryParse(cat.categoryCount ?? '0') ?? 0;
-        final percent = (count / 500).clamp(0.0, 1.0);
-
-        return InkWell(
-          onTap: () {
-            final staffList = currentData?.data?.staffLeads ?? [];
-            final details = staffList.map((s) {
-              return {
-                'name': s.staffName ?? 'Unknown',
-                'count': s.staffCount ?? '0',
-              };
-            }).toList();
-            _showReportDetailsDialog(
-                cat.categoryName ?? 'Category', details, appBarStart);
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: appBarStart.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: appBarStart.withOpacity(0.08)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildReportHeader(staffNames, categoryLastUpdated),
+        showCategoryTable
+            ? _buildStaffMatrixTable(staffWise?.data?.staffLeads ?? [])
+            : Transform.translate(
+                offset: const Offset(0, -30),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        appBarStart.withOpacity(0.1),
-                        appBarStart.withOpacity(0.05)
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      cat.categoryName?.substring(0, 1).toUpperCase() ?? 'C',
-                      style: TextStyle(
-                        color: appBarStart,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
                       ),
-                    ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade100),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            cat.categoryName ?? 'Category',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                              color: textPrimary,
+                      ...categoryDetails.map((cat) {
+                        int index = categoryDetails.indexOf(cat);
+                        final color = _colors[index % _colors.length];
+                        final percent = totalCount > 0
+                            ? (cat.total / totalCount).clamp(0.0, 1.0)
+                            : 0.0;
+
+                        return InkWell(
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                  child: CircularProgressIndicator()),
+                            );
+
+                            final catro.LeadCategoryReportOntapModel? result =
+                                await HttpService.leadCategoryReportOntapData(
+                              fromDate: categoryFromDate != null
+                                  ? DateFormat('dd-MM-yyyy')
+                                      .format(categoryFromDate!)
+                                  : "",
+                              toDate: categoryToDate != null
+                                  ? DateFormat('dd-MM-yyyy')
+                                      .format(categoryToDate!)
+                                  : "",
+                              staffId: categoryStaffs.join(','),
+                              leadCategoryId: cat.leadCategoryId.toString(),
+                            );
+
+                            if (mounted) Navigator.pop(context);
+
+                            if (result != null) {
+                              final drillDownDetails = result.data.details
+                                  .map((s) => {
+                                        'name': s.staffName,
+                                        'count': s.total.toString(),
+                                        'staffId': s.userId,
+                                      })
+                                  .toList();
+                              _showReportDetailsDialog(
+                                  cat.leadCategory, drillDownDetails, color,
+                                  onStaffTap: (staffItem) {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ViewLeadsNew(
+                                      widget.token,
+                                      updateLeadPermission1,
+                                      deleteLeadPermission1,
+                                      cloudCallPermission1,
+                                      pageName: cat.leadCategory,
+                                      fromDate: categoryFromDate?.toString() ??
+                                          DateTime.now().toString(),
+                                      toDate: categoryToDate?.toString() ??
+                                          DateTime.now().toString(),
+                                      staffId: staffItem['staffId'],
+                                      category: cat.leadCategoryId.toString(),
+                                    ),
+                                  ),
+                                ).then((_) {
+                                  getData(widget.token, fromDate, toDate);
+                                });
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      cat.leadCategory
+                                          .substring(0, 1)
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            cat.leadCategory,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 14,
+                                              color: textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            cat.total.toString(),
+                                            style: TextStyle(
+                                              color: color,
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: percent,
+                                          minHeight: 8,
+                                          backgroundColor: Colors.grey.shade200,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  color),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            cat.categoryCount ?? '0',
-                            style: TextStyle(
-                              color: appBarStart,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                            ),
+                        );
+                      }).toList(),
+                      if (hasMoreCategory)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Center(
+                            child: isCategoryMoreLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : TextButton(
+                                    onPressed: () =>
+                                        _fetchCategoryReport(isLoadMore: true),
+                                    child: const Text(
+                                      "View More",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: appBarStart,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: percent,
-                          minHeight: 8,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(appBarStart),
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ],
+              ),
+      ],
+    );
+  }
+
+  Widget _buildStaffMatrixTable(List<StaffLeads> staffLeads) {
+    if (staffLeads.isEmpty) return _buildEmptyReport();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Row(
+          children: [
+            // Sticky Left Column (Staff Names)
+            Container(
+              width: 160,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 10,
+                    offset: const Offset(4, 0),
+                  ),
+                ],
+                border: Border(
+                  right: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Sticky Header for Staff
+                  Container(
+                    height: 60,
+                    padding: const EdgeInsets.only(left: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          appBarStart.withOpacity(0.12),
+                          appBarStart.withOpacity(0.08)
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.shade200),
+                      ),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: _buildMatrixHeaderCell(
+                        'Staff Name', Icons.people_alt_rounded, 144),
+                  ),
+                  // Sticky Rows for Staff Names
+                  ...staffLeads.asMap().entries.map((entry) {
+                    final s = entry.value;
+                    final index = entry.key;
+                    return Container(
+                      height: 60,
+                      padding: const EdgeInsets.only(left: 16),
+                      decoration: BoxDecoration(
+                        color: index % 2 == 0
+                            ? Colors.white
+                            : appBarStart.withOpacity(0.02),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade50),
+                        ),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: _buildMatrixStaffCell(s.staffName ?? 'N/A', 144),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+            // Scrollable Right Area (Counters)
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Scrollable Header
+                    Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            appBarStart.withOpacity(0.12),
+                            appBarStart.withOpacity(0.04)
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade200),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 10),
+                          _buildMatrixHeaderCell('New', Icons.fiber_new_rounded, 80),
+                          _buildMatrixHeaderCell('Pending', Icons.pending_actions_rounded, 95),
+                          _buildMatrixHeaderCell('Followup', Icons.event_repeat_rounded, 105),
+                          _buildMatrixHeaderCell('Rejected', Icons.cancel_outlined, 95),
+                          _buildMatrixHeaderCell('Confirmed', Icons.check_circle_outline_rounded, 115),
+                          _buildMatrixHeaderCell('Total Leads', Icons.summarize_rounded, 100),
+                          const SizedBox(width: 10),
+                        ],
+                      ),
+                    ),
+                    // Scrollable Rows
+                    ...staffLeads.asMap().entries.map((entry) {
+                      final s = entry.value;
+                      final index = entry.key;
+                      return Container(
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: index % 2 == 0
+                              ? Colors.transparent
+                              : appBarStart.withOpacity(0.02),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade50),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 10),
+                            _buildMatrixCountCell(s.newCount ?? '0', primaryBlue, 80),
+                            _buildMatrixCountCell(s.pendingCount ?? '0', accentOrange, 95),
+                            _buildMatrixCountCell(s.followupCount ?? '0', Colors.teal, 105),
+                            _buildMatrixCountCell(s.rejectedCount ?? '0', accentRed, 95),
+                            _buildMatrixCountCell(s.confirmedCount ?? '0', callGreen, 115),
+                            _buildMatrixTotalCell(s.staffCount ?? '0', 100),
+                            const SizedBox(width: 10),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatrixHeaderCell(String label, IconData icon, double width) {
+    return SizedBox(
+      width: width,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: appBarStart.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 14, color: appBarStart),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: appBarStart,
+              fontSize: 11,
+              letterSpacing: 0.8,
             ),
           ),
-        );
-      }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatrixStaffCell(String name, double width) {
+    return SizedBox(
+      width: width,
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  appBarStart.withOpacity(0.2),
+                  appBarStart.withOpacity(0.05)
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(color: appBarStart.withOpacity(0.1), width: 1),
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: appBarStart,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatrixCountCell(String count, Color color, double width) {
+    return SizedBox(
+      width: width,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.1), width: 0.5),
+          ),
+          child: Text(
+            count,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatrixTotalCell(String count, double width) {
+    return SizedBox(
+      width: width,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [appBarStart, primaryBlue.withOpacity(0.85)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: appBarStart.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Text(
+            count,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   void _showReportDetailsDialog(
-    String title,
-    List<Map<String, dynamic>> details,
-    Color primaryColor,
-  ) {
+      String title, List<Map<String, dynamic>> details, Color primaryColor,
+      {void Function(Map<String, dynamic>)? onStaffTap}) {
     showDialog(
       context: context,
       builder: (context) {
@@ -4461,69 +5500,74 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                       itemCount: details.length,
                       itemBuilder: (context, index) {
                         final item = details[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade100),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                        return InkWell(
+                            onTap: onStaffTap != null
+                                ? () => onStaffTap(item)
+                                : null,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade100),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor:
-                                        primaryColor.withOpacity(0.1),
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor:
+                                            primaryColor.withOpacity(0.1),
+                                        child: Text(
+                                          item['name'][0].toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        item['name'],
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                     child: Text(
-                                      item['name'][0].toUpperCase(),
-                                      style: TextStyle(
+                                      item['count'].toString(),
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: primaryColor,
+                                        color: Colors.white,
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    item['name'],
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: textPrimary,
                                     ),
                                   ),
                                 ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  item['count'].toString(),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
+                            ));
                       },
                     ),
                   ),
@@ -5615,8 +6659,26 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                     ((status == '0' && callStatus != null)
                         ? callStatus!
                         : status);
-                await getLeadProgressbar(
-                    widget.token!, fromDate, toDate, effectiveGraphStatus);
+                label == "New"
+                    ? await getLeadProgressbarNew(
+                        widget.token!, fromDate, toDate, effectiveGraphStatus)
+                    : label == "Followup"
+                        ? await getLeadProgressbarFollowup(widget.token!,
+                            fromDate, toDate, effectiveGraphStatus)
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(widget.token!,
+                                fromDate, toDate, effectiveGraphStatus)
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(widget.token!,
+                                    fromDate, toDate, effectiveGraphStatus)
+                                :label == "Transferred"
+                                ? await getLeadProgressbarTransferred(widget.token!,
+                                    fromDate, toDate, effectiveGraphStatus)
+                                : await getLeadProgressbar(widget.token!,
+                                    fromDate, toDate, effectiveGraphStatus);
+
+                // await getLeadProgressbar(
+                //     widget.token!, fromDate, toDate, effectiveGraphStatus);
                 if (object1!.status == true) {
                   if (context.mounted) {
                     Navigator.pop(context);
@@ -5713,7 +6775,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          'Staff-wise ${title}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -6086,7 +7148,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          'Category-wise $title',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -6461,7 +7523,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          'Stage Wise ${title}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -8302,6 +9364,16 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     _tabController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+  Color _getReportItemColor(String? name, int index) {
+    if (name == null) return _colors[index % _colors.length];
+    String n = name.toLowerCase();
+    if (n.contains("followup") || n.contains("follow up"))
+      return Colors.yellow.shade700;
+    if (n.contains("pending")) return Colors.orange;
+    if (n.contains("not responding")) return Colors.red;
+    return _colors[index % _colors.length];
   }
 }
 

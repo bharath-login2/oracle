@@ -45,6 +45,7 @@ class PendingLeaveData {
   final String? fromDate;
   final String? toDate;
   final String? remarks;
+  final String? session;
 
   PendingLeaveData({
     required this.id,
@@ -62,6 +63,7 @@ class PendingLeaveData {
     this.fromDate,
     this.toDate,
     this.remarks,
+    this.session,
   });
 
   factory PendingLeaveData.fromJson(Map<String, dynamic> json) {
@@ -81,6 +83,7 @@ class PendingLeaveData {
       fromDate: json['from_date']?.toString(),
       toDate: json['to_date']?.toString(),
       remarks: json['remarks']?.toString() ?? json['remarks']?.toString(),
+      session: json['session']?.toString() ?? json['half_day_session']?.toString(),
     );
   }
 
@@ -101,6 +104,7 @@ class PendingLeaveData {
       'from_date': fromDate,
       'to_date': toDate,
       'remarks': remarks,
+      'session': session,
     };
   }
 }

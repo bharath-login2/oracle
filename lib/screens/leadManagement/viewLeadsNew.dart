@@ -66,6 +66,7 @@ class ViewLeadsNew extends StatefulWidget {
   final List<String>? preservedAssignedStaffItems;
   final List<String>? preservedResponseItems;
   final List<StateList>? stateDetails;
+  final String? leadSourceId;
 
   const ViewLeadsNew(
     this.token,
@@ -99,6 +100,7 @@ class ViewLeadsNew extends StatefulWidget {
     this.preservedAssignedStaffItems,
     this.preservedResponseItems,
     this.stateDetails,
+    this.leadSourceId,
   });
 
   @override
@@ -118,7 +120,6 @@ class ViewLeadsNew extends StatefulWidget {
 
 class _ViewLeadsNewState extends State<ViewLeadsNew>
     with AutomaticKeepAliveClientMixin {
-  // Original color scheme preserved
   static const Color appBarStart = Color(0xFF2a86c9);
   static const Color appBarEnd = Color(0xFF406dbe);
   static const Color callGreen = Color(0xFF4CAF50);
@@ -130,7 +131,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   static const Color borderLight = Color(0xFFECF0F1);
   static const Color backgroundLight = Color.fromARGB(255, 247, 249, 252);
 
-  // Data models
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
   LeadSubTypeModel? leadSubTypeList;
@@ -177,7 +177,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   bool isDistrictLoading = false;
   bool _isLoading = false;
   bool isFilterApplied = false;
-  bool _isCompactView = true;
+  bool _isCompactView = false;
   final Set<String> _expandedLeadIds = {};
   String? StateId;
   String? DistrictId;
@@ -520,7 +520,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       "leadType": widget.leadType ?? "",
       "state": StateId ?? "",
       "district": DistrictId ?? "",
-      "branchId": branch ?? ""
+      "branchId": branch ?? "",
+      "leadSourceId": widget.leadSourceId ?? ""
     };
 
     bool shouldSendDates = isFilterApplied ||
@@ -1320,10 +1321,14 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     ),
                   ),
                   const SizedBox(width: 25),
+                  // Text(
+                  //   selectedIUsers.isNotEmpty
+                  //       ? '${selectedIUsers.length} selected'
+                  //       : widget.pageName.toString(),
+                  //   style: const TextStyle(color: Colors.white, fontSize: 18),
+                  // ),
                   Text(
-                    selectedIUsers.isNotEmpty
-                        ? '${selectedIUsers.length} selected'
-                        : widget.pageName.toString(),
+                    selectedIUsers.isNotEmpty ? '' : widget.pageName.toString(),
                     style: const TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'package:login2/service/service.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/models/expense/staffListModel.dart';
+import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'dart:async';
 
 class LeaveRequestFilter {
@@ -50,6 +51,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
   final List<String> _leaveTypeFilters = [
     'Casual Leave',
     'Sick Leave',
+    'Saturday Leave',
     // 'Paid Leave',
     // 'Unpaid Leave',
     // 'Paternity Leave',
@@ -2728,10 +2730,102 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
     );
   }
 
+  Widget _buildLeaveBalanceWidget(String? type, GetLeaveBalanceModel? balance) {
+    if (balance == null || type == null) return const SizedBox.shrink();
+
+    LeaveType? typeData;
+    if (type.toLowerCase().contains('casual')) {
+      typeData = balance.data.casual;
+    } else if (type.toLowerCase().contains('saturday')) {
+      typeData = balance.data.saturday;
+    }
+
+    if (typeData == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryBlue.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_outlined,
+                  size: 18, color: primaryBlue),
+              const SizedBox(width: 8),
+              const Text(
+                "Leave Balance",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: primaryBlue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBalanceItem(
+                  "Allowed", typeData.allowed.toString(), primaryBlue),
+              Container(width: 1, height: 30, color: Colors.grey[300]),
+              _buildBalanceItem("Taken", typeData.taken.toString(), softOrange),
+              Container(width: 1, height: 30, color: Colors.grey[300]),
+              _buildBalanceItem(
+                  "Balance", typeData.balance.toString(), softGreen),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceItem(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 12, color: darkGrey)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
+  }
+
   void _openApplyLeaveDialog({dynamic item}) {
     bool isEdit = item != null;
     String? leaveType =
         isEdit ? _normalizeLeaveType(item.leaveType) : _leaveTypeFilters[0];
+
+    GetLeaveBalanceModel? leaveBalance;
+    bool isFetchingBalance = false;
+
+    Future<void> fetchBalance(StateSetter setS) async {
+      setS(() => isFetchingBalance = true);
+      try {
+        final res = await HttpService.leaveAvailable();
+        if (res != null && res.status) {
+          setS(() => leaveBalance = res);
+        }
+      } catch (e) {
+        debugPrint("Error fetching leave balance: $e");
+      } finally {
+        setS(() => isFetchingBalance = false);
+      }
+    }
 
     List<String> selectedDates = [];
     if (isEdit && item.leaveDates != null && item.leaveDates.isNotEmpty) {
@@ -2754,497 +2848,524 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setS) {
-          return Container(
-            constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.9),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            ),
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
+      builder: (_) {
+        bool initialLoad = true;
+        return StatefulBuilder(
+          builder: (context, setS) {
+            if (initialLoad) {
+              initialLoad = false;
+              fetchBalance(setS);
+            }
+            return Container(
+              constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.9),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [primaryBlue, secondaryBlue],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            isEdit ? Icons.edit_outlined : Icons.add,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          isEdit ? "Edit Leave Request" : "Apply for Leave",
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: primaryBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          const Text(
-                            "Leave Type",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [primaryBlue, secondaryBlue],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              isEdit ? Icons.edit_outlined : Icons.add,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            isEdit ? "Edit Leave Request" : "Apply for Leave",
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                               color: primaryBlue,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: lightBlue,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Leave Type",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: leaveType,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: const Icon(
+                                      Icons.category_outlined,
+                                      color: primaryBlue),
                                 ),
+                                items: _leaveTypeFilters
+                                    .map((e) => DropdownMenuItem(
+                                        value: e, child: Text(e)))
+                                    .toList(),
+                                onChanged: (v) {
+                                  setS(() => leaveType = v);
+                                  fetchBalance(setS);
+                                },
+                              ),
+                            ),
+                            if (isFetchingBalance)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 16),
+                                child: Center(
+                                  child: SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: primaryBlue),
+                                  ),
+                                ),
+                              )
+                            else
+                              _buildLeaveBalanceWidget(leaveType, leaveBalance),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: lightBlue,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Selected Dates",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: primaryBlue,
+                                  ),
+                                ),
+                                if (selectedDates.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: softOrange.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      isHalfDay
+                                          ? "${selectedDates.length / 2} Days"
+                                          : "${selectedDates.length} Days",
+                                      style: const TextStyle(
+                                        color: softOrange,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
-                            child: DropdownButtonFormField<String>(
-                              value: leaveType,
+                            const SizedBox(height: 12),
+                            if (selectedDates.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        size: 16, color: darkGrey),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      "No dates selected",
+                                      style: TextStyle(
+                                          color: darkGrey, fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: selectedDates
+                                    .map((date) => Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.05),
+                                                blurRadius: 5,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Chip(
+                                            label: Text(
+                                              date,
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            onDeleted: () {
+                                              setS(() {
+                                                selectedDates.remove(date);
+                                              });
+                                            },
+                                            deleteIcon: const Icon(Icons.close,
+                                                size: 16, color: softRed),
+                                            backgroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                            ),
+                                          ),
+                                        ))
+                                    .toList(),
+                              ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final p = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.light(
+                                          primary: primaryBlue,
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (p != null) {
+                                  String formatted =
+                                      DateFormat('dd-MM-yyyy').format(p);
+                                  if (!selectedDates.contains(formatted)) {
+                                    setS(() {
+                                      selectedDates.add(formatted);
+                                      selectedDates.sort((a, b) {
+                                        DateTime dateA =
+                                            DateFormat('dd-MM-yyyy').parse(a);
+                                        DateTime dateB =
+                                            DateFormat('dd-MM-yyyy').parse(b);
+                                        return dateA.compareTo(dateB);
+                                      });
+                                    });
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text("Add Date"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: primaryBlue,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: lightBlue,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Leave Type",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: CheckboxListTile(
+                                title: const Text(
+                                  "Is Half Day?",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                value: isHalfDay,
+                                onChanged: (v) =>
+                                    setS(() => isHalfDay = v ?? false),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                activeColor: primaryBlue,
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                dense: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: lightBlue,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Reason / Remarks",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: remarkCtrl,
+                              maxLines: 4,
                               decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
+                                hintText: "Enter your reason for leave...",
+                                hintStyle: const TextStyle(color: darkGrey),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
-                                prefixIcon: const Icon(Icons.category_outlined,
-                                    color: primaryBlue),
-                              ),
-                              items: _leaveTypeFilters
-                                  .map((e) => DropdownMenuItem(
-                                      value: e, child: Text(e)))
-                                  .toList(),
-                              onChanged: (v) => setS(() => leaveType = v),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Selected Dates",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: primaryBlue,
-                                ),
-                              ),
-                              if (selectedDates.isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: softOrange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    isHalfDay
-                                        ? "${selectedDates.length / 2} Days"
-                                        : "${selectedDates.length} Days",
-                                    style: const TextStyle(
-                                      color: softOrange,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          if (selectedDates.isEmpty)
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.info_outline,
-                                      size: 16, color: darkGrey),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    "No dates selected",
-                                    style: TextStyle(
-                                        color: darkGrey, fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: selectedDates
-                                  .map((date) => Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.05),
-                                              blurRadius: 5,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Chip(
-                                          label: Text(
-                                            date,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          onDeleted: () {
-                                            setS(() {
-                                              selectedDates.remove(date);
-                                            });
-                                          },
-                                          deleteIcon: const Icon(Icons.close,
-                                              size: 16, color: softRed),
-                                          backgroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final p = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.light(
-                                        primary: primaryBlue,
-                                        onPrimary: Colors.white,
-                                        surface: Colors.white,
-                                      ),
-                                    ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (p != null) {
-                                String formatted =
-                                    DateFormat('dd-MM-yyyy').format(p);
-                                if (!selectedDates.contains(formatted)) {
-                                  setS(() {
-                                    selectedDates.add(formatted);
-                                    selectedDates.sort((a, b) {
-                                      DateTime dateA =
-                                          DateFormat('dd-MM-yyyy').parse(a);
-                                      DateTime dateB =
-                                          DateFormat('dd-MM-yyyy').parse(b);
-                                      return dateA.compareTo(dateB);
-                                    });
-                                  });
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                            label: const Text("Add Date"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: primaryBlue,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                contentPadding: const EdgeInsets.all(16),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Leave Type",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: primaryBlue,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: CheckboxListTile(
-                              title: const Text(
-                                "Is Half Day?",
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              value: isHalfDay,
-                              onChanged: (v) =>
-                                  setS(() => isHalfDay = v ?? false),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              activeColor: primaryBlue,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              dense: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: lightBlue,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Reason / Remarks",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: primaryBlue,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: remarkCtrl,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: "Enter your reason for leave...",
-                              hintStyle: const TextStyle(color: darkGrey),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.all(16),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 4,
+                          ],
                         ),
-                        onPressed: isActionLoading
-                            ? null
-                            : () async {
-                                if (leaveType == null ||
-                                    selectedDates.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          "Please select leave type and at least one date"),
-                                      backgroundColor: softRed,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                setS(() {
-                                  isActionLoading = true;
-                                });
-
-                                try {
-                                  if (isEdit) {
-                                    final res =
-                                        await HttpService.editLeaveRequest(
-                                      id: item.id,
-                                      leaveType: leaveType!,
-                                      date: selectedDates.join(','),
-                                      remarks: remarkCtrl.text,
-                                      isHalfDay: isHalfDay,
-                                    );
-                                    if (res != null && res.status) {
-                                      Navigator.pop(context);
-                                      _loadData();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                              "Leave request updated"),
-                                          backgroundColor: softGreen,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(res?.message ??
-                                              "Failed to update"),
-                                          backgroundColor: softRed,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                    }
-                                  } else {
-                                    final res =
-                                        await HttpService.saveLeaveOfficial(
-                                      leaveType: leaveType!,
-                                      date: selectedDates.join(','),
-                                      remarks: remarkCtrl.text,
-                                      isHalfDay: isHalfDay,
-                                    );
-                                    if (res) {
-                                      Navigator.pop(context);
-                                      _loadData();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content:
-                                              Text("Leave request submitted"),
-                                          backgroundColor: softGreen,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content:
-                                              Text("Failed to submit request"),
-                                          backgroundColor: softRed,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    setS(() {
-                                      isActionLoading = false;
-                                    });
-                                  }
-                                }
-                              },
-                        child: isActionLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                isEdit ? "Update Request" : "Submit Request",
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 4,
+                          ),
+                          onPressed: isActionLoading
+                              ? null
+                              : () async {
+                                  if (leaveType == null ||
+                                      selectedDates.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            "Please select leave type and at least one date"),
+                                        backgroundColor: softRed,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  setS(() {
+                                    isActionLoading = true;
+                                  });
+
+                                  try {
+                                    if (isEdit) {
+                                      final res =
+                                          await HttpService.editLeaveRequest(
+                                        id: item.id,
+                                        leaveType: leaveType!,
+                                        date: selectedDates.join(','),
+                                        remarks: remarkCtrl.text,
+                                        isHalfDay: isHalfDay,
+                                      );
+                                      if (res != null && res.status) {
+                                        Navigator.pop(context);
+                                        _loadData();
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                                "Leave request updated"),
+                                            backgroundColor: softGreen,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(res?.message ??
+                                                "Failed to update"),
+                                            backgroundColor: softRed,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      final res =
+                                          await HttpService.saveLeaveOfficial(
+                                        leaveType: leaveType!,
+                                        date: selectedDates.join(','),
+                                        remarks: remarkCtrl.text,
+                                        isHalfDay: isHalfDay,
+                                      );
+                                      if (res) {
+                                        Navigator.pop(context);
+                                        _loadData();
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content:
+                                                Text("Leave request submitted"),
+                                            backgroundColor: softGreen,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                "Failed to submit request"),
+                                            backgroundColor: softRed,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } finally {
+                                    if (mounted) {
+                                      setS(() {
+                                        isActionLoading = false;
+                                      });
+                                    }
+                                  }
+                                },
+                          child: isActionLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  isEdit ? "Update Request" : "Submit Request",
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -237,6 +237,25 @@ class DeepLinkHandler {
     }
   }
 
+  Future<void> checkAndHandlePendingDeepLink() async {
+    log('[DEEPLINK] DeepLinkHandler: Checking for pending deep links');
+    final data = await getPendingDeepLink();
+    if (data != null) {
+      log('[DEEPLINK] DeepLinkHandler: Found pending deep link: $data');
+      final context = NoomiKeys.navKey.currentContext;
+      if (context != null) {
+        // Wait a bit for the dashboard to be ready
+        Future.delayed(const Duration(milliseconds: 500), () {
+          validateAndNavigate(context, data);
+        });
+      } else {
+        log('[DEEPLINK] DeepLinkHandler: No context available for pending deep link');
+        // Put it back if we really can't handle it now? Or just handle via Get
+        handleDeepLinkNavigation(data);
+      }
+    }
+  }
+
   Future<void> handleAppLink(String? link) async {
     if (link == null) {
       log('[DEEPLINK] DeepLinkHandler: No link to handle');

@@ -1909,7 +1909,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         );
                       },
                       child: Text(
-                        _formatCurrency(totalReceived.toString()),
+                        totalReceived.toString(),
+                        // _formatCurrency(totalReceived.toString()),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,

@@ -4,5 +4,13 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:login2.in</string>
+		<string>applinks:s1.login2.in</string>
+		<string>applinks:s2.login2.in</string>
+		<string>applinks:s3.login2.in</string>
+		<string>applinks:demo.login2.in</string>
+	</array>
 </dict>
 </plist>

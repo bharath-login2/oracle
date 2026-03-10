@@ -38,6 +38,7 @@ class CustomerPaymentData {
   final String? hiddenDate;
   final dynamic pendingAmount;
   final dynamic lastPaymentDate;
+  final dynamic daysAgo;
   CustomerPaymentData({
     this.accountId,
     this.accountName,
@@ -47,6 +48,7 @@ class CustomerPaymentData {
     this.hiddenDate,
     this.pendingAmount,
     this.lastPaymentDate,
+    this.daysAgo,
   });
 
   factory CustomerPaymentData.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class CustomerPaymentData {
       hiddenDate: json['hidden_date'],
       pendingAmount: json['pending_amount'],
       lastPaymentDate: json['last_payment_date'],
+      daysAgo: json['days_ago'],
     );
   }
 
@@ -72,6 +75,7 @@ class CustomerPaymentData {
       'hidden_date': hiddenDate,
       'pending_amount': pendingAmount,
       'last_payment_date': lastPaymentDate,
+      'days_ago': daysAgo,
     };
   }
 }

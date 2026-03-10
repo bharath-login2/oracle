@@ -740,17 +740,17 @@ class _LeadDetailsState extends State<LeadDetails> {
       //   });
       // }
       if (connectivityResult is List<ConnectivityResult>) {
-      if (connectivityResult.contains(ConnectivityResult.mobile) ||
-          connectivityResult.contains(ConnectivityResult.wifi)) {
+        if (connectivityResult.contains(ConnectivityResult.mobile) ||
+            connectivityResult.contains(ConnectivityResult.wifi)) {
+          setState(() {
+            result = true;
+          });
+        }
+      } else {
         setState(() {
-          result = true;
+          result = false;
         });
       }
-    } else {
-      setState(() {
-        result = false;
-      });
-    }
       await Common.saveSharedPref("openAppLeadId", '0');
       leadDetails = await HttpService.leadDetails(widget.token, callMasterId);
       commonDetails = await HttpService.addLeadCommonData(widget.token);

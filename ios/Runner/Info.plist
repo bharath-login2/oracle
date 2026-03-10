@@ -58,6 +58,19 @@
         <array>
             <string>tel</string>
         </array>
+        <key>FlutterDeepLinkingEnabled</key>
+        <true/>
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>example1</string>
+                </array>
+            </dict>
+        </array>
 
         <!-- Additional configurations -->
         <key>UIApplicationSupportsIndirectInputEvents</key>

@@ -1,0 +1,565 @@
+﻿Analyzing dashboardleadsnewupdated.dart...                      
+
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: DashboardLeadNewUpdated.token - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:89:7 - must_be_immutable
+warning - The value of the field '_isTabControllerInitialized' isn't used - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:134:8 - unused_field
+   info - The private field _listTabFilter could be 'final' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:207:10 - prefer_final_fields
+   info - The 'if' statement could be replaced by a null-aware assignment - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:574:5 - prefer_conditional_assignment
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:628:30 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:777:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1153:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1167:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1171:32 - use_build_context_synchronously
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1432:22 - argument_type_not_assignable
+  error - The name 'Padding' isn't a class - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1603:17 - creation_with_non_type
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1608:64 - unnecessary_to_list_in_spreads
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:1932:13 - list_element_type_not_assignable
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2008:9 - list_element_type_not_assignable
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2020:9 - sized_box_for_whitespace
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2158:9 - list_element_type_not_assignable
+  error - A value of type '(dynamic,)' can't be returned from the method '_buildLeadListItem' because it has a return type of 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2720:14 - return_of_invalid_type
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2764:28 - argument_type_not_assignable
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2816:33 - list_element_type_not_assignable
+  error - A value of type '(dynamic,)' can't be returned from the method '_buildLeadListItem' because it has a return type of 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:2964:12 - return_of_invalid_type
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3057:23 - list_element_type_not_assignable
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3101:15 - list_element_type_not_assignable
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3371:11 - use_build_context_synchronously
+  error - A value of type '(dynamic,)' can't be returned from the method '_buildReportSectionHeader' because it has a return type of 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3592:12 - return_of_invalid_type
+   info - The local variable '_formatter' starts with an underscore - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3725:22 - no_leading_underscores_for_local_identifiers
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3742:15 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:3744:15 - curly_braces_in_flow_control_structures
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4125:17 - list_element_type_not_assignable
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4178:32 - argument_type_not_assignable
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4192:17 - list_element_type_not_assignable
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4249:7 - curly_braces_in_flow_control_structures
+  error - The name 'Padding' isn't a class - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4249:20 - creation_with_non_type
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget?'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4364:34 - argument_type_not_assignable
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4434:26 - unnecessary_to_list_in_spreads
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4436:25 - list_element_type_not_assignable
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget?'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4471:14 - argument_type_not_assignable
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4489:21 - list_element_type_not_assignable
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4527:7 - curly_braces_in_flow_control_structures
+  error - The name 'Padding' isn't a class - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4527:20 - creation_with_non_type
+  error - The argument type 'List<(dynamic,)>' can't be assigned to the parameter type 'List<Widget>'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4573:33 - argument_type_not_assignable
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4697:7 - curly_braces_in_flow_control_structures
+  error - The name 'Padding' isn't a class - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4697:20 - creation_with_non_type
+  error - The named parameter 'leadSourceId' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4769:31 - undefined_named_parameter
+  error - The named parameter 'leadSourceId' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4800:39 - undefined_named_parameter
+  error - The argument type '(dynamic,)' can't be assigned to the parameter type 'Widget?'.  - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4809:34 - argument_type_not_assignable
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4819:58 - dead_null_aware_expression
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4879:26 - unnecessary_to_list_in_spreads
+  error - The element type '(dynamic,)' can't be assigned to the list type 'Widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4881:25 - list_element_type_not_assignable
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4918:7 - curly_braces_in_flow_control_structures
+  error - The name 'Padding' isn't a class - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4918:20 - creation_with_non_type
+warning - The value of the local variable 'totalCount' isn't used - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4935:9 - unused_local_variable
+  error - Undefined name 'decoration' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4941:29 - undefined_identifier
+  error - Expected to find ')' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4941:39 - expected_token
+  error - Expected to find ']' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4941:39 - expected_token
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4955:27 - expected_token
+warning - Dead code - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4955:28 - dead_code
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4955:28 - missing_identifier
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4955:28 - unexpected_token
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4956:51 - expected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4956:52 - missing_identifier
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4956:52 - unexpected_token
+  error - Undefined name 'cat' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4966:39 - undefined_identifier
+  error - Undefined name 'cat' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4974:39 - undefined_identifier
+  error - Undefined name 'color' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4976:48 - undefined_identifier
+  error - Undefined name 'percent' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4987:44 - undefined_identifier
+  error - Undefined name 'color' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4991:71 - undefined_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4996:27 - expected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4996:28 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4996:28 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4996:28 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:25 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:25 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:25 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:26 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:26 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4997:26 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:23 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:23 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:23 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:24 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:24 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4998:24 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:21 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:21 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:21 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:22 - missing_identifier
+  error - Expected to find ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:22 - expected_token
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:4999:22 - unexpected_token
+  error - Expected an identifier - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5000:19 - missing_identifier
+  error - Unexpected text ';' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5000:19 - unexpected_token
+   info - Unnecessary empty statement - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5000:20 - empty_statements
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5001:18 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5001:19 - expected_class_member
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5001:20 - strict_top_level_inference
+  error - A function body must be provided - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5001:28 - missing_function_body
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5001:28 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5002:17 - expected_class_member
+  error - hasMoreCategory isn't a type - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5002:21 - not_a_type
+  error - A record type with exactly one positional field requires a trailing comma - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5002:36 - record_type_one_positional_no_trailing_comma
+  error - The body might complete normally, causing 'null' to be returned, but the return type, '(dynamic,)', is a potentially non-nullable type - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5003:19 - body_might_complete_normally
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5004:21 - strict_top_level_inference
+  error - Named parameters must be enclosed in curly braces ('{' and '}') - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5004:28 - named_parameter_outside_group
+  error - Using a colon as the separator before a default value is no longer supported - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5004:28 - obsolete_colon_for_default_value
+   info - Missing type annotation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5005:21 - strict_top_level_inference
+  error - Named parameters must be enclosed in curly braces ('{' and '}') - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5005:26 - named_parameter_outside_group
+  error - Using a colon as the separator before a default value is no longer supported - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5005:26 - obsolete_colon_for_default_value
+  error - The default value of an optional parameter must be constant - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5005:28 - non_constant_default_value
+  error - A function body must be provided - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5025:20 - missing_function_body
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5025:20 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5026:15 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5026:16 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5027:13 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5027:14 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5028:11 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5028:12 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5029:9 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5029:10 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5030:7 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5030:8 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5031:5 - expected_class_member
+  error - Expected a class member - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5031:6 - expected_class_member
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5056:43 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5066:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5066:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5072:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5072:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5078:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5078:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5084:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5084:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5090:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5090:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5096:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5096:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5102:34 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5102:34 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5111:32 - invalid_constant
+  error - Undefined name 'textPrimary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5111:32 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5130:36 - invalid_constant
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5130:36 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5145:16 - undefined_identifier
+  error - Invalid constant value - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5242:50 - invalid_constant
+  error - Undefined name 'textPrimary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5242:50 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5329:26 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5334:65 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5341:32 - undefined_identifier
+  error - Undefined name 'createLeadPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5357:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5359:23 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5361:59 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5363:35 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5363:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5363:57 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5363:67 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5373:24 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5376:21 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5379:32 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5380:35 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5381:37 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5382:36 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5386:33 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5386:41 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5386:55 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5386:65 - undefined_identifier
+  error - Undefined name 'accessCallHistoryPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5395:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5397:23 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5400:27 - undefined_identifier
+  error - Undefined name 'name' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5401:27 - undefined_identifier
+  error - Undefined name 'userId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5402:27 - undefined_identifier
+  error - Undefined name 'accessCallRecordingPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5403:27 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5425:54 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5434:54 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5469:67 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5538:16 - undefined_identifier
+  error - Undefined name 'staffList' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5545:35 - undefined_identifier
+  error - Undefined name 'targetStaffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5632:41 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5634:31 - undefined_function
+  error - Undefined name 'targetStaffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5635:33 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5637:31 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5637:39 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5637:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5637:63 - undefined_identifier
+  error - Undefined name 'targetStaffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5648:31 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5650:29 - undefined_function
+  error - Undefined name 'targetStaffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5651:31 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5653:29 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5653:37 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5653:51 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5653:61 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5683:30 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5687:21 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5700:28 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5700:41 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5729:45 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5737:34 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5745:57 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5756:39 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5756:50 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5758:16 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5766:24 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5775:7 - undefined_function
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5777:11 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5779:11 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5782:7 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5782:15 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5782:29 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5782:39 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5791:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5793:57 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5798:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5800:43 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5805:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5812:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5819:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5826:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5828:50 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5833:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5835:48 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5840:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5842:44 - undefined_identifier
+  error - Undefined name '_scaffoldKey' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5842:59 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5847:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5850:20 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5854:9 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5854:17 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5854:31 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5854:41 - undefined_identifier
+  error - Undefined name 'loadmore' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5855:13 - undefined_identifier
+  error - The function 'getStaffwise' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5855:23 - undefined_function
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5859:9 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5864:9 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5864:17 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5864:31 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5864:41 - undefined_identifier
+  error - Undefined name 'loadmore' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5865:13 - undefined_identifier
+  error - The function 'getStaffwise' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5865:23 - undefined_function
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5871:9 - undefined_identifier
+  error - Undefined name 'adminCheckPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5877:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5879:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5886:11 - undefined_identifier
+  error - Undefined name 'staffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5889:60 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5895:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5902:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5919:16 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5935:23 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5954:23 - undefined_identifier
+  error - Undefined name 'userId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5973:27 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:5993:16 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6011:24 - undefined_identifier
+  error - Undefined name 'ProjectDashboardPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6021:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6023:9 - undefined_identifier
+  error - Undefined name 'AccountsDashboardPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6026:16 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6028:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6030:58 - undefined_identifier
+  error - Undefined name 'MenuDashboard' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6033:16 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6035:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6036:58 - undefined_identifier
+  error - Undefined name 'RenewalDashboardPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6038:16 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6040:9 - undefined_identifier
+  error - Undefined name 'NewleadDashboardPermission' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6043:16 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6045:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6047:50 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6052:9 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6054:57 - undefined_identifier
+  error - Undefined name 'timeOut' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6079:13 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6086:30 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6086:38 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6086:52 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6086:62 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6090:32 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6124:16 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6162:15 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6163:22 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6173:15 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6174:22 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6185:15 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6186:22 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6200:15 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6201:22 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6215:15 - undefined_identifier
+  error - Undefined name 'dashboardMainCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6216:22 - undefined_identifier
+  error - Undefined name '_listTabFilter' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6252:23 - undefined_identifier
+  error - Undefined name '_listTabFilter' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6262:35 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6263:15 - undefined_function
+  error - Undefined name '_listTabFilter' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6264:17 - undefined_identifier
+  error - Undefined name '_listTabSelectedStatusIds' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6266:19 - undefined_identifier
+  error - Undefined name '_listTabSelectedStaffIds' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6267:19 - undefined_identifier
+  error - Undefined name '_listTabSelectedCategoryIds' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6268:19 - undefined_identifier
+  error - Undefined name '_listTabSelectedPriorityIds' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6269:19 - undefined_identifier
+  error - Undefined name '_isListTabFilterApplied' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6270:19 - undefined_identifier
+  error - The function '_fetchTabLeads' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6273:15 - undefined_function
+  error - Undefined name 'borderLight' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6288:64 - undefined_identifier
+  error - Undefined name 'textSecondary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6312:53 - undefined_identifier
+  error - Undefined name 'textPrimary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6321:57 - undefined_identifier
+  error - Undefined name 'textSecondary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6336:51 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6351:43 - undefined_identifier
+warning - The '!' will have no effect because the receiver can't be null - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6355:37 - unnecessary_non_null_assertion
+  error - The function 'getLeadProgressbar' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6357:23 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6358:21 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6358:36 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6358:46 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6359:21 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6360:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6361:35 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6363:23 - undefined_identifier
+  error - Invalid reference to 'this' expression - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6410:16 - invalid_reference_to_this
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6443:30 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6447:32 - undefined_identifier
+   info - Unnecessary braces in a string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6455:39 - unnecessary_brace_in_string_interps
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6508:36 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6515:36 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6549:37 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6575:25 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6589:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6593:38 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6602:36 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6605:41 - undefined_identifier
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6606:58 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6625:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6626:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6627:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6628:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6630:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6631:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6636:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6636:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6636:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6636:69 - undefined_identifier
+  error - Invalid reference to 'this' expression - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6783:16 - invalid_reference_to_this
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6816:30 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6820:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6881:36 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6888:36 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6922:37 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6948:25 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6962:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6966:38 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6976:29 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6980:31 - undefined_identifier
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:6981:58 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7000:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7001:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7002:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7003:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7005:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7006:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7011:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7011:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7011:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7011:69 - undefined_identifier
+  error - Invalid reference to 'this' expression - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7158:16 - invalid_reference_to_this
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7191:30 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7195:32 - undefined_identifier
+   info - Unnecessary braces in a string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7203:39 - unnecessary_brace_in_string_interps
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7256:36 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7263:36 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7297:37 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7323:25 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7337:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7341:38 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7351:29 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7354:38 - undefined_identifier
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7355:58 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7374:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7375:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7376:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7377:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7379:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7380:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7385:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7385:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7385:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7385:69 - undefined_identifier
+  error - Invalid reference to 'this' expression - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7532:16 - invalid_reference_to_this
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7565:30 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7569:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7630:36 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7637:36 - undefined_identifier
+   info - Unnecessary braces in a string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7658:50 - unnecessary_brace_in_string_interps
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7671:37 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7696:25 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7709:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7713:38 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7722:36 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7725:41 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7727:35 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7744:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7745:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7746:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7747:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7749:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7750:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7756:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7756:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7756:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7756:69 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7885:25 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7899:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7903:38 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7912:36 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7915:39 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7917:35 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7934:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7935:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7936:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7937:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7939:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7940:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7946:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7946:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7946:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:7946:69 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8075:25 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8089:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8093:38 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8102:36 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8105:42 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8107:35 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8125:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8126:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8127:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8128:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8130:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8131:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8137:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8137:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8137:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8137:69 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8267:25 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8281:32 - undefined_identifier
+  error - Undefined name 'primaryBlue' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8285:38 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8294:36 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8297:46 - undefined_identifier
+  error - Undefined name 'object1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8299:35 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8317:43 - undefined_identifier
+  error - Undefined name 'updateLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8318:43 - undefined_identifier
+  error - Undefined name 'deleteLeadPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8319:43 - undefined_identifier
+  error - Undefined name 'cloudCallPermission1' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8320:43 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8322:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8323:51 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8327:37 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8327:45 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8327:59 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8327:69 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8537:37 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8549:56 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8567:16 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8577:60 - undefined_identifier
+  error - Undefined name 'targetFromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8579:64 - undefined_identifier
+  error - Undefined name 'targetFromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8583:34 - undefined_identifier
+  error - Undefined name 'targetFromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8588:42 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8594:51 - undefined_identifier
+  error - Undefined name 'targetToDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8596:64 - undefined_identifier
+  error - Undefined name 'targetToDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8600:34 - undefined_identifier
+  error - Undefined name 'targetToDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8605:42 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8618:34 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8624:17 - undefined_function
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8636:5 - undefined_function
+  error - Undefined name 'isDashboardCountsLoading' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8636:20 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8638:53 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8639:53 - undefined_identifier
+  error - Undefined name 'targetFromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8640:59 - undefined_identifier
+  error - Undefined name 'targetToDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8641:59 - undefined_identifier
+  error - Undefined name 'targetStaffId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8645:19 - undefined_identifier
+  error - Undefined name 'userId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8645:36 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8650:9 - undefined_function
+  error - Undefined name 'dashboardCounts' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8651:11 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8657:7 - undefined_function
+  error - Undefined name 'isDashboardCountsLoading' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8657:22 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8662:5 - undefined_function
+  error - Undefined name 'listTabLeads' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8663:20 - undefined_identifier
+  error - Undefined name 'selectedIUsers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8666:9 - undefined_identifier
+  error - Undefined name 'selectedUserNumbers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8667:9 - undefined_identifier
+  error - Undefined name 'selectedIUsers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8669:9 - undefined_identifier
+  error - Undefined name 'selectedUserNumbers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8670:9 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8676:5 - undefined_function
+  error - Undefined name 'selectedIUsers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8677:7 - undefined_identifier
+  error - Undefined name 'selectedUserNumbers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8678:7 - undefined_identifier
+  error - Undefined name 'transferStaffToggleName' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8679:7 - undefined_identifier
+  error - Undefined name 'transferStaffToggleId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8680:7 - undefined_identifier
+  error - Undefined name 'listTabLeads' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8681:24 - undefined_identifier
+  error - The function '_fetchTabLeads' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8685:5 - undefined_function
+  error - Undefined name 'borderLight' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8703:51 - undefined_identifier
+  error - Undefined name 'transferStaffToggleName' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8721:33 - undefined_identifier
+  error - Undefined name 'textSecondary' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8729:38 - undefined_identifier
+  error - Undefined name 'transferStaffToggleId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8746:25 - undefined_identifier
+  error - Undefined name 'accentRed' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8747:69 - undefined_identifier
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8755:34 - undefined_identifier
+  error - Undefined name 'selectedIUsers' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8756:42 - undefined_identifier
+  error - Undefined name 'transferStaffToggleId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8757:36 - undefined_identifier
+  error - Undefined name 'callGreen' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8764:68 - undefined_identifier
+  error - Undefined name 'accentRed' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8772:68 - undefined_identifier
+  error - Undefined name 'accentRed' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8780:69 - undefined_identifier
+  error - Undefined name 'commonDetails' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8795:9 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8796:5 - undefined_identifier
+  error - Undefined name 'commonDetails' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8796:39 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8814:27 - undefined_identifier
+  error - Undefined name 'commonDetails' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8814:51 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8836:34 - undefined_identifier
+  error - Undefined name 'transferStaffToggleName' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8843:29 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8844:33 - undefined_identifier
+  error - Undefined name 'transferStaffToggleId' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8845:29 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8846:33 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8847:29 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8848:29 - undefined_identifier
+  error - Undefined name 'commonDetails' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8849:41 - undefined_identifier
+  error - Invalid reference to 'this' expression - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8850:29 - invalid_reference_to_this
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8856:31 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8867:23 - undefined_identifier
+  error - Undefined name 'filteredTransferStaff' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8868:23 - undefined_identifier
+  error - Undefined name 'commonDetails' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8869:35 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8885:16 - undefined_identifier
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8895:60 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8897:64 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8901:34 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8906:42 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8907:21 - undefined_function
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8913:60 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8915:64 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8919:34 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8924:42 - undefined_identifier
+  error - The function 'setState' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8925:21 - undefined_function
+  error - Undefined name 'appBarStart' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8938:34 - undefined_identifier
+  error - The function 'getData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8944:17 - undefined_function
+  error - Undefined name 'widget' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8944:25 - undefined_identifier
+  error - Undefined name 'fromDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8944:39 - undefined_identifier
+  error - Undefined name 'toDate' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8944:49 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8955:31 - undefined_identifier
+  error - The function 'getLeadProgressBarStaffData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8956:11 - undefined_function
+  error - Undefined name 'staffProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8960:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8961:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8962:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8963:36 - undefined_identifier
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8963:45 - unnecessary_string_interpolations
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8966:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8966:42 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8971:31 - undefined_identifier
+  error - The function 'getLeadProgressBarCategoryData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8972:11 - undefined_function
+  error - Undefined name 'categoryProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8975:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8976:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8977:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8978:39 - undefined_identifier
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8978:48 - unnecessary_string_interpolations
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8981:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8981:42 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8986:31 - undefined_identifier
+  error - The function 'getLeadProgressBarStatusData' isn't defined - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8987:11 - undefined_function
+  error - Undefined name 'statusProgressData' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8990:9 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8991:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8992:23 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8993:37 - undefined_identifier
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8993:46 - unnecessary_string_interpolations
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8996:11 - undefined_identifier
+  error - Undefined name 'context' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:8996:42 - undefined_identifier
+  error - Undefined name '_tabController' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9041:5 - undefined_identifier
+  error - Undefined name 'searchController' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9042:5 - undefined_identifier
+  error - Invalid context for 'super' invocation - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9043:5 - super_in_invalid_context
+  error - Undefined name '_colors' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9047:30 - undefined_identifier
+  error - Undefined name '_colors' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9047:46 - undefined_identifier
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9050:7 - curly_braces_in_flow_control_structures
+  error - Undefined name '_colors' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9053:12 - undefined_identifier
+  error - Undefined name '_colors' - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9053:28 - undefined_identifier
+  error - Expected a method, getter, setter or operator declaration - lib\screens\leadmanagement\dashboardleadsnewupdated.dart:9055:1 - expected_executable
+

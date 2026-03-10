@@ -57,6 +57,9 @@ import 'package:login2/models/lead_management/attendanceHistoryModel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/callDataModel.dart';
+import 'package:login2/models/lead_management/callStatusReportModel.dart';
+import 'package:login2/models/lead_management/callStatusReportOntapModel.dart';
+import 'package:login2/models/lead_management/categoryReportModel.dart';
 import 'package:login2/models/lead_management/categoryWiseLeadBarModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
@@ -68,14 +71,18 @@ import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
+import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
+import 'package:login2/models/lead_management/leadCategoryReportOntapModel.dart';
 import 'package:login2/models/lead_management/leadDashboardCountNewModel.dart';
 import 'package:login2/models/lead_management/leadExtraSettings.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart';
 import 'package:login2/models/lead_management/leadProductsModel.dart';
 import 'package:login2/models/lead_management/leadProgressBarStaffModel.dart';
 import 'package:login2/models/lead_management/leadProgressBarStatusWise.dart';
+import 'package:login2/models/lead_management/leadSourceReportOntapModel.dart';
+import 'package:login2/models/lead_management/lead_source_report_model.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/lead_management/pendingExpenseModel.dart';
@@ -102,6 +109,8 @@ import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/lead_management/staffwiseCompletedUpdatedModel.dart';
 import 'package:login2/models/lead_management/staffwisePendingUpdatedModel.dart';
 import 'package:login2/models/lead_management/staffwiseWorkDataCountModel.dart';
+import 'package:login2/models/lead_management/stagewiseReportModel.dart';
+import 'package:login2/models/lead_management/stagewiseReportOntap.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
@@ -1553,6 +1562,145 @@ class HttpService {
     try {
       var result = await _dio.post(
           "${await Config.getUrl()}lead_progressbar_data",
+          data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future newleadProgressbar(token, fromDate, toDate, callStatus,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": "",
+      "toDate": "",
+      "callStatus": "",
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}new_lead_progressbar", data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future followupleadProgressbar(token, fromDate, toDate, callStatus,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": "",
+      "toDate": "",
+      "callStatus": "",
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}followup_lead_progressbar",
+          data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future missedleadProgressbar(token, fromDate, toDate, callStatus,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": "",
+      "toDate": "",
+      "callStatus": "",
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}missed_lead_progressbar",
+          data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future calledleadProgressbar(token, fromDate, toDate, callStatus,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": "",
+      "toDate": "",
+      "callStatus": "",
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}called_lead_progressbar",
+          data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future transferredleadProgressbar(token, fromDate, toDate, callStatus,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": "",
+      "toDate": "",
+      "callStatus": "",
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}transferred_lead_progressbar",
           data: formData);
       LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
       return model;
@@ -7079,6 +7227,28 @@ class HttpService {
     return null;
   }
 
+  static Future<StaffListModel?> getStaffsTelecaller() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      FormData formData = FormData.fromMap({
+        'token': token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_telecaller_list",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return StaffListModel.fromJson(response.data);
+      } else {
+        log("getStaffs failed: ${response.data}");
+      }
+    } catch (e) {
+      log("getStaffs error: $e");
+    }
+    return null;
+  }
+
   static Future<CustomerExpenseListModel?> getCustomers() async {
     var token = await Common.getSharedPref('token');
     try {
@@ -7220,6 +7390,7 @@ class HttpService {
     required String remarks,
     required String leaveType,
     required bool isHalfDay,
+    String? session,
   }) async {
     var token = await Common.getSharedPref('token');
     try {
@@ -7230,6 +7401,9 @@ class HttpService {
         'remarks': remarks,
         'leave_type': leaveType,
         'half_day': isHalfDay ? "1" : "0",
+        //if (session != null) 'half_day_session': session,
+        if (session != null) 'session': session,
+        // if (session != null) 'half_day_type': session,
       });
 
       final response = await _dio.post(
@@ -11864,7 +12038,7 @@ class HttpService {
   }
 
   static Future<CustomerPaymentReportModel?> customerPaymentReport(
-      {String? fromDate, String? toDate}) async {
+      {String? fromDate, String? toDate, String? lastPaymentDays}) async {
     try {
       final token = await Common.getSharedPref("token");
       if (token == null || token.isEmpty) {
@@ -11878,6 +12052,7 @@ class HttpService {
           "token": token,
           "from_date": fromDate,
           "to_date": toDate,
+          "last_payment_days": lastPaymentDays ?? "",
         }),
       );
 
@@ -12248,6 +12423,7 @@ class HttpService {
     required String remarks,
     required String leaveType,
     required bool isHalfDay,
+    String? session,
   }) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -12262,6 +12438,9 @@ class HttpService {
           "remarks": remarks,
           "leave_type": leaveType,
           "half_day": isHalfDay ? "1" : "0",
+          if (session != null) "half_day_session": session,
+          if (session != null) "session": session,
+          if (session != null) "half_day_type": session,
         }),
       );
       if (response.statusCode == 200) {
@@ -12448,6 +12627,340 @@ class HttpService {
       }
     } catch (e) {
       log("leadProgressBarCategory error: $e");
+    }
+    return null;
+  }
+
+  static Future<CallStatusReportModel?> callStatusReportData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCallStatusReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return CallStatusReportModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("callStatusReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<CallStatusReportOntapModel?> callStatusReportOntapData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? callResponseId,
+    String? branchId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCallStatusReportFilterResult",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "callResponseId": callResponseId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return CallStatusReportOntapModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("callStatusReportDataOntap error: $e");
+    }
+    return null;
+  }
+
+  static Future<StagewiseReportModel?> stagwWiseReportData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    //String? callResponseId,
+    String? branchId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getStageReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          //  "callResponseId": callResponseId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return StagewiseReportModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("StageReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<StagewiseReportOntapModel?> stagwWiseReportOntapData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? callResultId,
+    String? branchId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getStageReportFilter",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "callResultId": callResultId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return StagewiseReportOntapModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("StageOntapReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadSourceReportModel?> leadSourceReportData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    // String? callResultId,
+    String? branchId,
+    String? page,
+    String? pageSize,
+    String? leadCategoryId,
+    String? productId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getLeadSourceReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          //  "callResultId": callResultId,
+          "branchId": branchId,
+          "page": page,
+          "pageSize": pageSize,
+          "leadCategoryId": leadCategoryId,
+          "productId": productId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return LeadSourceReportModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("leadSourceReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadSourceReportOntapModel?> leadSourceReportOntapData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    //  String? callResultId,
+    String? branchId,
+    String? leadSourceId,
+    // String? pageSize,
+    String? leadCategoryId,
+    String? productId,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getLeadSourceReportFilter",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          //  "callResultId": callResultId,
+          "branchId": branchId,
+          "leadSourceId": leadSourceId,
+          // "pageSize": pageSize,
+          "leadCategoryId": leadCategoryId,
+          "productId": productId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return LeadSourceReportOntapModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("leadSourceOntapReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<CategoryReportModel?> leadCategoryReportData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    // String? callResultId,
+    String? branchId,
+    String? page,
+    String? pageSize,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getLeadCategoryReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          //  "callResultId": callResultId,
+          "branchId": branchId,
+          "page": page,
+          "pageSize": pageSize,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true ||
+            data['status'] == 'success' ||
+            data['status'] == 1 ||
+            data['status'] == 'true' ||
+            data['status'] == 200) {
+          return CategoryReportModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("leadCategoryReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadCategoryReportOntapModel?> leadCategoryReportOntapData({
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    //  String? callResultId,
+    String? branchId,
+    String? leadCategoryId,
+    // String? pageSize,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) return null;
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getLeadCategoryReportFilter",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          //  "callResultId": callResultId,
+          "branchId": branchId,
+          "leadCategoryId": leadCategoryId,
+          // "pageSize": pageSize,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return LeadCategoryReportOntapModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("leadCategoryOntapReportData error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetLeaveBalanceModel?> leaveAvailable() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_leave_balance",
+        data: FormData.fromMap({"token": token}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return GetLeaveBalanceModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
     }
     return null;
   }

@@ -146,7 +146,6 @@ class _LeadDashboardState extends State<LeadDashboard> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 25),
                     GridView.count(
                       crossAxisCount: 2,
@@ -201,13 +200,11 @@ class _LeadDashboardState extends State<LeadDashboard> {
           ],
         ),
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF3A2F87),
         onPressed: _refreshPage,
         child: const Icon(Icons.refresh, color: Colors.white),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavBar(
         selectedIndex: _selectedIndex,
