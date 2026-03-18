@@ -6,9 +6,13 @@ class SendOtpModel {
   SendOtpModel({this.status, this.message, this.data});
 
   SendOtpModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    message = json['message'];
-    data = json['data'];
+    status = json['status'] is bool 
+        ? json['status'] 
+        : (json['status']?.toString().toLowerCase() == 'true' || json['status']?.toString().toLowerCase() == 'success');
+    message = json['message']?.toString();
+    data = json['data'] is bool 
+        ? json['data'] 
+        : (json['data']?.toString().toLowerCase() == 'true' || json['data']?.toString().toLowerCase() == 'success');
   }
 
   Map<String, dynamic> toJson() {

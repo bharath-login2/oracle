@@ -75,7 +75,7 @@ class AudioRecordController extends GetxController {
 
   var minutes = 0.obs;
   var seconds = 0.obs;
-  late Timer? _timer;
+  Timer? _timer;
   bool isRunning = false;
 
   void startTimer() {
@@ -95,13 +95,13 @@ class AudioRecordController extends GetxController {
   void stopTimer() {
     if (isRunning) {
       isRunning = false;
-      _timer!.cancel();
+      _timer?.cancel();
     }
   }
 
   void resetTimer() {
     isRunning = false;
-    _timer!.cancel();
+    _timer?.cancel();
     minutes.value = 0;
     seconds.value = 0;
   }

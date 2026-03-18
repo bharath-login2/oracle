@@ -116,6 +116,10 @@ class LeadDetails extends StatefulWidget {
 class _LeadDetailsState extends State<LeadDetails> {
   AddLeadCommonDataModel? commonDetails;
   var dio = Dio();
+  static const Color appBarStart = Color(0xFF2a86c9);
+  static const Color textPrimary = Color(0xFF2C3E50);
+  static const Color textSecondary = Color(0xFF7F8C8D);
+
   TextEditingController transferRemark = TextEditingController();
   TextEditingController folderName = TextEditingController();
   TextEditingController fileName = TextEditingController();
@@ -253,7 +257,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   String? permissionAccess = '';
   String? uploadPermission = '';
   String roleId = "";
-  late bool deleteAccess;
+  bool deleteAccess = false;
   int from =
       DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
   CallLogUploadPermissionModel? callUploadPermission;
@@ -295,7 +299,12 @@ class _LeadDetailsState extends State<LeadDetails> {
 
       String? deleteAccessStr =
           await Common.getSharedPref("accessCallHistoryPermission");
-      roleId = await Common.getSharedPref("roleId");
+      roleId = await Common.getSharedPref("roleId") ?? "";
+
+      contactPermission = await Common.getSharedPref("getContactPermission");
+      transferPermission = await Common.getSharedPref("transferPermission");
+      cloudCall = await Common.getSharedPref("cloudCallPermission") ?? "";
+      whatsappOfficial = await Common.getSharedPref("officialWhatsapp") ?? "";
       // var sim = await Common.getSharedPref("simName");
       // if (sim != null) {
       //   selectedSim = await Common.getSharedPref("simName");
@@ -857,7 +866,7 @@ class _LeadDetailsState extends State<LeadDetails> {
           getData();
           return;
         },
-        child: result == true && timeOut == false
+        child: result == true && timeOut == false && leadDetails != null && leadDetailsAdditional != null
             ? Scaffold(
                 backgroundColor: Colors.grey.shade200,
                 appBar: PreferredSize(
@@ -2868,7 +2877,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         ),
                                                                         if (leadDetailsAdditional!.data.createCustomerInvoice == true &&
                                                                             leadDetailsAdditional!.data.followUpData[0].callResult ==
-                                                                                "Confirmed" &&
+                                                                                "Closed" &&
                                                                             leadDetailsAdditional!.data.isCreateOrder ==
                                                                                 true)
                                                                           InkWell(
@@ -4936,7 +4945,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                       } else {
                                                                                                         RenameFolderModel createFolder = await HttpService.renameFolder(widget.token, callMasterId, listPath, editableName, fileNameEdit.text, rawId);
                                                                                                         if (createFolder.data == true) {
-                                                                                                          folderActionEnable == false;
+                                                                                                          folderActionEnable = false;
                                                                                                           selectedRawIndex = '';
                                                                                                           listFolderList(widget.token, callMasterId, listPath);
 
@@ -5012,7 +5021,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                         onPressed: () async {
                                                                                           DeleteFolderAndFileModel deleteFolder = await HttpService.deleteLeadFolderAndFiles(widget.token, callMasterId, deletePath, rawId);
                                                                                           if (deleteFolder.data == true) {
-                                                                                            folderActionEnable == false;
+                                                                                            folderActionEnable = false;
                                                                                             selectedRawIndex = '';
                                                                                             listFolderList(widget.token, callMasterId, listPath);
                                                                                           }
@@ -6297,7 +6306,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                           heroTag: 'add',
                           backgroundColor: Colors.green,
                           onPressed: () {
-                            if (leadDetails!.data!.callResult != "Confirmed") {
+                            if (leadDetails!.data!.callResult != "Closed") {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -7537,186 +7546,283 @@ class _LeadDetailsState extends State<LeadDetails> {
     );
   }
 
-  Future<Object?> transferLeads(BuildContext context) {
-    return showGeneralDialog(
-      barrierLabel: "showGeneralDialog",
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.6),
-      transitionDuration: const Duration(milliseconds: 400),
+  Future<void> transferLeads(BuildContext context) {
+    int transferFresh = 0;
+
+    return showDialog(
       context: context,
-      pageBuilder: (context, _, __) {
-        return StatefulBuilder(builder: (context, setState) {
-          return Align(
-            alignment: Alignment.center,
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10, right: 10),
-                child: Container(
-                  width: double.maxFinite,
-                  clipBehavior: Clip.antiAlias,
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                      topRight: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
-                      bottomLeft: Radius.circular(10),
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Premium Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [appBarStart, Color(0xFF406dbe)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.sync_alt_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Transfer Lead',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Material(
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Transfer Leads',
+                        // Staff Selection
+                        Text(
+                          'Select Team Member',
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
+                            color: textPrimary.withOpacity(0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        FormField<String>(
-                          builder: (FormFieldState<String> state) {
-                            return Container(
-                              height: 50,
-                              width: MediaQuery.of(context).size.width * 0.9,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.grey.shade900, width: 0),
-                                  color: Colors.white,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(5))),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: const Padding(
-                                    padding: EdgeInsets.only(left: 20),
-                                    child: Text('Staff'),
-                                  ),
-                                  value: staff,
-                                  items: commonDetails!.data.transferStaffs
-                                      .map((data) {
-                                    return DropdownMenuItem(
-                                      value: data.tranStaffId.toString(),
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 20),
-                                        child:
-                                            Text(data.tranStaffName.toString()),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newValue) {
-                                    setState(() {
-                                      staff = newValue;
-                                    });
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(
-                          height: 15,
-                        ),
-                        TextFormField(
-                          controller: transferRemark,
-                          style: const TextStyle(
-                            color: Colors.black,
-                          ),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Remark";
-                            }
-                            return null;
-                          },
-                          keyboardType: TextInputType.name,
-                          decoration: InputDecoration(
-                              filled: true,
-                              //<-- SEE HERE
-                              fillColor: Colors.white,
-                              counterText: "",
-                              hintText: "Remark",
-                              isDense: true,
-                              border: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.purple.shade100),
-                                  borderRadius: BorderRadius.circular(5))),
-                        ),
-                        const SizedBox(
-                          height: 25,
-                        ),
+                        const SizedBox(height: 10),
                         Container(
-                          height: 40,
-                          width: double.maxFinite,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF3375e0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
                           ),
-                          child: RawMaterialButton(
-                            onPressed: () async {
-                              if (staff == null) {
-                                Common.toastMessaage(
-                                    'Choose Staff Name', Colors.red);
-                              } else {
-                                Common.showProgressDialog(context, "Loading..");
-                                LeadTransferModel transfer =
-                                    await HttpService.leadTransfer(
-                                        widget.token,
-                                        callMasterId,
-                                        staff,
-                                        transferRemark.text);
-                                if (transfer.status == true) {
-                                  Common.toastMessaage(
-                                      transfer.message, Colors.green);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                    Navigator.pop(context);
-                                    getData();
-                                  }
-                                } else {
-                                  Common.toastMessaage(
-                                      transfer.message, Colors.red);
-                                  if (context.mounted) {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  }
-                                }
-                              }
-                            },
-                            child: const Center(
-                              child: Text(
-                                'Continue',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              hint: const Text('Choose Staff'),
+                              value: staff,
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                              items: commonDetails?.data.transferStaffs
+                                  .map((data) {
+                                return DropdownMenuItem(
+                                  value: data.tranStaffId.toString(),
+                                  child: Text(
+                                    data.tranStaffName.toString(),
+                                    style: const TextStyle(fontSize: 15),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (newValue) {
+                                setDialogState(() {
+                                  staff = newValue;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Remarks
+                        Text(
+                          'Transfer Remarks',
+                          style: TextStyle(
+                            color: textPrimary.withOpacity(0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: transferRemark,
+                          maxLines: 2,
+                          decoration: InputDecoration(
+                            hintText: 'Enter reason for transfer...',
+                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: appBarStart, width: 1.5),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Transfer as Fresh Data Toggle
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              transferFresh = transferFresh == 0 ? 1 : 0;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            child: Row(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 22,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: transferFresh == 1 ? appBarStart : Colors.white,
+                                    border: Border.all(
+                                      color: transferFresh == 1 ? appBarStart : Colors.grey.shade400,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: transferFresh == 1
+                                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Transfer as Fresh Data',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Actions
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (staff == null) {
+                                    Common.toastMessaage('Please choose a staff member', Colors.red);
+                                  } else {
+                                    Common.showProgressDialog(context, "Transferring...");
+                                    LeadTransferModel transfer = await HttpService.leadTransfer(
+                                      widget.token,
+                                      widget.callMasterId,
+                                      staff.toString(),
+                                      transferRemark.text,
+                                      transferFresh,
+                                    );
+                                    if (context.mounted) {
+                                      Navigator.pop(context); // Close progress dialog
+                                      if (transfer.status == true) {
+                                        Common.toastMessaage(transfer.message, Colors.green);
+                                        Navigator.pop(context); // Close transfer dialog
+                                        Navigator.pop(context); // Go back
+                                        getData();
+                                      } else {
+                                        Common.toastMessaage(transfer.message, Colors.red);
+                                      }
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: appBarStart,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Confirm Transfer',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          );
-        });
-      },
-      transitionBuilder: (_, animation1, __, child) {
-        return SlideTransition(
-          position: Tween(
-            begin: const Offset(0, 1),
-            end: const Offset(0, 0),
-          ).animate(animation1),
-          child: child,
-        );
-      },
+          ),
+        ),
+      ),
     );
   }
-
   Future<dynamic> contactPermissionDialog(BuildContext context) {
     return showDialog(
       context: context,
@@ -8610,8 +8716,7 @@ class _AudioItemState extends State<AudioItem> {
                                 widget.isTransfer == false
                                     ? InkWell(
                                         onTap: () {
-                                          if (widget.callResult !=
-                                              "Confirmed") {
+                                          if (widget.callResult != "Closed") {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(

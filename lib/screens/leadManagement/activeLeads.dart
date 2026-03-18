@@ -35,7 +35,7 @@ import '../../widgets/viewLeadsFilterWidget.dart';
 import 'product_details_popup.dart';
 
 // ignore: must_be_immutable
-class ViewLeadsNew extends StatefulWidget {
+class ActiveLeads extends StatefulWidget {
   final String? token;
   final bool editLead;
   final bool deleteLead;
@@ -67,11 +67,8 @@ class ViewLeadsNew extends StatefulWidget {
   final List<String>? preservedResponseItems;
   final List<StateList>? stateDetails;
   final String? leadSourceId;
-  final String? isCallStatus;
-  final String? isActiveReport;
-  final String? isLeadSource;
-  final String? isLeadCategory;
-  const ViewLeadsNew(
+
+  const ActiveLeads(
     this.token,
     this.editLead,
     this.deleteLead,
@@ -104,19 +101,15 @@ class ViewLeadsNew extends StatefulWidget {
     this.preservedResponseItems,
     this.stateDetails,
     this.leadSourceId,
-    this.isCallStatus,
-    this.isActiveReport,
-    this.isLeadSource,
-    this.isLeadCategory,
   });
 
   @override
-  State<ViewLeadsNew> createState() => _ViewLeadsNewState();
+  State<ActiveLeads> createState() => _ActiveLeadsState();
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ViewLeadsNew &&
+      other is ActiveLeads &&
           runtimeType == other.runtimeType &&
           token == other.token &&
           pageName == other.pageName;
@@ -125,7 +118,7 @@ class ViewLeadsNew extends StatefulWidget {
   int get hashCode => Object.hash(token, pageName);
 }
 
-class _ViewLeadsNewState extends State<ViewLeadsNew>
+class _ActiveLeadsState extends State<ActiveLeads>
     with AutomaticKeepAliveClientMixin {
   static const Color appBarStart = Color(0xFF2a86c9);
   static const Color appBarEnd = Color(0xFF406dbe);
@@ -282,19 +275,15 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   void _initializeData() {
     isDateFiltered = (widget.fromDate != null && widget.fromDate != "") ||
         (widget.toDate != null && widget.toDate != "");
-    isFilterApplied = isDateFiltered;
     fromdate = widget.preservedFromDate ??
-        ((widget.fromDate != null && widget.fromDate!.isNotEmpty)
+        (widget.fromDate != null
             ? DateTime.parse(widget.fromDate!)
-            : null);
-
+            : DateTime.now().subtract(const Duration(days: 30)));
     todate = widget.preservedToDate ??
-        ((widget.toDate != null && widget.toDate!.isNotEmpty)
+        (widget.toDate != null
             ? DateTime.parse(widget.toDate!)
-            : null);
+            : DateTime.now());
 
-    print('From Date: $fromdate');
-    print('To Date: $todate');
     currentSortOrder = widget.preservedSortOrder ?? 'desc';
     sortAscending = widget.preservedSortAscending ?? false;
     _initializeFilterItems();
@@ -456,8 +445,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       if (statusWise == 'yes') {
         apiResponse = await HttpService.viewLeadsSts(
             widget.token,
-            fromdate != null ? DateFormat('dd-MM-yyyy').format(fromdate!) : "",
-            todate != null ? DateFormat('dd-MM-yyyy').format(todate!) : "",
+            fromdate,
+            todate,
             type,
             statusCatId,
             statusWiseId,
@@ -470,18 +459,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         Map<String, dynamic> body =
             _buildRequestBody(status1, sort, currentPage, isFirst);
         log("API Request Body: $body");
-        // apiResponse = await HttpService.viewLeads(body);
-        if (widget.isCallStatus == "1") {
-          apiResponse = await HttpService.leadReportCallStatus(body);
-        } else if (widget.isActiveReport == "1") {
-          apiResponse = await HttpService.leadReportActiveStatus(body);
-        } else if (widget.isLeadSource == "1") {
-          apiResponse = await HttpService.leadReportLeadSource(body);
-        } else if (widget.isLeadCategory == "1") {
-          apiResponse = await HttpService.leadReportLeadCategory(body);
-        } else {
-          apiResponse = await HttpService.leadReport(body);
-        }
+        apiResponse = await HttpService.viewLeadsforActive(body);
       }
 
       if (apiResponse != null) {
@@ -550,12 +528,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     };
 
     bool shouldSendDates = isFilterApplied ||
-        isDateFiltered ||
-        (widget.fromDate != null && widget.fromDate != "") ||
-        (widget.toDate != null && widget.toDate != "") ||
         widget.leadType == "-1" ||
-        (status1 != null && (status1 == "4" || status1 == "0")) ||
-        (widget.callResId != null);
+        (status1 != null && status1 == "4");
     body["filterStatus"] = shouldSendDates ? 1 : 0;
     body["fromDate"] = shouldSendDates && fromdate != null
         ? outputFormat.format(fromdate!)
@@ -1330,10 +1304,10 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -1350,43 +1324,17 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     ),
                   ),
                   const SizedBox(width: 25),
-                  if (selectedIUsers.isNotEmpty)
-                    Text(
-                      '${selectedIUsers.length} selected',
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    )
-                  else
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.pageName.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (widget.staffName != null &&
-                              widget.staffName!.isNotEmpty)
-                            Text(
-                              widget.staffName!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  // Text(
+                  //   selectedIUsers.isNotEmpty
+                  //       ? '${selectedIUsers.length} selected'
+                  //       : widget.pageName.toString(),
+                  //   style: const TextStyle(color: Colors.white, fontSize: 18),
+                  // ),
+                  Text(
+                    selectedIUsers.isNotEmpty ? '' : widget.pageName.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -2746,7 +2694,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                           ),
                           // const SizedBox(width: 6),
 
-                          // // View Products button
+                          // View Products button
                           // InkWell(
                           //   onTap: () {
                           //     showModalBottomSheet(
@@ -3523,19 +3471,19 @@ class MessageViewWidget extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: _ViewLeadsNewState.appBarStart.withOpacity(0.1),
+        color: _ActiveLeadsState.appBarStart.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         children: [
           Icon(Icons.info_outline_rounded,
-              color: _ViewLeadsNewState.appBarStart, size: 16),
+              color: _ActiveLeadsState.appBarStart, size: 16),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               label,
               style: TextStyle(
-                color: _ViewLeadsNewState.textPrimary,
+                color: _ActiveLeadsState.textPrimary,
                 fontSize: 12,
               ),
             ),

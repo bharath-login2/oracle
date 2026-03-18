@@ -59,8 +59,11 @@ import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/callDataModel.dart';
 import 'package:login2/models/lead_management/callStatusReportModel.dart';
 import 'package:login2/models/lead_management/callStatusReportOntapModel.dart';
+import 'package:login2/models/lead_management/callStatusReportTableModel.dart';
 import 'package:login2/models/lead_management/categoryReportModel.dart';
+import 'package:login2/models/lead_management/categoryReportTableModel.dart';
 import 'package:login2/models/lead_management/categoryWiseLeadBarModel.dart';
+import 'package:login2/models/lead_management/cloudCallReportModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
@@ -82,12 +85,14 @@ import 'package:login2/models/lead_management/leadProductsModel.dart';
 import 'package:login2/models/lead_management/leadProgressBarStaffModel.dart';
 import 'package:login2/models/lead_management/leadProgressBarStatusWise.dart';
 import 'package:login2/models/lead_management/leadSourceReportOntapModel.dart';
+import 'package:login2/models/lead_management/leadSourceTableModel.dart';
 import 'package:login2/models/lead_management/lead_source_report_model.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/lead_management/pendingExpenseModel.dart';
 import 'package:login2/models/lead_management/pendingListLeaveModel.dart';
 import 'package:login2/models/lead_management/pendingListModel.dart';
+import 'package:login2/models/lead_management/phoneCallReportModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart';
@@ -111,6 +116,7 @@ import 'package:login2/models/lead_management/staffwisePendingUpdatedModel.dart'
 import 'package:login2/models/lead_management/staffwiseWorkDataCountModel.dart';
 import 'package:login2/models/lead_management/stagewiseReportModel.dart';
 import 'package:login2/models/lead_management/stagewiseReportOntap.dart';
+import 'package:login2/models/lead_management/stagewiseTableModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
@@ -690,9 +696,129 @@ class HttpService {
     }
   }
 
+  static Future viewLeadsforNew(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportStatusNew",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future viewLeadsforNewToday(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportStatusNewTodays",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future viewLeadsforNewMissed(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportStatusNewMissed",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future viewLeadsforActive(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportStatusFollowup",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future leadReport(body) async {
     try {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future leadReportCallStatus(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportCallStatus",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future leadReportActiveStatus(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportActiveStatus",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future leadReportLeadSource(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportLeadSource",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future leadReportLeadCategory(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportLeadCategory",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
       if (result.statusCode == 200) {
@@ -1507,12 +1633,14 @@ class HttpService {
     }
   }
 
-  static Future leadTransfer(token, callMasterId, staff, remark) async {
+  static Future leadTransfer(
+      token, callMasterId, staff, remark, transferFresh) async {
     var formData = FormData.fromMap({
       "token": token,
       "call_master_id": callMasterId,
       "staff_id": staff,
       "remarks": remark,
+      "transfer_fresh": transferFresh
     });
 
     try {
@@ -10991,6 +11119,30 @@ class HttpService {
     return null;
   }
 
+  static Future<Map<String, dynamic>?> editRentalIssue(
+      Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+      final formData = FormData.fromMap(data);
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_rental_issue",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        log("editRentalIssue error: HTTP ${response.statusCode}");
+      }
+    } catch (e, stackTrace) {
+      log("editRentalIssue error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
   Future<RetalLocationModel?> getRentalLocation() async {
     try {
       final token = await Common.getSharedPref("token");
@@ -11477,6 +11629,50 @@ class HttpService {
       }
     } catch (e) {
       log("getRentalCustomerLocations error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> addRentalCustomerLocation(
+      String custId, String locationName) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "customer_id": custId,
+        "location_name": locationName,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_customer_location_post",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("addRentalCustomerLocation error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> addRentalCollectedStaff(
+      String custId, String staffName) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      final formData = FormData.fromMap({
+        "token": token,
+        "customer_id": custId,
+        "staff_name": staffName,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_collected_staff_post",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("addRentalCollectedStaff error: $e");
     }
     return null;
   }
@@ -12836,10 +13032,10 @@ class HttpService {
           "staffId": staffId,
           //  "callResultId": callResultId,
           "branchId": branchId,
-          "leadSourceId": leadSourceId,
+          "leadSourceourceId": leadSourceId,
           // "pageSize": pageSize,
-          "leadCategoryId": leadCategoryId,
-          "productId": productId,
+          // "leadCategoryId": leadCategoryId,
+          // "productId": productId,
         }),
       );
 
@@ -12954,6 +13150,240 @@ class HttpService {
         final data = response.data;
         if (data['status'] == true || data['status'] == 'success') {
           return GetLeaveBalanceModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<CallStatusReportResponse?> callStatusReportTable(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCallStatusReportDetailed",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return CallStatusReportResponse.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<StagewiseReportResponse?> stageWiseReportTable(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getStageReportDetailed",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return StagewiseReportResponse.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<LeadSourceReportResponse?> leadSourceReportTable(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getSourceReportDetailed",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return LeadSourceReportResponse.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<CategoryReportTableModel?> categoryReportTable(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCategoryReportDetailed",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return CategoryReportTableModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<CloudCallReportModel?> cloudCallReport(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getCloudCallReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return CloudCallReportModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<PhoneCallReportModel?> phoneCallReport(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+    String? branchId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getPhoneCallReport",
+        data: FormData.fromMap({
+          "token": token,
+          "fromDate": fromDate,
+          "toDate": toDate,
+          "staffId": staffId,
+          "branchId": branchId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return PhoneCallReportModel.fromJson(data);
         }
         log("leaveAvailable API error: ${data['message']}");
       } else {

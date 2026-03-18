@@ -1224,27 +1224,27 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                             //   ],
                             // ),
                             const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: softOrange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Icon(Icons.access_time,
-                                      size: 12, color: softOrange),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: softOrange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Icon(Icons.access_time,
+                                          size: 12, color: softOrange),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Day: ${item.dayType == "half" || item.dayType == "half_day" ? "Half Day${item.session != null ? " (${item.session})" : ""}" : item.dayType ?? "Full Day"}',
+                                      style: TextStyle(
+                                        color: darkGrey,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Day: ${item.dayType ?? 'Full Day'}',
-                                  style: TextStyle(
-                                    color: darkGrey,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -2002,6 +2002,9 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                         item.leaveType ?? 'N/A'),
                     _buildDetailRow(Icons.calendar_today_outlined, "Duration",
                         '${item.noOfDays ?? '0'} Days'),
+                    if (item.session != null && item.session != "")
+                      _buildDetailRow(Icons.access_time, "Session",
+                          item.session[0].toUpperCase() + item.session.substring(1)),
                     // _buildDetailRow(
                     //     Icons.date_range, "From Date", item.fromDate ?? 'N/A'),
                     // _buildDetailRow(
@@ -2842,6 +2845,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
         text: isEdit ? (item.remarks ?? item.reason) : "");
     bool isHalfDay =
         isEdit ? (item.dayType == "half" || item.dayType == "half_day") : false;
+    String? selectedSession = isEdit ? item.session : null;
 
     bool isActionLoading = false;
     showModalBottomSheet(
@@ -3143,7 +3147,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "Leave Type",
+                              "Leave Duration",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
@@ -3163,20 +3167,76 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                   ),
                                 ],
                               ),
-                              child: CheckboxListTile(
-                                title: const Text(
-                                  "Is Half Day?",
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                value: isHalfDay,
-                                onChanged: (v) =>
-                                    setS(() => isHalfDay = v ?? false),
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                activeColor: primaryBlue,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                dense: true,
+                              child: Column(
+                                children: [
+                                  CheckboxListTile(
+                                    title: const Text(
+                                      "Is Half Day?",
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    value: isHalfDay,
+                                    onChanged: (v) {
+                                      setS(() {
+                                        isHalfDay = v ?? false;
+                                        if (!isHalfDay) selectedSession = null;
+                                      });
+                                    },
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    activeColor: primaryBlue,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    dense: true,
+                                  ),
+                                  if (isHalfDay) ...[
+                                    const Divider(height: 1),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () => setS(() =>
+                                                  selectedSession = "morning"),
+                                              child: Row(
+                                                children: [
+                                                  Radio<String>(
+                                                    value: "morning",
+                                                    groupValue: selectedSession,
+                                                    onChanged: (v) => setS(() =>
+                                                        selectedSession = v),
+                                                    activeColor: primaryBlue,
+                                                  ),
+                                                  const Text("Morning"),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () => setS(() =>
+                                                  selectedSession =
+                                                      "afternoon"),
+                                              child: Row(
+                                                children: [
+                                                  Radio<String>(
+                                                    value: "afternoon",
+                                                    groupValue: selectedSession,
+                                                    onChanged: (v) => setS(() =>
+                                                        selectedSession = v),
+                                                    activeColor: primaryBlue,
+                                                  ),
+                                                  const Text("Afternoon"),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ],
@@ -3239,8 +3299,23 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                       selectedDates.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(
+                                        content: const Text(
                                             "Please select leave type and at least one date"),
+                                        backgroundColor: softRed,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  if (isHalfDay && selectedSession == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                            "Please select Morning or Afternoon for half day leave"),
                                         backgroundColor: softRed,
                                         behavior: SnackBarBehavior.floating,
                                         shape: RoundedRectangleBorder(
@@ -3264,6 +3339,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                         date: selectedDates.join(','),
                                         remarks: remarkCtrl.text,
                                         isHalfDay: isHalfDay,
+                                        session: selectedSession,
                                       );
                                       if (res != null && res.status) {
                                         Navigator.pop(context);
@@ -3301,6 +3377,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                         date: selectedDates.join(','),
                                         remarks: remarkCtrl.text,
                                         isHalfDay: isHalfDay,
+                                        session: selectedSession,
                                       );
                                       if (res) {
                                         Navigator.pop(context);

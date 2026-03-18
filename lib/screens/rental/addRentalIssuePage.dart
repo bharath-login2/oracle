@@ -249,8 +249,9 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         _toDateController.text.isNotEmpty) {
       try {
         final fromDate =
-            DateFormat('dd-MM-yyyy').parse(_fromDateController.text);
-        final toDate = DateFormat('dd-MM-yyyy').parse(_toDateController.text);
+            DateFormat('dd-MM-yyyy HH:mm').parse(_fromDateController.text);
+        final toDate =
+            DateFormat('dd-MM-yyyy HH:mm').parse(_toDateController.text);
         final difference = toDate.difference(fromDate).inDays;
         _totalDays = difference >= 0 ? difference + 1 : 1;
         _totalDaysController.text = _totalDays.toString();
@@ -262,6 +263,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         }
         _recalculateAllRows();
       } catch (e) {
+        log("Error updating total days: $e");
         _totalDaysController.text = "0";
       }
     }
@@ -299,9 +301,9 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         row.toDateController.text.isNotEmpty) {
       try {
         final fromDate =
-            DateFormat('dd-MM-yyyy').parse(row.fromDateController.text);
+            DateFormat('dd-MM-yyyy HH:mm').parse(row.fromDateController.text);
         final toDate =
-            DateFormat('dd-MM-yyyy').parse(row.toDateController.text);
+            DateFormat('dd-MM-yyyy HH:mm').parse(row.toDateController.text);
         final difference = toDate.difference(fromDate).inDays;
         row.noOfDaysController.text =
             (difference >= 0 ? difference + 1 : 1).toString();
@@ -349,15 +351,60 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
     if (pickedDate != null) {
       setState(() {
         controller.text = DateFormat('dd-MM-yyyy').format(pickedDate);
-        if (controller == _fromDateController ||
-            controller == _toDateController) {
-          _updateTotalDays();
-        }
       });
     }
   }
 
+  Future<void> _selectDateTime(
+      BuildContext context, TextEditingController controller) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+      if (pickedTime != null) {
+        final DateTime fullDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+        setState(() {
+          controller.text = DateFormat('dd-MM-yyyy HH:mm').format(fullDateTime);
+          if (controller == _fromDateController ||
+              controller == _toDateController) {
+            _updateTotalDays();
+          }
+        });
+      }
+    }
+  }
+
   Future<void> _submitForm() async {
+    if (_selectedCustomerId == null) {
+      Common.toastMessaage('Please select a customer', Colors.red);
+      return;
+    }
+    if (_productRows.isEmpty ||
+        _productRows.every((row) => row.selectedProductId == null)) {
+      Common.toastMessaage('Please add at least one product', Colors.red);
+      return;
+    }
+    if (_selectedLocationId == null) {
+      Common.toastMessaage('Please select a work site', Colors.red);
+      return;
+    }
+    if (_selectedCollectedByStaffId == null) {
+      Common.toastMessaage('Please select a collected staff', Colors.red);
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
@@ -367,13 +414,12 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
 
     setState(() => _isSubmitting = true);
     try {
-      final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
       Map<String, dynamic> formData = {
         'token': await Common.getSharedPref('token'),
-        'rent_id': widget.rentId,
+        if (widget.rentId != null) 'id': widget.rentId,
         'customer_id': _selectedCustomerId,
-        'from_date': "${_fromDateController.text} $currentTime",
-        'to_date': "${_toDateController.text} $currentTime",
+        'from_date': "${_fromDateController.text}:00",
+        'to_date': "${_toDateController.text}:00",
         'invoice_date': _invoiceDateController.text,
         'location': _selectedLocationId,
         'total_days': _totalDays.toString(),
@@ -406,11 +452,16 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
             .toList(),
       };
 
-      final response = await HttpService.createRentalIssue(formData);
+      final response = widget.rentId != null
+          ? await HttpService.editRentalIssue(formData)
+          : await HttpService.createRentalIssue(formData);
+
       if (response != null && response['status'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Rental Issue created successfully'),
+            content: Text(widget.rentId != null
+                ? 'Rental Issue updated successfully'
+                : 'Rental Issue created successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -418,8 +469,10 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(response?['message'] ?? 'Failed to create rental issue'),
+            content: Text(response?['message'] ??
+                (widget.rentId != null
+                    ? 'Failed to update rental issue'
+                    : 'Failed to create rental issue')),
             backgroundColor: Colors.red,
           ),
         );
@@ -783,7 +836,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildFormRow(
-                                "Work Site :",
+                                "Work Site * :",
                                 _dropdown(
                                   _customerLocations
                                       .map((l) => l.locationName)
@@ -807,6 +860,14 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                                       });
                                     }
                                   },
+                                  suffixAction: IconButton(
+                                    icon: const Icon(Icons.add_circle,
+                                        color: Colors.blue),
+                                    onPressed: () =>
+                                        _addWorkSiteDialog(context),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
                                 ),
                               ),
                             ),
@@ -818,15 +879,17 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                             Expanded(
                               child: _buildFormRow(
                                 "Collected Staff * :",
-                                GestureDetector(
-                                  onTap: () => _showStaffDialog(context,
-                                      isPayment: false),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: _boxDecoration(),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: _boxDecoration(),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTap: () => _showStaffDialog(context,
+                                              isPayment: false),
                                           child: Text(
                                             _selectedStaffName ?? "Select",
                                             style: TextStyle(
@@ -839,10 +902,24 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                                             ),
                                           ),
                                         ),
-                                        const Icon(Icons.arrow_drop_down,
+                                      ),
+                                      GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTap: () => _showStaffDialog(context,
+                                            isPayment: false),
+                                        child: const Icon(Icons.arrow_drop_down,
                                             size: 20),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(Icons.add_circle,
+                                            color: Colors.blue),
+                                        onPressed: () =>
+                                            _addCollectedStaffDialog(context),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -1241,31 +1318,44 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
   }
 
   Widget _dropdown(List<String> items, String? value, String hint,
-      Function(String?) onChanged) {
+      Function(String?) onChanged,
+      {Widget? suffixAction}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: items.contains(value) ? value : null,
-          hint: Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: Text(hint, style: const TextStyle(fontSize: 14)),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: items.contains(value) ? value : null,
+                hint: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(hint, style: const TextStyle(fontSize: 14)),
+                ),
+                items: items
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Text(e,
+                                  style: const TextStyle(fontSize: 14))),
+                        ))
+                    .toList(),
+                onChanged: onChanged,
+              ),
+            ),
           ),
-          items: items
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Text(e, style: const TextStyle(fontSize: 14))),
-                  ))
-              .toList(),
-          onChanged: onChanged,
-        ),
+          if (suffixAction != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: suffixAction,
+            ),
+        ],
       ),
     );
   }
@@ -1359,6 +1449,125 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
     );
   }
 
+  void _addWorkSiteDialog(BuildContext context) {
+    if (_selectedCustomerId == null) {
+      Common.toastMessaage('Please select a customer first', Colors.red);
+      return;
+    }
+    TextEditingController locationController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool adding = false;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Add Work Site'),
+              content: TextFormField(
+                controller: locationController,
+                decoration:
+                    _inputDecoration().copyWith(hintText: 'Work Site Name'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (locationController.text.trim().isEmpty) {
+                      Common.toastMessaage('Name required', Colors.red);
+                      return;
+                    }
+                    setStateDialog(() => adding = true);
+                    final response =
+                        await HttpService.addRentalCustomerLocation(
+                            _selectedCustomerId!,
+                            locationController.text.trim());
+                    setStateDialog(() => adding = false);
+                    if (response != null && response['status'] == true) {
+                      Common.toastMessaage(
+                          'Work Site added successfully', Colors.green);
+                      Navigator.pop(context);
+                      await _loadCustomerLocations(_selectedCustomerId!);
+                    } else {
+                      Common.toastMessaage(
+                          response?['message'] ?? 'Failed', Colors.red);
+                    }
+                  },
+                  child: adding
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _addCollectedStaffDialog(BuildContext context) {
+    if (_selectedCustomerId == null) {
+      Common.toastMessaage('Please select a customer first', Colors.red);
+      return;
+    }
+    TextEditingController staffController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool adding = false;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Add Collected Staff'),
+              content: TextFormField(
+                controller: staffController,
+                decoration: _inputDecoration().copyWith(hintText: 'Staff Name'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (staffController.text.trim().isEmpty) {
+                      Common.toastMessaage('Name required', Colors.red);
+                      return;
+                    }
+                    setStateDialog(() => adding = true);
+                    final response = await HttpService.addRentalCollectedStaff(
+                        _selectedCustomerId!, staffController.text.trim());
+                    setStateDialog(() => adding = false);
+                    if (response != null && response['status'] == true) {
+                      Common.toastMessaage(
+                          'Staff added successfully', Colors.green);
+                      Navigator.pop(context);
+                      await _loadCollectedStaffs(_selectedCustomerId!);
+                    } else {
+                      Common.toastMessaage(
+                          response?['message'] ?? 'Failed', Colors.red);
+                    }
+                  },
+                  child: adding
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showCustomerDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -1381,6 +1590,8 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                     onPressed: () async {
                       final token = await Common.getSharedPref('token');
                       Navigator.pop(context);
+                      final oldCustomerIds =
+                          _customers.map((c) => c.id).toSet();
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1388,42 +1599,48 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                         ),
                       );
 
-                      if (result == true) {
+                      if (result == true || result == false || result == null) {
                         await _loadCustomers();
-                        if (_customers.isNotEmpty) {
-                          final latestCustomer = _customers.first;
-                          setState(() {
-                            _selectedCustomerId = latestCustomer.id;
-                            _loadCustomerLocations(_selectedCustomerId!);
-                            _loadCollectedStaffs(_selectedCustomerId!);
-                            _selectedCollectedByStaffId = null;
-                            _selectedStaffName = "Select Staff";
-                          });
+                      }
+                      final newCustomers = _customers
+                          .where((c) => !oldCustomerIds.contains(c.id))
+                          .toList();
 
-                          // Fetch rental invoice number for the new customer
-                          final invoiceRes =
-                              await HttpService.generateInvoiceNumberRental(
-                                  latestCustomer.id);
-                          if (invoiceRes != null &&
-                              invoiceRes.status &&
-                              invoiceRes.data != null) {
-                            String rawInvoiceNo = invoiceRes.data!.invoiceNo;
-                            String numericInvoiceNo =
-                                rawInvoiceNo.replaceFirst(RegExp(r'^#+'), '');
-                            setState(() {
-                              _invoiceNoController.text = "#$numericInvoiceNo";
-                              _rentIssueIdController.text =
-                                  "#RIN$numericInvoiceNo";
-                            });
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  'Customer "${latestCustomer.name}" added and selected'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                      if (newCustomers.isNotEmpty) {
+                        final latestCustomer = newCustomers.first;
+                        setState(() {
+                          _selectedCustomerId = latestCustomer.id;
+                          _loadCustomerLocations(_selectedCustomerId!);
+                          _loadCollectedStaffs(_selectedCustomerId!);
+                          _selectedCollectedByStaffId = null;
+                          _selectedStaffName = "Select Staff";
+                        });
+
+                        // Fetch rental invoice number for the new customer
+                        final invoiceRes =
+                            await HttpService.generateInvoiceNumberRental(
+                                latestCustomer.id);
+                        if (invoiceRes != null &&
+                            invoiceRes.status &&
+                            invoiceRes.data != null) {
+                          String rawInvoiceNo = invoiceRes.data!.invoiceNo;
+                          String numericInvoiceNo =
+                              rawInvoiceNo.replaceFirst(RegExp(r'^#+'), '');
+                          setState(() {
+                            _invoiceNoController.text = "#$numericInvoiceNo";
+                            _rentIssueIdController.text =
+                                "#RIN$numericInvoiceNo";
+                          });
                         }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Customer "${latestCustomer.name}" added and selected'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        // User cancelled or back button
                       }
                     },
                     icon: const Icon(Icons.add, color: Colors.blue, size: 20),
@@ -1579,7 +1796,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
 
   Widget _minimalDateItem(String label, TextEditingController controller) {
     return GestureDetector(
-      onTap: () => _selectDate(context, controller),
+      onTap: () => _selectDateTime(context, controller),
       child: Column(
         children: [
           Text(label,
@@ -1587,11 +1804,11 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                   fontSize: 10,
                   color: Colors.blue,
                   fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
           Text(
-            controller.text.isNotEmpty
-                ? controller.text.split(' ')[0]
-                : "Select",
+            controller.text.isNotEmpty ? controller.text : "Select",
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

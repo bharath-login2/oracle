@@ -1,16 +1,21 @@
 import 'dart:developer';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:dio/dio.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/lead_management/deleteLeadModel.dart';
+import 'package:login2/models/lead_management/leadTransferModel.dart';
+import 'package:login2/models/lead_management/uploadAudioRecoed.dart';
 import 'package:login2/models/lead_management/leadExtraSettings.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart' as af;
 import 'package:login2/models/lead_management/callResultResonModel.dart' as cr;
 import 'package:login2/models/lead_management/leadSubTypeModel.dart' as lst;
 import 'package:login2/models/renewal/renewal_details.dart' as rn;
+import 'package:login2/screens/leadManagement/add_leads_new.dart';
 import 'package:login2/screens/leadManagement/audio_controller.dart';
 import 'package:login2/screens/leadManagement/editLeadNew.dart';
 import 'package:login2/screens/leadManagement/imageUploadController.dart';
@@ -39,6 +44,9 @@ import 'editFollowup.dart';
 import 'package:dotted_border/dotted_border.dart';
 import '../../models/lead_management/fileManagerPermissionModel.dart';
 import 'docViewWebView.dart';
+import 'package:login2/models/lead_management/updateReminderSetings.dart';
+import 'package:login2/models/lead_management/unsetReminderModel.dart';
+import 'package:path/path.dart' as p;
 
 class LeadDetailsPopup extends StatefulWidget {
   final String token;
@@ -234,6 +242,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   List<LeadProduct> _selectedProducts = [];
   final TextEditingController _productSearchCtrl = TextEditingController();
   List<LeadProduct> _productSearchResults = [];
+
+  static const Color appBarStart = Color(0xFF2a86c9);
+  static const Color textPrimary = Color(0xFF2C3E50);
+  static const Color textSecondary = Color(0xFF7F8C8D);
 
   rn.RenewalDetailslModel? detailsResponse;
   cr.CallResultResonModel? callResultReason;
@@ -836,104 +848,254 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 value: int.parse(data
                                     .leadCategories![i].callMasterId
                                     .toString()),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border:
                                         data.leadCategories![i].isSelected ==
                                                 true
-                                            ? const Icon(
-                                                Icons.done,
-                                                size: 20,
+                                            ? Border.all(
+                                                color: Colors.green, width: 1.5)
+                                            : null,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Title row with selection indicator
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          // Selection indicator
+                                          if (data.leadCategories![i]
+                                                  .isSelected ==
+                                              true)
+                                            const Padding(
+                                              padding:
+                                                  EdgeInsets.only(right: 8),
+                                              child: Icon(
+                                                Icons.check_circle,
                                                 color: Colors.green,
-                                              )
-                                            : const SizedBox(width: 15),
-                                        const SizedBox(width: 10),
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.5,
-                                          child: Text(
-                                            data.leadCategories![i].leadCategory
-                                                .toString(),
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
+                                                size: 18,
+                                              ),
+                                            ),
+
+                                          // Category name
+                                          Expanded(
+                                            child: Text(
+                                              data.leadCategories![i]
+                                                  .leadCategory
+                                                  .toString(),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFF2C3E50),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                        ),
-                                        Flexible(
-                                          child: Container(
+
+                                          const SizedBox(width: 12),
+
+                                          // Status badge
+                                          Container(
                                             padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 2),
+                                                horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: data.leadCategories![i]
-                                                          .leadStatus ==
-                                                      "New"
-                                                  ? Colors.blue
-                                                  : data.leadCategories![i]
-                                                              .leadStatus ==
-                                                          "Follow Up"
-                                                      ? Colors.yellow
-                                                      : data.leadCategories![i]
-                                                                  .leadStatus ==
-                                                              "Rejected"
-                                                          ? Colors.red
-                                                          : const Color
-                                                              .fromARGB(
-                                                              255, 96, 66, 226),
+                                              color: _getStatusColor(data
+                                                  .leadCategories![i].leadStatus
+                                                  .toString()),
                                               borderRadius:
-                                                  BorderRadius.circular(4),
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Text(
                                               data.leadCategories![i].leadStatus
                                                   .toString(),
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 7.5,
-                                                fontWeight: FontWeight.bold,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 25),
-                                            child: Text(
-                                              'Staff: ${data.leadCategories![i].staffName.toString()}',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 10),
-                                            child: Text(
-                                              'Created Date: ${data.leadCategories![i].createdDate.toString()}',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
+
+                                      const SizedBox(height: 10),
+
+                                      // Details row
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            // Staff info
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.person_outline,
+                                                  size: 14,
+                                                  color: Colors.grey[500],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  data.leadCategories![i]
+                                                      .staffName
+                                                      .toString(),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+                                            const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 8),
+                                              child: Text(
+                                                '•',
+                                                style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12),
+                                              ),
+                                            ),
+
+                                            // Date info
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.calendar_today,
+                                                  size: 12,
+                                                  color: Colors.grey[500],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _formatDate(data
+                                                      .leadCategories![i]
+                                                      .createdDate
+                                                      .toString()),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              )
+                            // PopupMenuItem<int>(
+                            //   value: int.parse(data
+                            //       .leadCategories![i].callMasterId
+                            //       .toString()),
+                            //   child: Column(
+                            //     crossAxisAlignment: CrossAxisAlignment.start,
+                            //     children: [
+                            //       Row(
+                            //         children: [
+                            //           data.leadCategories![i].isSelected ==
+                            //                   true
+                            //               ? const Icon(
+                            //                   Icons.done,
+                            //                   size: 20,
+                            //                   color: Colors.green,
+                            //                 )
+                            //               : const SizedBox(width: 15),
+                            //           const SizedBox(width: 10),
+                            //           SizedBox(
+                            //             width: MediaQuery.of(context)
+                            //                     .size
+                            //                     .width *
+                            //                 0.5,
+                            //             child: Text(
+                            //               data.leadCategories![i].leadCategory
+                            //                   .toString(),
+                            //               maxLines: 3,
+                            //               overflow: TextOverflow.ellipsis,
+                            //             ),
+                            //           ),
+                            //           Flexible(
+                            //             child: Container(
+                            //               padding: const EdgeInsets.symmetric(
+                            //                   horizontal: 6, vertical: 2),
+                            //               decoration: BoxDecoration(
+                            //                 color: data.leadCategories![i]
+                            //                             .leadStatus ==
+                            //                         "New"
+                            //                     ? Colors.blue
+                            //                     : data.leadCategories![i]
+                            //                                 .leadStatus ==
+                            //                             "Follow Up"
+                            //                         ? Colors.yellow
+                            //                         : data.leadCategories![i]
+                            //                                     .leadStatus ==
+                            //                                 "Rejected"
+                            //                             ? Colors.red
+                            //                             : const Color
+                            //                                 .fromARGB(
+                            //                                 255, 96, 66, 226),
+                            //                 borderRadius:
+                            //                     BorderRadius.circular(4),
+                            //               ),
+                            //               child: Text(
+                            //                 data.leadCategories![i].leadStatus
+                            //                     .toString(),
+                            //                 style: const TextStyle(
+                            //                   color: Colors.white,
+                            //                   fontSize: 7.5,
+                            //                   fontWeight: FontWeight.bold,
+                            //                 ),
+                            //                 overflow: TextOverflow.ellipsis,
+                            //               ),
+                            //             ),
+                            //           ),
+                            //         ],
+                            //       ),
+                            //       const SizedBox(height: 4),
+                            //       SingleChildScrollView(
+                            //         scrollDirection: Axis.horizontal,
+                            //         child: Row(
+                            //           children: [
+                            //             Padding(
+                            //               padding:
+                            //                   const EdgeInsets.only(left: 25),
+                            //               child: Text(
+                            //                 'Staff: ${data.leadCategories![i].staffName.toString()}',
+                            //                 style: const TextStyle(
+                            //                   fontSize: 11,
+                            //                   color: Colors.grey,
+                            //                 ),
+                            //                 overflow: TextOverflow.ellipsis,
+                            //               ),
+                            //             ),
+                            //             Padding(
+                            //               padding:
+                            //                   const EdgeInsets.only(left: 10),
+                            //               child: Text(
+                            //                 'Created Date: ${data.leadCategories![i].createdDate.toString()}',
+                            //                 style: const TextStyle(
+                            //                   fontSize: 11,
+                            //                   color: Colors.grey,
+                            //                 ),
+                            //                 overflow: TextOverflow.ellipsis,
+                            //               ),
+                            //             ),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
                           ];
                         },
                         onSelected: (value) {
@@ -1017,11 +1179,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   color: Colors.green,
                 ),
               ),
-              // WhatsApp
               PopupMenuButton<String>(
                 onSelected: (value) async {
                   final String? phone = leadDetails?.data?.contactNumber1;
                   if (phone == null) return;
+
                   if (value == "1") {
                     final whatsappLink = "https://wa.me/$phone";
                     await launchUrl(Uri.parse(whatsappLink));
@@ -1030,36 +1192,60 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     try {
                       GetWhatsappChat whatsappGroup =
                           await HttpService.getWhatsappGroupid(
-                              leadDetails!.data!.clientName!,
-                              leadDetails!.data!.countryCode!,
-                              leadDetails!.data!.contactNumber1!);
-                      Navigator.pop(context);
-                      if (whatsappGroup.status == true) {
-                        if (context.mounted) {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(
-                                  groupId: whatsappGroup.data,
-                                  nav: "",
-                                ),
-                              )).then((_) {
-                            widget.onDataChanged();
-                          });
-                        }
+                        leadDetails!.data!.clientName!,
+                        leadDetails!.data!.countryCode!,
+                        leadDetails!.data!.contactNumber1!,
+                      );
+                      if (context.mounted) Navigator.pop(context);
+
+                      if (whatsappGroup.status == true && context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              groupId: whatsappGroup.data,
+                              nav: "",
+                            ),
+                          ),
+                        ).then((_) => widget.onDataChanged());
                       }
                     } catch (e) {
-                      Navigator.pop(context);
+                      if (context.mounted) Navigator.pop(context);
                       log("Error opening official whatsapp: $e");
                     }
                   }
                 },
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: Colors.white,
+                position: PopupMenuPosition.under,
+                offset: const Offset(0, 8),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
-                      value: "1", child: Text("Personal WhatsApp")),
+                  PopupMenuItem(
+                    value: "1",
+                    child: Row(
+                      children: [
+                        Icon(FontAwesomeIcons.whatsapp,
+                            size: 20, color: const Color(0xFF25D366)),
+                        const SizedBox(width: 12),
+                        const Text('Personal WhatsApp'),
+                      ],
+                    ),
+                  ),
                   if (whatsappOfficial == 'true')
-                    const PopupMenuItem(
-                        value: "2", child: Text("Official WhatsApp")),
+                    PopupMenuItem(
+                      value: "2",
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.whatsapp,
+                              size: 20, color: const Color(0xFF075E54)),
+                          const SizedBox(width: 12),
+                          const Text('Official WhatsApp'),
+                        ],
+                      ),
+                    ),
                 ],
                 child: _buildActionColumn(
                   imageAsset: "assets/icons/whatsapp_white.png",
@@ -1068,6 +1254,57 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   isSolid: true,
                 ),
               ),
+              // WhatsApp
+              // PopupMenuButton<String>(
+              //   onSelected: (value) async {
+              //     final String? phone = leadDetails?.data?.contactNumber1;
+              //     if (phone == null) return;
+              //     if (value == "1") {
+              //       final whatsappLink = "https://wa.me/$phone";
+              //       await launchUrl(Uri.parse(whatsappLink));
+              //     } else if (value == "2") {
+              //       Common.showProgressDialog(context, "Loading...");
+              //       try {
+              //         GetWhatsappChat whatsappGroup =
+              //             await HttpService.getWhatsappGroupid(
+              //                 leadDetails!.data!.clientName!,
+              //                 leadDetails!.data!.countryCode!,
+              //                 leadDetails!.data!.contactNumber1!);
+              //         Navigator.pop(context);
+              //         if (whatsappGroup.status == true) {
+              //           if (context.mounted) {
+              //             Navigator.push(
+              //                 context,
+              //                 MaterialPageRoute(
+              //                   builder: (context) => ChatScreen(
+              //                     groupId: whatsappGroup.data,
+              //                     nav: "",
+              //                   ),
+              //                 )).then((_) {
+              //               widget.onDataChanged();
+              //             });
+              //           }
+              //         }
+              //       } catch (e) {
+              //         Navigator.pop(context);
+              //         log("Error opening official whatsapp: $e");
+              //       }
+              //     }
+              //   },
+              //   itemBuilder: (context) => [
+              //     const PopupMenuItem(
+              //         value: "1", child: Text("Personal WhatsApp")),
+              //     if (whatsappOfficial == 'true')
+              //       const PopupMenuItem(
+              //           value: "2", child: Text("Official WhatsApp")),
+              //   ],
+              //   child: _buildActionColumn(
+              //     imageAsset: "assets/icons/whatsapp_white.png",
+              //     label: 'WhatsApp',
+              //     color: Colors.green,
+              //     isSolid: true,
+              //   ),
+              // ),
               // Share
               // InkWell(
               //   onTap: () async {
@@ -1197,7 +1434,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddLeads(
+                          builder: (context) => AddLeadsNew(
                             widget.token,
                             page: 'leadDetails',
                             leadMasterId: leadDetails!.data!.callMasterId,
@@ -1214,6 +1451,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                       ).then((_) => widget.onDataChanged());
                       break;
+                    case 'delete':
+                      _deleteDialog(context, "", "lead");
+                      break;
                   }
                 },
                 itemBuilder: (context) => [
@@ -1224,6 +1464,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       'Transfer', Colors.orange),
                   _buildPopupItem('add', Icons.person_add_rounded, 'Add Leads',
                       Colors.green),
+                  if (widget.deleteLead)
+                    _buildPopupItem('delete', Icons.delete_outline_rounded,
+                        'Delete', Colors.red),
                 ],
                 child: _buildActionColumn(
                   icon: Icons.more_vert,
@@ -1690,7 +1933,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         leadDetailsFollowup!.data.followUpData[index];
                     final fNo =
                         leadDetailsFollowup!.data.followUpData.length - index;
-                    return _buildFollowupItem(followup, fNo);
+                    final isLatest = index == 0; // First item is the latest
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildFollowupItem(followup, fNo, isLatest),
+                    );
                   },
                 ),
         ],
@@ -3381,15 +3629,33 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildFollowupItem(af.FollowUpDatum followup, int followupNumber) {
+  Widget _buildFollowupItem(
+      af.FollowUpDatum followup, int followupNumber, bool isLatest) {
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isLatest
+                ? Colors
+                    .blue.shade50 // Light blue background for latest followup
+                : Colors.white, // White background for others
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+              color: isLatest
+                  ? Colors.blue.shade200 // Blue border for latest
+                  : Colors.grey.shade200, // Grey border for others
+            ),
+            // Optional: Add a subtle shadow for the latest followup
+            boxShadow: isLatest
+                ? [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : null,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3400,7 +3666,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(
+                    color:
+                        isLatest ? Colors.blue.shade300 : Colors.grey.shade300,
+                  ),
                   image: followup.proPicThumb.isNotEmpty
                       ? DecorationImage(
                           image: NetworkImage(followup.proPicThumb),
@@ -3409,7 +3678,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       : null,
                 ),
                 child: followup.proPicThumb.isEmpty
-                    ? const Icon(Icons.person, size: 20, color: Colors.grey)
+                    ? Icon(
+                        Icons.person,
+                        size: 20,
+                        color: isLatest ? Colors.blue.shade400 : Colors.grey,
+                      )
                     : null,
               ),
               const SizedBox(width: 12),
@@ -3423,20 +3696,39 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         Expanded(
                           child: Text(
                             followup.staffName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
+                              color: isLatest
+                                  ? Colors.blue.shade700
+                                  : Colors.black87,
                             ),
                           ),
                         ),
                         Row(
                           children: [
+                            if (followup.isSetReminder == true)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    _showReminderDialog(followup);
+                                  },
+                                  child: Icon(
+                                    Icons.notifications,
+                                    color: followup.isReminder == true
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
                             if (leadDetailsAdditional!
                                         .data.createCustomerInvoice ==
                                     true &&
                                 leadDetailsFollowup!
                                         .data.followUpData[0].callResult ==
-                                    "Confirmed" &&
+                                    "Closed" &&
                                 leadDetailsAdditional!.data.isCreateOrder ==
                                     true)
                               InkWell(
@@ -3449,14 +3741,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     _fetchRenewalDetails();
                                   });
                                 },
-                                child: const Icon(Icons.add,
-                                    color: Colors.green, size: 22),
+                                child: Icon(
+                                  Icons.add,
+                                  color: isLatest
+                                      ? Colors.green.shade600
+                                      : Colors.green,
+                                  size: 22,
+                                ),
                               )
                             else if (leadDetails?.data?.callResultId != "4" &&
                                 leadDetails?.data?.callResult != "Closed" &&
                                 leadDetailsFollowup!
                                         .data.followUpData[0].callResult ==
-                                    "Confirmed")
+                                    "Closed")
                               InkWell(
                                 onTap: () {
                                   Get.to(() => CustomerDashboard(
@@ -3473,8 +3770,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     widget.onDataChanged();
                                   });
                                 },
-                                child: const Icon(Icons.menu,
-                                    color: Colors.green, size: 22),
+                                child: Icon(
+                                  Icons.menu,
+                                  color: isLatest
+                                      ? Colors.green.shade600
+                                      : Colors.green,
+                                  size: 22,
+                                ),
                               ),
                             const SizedBox(width: 8),
                             if (followup.isEdit == true)
@@ -3503,9 +3805,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     widget.onDataChanged();
                                   });
                                 },
-                                child: const Icon(
+                                child: Icon(
                                   Icons.edit,
-                                  color: Colors.blue,
+                                  color: isLatest
+                                      ? Colors.blue.shade600
+                                      : Colors.blue,
                                   size: 18,
                                 ),
                               ),
@@ -3513,12 +3817,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             if (followup.isDelete == true)
                               InkWell(
                                 onTap: () {
-                                  _deleteDialog(
-                                      context, followup.callDetailsId);
+                                  _deleteDialog(context, followup.callDetailsId,
+                                      "followup");
                                 },
-                                child: const Icon(
+                                child: Icon(
                                   Icons.delete,
-                                  color: Colors.red,
+                                  color: isLatest
+                                      ? Colors.red.shade600
+                                      : Colors.red,
                                   size: 18,
                                 ),
                               ),
@@ -3541,6 +3847,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 ),
                               ),
                             ),
+                            if (followup.isCalled == false)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4.0),
+                                child: Text(
+                                  '( Pending )',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ],
@@ -3550,7 +3868,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       followup.remarks,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade800,
+                        color: isLatest
+                            ? Colors.blue.shade800
+                            : Colors.grey.shade800,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -3558,7 +3878,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       'Reason: ${followup.reason.isNotEmpty ? followup.reason : "Not Added"}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: isLatest
+                            ? Colors.blue.shade600
+                            : Colors.grey.shade600,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -3568,7 +3890,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         'Call Response: ${followup.callResponse}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: isLatest
+                              ? Colors.blue.shade600
+                              : Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -3579,7 +3903,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         'Products: ${followup.productNames}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: isLatest
+                              ? Colors.blue.shade600
+                              : Colors.grey.shade600,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -3598,24 +3924,39 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade50,
-                                border:
-                                    Border.all(color: Colors.green.shade200),
+                                color: isLatest
+                                    ? Colors.green.shade100
+                                    : Colors.green.shade50,
+                                border: Border.all(
+                                  color: isLatest
+                                      ? Colors.green.shade400
+                                      : Colors.green.shade200,
+                                ),
                                 borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(6),
                                   bottomLeft: Radius.circular(6),
                                 ),
                               ),
-                              child: const Row(
+                              child: Row(
                                 children: [
-                                  Icon(Icons.play_arrow,
-                                      color: Colors.green, size: 18),
-                                  SizedBox(width: 4),
-                                  Text('Play',
-                                      style: TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold)),
+                                  Icon(
+                                    Icons.play_arrow,
+                                    color: isLatest
+                                        ? Colors.green.shade700
+                                        : Colors.green,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Play',
+                                    style: TextStyle(
+                                      color: isLatest
+                                          ? Colors.green.shade700
+                                          : Colors.green,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -3627,48 +3968,30 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 5),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                border: Border.all(color: Colors.red.shade200),
+                                color: isLatest
+                                    ? Colors.red.shade100
+                                    : Colors.red.shade50,
+                                border: Border.all(
+                                  color: isLatest
+                                      ? Colors.red.shade400
+                                      : Colors.red.shade200,
+                                ),
                                 borderRadius: const BorderRadius.only(
                                   topRight: Radius.circular(6),
                                   bottomRight: Radius.circular(6),
                                 ),
                               ),
-                              child: const Icon(Icons.close,
-                                  color: Colors.red, size: 18),
+                              child: Icon(
+                                Icons.close,
+                                color:
+                                    isLatest ? Colors.red.shade700 : Colors.red,
+                                size: 18,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ],
-                    //  else if (followup.voiceUploadPermission == true) ...[
-                    //   const SizedBox(height: 8),
-                    //   InkWell(
-                    //     onTap: () => _showRecordDialog(followup.callDetailsId),
-                    //     child: Container(
-                    //       padding: const EdgeInsets.symmetric(
-                    //           horizontal: 10, vertical: 5),
-                    //       decoration: BoxDecoration(
-                    //         color: Colors.blue.shade50,
-                    //         border: Border.all(color: Colors.blue.shade200),
-                    //         borderRadius: BorderRadius.circular(6),
-                    //       ),
-                    //       child: const Row(
-                    //         mainAxisSize: MainAxisSize.min,
-                    //         children: [
-                    //           Icon(Icons.mic,
-                    //               color: Color(0xFF2a86c9), size: 18),
-                    //           SizedBox(width: 4),
-                    //           Text('Record Voice',
-                    //               style: TextStyle(
-                    //                   color: Color(0xFF2a86c9),
-                    //                   fontSize: 11,
-                    //                   fontWeight: FontWeight.bold)),
-                    //         ],
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ],
 
                     const SizedBox(height: 8),
                     Row(
@@ -3676,24 +3999,45 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.access_time,
-                                size: 12, color: Colors.grey.shade500),
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: isLatest
+                                  ? Colors.blue.shade400
+                                  : Colors.grey.shade500,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               followup.scheduledDate,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey.shade500,
+                                color: isLatest
+                                    ? Colors.blue.shade600
+                                    : Colors.grey.shade500,
                               ),
                             ),
                           ],
                         ),
-                        Text(
-                          "F.No : $followupNumber",
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isLatest
+                                ? Colors.green.shade100
+                                : Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "F.No : $followupNumber",
+                            style: TextStyle(
+                              color: isLatest
+                                  ? Colors.green.shade700
+                                  : Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -3708,28 +4052,514 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  void _deleteDialog(BuildContext context, String followupId) {
+  // Widget _buildFollowupItem(af.FollowUpDatum followup, int followupNumber) {
+  //   return Column(
+  //     children: [
+  //       Container(
+  //         padding: const EdgeInsets.all(12),
+  //         decoration: BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.circular(12),
+  //           border: Border.all(color: Colors.grey.shade200),
+  //         ),
+  //         child: Row(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Container(
+  //               width: 36,
+  //               height: 36,
+  //               decoration: BoxDecoration(
+  //                 shape: BoxShape.circle,
+  //                 color: Colors.white,
+  //                 border: Border.all(color: Colors.grey.shade300),
+  //                 image: followup.proPicThumb.isNotEmpty
+  //                     ? DecorationImage(
+  //                         image: NetworkImage(followup.proPicThumb),
+  //                         fit: BoxFit.cover,
+  //                       )
+  //                     : null,
+  //               ),
+  //               child: followup.proPicThumb.isEmpty
+  //                   ? const Icon(Icons.person, size: 20, color: Colors.grey)
+  //                   : null,
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Expanded(
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Expanded(
+  //                         child: Text(
+  //                           followup.staffName,
+  //                           style: const TextStyle(
+  //                             fontWeight: FontWeight.bold,
+  //                             fontSize: 14,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       Row(
+  //                         children: [
+  //                           if (leadDetailsAdditional!
+  //                                       .data.createCustomerInvoice ==
+  //                                   true &&
+  //                               leadDetailsFollowup!
+  //                                       .data.followUpData[0].callResult ==
+  //                                   "Closed" &&
+  //                               leadDetailsAdditional!.data.isCreateOrder ==
+  //                                   true)
+  //                             InkWell(
+  //                               onTap: () {
+  //                                 setState(() {
+  //                                   isCreatingOrderOnly = true;
+  //                                   createOrder = true;
+  //                                   creatingOrderFollowupId =
+  //                                       widget.callMasterId;
+  //                                   _fetchRenewalDetails();
+  //                                 });
+  //                               },
+  //                               child: const Icon(Icons.add,
+  //                                   color: Colors.green, size: 22),
+  //                             )
+  //                           else if (leadDetails?.data?.callResultId != "4" &&
+  //                               leadDetails?.data?.callResult != "Closed" &&
+  //                               leadDetailsFollowup!
+  //                                       .data.followUpData[0].callResult ==
+  //                                   "Closed")
+  //                             InkWell(
+  //                               onTap: () {
+  //                                 Get.to(() => CustomerDashboard(
+  //                                       token: widget.token,
+  //                                       name: name ?? '',
+  //                                       userId: userId ?? '',
+  //                                       phoneCallLogPermission:
+  //                                           phoneCallLogPermission,
+  //                                       custId: leadDetailsAdditional!
+  //                                           .data.customerId
+  //                                           .toString(),
+  //                                     ))?.then((r) {
+  //                                   _refreshData(widget.callMasterId);
+  //                                   widget.onDataChanged();
+  //                                 });
+  //                               },
+  //                               child: const Icon(Icons.menu,
+  //                                   color: Colors.green, size: 22),
+  //                             ),
+  //                           const SizedBox(width: 8),
+  //                           if (followup.isEdit == true)
+  //                             InkWell(
+  //                               onTap: () {
+  //                                 Navigator.push(
+  //                                     context,
+  //                                     MaterialPageRoute(
+  //                                         builder: (context) => EditFollowup(
+  //                                               widget.token,
+  //                                               widget.editLead,
+  //                                               widget.deleteLead,
+  //                                               widget.cloudCall,
+  //                                               widget.callMasterId,
+  //                                               followup.callDetailsId
+  //                                                   .toString(),
+  //                                               pageName: widget.pageName,
+  //                                               status: widget.status,
+  //                                               staff: widget.staff,
+  //                                               isCalled: widget.isCalled,
+  //                                               fromDate: widget.fromDate,
+  //                                               toDate: widget.toDate,
+  //                                               category: widget.category,
+  //                                             )))?.then((r) {
+  //                                   _refreshData(widget.callMasterId);
+  //                                   widget.onDataChanged();
+  //                                 });
+  //                               },
+  //                               child: const Icon(
+  //                                 Icons.edit,
+  //                                 color: Colors.blue,
+  //                                 size: 18,
+  //                               ),
+  //                             ),
+  //                           const SizedBox(width: 8),
+  //                           if (followup.isDelete == true)
+  //                             InkWell(
+  //                               onTap: () {
+  //                                 _deleteDialog(
+  //                                     context, followup.callDetailsId);
+  //                               },
+  //                               child: const Icon(
+  //                                 Icons.delete,
+  //                                 color: Colors.red,
+  //                                 size: 18,
+  //                               ),
+  //                             ),
+  //                           const SizedBox(width: 8),
+  //                           Container(
+  //                             padding: const EdgeInsets.symmetric(
+  //                               horizontal: 8,
+  //                               vertical: 2,
+  //                             ),
+  //                             decoration: BoxDecoration(
+  //                               color: _getStatusColor(followup.callResultId),
+  //                               borderRadius: BorderRadius.circular(10),
+  //                             ),
+  //                             child: Text(
+  //                               followup.callResult,
+  //                               style: const TextStyle(
+  //                                 fontSize: 10,
+  //                                 color: Colors.white,
+  //                                 fontWeight: FontWeight.bold,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   const SizedBox(height: 4),
+  //                   Text(
+  //                     followup.remarks,
+  //                     style: TextStyle(
+  //                       fontSize: 13,
+  //                       color: Colors.grey.shade800,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 2),
+  //                   Text(
+  //                     'Reason: ${followup.reason.isNotEmpty ? followup.reason : "Not Added"}',
+  //                     style: TextStyle(
+  //                       fontSize: 12,
+  //                       color: Colors.grey.shade600,
+  //                       fontStyle: FontStyle.italic,
+  //                     ),
+  //                   ),
+  //                   if (followup.callResponse.isNotEmpty) ...[
+  //                     const SizedBox(height: 2),
+  //                     Text(
+  //                       'Call Response: ${followup.callResponse}',
+  //                       style: TextStyle(
+  //                         fontSize: 12,
+  //                         color: Colors.grey.shade600,
+  //                         fontWeight: FontWeight.w500,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                   if (followup.productNames.isNotEmpty) ...[
+  //                     const SizedBox(height: 2),
+  //                     Text(
+  //                       'Products: ${followup.productNames}',
+  //                       style: TextStyle(
+  //                         fontSize: 12,
+  //                         color: Colors.grey.shade600,
+  //                         fontStyle: FontStyle.italic,
+  //                       ),
+  //                     ),
+  //                   ],
+
+  //                   // Voice Recording Section
+  //                   if (followup.playVoicePermission == true &&
+  //                       followup.voiceFile.isNotEmpty) ...[
+  //                     const SizedBox(height: 8),
+  //                     Row(
+  //                       children: [
+  //                         InkWell(
+  //                           onTap: () => _showAudioDialog(
+  //                               followup.voiceFile, followup.callDetailsId),
+  //                           child: Container(
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 10, vertical: 5),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.green.shade50,
+  //                               border:
+  //                                   Border.all(color: Colors.green.shade200),
+  //                               borderRadius: const BorderRadius.only(
+  //                                 topLeft: Radius.circular(6),
+  //                                 bottomLeft: Radius.circular(6),
+  //                               ),
+  //                             ),
+  //                             child: const Row(
+  //                               children: [
+  //                                 Icon(Icons.play_arrow,
+  //                                     color: Colors.green, size: 18),
+  //                                 SizedBox(width: 4),
+  //                                 Text('Play',
+  //                                     style: TextStyle(
+  //                                         color: Colors.green,
+  //                                         fontSize: 11,
+  //                                         fontWeight: FontWeight.bold)),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         InkWell(
+  //                           onTap: () =>
+  //                               _deleteVoiceDialog(followup.callDetailsId),
+  //                           child: Container(
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 8, vertical: 5),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.red.shade50,
+  //                               border: Border.all(color: Colors.red.shade200),
+  //                               borderRadius: const BorderRadius.only(
+  //                                 topRight: Radius.circular(6),
+  //                                 bottomRight: Radius.circular(6),
+  //                               ),
+  //                             ),
+  //                             child: const Icon(Icons.close,
+  //                                 color: Colors.red, size: 18),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ],
+  //                   //  else if (followup.voiceUploadPermission == true) ...[
+  //                   //   const SizedBox(height: 8),
+  //                   //   InkWell(
+  //                   //     onTap: () => _showRecordDialog(followup.callDetailsId),
+  //                   //     child: Container(
+  //                   //       padding: const EdgeInsets.symmetric(
+  //                   //           horizontal: 10, vertical: 5),
+  //                   //       decoration: BoxDecoration(
+  //                   //         color: Colors.blue.shade50,
+  //                   //         border: Border.all(color: Colors.blue.shade200),
+  //                   //         borderRadius: BorderRadius.circular(6),
+  //                   //       ),
+  //                   //       child: const Row(
+  //                   //         mainAxisSize: MainAxisSize.min,
+  //                   //         children: [
+  //                   //           Icon(Icons.mic,
+  //                   //               color: Color(0xFF2a86c9), size: 18),
+  //                   //           SizedBox(width: 4),
+  //                   //           Text('Record Voice',
+  //                   //               style: TextStyle(
+  //                   //                   color: Color(0xFF2a86c9),
+  //                   //                   fontSize: 11,
+  //                   //                   fontWeight: FontWeight.bold)),
+  //                   //         ],
+  //                   //       ),
+  //                   //     ),
+  //                   //   ),
+  //                   // ],
+
+  //                   const SizedBox(height: 8),
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Row(
+  //                         children: [
+  //                           Icon(Icons.access_time,
+  //                               size: 12, color: Colors.grey.shade500),
+  //                           const SizedBox(width: 4),
+  //                           Text(
+  //                             followup.scheduledDate,
+  //                             style: TextStyle(
+  //                               fontSize: 11,
+  //                               color: Colors.grey.shade500,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       Text(
+  //                         "F.No : $followupNumber",
+  //                         style: const TextStyle(
+  //                           color: Colors.green,
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  void _deleteDialog(BuildContext context, String id, String type) {
+    final isLead = type == 'lead';
+
     showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Delete?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No')),
-              TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    _deleteFollowup(context, followupId);
-                  },
-                  child: const Text('Yes')),
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Confirm Deletion',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
-          );
-        });
+          ),
+          content: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isLead
+                      ? 'Are you sure you want to delete this lead?'
+                      : 'Are you sure you want to delete this follow-up?',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 18,
+                        color: Colors.amber,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This action cannot be reversed',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.amber,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+
+                // Show brief progress
+                Common.showProgressDialog(context, "Deleting...");
+                await Future.delayed(const Duration(milliseconds: 500));
+
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).pop();
+
+                  if (isLead) {
+                    _deleteLead(context);
+                  } else {
+                    _deleteFollowup(context, id);
+                  }
+
+                  Common.toastMessaage(
+                    'Deleted successfully',
+                    Colors.green,
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // void _deleteDialog(BuildContext context, String id, String type) {
+  //   showDialog(
+  //       context: context,
+  //       builder: (BuildContext ctx) {
+  //         return AlertDialog(
+  //           title: const Text('Please Confirm'),
+  //           content: Text(type == 'lead'
+  //               ? 'Are you sure to Delete this Lead?'
+  //               : 'Are you sure to Delete this Followup?'),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 child: const Text('No')),
+  //             TextButton(
+  //                 onPressed: () async {
+  //                   Navigator.of(context).pop();
+  //                   if (type == 'lead') {
+  //                     _deleteLead(context);
+  //                   } else {
+  //                     _deleteFollowup(context, id);
+  //                   }
+  //                 },
+  //                 child: const Text('Yes')),
+  //           ],
+  //         );
+  //       });
+  // }
+
+  Future<void> _deleteLead(BuildContext context) async {
+    Common.showProgressDialog(context, "Deleting Lead..");
+    DeleteLeadModel delete =
+        await HttpService.deleteLead(widget.token, widget.callMasterId);
+    if (delete.data == true) {
+      Common.toastMessaage(delete.message, Colors.green);
+      if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+        Navigator.pop(context); // Close popup
+        widget.onDataChanged();
+      }
+    } else {
+      Common.toastMessaage(delete.message, Colors.red);
+      if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+      }
+    }
   }
 
   Future<void> _deleteFollowup(BuildContext context, String followupId) async {
@@ -4037,110 +4867,651 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
   }
 
-  Widget _buildActivitiesTab() {
-    if (isActivityLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (activeMode == null || activeMode!.activities.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text('No activities found'),
-        ),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      itemCount: activeMode!.activities.length,
-      itemBuilder: (context, index) {
-        final activity = activeMode!.activities[index];
-        return Stack(
-          children: [
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 32,
-              child: Container(
-                width: 1.0,
-                color: Colors.grey.shade300,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                      image: activity.proPicThumb.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(activity.proPicThumb),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: activity.proPicThumb.isEmpty
-                        ? const Icon(Icons.person, size: 18, color: Colors.grey)
-                        : null,
+  void _showReminderDialog(af.FollowUpDatum followup) {
+    timeBefore.text = followup.time.toString();
+    showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                child: Container(
+                  width: double.maxFinite,
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
+                  child: Material(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          activity.staffName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          activity.remark,
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Set Reminder',
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade800,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today,
-                                size: 12, color: Colors.grey.shade500),
-                            const SizedBox(width: 4),
-                            Text(
-                              activity.createdTime,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade500,
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: timeBefore,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                              contentPadding:
+                                  EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                              labelText: 'Time Before ( Min )',
+                              fillColor: Colors.white,
+                              filled: true,
+                              prefixIcon:
+                                  Icon(Icons.lock_clock, color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        if (followup.isReminder == true)
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 15),
+                              child: InkWell(
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  Common.showProgressDialog(
+                                      context, "Loading..");
+                                  UnsetReminderModel unsetReminder =
+                                      await HttpService.unsetReminder(
+                                          widget.token,
+                                          followup.callDetailsId.toString());
+                                  if (context.mounted) Navigator.pop(context);
+
+                                  if (unsetReminder.data == true) {
+                                    _refreshData(widget.callMasterId);
+                                    widget.onDataChanged();
+                                  } else {
+                                    Common.toastMessaage(
+                                        unsetReminder.message, Colors.red);
+                                  }
+                                },
+                                child: const Text(
+                                  'Unset Reminder',
+                                  style: TextStyle(
+                                      fontSize: 13, color: Colors.red),
+                                ),
                               ),
                             ),
-                          ],
+                          ),
+                        const SizedBox(height: 25),
+                        Container(
+                          height: 40,
+                          width: double.maxFinite,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3375e0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: RawMaterialButton(
+                            onPressed: () async {
+                              if (timeBefore.text.isEmpty ||
+                                  timeBefore.text == '0') {
+                                Common.toastMessaage('Set Time', Colors.red);
+                              } else {
+                                Navigator.pop(context);
+                                Common.showProgressDialog(context, "Loading..");
+                                UpdateReminderSetting updateReminder =
+                                    await HttpService.updateReminder(
+                                        widget.token,
+                                        followup.callDetailsId,
+                                        true,
+                                        timeBefore.text);
+                                if (context.mounted) Navigator.pop(context);
+
+                                if (updateReminder.status == true) {
+                                  Common.toastMessaage(
+                                      updateReminder.message, Colors.green);
+                                  _refreshData(widget.callMasterId);
+                                  widget.onDataChanged();
+                                } else {
+                                  Common.toastMessaage(
+                                      updateReminder.message, Colors.red);
+                                }
+                              }
+                            },
+                            child: const Center(
+                              child: Text(
+                                'Continue',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ],
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
         );
       },
     );
   }
+
+  Widget _buildActivitiesTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final latestColor = const Color(0xFF3375e0); // Blue for latest
+    final otherColor = Colors.grey; // Grey for others
+
+    if (isActivityLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: latestColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(latestColor),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Loading Activities...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: latestColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (activeMode == null || activeMode!.activities.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: latestColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.history_rounded,
+                size: 48,
+                color: latestColor.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No Activities Yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Activities will appear here',
+              style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      itemCount: activeMode!.activities.length,
+      itemBuilder: (context, index) {
+        final activity = activeMode!.activities[index];
+        final isLatest = index == 0;
+        final isLastItem = index == activeMode!.activities.length - 1;
+
+        // Use two colors only
+        final activityColor = isLatest ? latestColor : otherColor;
+        final lightColor = activityColor.withOpacity(0.1);
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Stack(
+            children: [
+              // Timeline line
+              if (!isLastItem)
+                Positioned(
+                  top: 50,
+                  bottom: -16,
+                  left: 40,
+                  child: Container(
+                    width: 2,
+                    color: isLatest
+                        ? latestColor.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+
+              // Activity card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Timeline dot
+                    Container(
+                      width: 48,
+                      height: 48,
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: activityColor,
+                          width: isLatest ? 2 : 1.5,
+                        ),
+                        image: activity.proPicThumb.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(activity.proPicThumb),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: activity.proPicThumb.isEmpty
+                          ? Icon(
+                              Icons.person_rounded,
+                              size: 24,
+                              color: activityColor,
+                            )
+                          : null,
+                    ),
+
+                    // Activity content
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[800] : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: activityColor.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          activity.staffName,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                            color: isLatest
+                                                ? latestColor
+                                                : (isDark
+                                                    ? Colors.white
+                                                    : Colors.black87),
+                                          ),
+                                        ),
+                                        // if (isLatest) ...[
+                                        //   const SizedBox(width: 8),
+                                        //   Container(
+                                        //     padding: const EdgeInsets.symmetric(
+                                        //       horizontal: 8,
+                                        //       vertical: 4,
+                                        //     ),
+                                        //     decoration: BoxDecoration(
+                                        //       color: latestColor,
+                                        //       borderRadius:
+                                        //           BorderRadius.circular(4),
+                                        //     ),
+                                        //     child: const Text(
+                                        //       'LATEST',
+                                        //       style: TextStyle(
+                                        //         fontSize: 10,
+                                        //         fontWeight: FontWeight.w600,
+                                        //         color: Colors.white,
+                                        //       ),
+                                        //     ),
+                                        //   ),
+                                        // ],
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Time badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: lightColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.access_time_rounded,
+                                          size: 12,
+                                          color: activityColor,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _getTimeAgo(activity.createdTime),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: activityColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Remark
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: lightColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getActivityIcon(activity.remark),
+                                      size: 18,
+                                      color: activityColor,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        activity.remark,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.grey[300]
+                                              : Colors.grey[800],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Date
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 12,
+                                    color: activityColor.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatFullDate(activity.createdTime),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: activityColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      // Adjust this parsing based on your date format
+      // Assuming format: YYYY-MM-DD
+      if (dateStr.length >= 10) {
+        return dateStr.substring(0, 10); // Returns YYYY-MM-DD
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+// Status color mapping
+// Color _getStatusColor(String status) {
+//   switch(status) {
+//     case 'New':
+//       return const Color(0xFF2196F3); // Blue
+//     case 'Follow Up':
+//       return const Color(0xFFFF9800); // Orange
+//     case 'Rejected':
+//       return const Color(0xFFF44336); // Red
+//     case 'Completed':
+//       return const Color(0xFF4CAF50); // Green
+//     case 'Pending':
+//       return const Color(0xFF9C27B0); // Purple
+//     default:
+//       return const Color(0xFF607D8B); // Blue Grey
+//   }
+// }
+// Helper methods
+  String _getTimeAgo(String createdTime) {
+    try {
+      final date = DateTime.parse(createdTime);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 7) {
+        return '${difference.inDays ~/ 7}w';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays}d';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours}h';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes}m';
+      } else {
+        return 'now';
+      }
+    } catch (e) {
+      return createdTime;
+    }
+  }
+
+  String _formatFullDate(String createdTime) {
+    try {
+      final date = DateTime.parse(createdTime);
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return '${date.day} ${months[date.month - 1]} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return createdTime;
+    }
+  }
+
+  IconData _getActivityIcon(String remark) {
+    remark = remark.toLowerCase();
+    if (remark.contains('call') || remark.contains('phone')) {
+      return Icons.call_rounded;
+    } else if (remark.contains('meeting') || remark.contains('visit')) {
+      return Icons.groups_rounded;
+    } else if (remark.contains('email') || remark.contains('mail')) {
+      return Icons.email_rounded;
+    } else if (remark.contains('task') || remark.contains('todo')) {
+      return Icons.task_alt_rounded;
+    } else {
+      return Icons.comment_rounded;
+    }
+  }
+
+  // Widget _buildActivitiesTab() {
+  //   if (isActivityLoading) {
+  //     return const Center(child: CircularProgressIndicator());
+  //   }
+  //   if (activeMode == null || activeMode!.activities.isEmpty) {
+  //     return const Center(
+  //       child: Padding(
+  //         padding: EdgeInsets.all(32),
+  //         child: Text('No activities found'),
+  //       ),
+  //     );
+  //   }
+  //   return ListView.builder(
+  //     padding: const EdgeInsets.symmetric(vertical: 16),
+  //     itemCount: activeMode!.activities.length,
+  //     itemBuilder: (context, index) {
+  //       final activity = activeMode!.activities[index];
+  //       return Stack(
+  //         children: [
+  //           Positioned(
+  //             top: 0,
+  //             bottom: 0,
+  //             left: 32,
+  //             child: Container(
+  //               width: 1.0,
+  //               color: Colors.grey.shade300,
+  //             ),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+  //             child: Row(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Container(
+  //                   width: 32,
+  //                   height: 32,
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     color: Colors.white,
+  //                     border: Border.all(color: Colors.grey.shade300),
+  //                     boxShadow: [
+  //                       BoxShadow(
+  //                         color: Colors.grey.withOpacity(0.1),
+  //                         blurRadius: 2,
+  //                         offset: const Offset(0, 1),
+  //                       ),
+  //                     ],
+  //                     image: activity.proPicThumb.isNotEmpty
+  //                         ? DecorationImage(
+  //                             image: NetworkImage(activity.proPicThumb),
+  //                             fit: BoxFit.cover,
+  //                           )
+  //                         : null,
+  //                   ),
+  //                   child: activity.proPicThumb.isEmpty
+  //                       ? const Icon(Icons.person, size: 18, color: Colors.grey)
+  //                       : null,
+  //                 ),
+  //                 const SizedBox(width: 16),
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       Text(
+  //                         activity.staffName,
+  //                         style: const TextStyle(
+  //                           fontWeight: FontWeight.bold,
+  //                           fontSize: 14,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 4),
+  //                       Text(
+  //                         activity.remark,
+  //                         style: TextStyle(
+  //                           fontSize: 13,
+  //                           color: Colors.grey.shade800,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 6),
+  //                       Row(
+  //                         children: [
+  //                           Icon(Icons.calendar_today,
+  //                               size: 12, color: Colors.grey.shade500),
+  //                           const SizedBox(width: 4),
+  //                           Text(
+  //                             activity.createdTime,
+  //                             style: TextStyle(
+  //                               fontSize: 11,
+  //                               color: Colors.grey.shade500,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildCallHistoryTab() {
     if (isCallHistoryLoading) {
@@ -4270,8 +5641,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             // _buildDetailRow(
             //     'WhatsApp (', _stripCountryCode(data.whatsaAppNumber)),
             _buildDetailRow(
-                'WA Country Code', data.whatsappNumberCountryCode ?? '-'),
+                'Country Code', data.whatsappNumberCountryCode ?? '-'),
             _buildDetailRow('Email', data.emailId ?? '-'),
+            _buildDetailRow('Products', data.products ?? '-'),
+            _buildDetailRow('Category', data.leadCategory ?? '-'),
+            _buildDetailRow('Sub Category', data.leadSubCategory ?? '-'),
             _buildDetailRow('Assigned to', data.staffName ?? '-'),
             _buildDetailRow('Created date', data.createdDate ?? '-'),
             _buildDetailRow('Call Result', data.callResult ?? '-'),
@@ -4467,171 +5841,234 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 )
               else
                 const SizedBox(),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      if (fileManagerPermission?.data?.createFile == true) {
-                        _showCreateFolderDialog();
-                      } else {
-                        _dialogue(context, 'Create Folder');
-                      }
-                    },
-                    child: DottedBorder(
-                      borderType: BorderType.RRect,
-                      radius: const Radius.circular(5),
-                      dashPattern: const [8, 4],
-                      strokeCap: StrokeCap.round,
-                      color: const Color(0xFF2a86c9),
-                      child: Container(
-                        width: 110,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2a86c9).withOpacity(.05),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.folder_open_rounded,
-                                color: Color(0xFF2a86c9), size: 16),
-                            SizedBox(width: 8),
-                            Text('New Folder',
-                                style: TextStyle(
-                                    fontSize: 12, color: Color(0xFF2a86c9))),
-                          ],
+              Expanded(
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        if (fileManagerPermission?.data?.createFile == true) {
+                          _showCreateFolderDialog();
+                        } else {
+                          _dialogue(context, 'Create Folder');
+                        }
+                      },
+                      child: DottedBorder(
+                        borderType: BorderType.RRect,
+                        radius: const Radius.circular(5),
+                        dashPattern: const [8, 4],
+                        strokeCap: StrokeCap.round,
+                        color: const Color(0xFF2a86c9),
+                        child: Container(
+                          width: 110,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2a86c9).withOpacity(.05),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.folder_open_rounded,
+                                  color: Color(0xFF2a86c9), size: 16),
+                              SizedBox(width: 8),
+                              Text('New Folder',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Color(0xFF2a86c9))),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (folderActionEnable) ...[
-                    const SizedBox(width: 8),
+                    if (folderActionEnable) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          if (fileManagerPermission?.data?.renameFile == true) {
+                            _showRenameFolderDialog();
+                          } else {
+                            _dialogue(context, 'Rename Folder');
+                          }
+                        },
+                        child: const Icon(Icons.edit,
+                            color: Color(0xFF2a86c9), size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          if (fileManagerPermission?.data?.deleteFile == true) {
+                            _showDeleteConfirmDialog();
+                          } else {
+                            _dialogue(context, 'Delete Folder');
+                          }
+                        },
+                        child: const Icon(Icons.delete_outline,
+                            color: Colors.red, size: 20),
+                      ),
+                    ],
+                    const Spacer(),
+                    // Voice Record Icon
                     InkWell(
                       onTap: () {
-                        if (fileManagerPermission?.data?.renameFile == true) {
-                          _showRenameFolderDialog();
+                        if (fileManagerPermission?.data?.createFile == true) {
+                          _showVoiceUploadDialog();
                         } else {
-                          _dialogue(context, 'Rename Folder');
+                          _showPermissionDialog('Upload Voice');
                         }
                       },
-                      child: const Icon(Icons.edit,
-                          color: Color(0xFF2a86c9), size: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.mic_none_rounded,
+                            color: Colors.red, size: 20),
+                      ),
                     ),
                     const SizedBox(width: 8),
+                    // Image Upload Icon
                     InkWell(
                       onTap: () {
-                        if (fileManagerPermission?.data?.deleteFile == true) {
-                          _showDeleteConfirmDialog();
+                        if (fileManagerPermission?.data?.createFile == true) {
+                          _showImageUploadDialog();
                         } else {
-                          _dialogue(context, 'Delete Folder');
+                          _showPermissionDialog('Upload Image');
                         }
                       },
-                      child: const Icon(Icons.delete_outline,
-                          color: Colors.red, size: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.image_outlined,
+                            color: Colors.green, size: 20),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // File Upload Icon
+                    InkWell(
+                      onTap: () {
+                        if (fileManagerPermission?.data?.createFile == true) {
+                          _showFileUploadDialog();
+                        } else {
+                          _showPermissionDialog('Upload Document');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.file_copy_outlined,
+                            color: Colors.orange, size: 18),
+                      ),
                     ),
                   ],
-                ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 15),
         Expanded(
-          child: listFolder!.data!.isEmpty
-              ? const Center(child: Text('No documents found'))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.85,
-                  ),
-                  itemCount: listFolder!.data!.length,
-                  itemBuilder: (context, index) {
-                    final item = listFolder!.data![index];
-                    bool isSelected = selectedRawIndex == index.toString();
+          child: Builder(builder: (context) {
+            final folderData = listFolder?.data ?? [];
+            if (folderData.isEmpty) {
+              return const Center(child: Text('No documents found'));
+            }
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.85,
+              ),
+              itemCount: folderData.length,
+              itemBuilder: (context, index) {
+                final item = folderData[index];
+                bool isSelected = selectedRawIndex == index.toString();
 
-                    return InkWell(
-                      onLongPress: () {
-                        setState(() {
-                          deletePath = '${item.path}';
-                          folderActionEnable = true;
-                          rawId = item.id.toString();
-                          selectedRawIndex = index.toString();
-                          editableName = item.name.toString();
-                          fileNameEdit.text = editableName;
-                        });
-                      },
-                      onTap: () {
-                        if (fileManagerPermission?.data?.openFile == true) {
-                          setState(() {
-                            folderActionEnable = false;
-                            rawId = '';
-                            selectedRawIndex = '';
-                            if (item.isFolder == 'Y') {
-                              backPath = '${item.path}';
-                              path = '${item.path}/';
-                              listPath = '${item.path}';
-                              listFolderList(
-                                  widget.token, callMasterId, listPath);
-                            } else {
-                              _viewDocument(item);
-                            }
-                          });
-                        } else {
-                          _dialogue(context, 'Open Folder');
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected ? Colors.blue.shade50 : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF2a86c9)
-                                : Colors.grey.shade200,
-                          ),
-                          boxShadow: [
-                            if (isSelected)
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _getFileIcon(item),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                item.name ?? '',
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? const Color(0xFF2a86c9)
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                return InkWell(
+                  onLongPress: () {
+                    setState(() {
+                      deletePath = '${item.path}';
+                      folderActionEnable = true;
+                      rawId = item.id.toString();
+                      selectedRawIndex = index.toString();
+                      editableName = item.name.toString();
+                      fileNameEdit.text = editableName;
+                    });
                   },
-                ),
+                  onTap: () {
+                    if (fileManagerPermission?.data?.openFile == true) {
+                      setState(() {
+                        folderActionEnable = false;
+                        rawId = '';
+                        selectedRawIndex = '';
+                        if (item.isFolder == 'Y') {
+                          backPath = '${item.path}';
+                          path = '${item.path}/';
+                          listPath = '${item.path}';
+                          listFolderList(widget.token, callMasterId, listPath);
+                        } else {
+                          _viewDocument(item);
+                        }
+                      });
+                    } else {
+                      _dialogue(context, 'Open Folder');
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue.shade50 : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF2a86c9)
+                            : Colors.grey.shade200,
+                      ),
+                      boxShadow: [
+                        if (isSelected)
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _getFileIcon(item),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            item.name ?? '',
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? const Color(0xFF2a86c9)
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ],
     );
@@ -4988,6 +6425,353 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
+  void _showVoiceUploadDialog() {
+    audioCreateController.audioPath.value = "";
+    audioCreateController.resetTimer();
+    showGeneralDialog(
+      barrierLabel: "VoiceUpload",
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return Obx(() {
+          return AlertDialog(
+            content: IntrinsicHeight(
+              child: Column(
+                children: [
+                  if (audioCreateController.isRecording.value ||
+                      audioCreateController.audioPath.isNotEmpty)
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
+                          style: const TextStyle(fontSize: 30),
+                        ),
+                        if (audioCreateController.isRecording.value)
+                          const Text("Voice Recording..."),
+                      ],
+                    )
+                  else
+                    const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 10),
+                        Text('Voice Record', style: TextStyle(fontSize: 18)),
+                        SizedBox(height: 20),
+                        Text("Do you want to record voice?"),
+                      ],
+                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!audioCreateController.isRecording.value &&
+                          audioCreateController.audioPath.isNotEmpty)
+                        FloatingActionButton(
+                          heroTag: "play_new",
+                          onPressed: () {
+                            audioCreateController.resetTimer();
+                            audioCreateController.playRcording();
+                          },
+                          mini: true,
+                          child: const Icon(Icons.play_arrow),
+                        ),
+                      const SizedBox(width: 20),
+                      if (audioCreateController.isRecording.value)
+                        FloatingActionButton(
+                          heroTag: "stop_new",
+                          onPressed: () =>
+                              audioCreateController.stopRecording(),
+                          backgroundColor: Colors.red,
+                          mini: true,
+                          child: const Icon(Icons.stop),
+                        )
+                      else if (audioCreateController.audioPath.isEmpty)
+                        FloatingActionButton(
+                          heroTag: "start_new",
+                          onPressed: () =>
+                              audioCreateController.startRecording(),
+                          backgroundColor: const Color(0xFF2a86c9),
+                          mini: true,
+                          child: const Icon(Icons.mic),
+                        ),
+                      const SizedBox(width: 20),
+                      if (!audioCreateController.isRecording.value &&
+                          audioCreateController.audioPath.isNotEmpty)
+                        FloatingActionButton(
+                          heroTag: "delete_new",
+                          onPressed: () {
+                            audioCreateController.audioPath.value = "";
+                            audioCreateController.resetTimer();
+                          },
+                          backgroundColor: Colors.red,
+                          mini: true,
+                          child: const Icon(Icons.delete),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  audioCreateController.stopRecording();
+                  audioCreateController.resetTimer();
+                  audioCreateController.audioPath.value = "";
+                  Navigator.pop(context);
+                },
+                child: const Text('Back'),
+              ),
+              if (audioCreateController.audioPath.isNotEmpty &&
+                  !audioCreateController.isRecording.value)
+                TextButton(
+                  onPressed: () async {
+                    Common.showProgressDialog(context, "Uploading...");
+                    UploadAudioRecord res = await HttpService.uploadRecord(
+                      widget.token,
+                      widget.callMasterId,
+                      listPath,
+                      audioCreateController.audioPath.value,
+                      "Voice_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.mp3",
+                    );
+                    Navigator.pop(context); // Close progress
+                    if (res.data == true) {
+                      Common.toastMessaage(
+                          res.message ?? "Success", Colors.green);
+                      listFolderList(
+                          widget.token, widget.callMasterId, listPath);
+                      Navigator.pop(context);
+                    } else {
+                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
+                    }
+                  },
+                  child: const Text('Upload'),
+                ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  void _showImageUploadDialog() {
+    imageUploadController.file.value = '';
+    fileName.text = '';
+    showGeneralDialog(
+      barrierLabel: "ImageUpload",
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return Obx(() {
+          return AlertDialog(
+            title: const Text('Upload Image'),
+            content: IntrinsicHeight(
+              child: Column(
+                children: [
+                  if (imageUploadController.file.value.isEmpty)
+                    const Text("Do you want to upload image?")
+                  else
+                    Column(
+                      children: [
+                        Container(
+                          height: 150,
+                          width: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: FileImage(
+                                  File(imageUploadController.file.value)),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              imageUploadController.file.value = '',
+                          child: const Icon(Icons.delete, color: Colors.red),
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: fileName,
+                          decoration: const InputDecoration(
+                            labelText: 'File Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Back'),
+              ),
+              if (imageUploadController.file.value.isEmpty)
+                TextButton(
+                  onPressed: () async {
+                    Get.bottomSheet(
+                      Container(
+                        color: Colors.white,
+                        child: Wrap(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.photo_library),
+                              title: const Text('Gallery'),
+                              onTap: () async {
+                                Get.back();
+                                imageUploadController
+                                    .takePhoto(ImageSource.gallery);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text('Camera'),
+                              onTap: () async {
+                                Get.back();
+                                imageUploadController
+                                    .takePhoto(ImageSource.camera);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Choose'),
+                )
+              else
+                TextButton(
+                  onPressed: () async {
+                    Common.showProgressDialog(context, "Uploading...");
+                    String name = fileName.text.isNotEmpty
+                        ? fileName.text +
+                            p.extension(imageUploadController.file.value)
+                        : p.basename(imageUploadController.file.value);
+
+                    UploadAudioRecord res = await HttpService.uploadRecord(
+                      widget.token,
+                      widget.callMasterId,
+                      listPath,
+                      imageUploadController.file.value,
+                      name,
+                    );
+                    Navigator.pop(context);
+                    if (res.data == true) {
+                      Common.toastMessaage(
+                          res.message ?? "Success", Colors.green);
+                      listFolderList(
+                          widget.token, widget.callMasterId, listPath);
+                      Navigator.pop(context);
+                    } else {
+                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
+                    }
+                  },
+                  child: const Text('Upload'),
+                ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  void _showFileUploadDialog() {
+    isFile = false;
+    file = null;
+    showGeneralDialog(
+      barrierLabel: "FileUpload",
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Upload Document'),
+            content: IntrinsicHeight(
+              child: Column(
+                children: [
+                  if (isFile)
+                    Column(
+                      children: [
+                        const Icon(Icons.insert_drive_file,
+                            size: 50, color: Colors.blue),
+                        const SizedBox(height: 10),
+                        Text(file?.name ?? ""),
+                      ],
+                    )
+                  else
+                    const Text("Do you want to upload a document?"),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Back'),
+              ),
+              if (!isFile)
+                TextButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: [
+                        'pdf',
+                        'doc',
+                        'docx',
+                        'xls',
+                        'xlsx',
+                        'txt'
+                      ],
+                    );
+                    if (result != null) {
+                      setDialogState(() {
+                        isFile = true;
+                        file = result.files.first;
+                      });
+                    }
+                  },
+                  child: const Text('Choose File'),
+                )
+              else
+                TextButton(
+                  onPressed: () async {
+                    Common.showProgressDialog(context, "Uploading...");
+                    UploadAudioRecord res = await HttpService.uploadRecord(
+                      widget.token,
+                      widget.callMasterId,
+                      listPath,
+                      file!.path!,
+                      file!.name,
+                    );
+                    Navigator.pop(context);
+                    if (res.data == true) {
+                      Common.toastMessaage(
+                          res.message ?? "Success", Colors.green);
+                      listFolderList(
+                          widget.token, widget.callMasterId, listPath);
+                      Navigator.pop(context);
+                    } else {
+                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
+                    }
+                  },
+                  child: const Text('Upload'),
+                ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
   Widget _getFileIcon(dynamic item) {
     String assetPath = 'assets/icons/picture.png';
     if (item.isFolder == 'Y') {
@@ -5113,8 +6897,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         return Colors.purple;
       case '6':
         return Colors.pink;
+      case 'New':
+        return const Color(0xFF2196F3);
+      case 'Follow Up':
+        return const Color(0xFFFF9800);
+      case 'Rejected':
+        return const Color(0xFFF44336);
+      case 'Completed':
+        return const Color(0xFF4CAF50);
+      case 'Pending':
+        return const Color(0xFF9C27B0);
       default:
-        return Colors.grey;
+        return const Color.fromARGB(255, 114, 161, 25);
     }
   }
 
@@ -5230,83 +7024,361 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   void _showTransferDialog() {
     TextEditingController remarkController = TextEditingController();
     String? selectedStaff;
+    int transferFresh = 0;
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text('Transfer Lead'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Staff',
-                      border: OutlineInputBorder(),
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                    value: selectedStaff,
-                    items: commonDetails?.data.transferStaffs.map((staff) {
-                      return DropdownMenuItem<String>(
-                        value: staff.tranStaffId,
-                        child: Text(staff.tranStaffName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStaff = value;
-                      });
-                    },
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: appBarStart.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.swap_horiz_rounded,
+                                color: appBarStart, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Transfer Lead',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: textPrimary,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              Text(
+                                'Reassign this lead to another staff',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Staff Selector Label
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "SELECT TARGET STAFF",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: textSecondary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Dropdown Replacement / Themed Selection
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            hint: const Text("Choose staff member",
+                                style: TextStyle(fontSize: 14)),
+                            value: selectedStaff,
+                            icon: Icon(Icons.keyboard_arrow_down_rounded,
+                                color: Colors.grey.shade400),
+                            items:
+                                commonDetails?.data.transferStaffs.map((staff) {
+                              return DropdownMenuItem<String>(
+                                value: staff.tranStaffId,
+                                child: Text(
+                                  staff.tranStaffName,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedStaff = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Remark Label
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "REMARKS (OPTIONAL)",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: textSecondary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Remark Field
+                      TextField(
+                        controller: remarkController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: "Add a note for the new owner...",
+                          hintStyle: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade400),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.all(16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                BorderSide(color: appBarStart.withOpacity(0.5)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Fresh Data Toggle (Radio style)
+                      InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            transferFresh = transferFresh == 1 ? 0 : 1;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: transferFresh == 1
+                                ? appBarStart.withOpacity(0.04)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: transferFresh == 1
+                                  ? appBarStart.withOpacity(0.2)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: transferFresh == 1
+                                        ? appBarStart
+                                        : Colors.grey.shade300,
+                                    width: 2,
+                                  ),
+                                  color: Colors.white,
+                                ),
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: transferFresh == 1
+                                          ? appBarStart
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Transfer as Fresh Data",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Actions
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                    color: textSecondary,
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: appBarStart.withOpacity(0.25),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (selectedStaff == null) {
+                                    Common.toastMessaage(
+                                        'Please select staff', Colors.red);
+                                    return;
+                                  }
+                                  // 1. Capture the stable screen context
+                                  final screenContext = context;
+
+                                  // 2. Close the transfer selection dialog first
+                                  Navigator.pop(dialogContext);
+
+                                  // 3. Show progress using the stable screen context
+                                  Common.showProgressDialog(
+                                      screenContext, "Transferring...");
+
+                                  LeadTransferModel? result =
+                                      await HttpService.leadTransfer(
+                                    widget.token,
+                                    widget.callMasterId,
+                                    selectedStaff!,
+                                    remarkController.text,
+                                    transferFresh,
+                                  );
+
+                                  if (screenContext.mounted) {
+                                    // 4. Pop the progress dialog
+                                    Navigator.of(screenContext,
+                                            rootNavigator: true)
+                                        .pop();
+
+                                    if (result == null) {
+                                      Common.toastMessaage(
+                                          'Failed to connect to server',
+                                          Colors.red);
+                                      return;
+                                    }
+
+                                    // Check for success across various formats
+                                    bool isSuccess = result.status == true ||
+                                        result.data == true;
+
+                                    if (isSuccess) {
+                                      Common.toastMessaage(
+                                          result.message ??
+                                              'Lead Transferred successfully',
+                                          Colors.green);
+
+                                      if (widget.onDataChanged != null) {
+                                        widget.onDataChanged();
+                                      }
+
+                                      // Close the main details popup
+                                      if (Navigator.canPop(screenContext)) {
+                                        Navigator.pop(screenContext);
+                                      }
+                                    } else {
+                                      Common.toastMessaage(
+                                          result.message ?? 'Transfer failed',
+                                          Colors.red);
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: appBarStart,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Confirm',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: remarkController,
-                    decoration: const InputDecoration(
-                      labelText: 'Remark',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    if (selectedStaff == null) {
-                      Common.toastMessaage('Please select staff', Colors.red);
-                      return;
-                    }
-
-                    Navigator.pop(context); // Close dialog
-                    Common.showProgressDialog(context, "Transferring...");
-
-                    final result = await HttpService.leadTransfer(
-                      widget.token,
-                      widget.callMasterId,
-                      selectedStaff!,
-                      remarkController.text,
-                    );
-
-                    if (context.mounted) {
-                      Navigator.pop(context); // Close progress dialog
-
-                      if (result.status == true) {
-                        Common.toastMessaage(result.message, Colors.green);
-                        widget.onDataChanged();
-                        Navigator.pop(context); // Close popup
-                      } else {
-                        Common.toastMessaage(result.message, Colors.red);
-                      }
-                    }
-                  },
-                  child: const Text('Transfer'),
-                ),
-              ],
             );
           },
         );
@@ -6566,192 +8638,266 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Future<Object?> saveContactDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color.fromARGB(255, 49, 166, 243);
+
     return showGeneralDialog(
-      barrierLabel: "showGeneralDialog",
+      barrierLabel: "Save Contact Dialog",
       barrierDismissible: true,
       barrierColor: Colors.black.withOpacity(0.6),
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        );
+      },
       context: context,
       pageBuilder: (context, _, __) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom),
-                child: IntrinsicHeight(
+            return SafeArea(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
                   child: Container(
-                    width: double.maxFinite,
-                    clipBehavior: Clip.antiAlias,
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
                     ),
-                    child: Material(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Save Contact to Phone',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          TextFormField(
-                            controller: contactFName,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'First Name',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon:
-                                    Icon(Icons.person, color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(
-                            height: 13,
-                          ),
-                          TextFormField(
-                            controller: contactLName,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Last Name',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon:
-                                    Icon(Icons.person, color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(
-                            height: 13,
-                          ),
-                          TextFormField(
-                            controller: contactMobile,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Mobile Number',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(Icons.phone_android_rounded,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            height: 40,
-                            width: double.maxFinite,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3375e0),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(8)),
-                            ),
-                            child: RawMaterialButton(
-                              onPressed: () async {
-                                if (contactFName.text.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Enter the first name', Colors.red);
-                                } else if (contactMobile.text.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Enter the Mobile number', Colors.red);
-                                } else {
-                                  PermissionStatus permission =
-                                      await Permission.contacts.status;
-
-                                  if (permission != PermissionStatus.granted) {
-                                    await Permission.contacts.request();
-                                    PermissionStatus permission =
-                                        await Permission.contacts.status;
-
-                                    if (permission ==
-                                        PermissionStatus.granted) {
-                                      if (context.mounted) {
-                                        Navigator.of(context,
-                                                rootNavigator: true)
-                                            .pop();
-                                        Common.showProgressDialog(
-                                            context, "Saving...");
-                                      }
-                                      final newContact = Contact(
-                                        name: Name(
-                                          first: contactFName.text,
-                                          last: contactLName.text,
-                                        ),
-                                        displayName:
-                                            "${contactFName.text} ${contactLName.text}",
-                                        phones: [Phone(contactMobile.text)],
-                                      );
-                                      await newContact.insert();
-
-                                      Common.toastMessaage(
-                                          'Saved', Colors.green);
-                                    } else {
-                                      //_handleInvalidPermissions(context);
-                                    }
-                                  } else {
-                                    if (context.mounted) {
-                                      Navigator.of(context, rootNavigator: true)
-                                          .pop();
-                                      Common.showProgressDialog(
-                                          context, "Saving...");
-                                    }
-                                    final newContact = Contact(
-                                      name: Name(
-                                        first: contactFName.text,
-                                        last: contactLName.text,
-                                      ),
-                                      displayName:
-                                          "${contactFName.text} ${contactLName.text}",
-                                      phones: [Phone(contactMobile.text)],
-                                    );
-                                    await newContact.insert();
-
-                                    Common.toastMessaage('Saved', Colors.green);
-                                  }
-                                  if (context.mounted) {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  }
-                                }
-                              },
-                              child: const Center(
-                                child: Text(
-                                  'Save',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Drag handle
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.grey[700]
+                                        : Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 20),
+
+                              // Header
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.person_add_alt_1_rounded,
+                                      color: primaryColor,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Save to Contacts',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Add contact information',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: isDark
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Form fields
+                              _buildTextField(
+                                controller: contactFName,
+                                label: 'First Name',
+                                icon: Icons.person_outline_rounded,
+                                isDark: isDark,
+                                autofocus: true,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              _buildTextField(
+                                controller: contactLName,
+                                label: 'Last Name',
+                                icon: Icons.person_outline_rounded,
+                                isDark: isDark,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              _buildTextField(
+                                controller: contactMobile,
+                                label: 'Mobile Number',
+                                icon: Icons.phone_android_rounded,
+                                isDark: isDark,
+                                keyboardType: TextInputType.phone,
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Action buttons
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          side: BorderSide(
+                                            color: isDark
+                                                ? Colors.grey[700]!
+                                                : Colors.grey[300]!,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.grey[400]
+                                              : Colors.grey[700],
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () =>
+                                          _saveContact(context, setState),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Save Contact',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // Permission hint
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.grey[800]!.withOpacity(0.5)
+                                      : Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.shield_outlined,
+                                      size: 16,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Contacts permission will be requested to save this contact',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? Colors.grey[400]
+                                              : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 10),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -6763,6 +8909,335 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       },
     );
   }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool isDark,
+    TextInputType? keyboardType,
+    bool autofocus = false,
+  }) {
+    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+    final fillColor = isDark ? Colors.grey[800]! : Colors.grey[50]!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: fillColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        autofocus: autofocus,
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          floatingLabelStyle: TextStyle(
+            color: const Color(0xFF3375e0),
+            fontSize: 12,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            size: 20,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveContact(BuildContext context, StateSetter setState) async {
+    if (contactFName.text.isEmpty) {
+      Common.toastMessaage('Please enter first name', Colors.red);
+      return;
+    }
+
+    if (contactMobile.text.isEmpty) {
+      Common.toastMessaage('Please enter mobile number', Colors.red);
+      return;
+    }
+
+    try {
+      PermissionStatus permission = await Permission.contacts.status;
+
+      if (permission != PermissionStatus.granted) {
+        permission = await Permission.contacts.request();
+      }
+
+      if (permission == PermissionStatus.granted) {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          Common.showProgressDialog(context, "Saving contact...");
+        }
+
+        final newContact = Contact(
+          name: Name(
+            first: contactFName.text.trim(),
+            last: contactLName.text.trim(),
+          ),
+          displayName:
+              "${contactFName.text.trim()} ${contactLName.text.trim()}".trim(),
+          phones: [Phone(contactMobile.text.trim())],
+        );
+
+        await newContact.insert();
+
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true)
+              .pop(); // Close progress dialog
+          Common.toastMessaage('Contact saved successfully!', Colors.green);
+        }
+      } else {
+        if (context.mounted) {
+          _showPermissionDeniedDialog(context);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Common.toastMessaage(
+            'Failed to save contact: ${e.toString()}', Colors.red);
+      }
+    }
+  }
+
+  void _showPermissionDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Permission Required'),
+        content: const Text(
+            'Contacts permission is needed to save contacts to your phone. '
+            'Please enable it in settings to continue.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Future<Object?> saveContactDialog(BuildContext context) {
+  //   return showGeneralDialog(
+  //     barrierLabel: "showGeneralDialog",
+  //     barrierDismissible: true,
+  //     barrierColor: Colors.black.withOpacity(0.6),
+  //     transitionDuration: const Duration(milliseconds: 400),
+  //     context: context,
+  //     pageBuilder: (context, _, __) {
+  //       return StatefulBuilder(
+  //         builder: (context, setState) {
+  //           return Align(
+  //             alignment: Alignment.bottomCenter,
+  //             child: Padding(
+  //               padding: EdgeInsets.only(
+  //                   bottom: MediaQuery.of(context).viewInsets.bottom),
+  //               child: IntrinsicHeight(
+  //                 child: Container(
+  //                   width: double.maxFinite,
+  //                   clipBehavior: Clip.antiAlias,
+  //                   padding: const EdgeInsets.all(16),
+  //                   decoration: const BoxDecoration(
+  //                     color: Colors.white,
+  //                     borderRadius: BorderRadius.only(
+  //                       topLeft: Radius.circular(16),
+  //                       topRight: Radius.circular(16),
+  //                     ),
+  //                   ),
+  //                   child: Material(
+  //                     child: Column(
+  //                       children: [
+  //                         const SizedBox(height: 20),
+  //                         const Text(
+  //                           'Save Contact to Phone',
+  //                           style: TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: FontWeight.w500,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(height: 20),
+  //                         TextFormField(
+  //                           controller: contactFName,
+  //                           decoration: const InputDecoration(
+  //                               contentPadding: EdgeInsets.only(
+  //                                   left: 10, top: 2, bottom: 2),
+  //                               labelText: 'First Name',
+  //                               fillColor: Colors.white,
+  //                               filled: true,
+  //                               prefixIcon:
+  //                                   Icon(Icons.person, color: Colors.grey),
+  //                               border: OutlineInputBorder(),
+  //                               focusedBorder: OutlineInputBorder(
+  //                                 borderSide: BorderSide(color: Colors.grey),
+  //                               ),
+  //                               labelStyle: TextStyle(color: Colors.grey)),
+  //                         ),
+  //                         const SizedBox(
+  //                           height: 13,
+  //                         ),
+  //                         TextFormField(
+  //                           controller: contactLName,
+  //                           decoration: const InputDecoration(
+  //                               contentPadding: EdgeInsets.only(
+  //                                   left: 10, top: 2, bottom: 2),
+  //                               labelText: 'Last Name',
+  //                               fillColor: Colors.white,
+  //                               filled: true,
+  //                               prefixIcon:
+  //                                   Icon(Icons.person, color: Colors.grey),
+  //                               border: OutlineInputBorder(),
+  //                               focusedBorder: OutlineInputBorder(
+  //                                 borderSide: BorderSide(color: Colors.grey),
+  //                               ),
+  //                               labelStyle: TextStyle(color: Colors.grey)),
+  //                         ),
+  //                         const SizedBox(
+  //                           height: 13,
+  //                         ),
+  //                         TextFormField(
+  //                           controller: contactMobile,
+  //                           decoration: const InputDecoration(
+  //                               contentPadding: EdgeInsets.only(
+  //                                   left: 10, top: 2, bottom: 2),
+  //                               labelText: 'Mobile Number',
+  //                               fillColor: Colors.white,
+  //                               filled: true,
+  //                               prefixIcon: Icon(Icons.phone_android_rounded,
+  //                                   color: Colors.grey),
+  //                               border: OutlineInputBorder(),
+  //                               focusedBorder: OutlineInputBorder(
+  //                                 borderSide: BorderSide(color: Colors.grey),
+  //                               ),
+  //                               labelStyle: TextStyle(color: Colors.grey)),
+  //                         ),
+  //                         const SizedBox(
+  //                           height: 10,
+  //                         ),
+  //                         const SizedBox(height: 16),
+  //                         Container(
+  //                           height: 40,
+  //                           width: double.maxFinite,
+  //                           decoration: const BoxDecoration(
+  //                             color: Color(0xFF3375e0),
+  //                             borderRadius:
+  //                                 BorderRadius.all(Radius.circular(8)),
+  //                           ),
+  //                           child: RawMaterialButton(
+  //                             onPressed: () async {
+  //                               if (contactFName.text.isEmpty) {
+  //                                 Common.toastMessaage(
+  //                                     'Enter the first name', Colors.red);
+  //                               } else if (contactMobile.text.isEmpty) {
+  //                                 Common.toastMessaage(
+  //                                     'Enter the Mobile number', Colors.red);
+  //                               } else {
+  //                                 PermissionStatus permission =
+  //                                     await Permission.contacts.status;
+
+  //                                 if (permission != PermissionStatus.granted) {
+  //                                   await Permission.contacts.request();
+  //                                   PermissionStatus permission =
+  //                                       await Permission.contacts.status;
+
+  //                                   if (permission ==
+  //                                       PermissionStatus.granted) {
+  //                                     if (context.mounted) {
+  //                                       Navigator.of(context,
+  //                                               rootNavigator: true)
+  //                                           .pop();
+  //                                       Common.showProgressDialog(
+  //                                           context, "Saving...");
+  //                                     }
+  //                                     final newContact = Contact(
+  //                                       name: Name(
+  //                                         first: contactFName.text,
+  //                                         last: contactLName.text,
+  //                                       ),
+  //                                       displayName:
+  //                                           "${contactFName.text} ${contactLName.text}",
+  //                                       phones: [Phone(contactMobile.text)],
+  //                                     );
+  //                                     await newContact.insert();
+
+  //                                     Common.toastMessaage(
+  //                                         'Saved', Colors.green);
+  //                                   } else {
+  //                                     //_handleInvalidPermissions(context);
+  //                                   }
+  //                                 } else {
+  //                                   if (context.mounted) {
+  //                                     Navigator.of(context, rootNavigator: true)
+  //                                         .pop();
+  //                                     Common.showProgressDialog(
+  //                                         context, "Saving...");
+  //                                   }
+  //                                   final newContact = Contact(
+  //                                     name: Name(
+  //                                       first: contactFName.text,
+  //                                       last: contactLName.text,
+  //                                     ),
+  //                                     displayName:
+  //                                         "${contactFName.text} ${contactLName.text}",
+  //                                     phones: [Phone(contactMobile.text)],
+  //                                   );
+  //                                   await newContact.insert();
+
+  //                                   Common.toastMessaage('Saved', Colors.green);
+  //                                 }
+  //                                 if (context.mounted) {
+  //                                   Navigator.of(context, rootNavigator: true)
+  //                                       .pop();
+  //                                 }
+  //                               }
+  //                             },
+  //                             child: const Center(
+  //                               child: Text(
+  //                                 'Save',
+  //                                 style: TextStyle(
+  //                                   color: Colors.white,
+  //                                   fontSize: 16,
+  //                                   fontWeight: FontWeight.w500,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const SizedBox(height: 10),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 }
 
 class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {

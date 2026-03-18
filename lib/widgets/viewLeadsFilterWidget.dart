@@ -29,6 +29,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   // Filter states
   DateTime? fromDate;
   DateTime? toDate;
+  bool isDateFiltered = false;
   Set<String> selectedStatusIds = {};
   Set<String> selectedStaffIds = {};
   Set<String> selectedCategoryIds = {};
@@ -47,6 +48,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   void _loadInitialFilters() {
     if (widget.initialFilters != null) {
       final filters = widget.initialFilters!;
+      isDateFiltered = filters['isDateFiltered'] ?? false;
 
       if (filters['fromDate'] != null) {
         fromDate = filters['fromDate'] is DateTime
@@ -74,14 +76,6 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       if (filters['productIds'] != null) {
         selectedProductIds = Set<String>.from(filters['productIds']);
       }
-    }
-
-    // Set default dates if null
-    if (fromDate == null) {
-      fromDate = DateTime.now().subtract(const Duration(days: 30));
-    }
-    if (toDate == null) {
-      toDate = DateTime.now();
     }
   }
 
@@ -227,7 +221,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   bool _hasFiltersForCategory(String category) {
     switch (category) {
       case 'Leads Date':
-        return true; // Always has some range
+        return isDateFiltered; 
       case 'Stages':
         return selectedStatusIds.isNotEmpty;
       case 'Assigned Staff':
@@ -269,11 +263,19 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         const Text('Select Date Range',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 16),
-        _buildDateField(
-            'From Date', fromDate, (date) => setState(() => fromDate = date)),
+        _buildDateField('From Date', fromDate, (date) {
+          setState(() {
+            fromDate = date;
+            isDateFiltered = true;
+          });
+        }),
         const SizedBox(height: 12),
-        _buildDateField(
-            'To Date', toDate, (date) => setState(() => toDate = date)),
+        _buildDateField('To Date', toDate, (date) {
+          setState(() {
+            toDate = date;
+            isDateFiltered = true;
+          });
+        }),
         const SizedBox(height: 16),
         _buildQuickDateFilters(
           onToday: () {
@@ -281,6 +283,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
             setState(() {
               fromDate = now;
               toDate = now;
+              isDateFiltered = true;
             });
           },
           onThisMonth: () {
@@ -288,6 +291,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
             setState(() {
               fromDate = DateTime(now.year, now.month, 1);
               toDate = DateTime(now.year, now.month + 1, 0);
+              isDateFiltered = true;
             });
           },
         ),
@@ -536,8 +540,9 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 selectedCategoryIds.clear();
                 selectedPriorityIds.clear();
                 selectedProductIds.clear();
-                fromDate = DateTime.now().subtract(const Duration(days: 30));
-                toDate = DateTime.now();
+                fromDate = null;
+                toDate = null;
+                isDateFiltered = false;
               });
             },
             style: OutlinedButton.styleFrom(
@@ -557,6 +562,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
               widget.onApplyFilters({
                 'fromDate': fromDate,
                 'toDate': toDate,
+                'isDateFiltered': isDateFiltered,
                 'statusIds': selectedStatusIds.toList(),
                 'staffIds': selectedStaffIds.toList(),
                 'categoryIds': selectedCategoryIds.toList(),

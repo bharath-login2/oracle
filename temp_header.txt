@@ -1,0 +1,110 @@
+﻿  Widget _buildReportHeader(String staffNames, DateTime? lastUpdated,
+      {DateTime? fromDate, DateTime? toDate, VoidCallback? onRefresh}) {
+    String dateRangeStr = _getFormattedDateRange(fromDate, toDate);
+
+    return Transform.translate(
+       offset: const Offset(0, -30),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (dateRangeStr.isNotEmpty)
+                      Row(
+                        children: [
+                          Icon(Icons.date_range,
+                              size: 12, color: appBarStart.withOpacity(0.7)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              dateRangeStr,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: appBarStart,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (lastUpdated != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time,
+                              size: 10, color: textSecondary.withOpacity(0.6)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              "Updated ${DateFormat('hh:mm a').format(lastUpdated)}",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textSecondary.withOpacity(0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (staffNames.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: appBarStart.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "ðŸ‘¥ $staffNames",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: appBarStart,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (onRefresh != null)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  child: InkWell(
+                    onTap: onRefresh,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: appBarStart.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.refresh_rounded,
+                        size: 14,
+                        color: appBarStart,
+                      ),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+    ),
+    );
+  }

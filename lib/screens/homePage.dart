@@ -23,6 +23,7 @@ import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNew.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
@@ -957,7 +958,7 @@ class _HomePageState extends State<HomePage> {
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
-                                                        DashboardLeadNewUpdated(
+                                                        DashboardLeadNewUpdatedTwo(
                                                             widget.token)),
                                               );
                                             } else if (userDashboard!

@@ -71,7 +71,7 @@ class ListElement {
   String isVerified;
   String createdBy;
   String createdAt;
-
+  String productNames;
   ListElement({
     required this.id,
     required this.receiptNumber,
@@ -87,6 +87,7 @@ class ListElement {
     required this.isVerified,
     required this.createdBy,
     required this.createdAt,
+    required this.productNames,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -104,6 +105,7 @@ class ListElement {
         isVerified: json["is_verified"],
         createdBy: json["created_by"],
         createdAt: json["created_at"],
+        productNames: json["product_names"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -121,5 +123,6 @@ class ListElement {
         "is_verified": isVerified,
         "created_by": createdBy,
         "created_at": createdAt,
+        "product_names": productNames,
       };
 }

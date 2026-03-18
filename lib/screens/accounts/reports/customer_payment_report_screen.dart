@@ -29,7 +29,7 @@ class _CustomerPaymentReportScreenState
     "61-90 Days": "3",
     "91-180 Days": "4",
     "180+ Days": "5",
-    "1 Year": "6",
+    "1 Year +": "6",
   };
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -145,7 +145,11 @@ class _CustomerPaymentReportScreenState
         response.message ?? 'Report hidden successfully',
         isSuccess: true,
       );
-      fetchData();
+      setState(() {
+        reportList.removeWhere((item) => item.accountId == accountId);
+        applyFilter();
+      });
+      // fetchData(); // Removed to maintain scroll position
     } else {
       _showCustomSnackBar(
         response?.message ?? 'Failed to hide report',
@@ -825,49 +829,53 @@ class _CustomerPaymentReportScreenState
                                                             color: Color(
                                                                 0xFF0F172A),
                                                           ),
-                                                          maxLines: 1,
+                                                          maxLines: 2,
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
                                                       ),
-                                                      // Horizontal Actions Row Moved to Top
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      // Amount
+                                                      Container(
+                                                        padding: const EdgeInsets
+                                                            .symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 6,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          gradient:
+                                                              _getAmountGradient(
+                                                                  amount),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
+                                                        ),
+                                                        child: Text(
+                                                          '₹ ${amount.abs().toStringAsFixed(0)}',
+                                                          style: TextStyle(
+                                                            color:
+                                                                _getAmountColor(
+                                                                    amount),
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                      // Actions Row
                                                       Row(
                                                         mainAxisSize:
                                                             MainAxisSize.min,
                                                         children: [
-                                                          // Amount
-                                                          Container(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                              horizontal: 12,
-                                                              vertical: 6,
-                                                            ),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              gradient:
-                                                                  _getAmountGradient(
-                                                                      amount),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          12),
-                                                            ),
-                                                            child: Text(
-                                                              '₹ ${amount.abs().toStringAsFixed(0)}',
-                                                              style: TextStyle(
-                                                                color:
-                                                                    _getAmountColor(
-                                                                        amount),
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                fontSize: 14,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 8),
                                                           // Menu
                                                           PopupMenuButton<
                                                               String>(

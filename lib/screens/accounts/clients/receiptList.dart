@@ -1599,6 +1599,45 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                 ],
                                                               ),
                                                               const SizedBox(
+                                                                  height: 5),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  const Icon(
+                                                                    Icons
+                                                                        .inventory_2_rounded,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    size: 20,
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 8),
+                                                                  Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceBetween,
+                                                                    children: [
+                                                                      SizedBox(
+                                                                        width: MediaQuery.of(context).size.width *
+                                                                            0.6,
+                                                                        child: Text(
+                                                                            "Products : ${items[index].productNames} ",
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: const TextStyle(
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w400,
+                                                                            )),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              const SizedBox(
                                                                   height: 8),
                                                               Row(
                                                                 mainAxisAlignment:

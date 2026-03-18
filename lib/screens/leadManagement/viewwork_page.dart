@@ -703,9 +703,9 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                           builder: (context) =>
                                                                               AddWorkPage(
                                                                             workId:
-                                                                                "",
+                                                                                item.id,
                                                                             existingWork:
-                                                                                newExistingWork,
+                                                                                null,
                                                                             isPaused:
                                                                                 0,
                                                                             Restart:
@@ -713,7 +713,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                             onSuccess:
                                                                                 () {
                                                                               setState(() {
-                                                                                getWorkDuration(currentDate);
                                                                                 checkExistingWorkStatus();
                                                                               });
                                                                             },

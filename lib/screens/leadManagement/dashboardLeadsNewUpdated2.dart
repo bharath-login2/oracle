@@ -99,18 +99,18 @@ import '../../widgets/togglebutton_start.dart';
 import '../drawerScreen.dart';
 import '../../models/lead_management/BulkTransferLeadModel.dart';
 
-class DashboardLeadNewUpdated extends StatefulWidget {
+class DashboardLeadNewUpdatedTwo extends StatefulWidget {
   String? token;
-  final GlobalKey<_DashboardLeadNewUpdatedState>? dashboardKey;
+  final GlobalKey<_DashboardLeadNewUpdatedTwoState>? dashboardKey;
 
-  DashboardLeadNewUpdated(this.token, {super.key, this.dashboardKey});
+  DashboardLeadNewUpdatedTwo(this.token, {super.key, this.dashboardKey});
 
   @override
-  State<DashboardLeadNewUpdated> createState() =>
-      _DashboardLeadNewUpdatedState();
+  State<DashboardLeadNewUpdatedTwo> createState() =>
+      _DashboardLeadNewUpdatedTwoState();
 }
 
-class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
+class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     with TickerProviderStateMixin {
   late TabController _tabController;
   ld.LeadDashboardModel? leadDashboard;
@@ -5338,6 +5338,10 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       reportContent = _buildCloudCallReport(isFlipped: isFlipped);
     } else if (title == "Phone Call Report") {
       reportContent = _buildPhoneCallReport(isFlipped: isFlipped);
+    } else if (title == "Cloud Call Graph") {
+      reportContent = _buildCloudCallGraph();
+    } else if (title == "Phone Call Graph") {
+      reportContent = _buildPhoneCallGraph();
     } else {
       if (index == 1)
         reportContent = _buildCallStatusReport(isFlipped: isFlipped);
@@ -5374,9 +5378,12 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           onFlip: onFlip,
           showMoreMenu: index == 1,
           onTypeSelected: (newType) {
-            if (newType == "Cloud Call Report" && cloudCallReportData == null) {
+            if ((newType == "Cloud Call Report" ||
+                    newType == "Cloud Call Graph") &&
+                cloudCallReportData == null) {
               _fetchCloudCallReport();
-            } else if (newType == "Phone Call Report" &&
+            } else if ((newType == "Phone Call Report" ||
+                    newType == "Phone Call Graph") &&
                 phoneCallReportData == null) {
               _fetchPhoneCallReport();
             }
@@ -5463,54 +5470,44 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 if (onTypeSelected != null) onTypeSelected(val);
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: "Call Status Report",
-                  height: 48,
-                  child: Row(
-                    children: [
-                      Icon(Icons.analytics_outlined,
-                          size: 20, color: Colors.grey),
-                      SizedBox(width: 12),
-                      Text(
-                        "Call Status Report",
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: "Cloud Call Report",
-                  height: 48,
-                  child: Row(
-                    children: [
-                      Icon(Icons.cloud_outlined, size: 20, color: Colors.grey),
-                      SizedBox(width: 12),
-                      Text(
-                        "Cloud Call Report",
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: "Phone Call Report",
-                  height: 48,
-                  child: Row(
-                    children: [
-                      Icon(Icons.phone_outlined, size: 20, color: Colors.grey),
-                      SizedBox(width: 12),
-                      Text(
-                        "Phone Call Report",
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildPopupItem("Call Status Report", Icons.analytics_outlined,
+                    title == "Call Status Report"),
+                _buildPopupItem("Cloud Call Report", Icons.cloud_outlined,
+                    title == "Cloud Call Report"),
+                _buildPopupItem("Phone Call Report", Icons.phone_outlined,
+                    title == "Phone Call Report"),
+                _buildPopupItem("Cloud Call Graph", Icons.bar_chart_rounded,
+                    title == "Cloud Call Graph"),
+                _buildPopupItem("Phone Call Graph", Icons.insert_chart_outlined,
+                    title == "Phone Call Graph"),
               ],
             )
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupItem(
+      String value, IconData icon, bool isSelected) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 48,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: isSelected ? appBarStart : Colors.grey),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? appBarStart : textPrimary,
+              ),
+            ),
+          ),
+          if (isSelected)
+            Icon(Icons.check_circle_rounded, size: 16, color: appBarStart),
         ],
       ),
     );
@@ -5622,7 +5619,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                             final percentage = totalCount > 0
                                 ? (count / totalCount).clamp(0.0, 1.0)
                                 : 0.0;
-
                             return InkWell(
                               onTap: () => _showCallStatusDrillDown(
                                   item.callResponse ?? "N/A",
@@ -9188,7 +9184,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 ],
               ),
             ),
-            // Scrollable right columns with metrics
+
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -9216,7 +9212,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                         ],
                       ),
                     ),
-                    // Data rows
+
                     ...data.asMap().entries.map((entry) {
                       final item = entry.value;
                       return Container(
@@ -9317,13 +9313,193 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     );
   }
 
+  Widget _buildCloudCallGraph() {
+    return _buildRealCallGraph(cloudCallReportData?.data ?? [], "Cloud Call",
+        (label, color) => _showCloudCallDrillDown(label, color));
+  }
+
+  Widget _buildPhoneCallGraph() {
+    return _buildRealCallGraph(phoneCallReportData?.data ?? [], "Phone Call",
+        (label, color) => _showPhoneCallDrillDown(label, color));
+  }
+
+  Widget _buildRealCallGraph(List<dynamic> data, String title,
+      void Function(String, Color) onDrillDownTapped) {
+    if (data.isEmpty) return _buildEmptyReport();
+
+    int totalCallsOverall = 0;
+    int connectedOverall = 0;
+
+    for (var item in data) {
+      totalCallsOverall +=
+          int.tryParse(item.totalCalls?.toString() ?? "0") ?? 0;
+      connectedOverall +=
+          int.tryParse(item.totalConnected?.toString() ?? "0") ?? 0;
+    }
+
+    int notConnected = totalCallsOverall - connectedOverall;
+    if (notConnected < 0) notConnected = 0;
+
+    final results = [
+      {'label': 'Connected', 'count': connectedOverall, 'color': callGreen},
+      {'label': 'Not Connected', 'count': notConnected, 'color': appBarStart},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: appBarStart.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "Total: $totalCallsOverall",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: appBarStart,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...results.map((res) {
+            final double percentage = totalCallsOverall > 0
+                ? (res['count'] as int) / totalCallsOverall
+                : 0.0;
+            final Color color = res['color'] as Color;
+            return InkWell(
+              onTap: () => onDrillDownTapped(res['label'] as String, color),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          res['label'] as String,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          "${res['count']}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: color,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Stack(
+                      children: [
+                        Container(
+                          height: 8,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: percentage,
+                          child: Container(
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  void _showCloudCallDrillDown(String label, Color color) {
+    if (cloudCallReportData?.data == null) return;
+    final List<Map<String, dynamic>> details =
+        cloudCallReportData!.data!.map((item) {
+      int tot = int.tryParse(item.totalCalls?.toString() ?? "0") ?? 0;
+      int con = int.tryParse(item.totalConnected?.toString() ?? "0") ?? 0;
+      return {
+        'name': item.staffName ?? "N/A",
+        'count': label == 'Connected' ? con : (tot - con),
+        'staffId': item.userId,
+      };
+    }).toList();
+
+    _showReportDetailsDialog("Cloud Call: $label", details, color);
+  }
+
+  void _showPhoneCallDrillDown(String label, Color color) {
+    if (phoneCallReportData?.data == null) return;
+    final List<Map<String, dynamic>> details =
+        phoneCallReportData!.data!.map((item) {
+      int tot = int.tryParse(item.totalCalls?.toString() ?? "0") ?? 0;
+      int con = int.tryParse(item.totalConnected?.toString() ?? "0") ?? 0;
+      return {
+        'name': item.staffName ?? "N/A",
+        'count': label == 'Connected' ? con : (tot - con),
+        'staffId': item.userId,
+      };
+    }).toList();
+
+    _showReportDetailsDialog("Phone Call: $label", details, color);
+  }
+
   double _getColWidth(String label) {
     if (label.isEmpty) return 60;
-    // Base width for padding + icon space
     double base = 35;
-    // Add space for characters (approx 6.5px per char for uppercase 8.5pt font)
     double contentWidth = label.length * 6.5;
-    // Return a clamped value to avoid too small or too huge columns
     return (base + contentWidth).clamp(65.0, 130.0);
   }
 
@@ -9542,7 +9718,6 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
   String _getFormattedDateRange(DateTime? from, DateTime? to) {
     if (from == null && to == null) return "Showing all data";
     if (from == null || to == null) return "";
-
     final today = DateTime.now();
     final isToday = from.year == today.year &&
         from.month == today.month &&
@@ -9550,18 +9725,14 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
         to.year == today.year &&
         to.month == today.month &&
         to.day == today.day;
-
     if (isToday) return "Showing today's data";
-
     final isFullMonth = from.day == 1 &&
         to.day == DateTime(to.year, to.month + 1, 0).day &&
         from.month == to.month &&
         from.year == to.year;
-
     if (isFullMonth) {
       return "Showing ${DateFormat('MMMM').format(from)}'s data";
     }
-
     return "Showing data from ${DateFormat('dd MMM yyyy').format(from)} to ${DateFormat('dd MMM yyyy').format(to)}";
   }
 
@@ -10342,7 +10513,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => DashboardLeadNewUpdated(widget.token),
+          builder: (context) => DashboardLeadNewUpdatedTwo(widget.token),
         ),
       );
     } else if (menuName == 'Staff_management') {
@@ -10603,7 +10774,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => DashboardLeadNewUpdated(widget.token),
+          builder: (context) => DashboardLeadNewUpdatedTwo(widget.token),
         ),
       );
     }

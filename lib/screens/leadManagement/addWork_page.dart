@@ -215,7 +215,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
               .remarksControllers
               .any((controller) => controller.text.trim().isNotEmpty);
           if (!hasRemark) {
-            String label = widget.Restart == 1 ? 'remark' : 'description';
+            String label = widget.Restart == 1
+                ? 'remark'
+                : (widget.existingWork != null &&
+                        widget.isPaused != 1 &&
+                        widget.Restart != 1)
+                    ? 'remark'
+                    : 'description';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -1395,7 +1401,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                         maxLines: 2,
                                         decoration: InputDecoration(
                                           hintText:
-                                              '${widget.Restart == 1 ? "Remark" : "Description"} ${remarkIndex + 1}',
+                                              '${widget.Restart == 1 ? "Remark" : (widget.existingWork != null && widget.isPaused != 1 && widget.Restart != 1) ? "Remark" : "Description"} ${remarkIndex + 1}',
                                           border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(6),

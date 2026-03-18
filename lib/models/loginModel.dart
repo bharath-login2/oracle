@@ -26,6 +26,7 @@ class Data {
   String? token;
   String? userId;
   String? name;
+  String? staffType;
   String? accountName;
   String? accountId;
   String? role;
@@ -36,6 +37,7 @@ class Data {
       {this.token,
       this.userId,
       this.name,
+      this.staffType,
       this.accountName,
       this.accountId,
       this.role,
@@ -43,14 +45,15 @@ class Data {
       this.isMultiBranch});
 
   Data.fromJson(Map<String, dynamic> json) {
-    token = json['token']??"";
-    userId = json['user_id']??"";
-    name = json['name']??"";
-    accountName = json['account_name']??"";
-    accountId = json['account_id']??"";
-    role = json['role']??"";
-    roleId = json['role_id']??"";
-    isMultiBranch = json['is_multi_branch']??"";
+    token = json['token'] ?? "";
+    userId = json['user_id'] ?? "";
+    name = json['name'] ?? "";
+    staffType = json['staff_type'] ?? "";
+    accountName = json['account_name'] ?? "";
+    accountId = json['account_id'] ?? "";
+    role = json['role'] ?? "";
+    roleId = json['role_id'] ?? "";
+    isMultiBranch = json['is_multi_branch'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
@@ -58,6 +61,7 @@ class Data {
     data['token'] = token;
     data['user_id'] = userId;
     data['name'] = name;
+    data['staff_type'] = staffType;
     data['role'] = role;
     data['role_id'] = roleId;
     data['is_multi_branch'] = isMultiBranch;

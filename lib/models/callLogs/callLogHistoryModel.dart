@@ -37,17 +37,18 @@ class Data {
   String? dateTime;
   String? userId;
   String? staffName;
-
+  String? isMannual;
   Data(
       {this.id,
-        this.name,
-        this.phoneNumber,
-        this.callType,
-        this.duration,
-        this.simName,
-        this.dateTime,
-        this.userId,
-        this.staffName});
+      this.name,
+      this.phoneNumber,
+      this.callType,
+      this.duration,
+      this.simName,
+      this.dateTime,
+      this.userId,
+      this.staffName,
+      this.isMannual});
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -59,6 +60,7 @@ class Data {
     dateTime = json['date_time'];
     userId = json['user_id'];
     staffName = json['staff_name'];
+    isMannual = json['is_mannual'];
   }
 
   Map<String, dynamic> toJson() {
@@ -72,6 +74,7 @@ class Data {
     data['date_time'] = dateTime;
     data['user_id'] = userId;
     data['staff_name'] = staffName;
+    data['is_mannual'] = isMannual;
     return data;
   }
 }

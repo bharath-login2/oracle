@@ -19,17 +19,17 @@ class _TimelinePageState extends State<TimelinePage> {
 
   StaffCallDuration? staffCallDuration;
   Map<String, List<Call>> groupedItems = {};
-  
+
   // Right panel variables
   bool _isPanelOpen = false;
   final double _panelWidth = 200.0;
   double _panelPosition = -200.0;
-  
+
   // Left panel variables
   bool _isLeftPanelOpen = false;
   final double _leftPanelWidth = 200.0;
   double _leftPanelPosition = -200.0;
-  String token ="";
+  String token = "";
   @override
   void initState() {
     super.initState();
@@ -50,18 +50,19 @@ class _TimelinePageState extends State<TimelinePage> {
   }
 
   Future<void> _initializeData() async {
-  token = await Common.getSharedPref("token") ?? "";
-  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    token = await Common.getSharedPref("token") ?? "";
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-  staffId = args["staffId"] as String;
+    staffId = args["staffId"] as String;
 
-  selectedDate = args.containsKey("selectedDate")
-      ? args["selectedDate"] as DateTime
-      : DateTime.now();
+    selectedDate = args.containsKey("selectedDate")
+        ? args["selectedDate"] as DateTime
+        : DateTime.now();
 
-  currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
-  await getCallDuration();
-}
+    currentDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+    await getCallDuration();
+  }
 
   Future<void> getCallDuration() async {
     staffCallDuration =
@@ -355,7 +356,7 @@ class _TimelinePageState extends State<TimelinePage> {
   //     ),
   //   );
   // }
-    Widget _buildTimeSummaryItem(
+  Widget _buildTimeSummaryItem(
     String label,
     String value,
     IconData icon,
@@ -452,7 +453,7 @@ class _TimelinePageState extends State<TimelinePage> {
                 //   Icons.login,
                 //   Colors.green,
                 // ),
-                  _buildTimeSummaryItem(
+                _buildTimeSummaryItem(
                   "Login",
                   summary?.startTime ?? "--",
                   Icons.login,
@@ -470,7 +471,7 @@ class _TimelinePageState extends State<TimelinePage> {
                     );
                   },
                 ),
-                 _buildTimeSummaryItem(
+                _buildTimeSummaryItem(
                   "Work Time",
                   summary != null
                       ? formatDuration_build(
@@ -528,18 +529,21 @@ class _TimelinePageState extends State<TimelinePage> {
   }
 
   String _calculateAverageCallDuration() {
-    if (staffCallDuration == null || 
-        staffCallDuration!.data.calls.isEmpty || 
+    if (staffCallDuration == null ||
+        staffCallDuration!.data.calls.isEmpty ||
         staffCallDuration!.data.summary.totalCalls == 0) {
       return "--";
     }
-    
-    final totalDuration = parseDuration_build(staffCallDuration!.data.summary.totalIncomingDuration) +
-        parseDuration_build(staffCallDuration!.data.summary.totalOutgoingDuration);
-    
-    final averageSeconds = totalDuration.inSeconds / staffCallDuration!.data.summary.totalCalls;
+
+    final totalDuration = parseDuration_build(
+            staffCallDuration!.data.summary.totalIncomingDuration) +
+        parseDuration_build(
+            staffCallDuration!.data.summary.totalOutgoingDuration);
+
+    final averageSeconds =
+        totalDuration.inSeconds / staffCallDuration!.data.summary.totalCalls;
     final averageDuration = Duration(seconds: averageSeconds.round());
-    
+
     return formatDuration_build(averageDuration);
   }
 
@@ -589,12 +593,9 @@ class _TimelinePageState extends State<TimelinePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                       
                           buildBottomSummarySection(staffCallDuration!),
                           const SizedBox(height: 16),
-                          
                           buildLogoutTimeRow(),
-                          
                           ListView.builder(
                             itemCount: groupedItems.keys.length,
                             shrinkWrap: true,
@@ -612,7 +613,8 @@ class _TimelinePageState extends State<TimelinePage> {
                                         backgroundColor: Colors.green,
                                         child: Text(
                                           formatDateHeader(date),
-                                          style: const TextStyle(color: Colors.white),
+                                          style: const TextStyle(
+                                              color: Colors.white),
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
@@ -632,8 +634,6 @@ class _TimelinePageState extends State<TimelinePage> {
                     ),
                   ),
                 ),
-                
-             
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -683,8 +683,6 @@ class _TimelinePageState extends State<TimelinePage> {
                     ),
                   ),
                 ),
-                
-            
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
@@ -696,13 +694,15 @@ class _TimelinePageState extends State<TimelinePage> {
                     onHorizontalDragUpdate: (details) {
                       if (details.delta.dx > 0) {
                         setState(() {
-                          _leftPanelPosition = (_leftPanelPosition + details.delta.dx)
-                              .clamp(-_leftPanelWidth, 0.0);
+                          _leftPanelPosition =
+                              (_leftPanelPosition + details.delta.dx)
+                                  .clamp(-_leftPanelWidth, 0.0);
                         });
                       } else if (details.delta.dx < 0) {
                         setState(() {
-                          _leftPanelPosition = (_leftPanelPosition + details.delta.dx)
-                              .clamp(-_leftPanelWidth, 0.0);
+                          _leftPanelPosition =
+                              (_leftPanelPosition + details.delta.dx)
+                                  .clamp(-_leftPanelWidth, 0.0);
                         });
                       }
                     },

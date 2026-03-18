@@ -268,6 +268,7 @@ class _CallLogsState extends State<CallLogs> {
     Map<String, dynamic> body = {
       "token": widget.token,
       'log': history,
+      'is_mannual': 1,
     };
 
     if (context.mounted) {
@@ -3205,11 +3206,21 @@ class _CallLogsState extends State<CallLogs> {
                                                                               index]
                                                                           .id
                                                                           .toString())
-                                                                  ? Colors
-                                                                      .blueGrey
+                                                                  ? Colors.blueGrey
                                                                       .shade200
-                                                                  : Colors
-                                                                      .white,
+                                                                  : logHistory!
+                                                                              .data![
+                                                                                  index]
+                                                                              .isMannual ==
+                                                                          "1"
+                                                                      ? const Color
+                                                                          .fromARGB(
+                                                                          255,
+                                                                          224,
+                                                                          248,
+                                                                          223)
+                                                                      : Colors
+                                                                          .white,
                                                               boxShadow: const [
                                                                 BoxShadow(
                                                                   color: Colors
@@ -3897,6 +3908,7 @@ class _CallLogsState extends State<CallLogs> {
     Map<String, dynamic> body = {
       "token": widget.token,
       'log': history,
+      'is_mannual': "1",
     };
     if (context.mounted) {
       Common.showProgressDialog(context, "Uploading ${history.length} logs...");

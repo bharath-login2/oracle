@@ -276,7 +276,7 @@ class _BankAccountState extends State<BankAccount> {
               children: [
                 Expanded(
                   child: _buildSummaryItem(
-                    label: "Total Debt",
+                    label: "Total Debit",
                     amount: listResponse!.data.toalDebit,
                     color: Colors.red,
                     icon: Icons.arrow_downward_rounded,

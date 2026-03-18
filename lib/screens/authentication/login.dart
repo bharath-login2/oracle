@@ -1,11 +1,12 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' hide log;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:device_marketing_names/device_marketing_names.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
@@ -13,13 +14,11 @@ import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
-import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/forgot_password.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/service/backgroundService.dart';
-import 'package:lottie/lottie.dart';
 // import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../core/common.dart';
@@ -27,10 +26,9 @@ import '../../models/loginModel.dart';
 import '../../models/updateModel.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
-import '../../widgets/colors.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import '../../widgets/size_config.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -39,7 +37,23 @@ class Login extends StatefulWidget {
   State<Login> createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginState extends State<Login> with TickerProviderStateMixin {
+  // Animation controllers
+  late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late AnimationController _floatController;
+
+  // Animations
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _floatAnimation;
+
+  static const Color primaryBlue = Color(0xFF1E88E5);
+  static const Color lightBlue = Color(0xFF90CAF9);
+  static const Color extraLightBlue = Color(0xFFE3F2FD);
+  static const Color gradientStart = Color(0xFF2196F3);
+  static const Color gradientEnd = Color(0xFF1976D2);
+
   TextEditingController username = TextEditingController();
   TextEditingController password = TextEditingController();
   String? firebaseToken;
@@ -493,6 +507,8 @@ class _LoginState extends State<Login> {
               Common.saveSharedPref("role", object.data!.role.toString());
               Common.saveSharedPref("roleId", object.data!.roleId.toString());
               Common.saveSharedPref(
+                  "staffType", object.data!.staffType.toString());
+              Common.saveSharedPref(
                   "multiBranch", object.data!.isMultiBranch.toString());
               Common.saveSharedPref(
                   "faceDetection", object1.data!.faceDetection.toString());
@@ -646,12 +662,61 @@ class _LoginState extends State<Login> {
     popupMenuState?.showButtonMenu();
   }
 
+  void _initAnimations() {
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    );
+
+    _pulseAnimation = Tween<double>(begin: 0.98, end: 1.02).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _floatAnimation = Tween<double>(begin: -5, end: 5).animate(
+      CurvedAnimation(
+        parent: _floatController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _fadeController.forward();
+  }
+
   @override
   void initState() {
     super.initState();
+    _initAnimations();
     handleAsync();
     getData();
     HiveUtil.clearAllCallLogs();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _pulseController.dispose();
+    _floatController.dispose();
+    username.dispose();
+    password.dispose();
+    super.dispose();
   }
 
   @override
@@ -661,599 +726,684 @@ class _LoginState extends State<Login> {
         ? Scaffold(
             backgroundColor: Colors.white,
             body: updatedata != null
-                ? SingleChildScrollView(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                            // Colors.purple,
-                            Colors.white,
-                            Colors.white,
-                          ])),
-                      child: Column(
-                        children: [
-                          // Container(
-                          //   margin: const EdgeInsets.only(top: 50, right: 20),
-                          //   child: Align(
-                          //     alignment: Alignment.topRight,
-                          //     child: updatedata!.data!.server!.length > 1
-                          //         ? PopupMenuButton(
-                          //             key: popupMenuKey,
-                          //             child: const Icon(
-                          //                 Icons.miscellaneous_services),
-                          //             itemBuilder: (context) {
-                          //               return updatedata!.data!.server!
-                          //                   .map((data) {
-                          //                 return PopupMenuItem<String>(
-                          //                   value: data.url,
-                          //                   child: Row(
-                          //                     mainAxisAlignment:
-                          //                         MainAxisAlignment
-                          //                             .spaceBetween,
-                          //                     children: [
-                          //                       Text(data.name.toString()),
-                          //                       if (selectedUrl == data.url)
-                          //                         const Icon(
-                          //                           Icons.check_circle,
-                          //                           color: Colors.green,
-                          //                           size: 20,
-                          //                         )
-                          //                     ],
-                          //                   ),
-                          //                 );
-                          //               }).toList();
-                          //             },
-                          //             onSelected: (value) {
-                          //               Common.saveSharedPref("url", value);
-                          //               selectedUrl = value;
-                          //               serverChoose = true;
-                          //               setState(() {});
-                          //             })
-                          //         : const SizedBox(),
-                          //   ),
-                          // ),
-                          const SizedBox(
-                            height: 50,
+                ? SafeArea(
+                    child: Stack(
+                      children: [
+                        // Animated background with blue waves
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: BlueWavePainter(),
                           ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              child: Center(
-                                child: Lottie.asset(
-                                  'assets/main/splash.json',
-                                  fit: BoxFit.fill,
-                                ),
-                              )),
-                          Container(
-                              width: double.infinity,
-                              decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(50),
-                                      topRight: Radius.circular(50))),
-                              margin: const EdgeInsets.only(top: 60),
-                              child: Column(
-                                children: [
-                                  const Text("Login",
-                                      style: TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w700,
-                                      )),
-                                  const SizedBox(
-                                    height: 5,
-                                  ),
-                                  const Text("Enter your login details",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      )),
-                                  const SizedBox(
-                                    height: 30,
-                                  ),
-                                  SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.9,
-                                    child: TextFormField(
-                                      controller: username,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Enter Username',
-                                        contentPadding: EdgeInsets.all(10),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 25,
-                                  ),
-                                  SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.9,
-                                    child: TextFormField(
-                                      obscureText: obSecure,
-                                      controller: password,
-                                      decoration: InputDecoration(
-                                        hintText: 'Enter Password',
-                                        suffixIcon: IconButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              obSecure = !obSecure;
-                                            });
-                                          },
-                                          icon: Icon(
-                                            obSecure == true
-                                                ? Icons.remove_red_eye_outlined
-                                                : Icons.visibility_off,
-                                            color: const Color(0xFF454B60),
-                                            size: 22,
-                                          ),
-                                        ),
-                                        contentPadding:
-                                            const EdgeInsets.all(10),
-                                        border: const OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 25,
-                                  ),
+                        ),
 
-                                  Container(
-                                    child: Align(
-                                      child: updatedata!.data!.server!.length >
-                                              1
-                                          ? PopupMenuButton(
-                                              key: popupMenuKey,
-                                              child: const Text(
-                                                "Select Server",
+                        // Floating blue circles for decoration
+                        Positioned(
+                          top: -50,
+                          right: -30,
+                          child: TweenAnimationBuilder(
+                            tween: Tween<double>(begin: 0, end: 1),
+                            duration: const Duration(seconds: 3),
+                            curve: Curves.easeInOut,
+                            builder: (context, double value, child) {
+                              return Transform.translate(
+                                offset: Offset(0, sin(value * pi * 2) * 10),
+                                child: Container(
+                                  width: 200,
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: lightBlue.withOpacity(0.15),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: -40,
+                          left: -40,
+                          child: TweenAnimationBuilder(
+                            tween: Tween<double>(begin: 0, end: 1),
+                            duration: const Duration(seconds: 4),
+                            curve: Curves.easeInOut,
+                            builder: (context, double value, child) {
+                              return Transform.translate(
+                                offset: Offset(cos(value * pi * 2) * 15, 0),
+                                child: Container(
+                                  width: 250,
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: extraLightBlue.withOpacity(0.2),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Container(
+                                width: double.infinity,
+                                color: Colors.transparent,
+                                child: Column(children: [
+                                  // Server selector at top right (only if multiple servers)
+                                  if (updatedata!.data!.server!.length > 1)
+                                    Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(
+                                          right: 20, top: 10),
+                                      child: PopupMenuButton(
+                                        key: popupMenuKey,
+                                        elevation: 8,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                                color: Colors.blue.shade200),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.dns_rounded,
+                                                size: 18,
+                                                color: Colors.blue.shade700,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                serverChoose &&
+                                                        selectedUrl.isNotEmpty
+                                                    ? _getServerDisplayName()
+                                                    : 'Select Server',
                                                 style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.blue.shade700,
                                                 ),
                                               ),
-                                              itemBuilder: (context) {
-                                                return updatedata!.data!.server!
-                                                    .map((data) {
-                                                  return PopupMenuItem<String>(
-                                                    value: data.url,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(data.name
-                                                            .toString()),
-                                                        if (selectedUrl ==
-                                                            data.url)
-                                                          const Icon(
-                                                            Icons.check_circle,
-                                                            color: Colors.green,
-                                                            size: 20,
-                                                          )
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_drop_down_rounded,
+                                                color: Colors.blue.shade700,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        itemBuilder: (context) {
+                                          return updatedata!.data!.server!
+                                              .map((data) {
+                                            return PopupMenuItem<String>(
+                                              value: data.url,
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    data.name.toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  if (selectedUrl == data.url)
+                                                    Icon(
+                                                      Icons
+                                                          .check_circle_rounded,
+                                                      color:
+                                                          Colors.green.shade600,
+                                                      size: 18,
+                                                    ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList();
+                                        },
+                                        onSelected: (value) {
+                                          Common.saveSharedPref("url", value);
+                                          selectedUrl = value;
+                                          serverChoose = true;
+                                          setState(() {});
+                                        },
+                                      ),
+                                    ),
+
+                                  // Main content
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24),
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 20),
+
+                                        // Animated Logo Section - NOW IN FULL COLOR
+                                        FadeTransition(
+                                          opacity: _fadeAnimation,
+                                          child: AnimatedBuilder(
+                                            animation: _floatAnimation,
+                                            builder: (context, child) {
+                                              return Transform.translate(
+                                                offset: Offset(
+                                                    0, _floatAnimation.value),
+                                                child: ScaleTransition(
+                                                  scale: _pulseAnimation,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            15),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: primaryBlue
+                                                              .withOpacity(
+                                                                  0.25),
+                                                          blurRadius: 30,
+                                                          offset: const Offset(
+                                                              0, 15),
+                                                          spreadRadius: 8,
+                                                        ),
+                                                        BoxShadow(
+                                                          color: lightBlue
+                                                              .withOpacity(
+                                                                  0.15),
+                                                          blurRadius: 50,
+                                                          offset: const Offset(
+                                                              0, 20),
+                                                          spreadRadius: 10,
+                                                        ),
                                                       ],
                                                     ),
-                                                  );
-                                                }).toList();
-                                              },
-                                              onSelected: (value) {
-                                                Common.saveSharedPref(
-                                                    "url", value);
-                                                selectedUrl = value;
-                                                serverChoose = true;
-                                                setState(() {});
-                                              },
-                                            )
-                                          : const SizedBox(),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  InkWell(
-                                    onTap: () async {
-                                      FocusScope.of(context).unfocus();
-                                      login();
-                                    },
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.9,
-                                      height: 45,
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Colors.black),
-                                      child: Center(
-                                        child: _loading == true
-                                            ? const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Colors.white,
+                                                    child: ClipOval(
+                                                      child: Image.asset(
+                                                        'assets/main/logo.png',
+                                                        width: 100,
+                                                        height: 100,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context,
+                                                            error, stackTrace) {
+                                                          return Container(
+                                                            width: 100,
+                                                            height: 100,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              gradient:
+                                                                  LinearGradient(
+                                                                begin: Alignment
+                                                                    .topLeft,
+                                                                end: Alignment
+                                                                    .bottomRight,
+                                                                colors: [
+                                                                  gradientStart,
+                                                                  gradientEnd
+                                                                ],
+                                                              ),
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                            child: Center(
+                                                              child: Text(
+                                                                "Logo",
+                                                                style:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
-                                              )
-                                            : const Text("Login",
-                                                style: TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.white)),
-                                      ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 10),
+
+                                        // Welcome text
+                                        const Text(
+                                          "Welcome Back",
+                                          style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1A1F36),
+                                            letterSpacing: -0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          "Sign in to access your account",
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 40),
+
+                                        // Username field
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.grey.shade200,
+                                                blurRadius: 20,
+                                                offset: const Offset(0, 5),
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextFormField(
+                                            controller: username,
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                            decoration: InputDecoration(
+                                              hintText: 'Enter your username',
+                                              hintStyle: TextStyle(
+                                                  color: Colors.grey.shade400),
+                                              prefixIcon: Icon(
+                                                Icons.person_outline_rounded,
+                                                color: Colors.blue.shade700,
+                                                size: 22,
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.white,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey.shade200,
+                                                    width: 1.5),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                    color: Colors.blue.shade700,
+                                                    width: 2),
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 16),
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 18),
+
+                                        // Password field
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.grey.shade200,
+                                                blurRadius: 20,
+                                                offset: const Offset(0, 5),
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextFormField(
+                                            obscureText: obSecure,
+                                            controller: password,
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                            decoration: InputDecoration(
+                                              hintText: 'Enter your password',
+                                              hintStyle: TextStyle(
+                                                  color: Colors.grey.shade400),
+                                              prefixIcon: Icon(
+                                                Icons.lock_outline_rounded,
+                                                color: Colors.blue.shade700,
+                                                size: 22,
+                                              ),
+                                              suffixIcon: IconButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    obSecure = !obSecure;
+                                                  });
+                                                },
+                                                icon: Icon(
+                                                  obSecure
+                                                      ? Icons
+                                                          .visibility_outlined
+                                                      : Icons
+                                                          .visibility_off_outlined,
+                                                  color: Colors.grey.shade600,
+                                                  size: 22,
+                                                ),
+                                              ),
+                                              filled: true,
+                                              fillColor: Colors.white,
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey.shade200,
+                                                    width: 1.5),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                borderSide: BorderSide(
+                                                    color: Colors.blue.shade700,
+                                                    width: 2),
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 16),
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 30),
+
+                                        // Login button
+                                        InkWell(
+                                          onTap: () async {
+                                            FocusScope.of(context).unfocus();
+                                            login();
+                                          },
+                                          child: Container(
+                                            width: double.infinity,
+                                            height: 55,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Colors.blue.shade700,
+                                                  Colors.blue.shade500,
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.blue.shade200,
+                                                  blurRadius: 20,
+                                                  offset: const Offset(0, 8),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Center(
+                                              child: _loading
+                                                  ? const SizedBox(
+                                                      height: 30,
+                                                      width: 30,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 3,
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<
+                                                                    Color>(
+                                                                Colors.white),
+                                                      ),
+                                                    )
+                                                  : const Text(
+                                                      "Sign In",
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: Colors.white,
+                                                        letterSpacing: 0.5,
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 20),
+
+                                        // Forgot password
+                                        InkWell(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const ForgotPassword(),
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            "Forgot Password?",
+                                            style: TextStyle(
+                                              color: Colors.blue.shade700,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 30),
+                                        Text(
+                                          "Version 2.0.7",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(
-                                    height: 30,
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      // if (serverChoose == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const ForgotPassword()),
-                                      );
-                                      // } else {
-                                      //   Common.toastMessaage(
-                                      //       'Choose a server', Colors.red);
-                                      //   openPopupMenu();
-                                      // }
-                                    },
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        "Forgot Password?",
-                                        style: TextStyle(
-                                            color: textColor,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      // child: Column(
-                                      //   crossAxisAlignment:
-                                      //       CrossAxisAlignment.start,
-                                      //   children: [
-                                      //     Container(
-                                      //       alignment: Alignment.center,
-                                      //       child: Text(
-                                      //         "Forgot Password?",
-                                      //         style: TextStyle(
-                                      //           color: textColor,
-                                      //           fontWeight: FontWeight.bold,
-                                      //         ),
-                                      //       ),
-                                      //     ),
-                                      //     Container(
-                                      //       child: Align(
-                                      //         child: updatedata!.data!.server!
-                                      //                     .length >
-                                      //                 1
-                                      //             ? PopupMenuButton(
-                                      //                 key: popupMenuKey,
-                                      //                 child: Text(
-                                      //                   "Select Server",
-                                      //                   style: TextStyle(
-                                      //                     fontWeight:
-                                      //                         FontWeight.bold,
-                                      //                     color: Colors.blue,
-                                      //                   ),
-                                      //                 ),
-                                      //                 itemBuilder: (context) {
-                                      //                   return updatedata!
-                                      //                       .data!.server!
-                                      //                       .map((data) {
-                                      //                     return PopupMenuItem<
-                                      //                         String>(
-                                      //                       value: data.url,
-                                      //                       child: Row(
-                                      //                         mainAxisAlignment:
-                                      //                             MainAxisAlignment
-                                      //                                 .spaceBetween,
-                                      //                         children: [
-                                      //                           Text(data.name
-                                      //                               .toString()),
-                                      //                           if (selectedUrl ==
-                                      //                               data.url)
-                                      //                             const Icon(
-                                      //                               Icons
-                                      //                                   .check_circle,
-                                      //                               color: Colors
-                                      //                                   .green,
-                                      //                               size: 20,
-                                      //                             )
-                                      //                         ],
-                                      //                       ),
-                                      //                     );
-                                      //                   }).toList();
-                                      //                 },
-                                      //                 onSelected: (value) {
-                                      //                   Common.saveSharedPref(
-                                      //                       "url", value);
-                                      //                   selectedUrl = value;
-                                      //                   serverChoose = true;
-                                      //                   setState(() {});
-                                      //                 },
-                                      //               )
-                                      //             : const SizedBox(),
-                                      //       ),
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 20,
-                                  ),
-                                  // ElevatedButton(
-                                  //   onPressed: () async {
-                                  //     Navigator.of(context).pushAndRemoveUntil(
-                                  //         MaterialPageRoute(
-                                  //             builder: (context) => CreditHomePageView()),
-                                  //             (Route<dynamic> route) => false);
-                                  //
-                                  //     // Navigator.of(context).pushAndRemoveUntil(
-                                  //     //     MaterialPageRoute(builder: (context) => Dashboard()),
-                                  //     //         (Route<dynamic> route) => false);
-                                  //   },
-                                  //   style: ElevatedButton.styleFrom(
-                                  //       onPrimary: Colors.orangeAccent,
-                                  //       shadowColor: Colors.orange,
-                                  //       elevation: 15,
-                                  //       padding: EdgeInsets.zero,
-                                  //       shape: RoundedRectangleBorder(
-                                  //           borderRadius: BorderRadius.circular(15))),
-                                  //   child: Ink(
-                                  //     decoration: BoxDecoration(
-                                  //         gradient: const LinearGradient(colors: [
-                                  //           Colors.orangeAccent,
-                                  //           Colors.orange
-                                  //         ]),
-                                  //         borderRadius: BorderRadius.circular(15)),
-                                  //     child: Container(
-                                  //       width: 200,
-                                  //       height: 50,
-                                  //       alignment: Alignment.center,
-                                  //       child: _loading == true
-                                  //           ? Center(
-                                  //         child: CircularProgressIndicator(
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       )
-                                  //           : const Text(
-                                  //         'credit',
-                                  //         style: TextStyle(
-                                  //           fontSize: 20,
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  // const SizedBox(
-                                  //   height: 20,
-                                  // ),
-                                  // ElevatedButton(
-                                  //   onPressed: () async {
-                                  //     Navigator.of(context).pushAndRemoveUntil(
-                                  //         MaterialPageRoute(
-                                  //             builder: (context) => InsuranceHomePageView()),
-                                  //             (Route<dynamic> route) => false);
-                                  //
-                                  //     // Navigator.of(context).pushAndRemoveUntil(
-                                  //     //     MaterialPageRoute(builder: (context) => Dashboard()),
-                                  //     //         (Route<dynamic> route) => false);
-                                  //   },
-                                  //   style: ElevatedButton.styleFrom(
-                                  //       onPrimary: Colors.orangeAccent,
-                                  //       shadowColor: Colors.orange,
-                                  //       elevation: 15,
-                                  //       padding: EdgeInsets.zero,
-                                  //       shape: RoundedRectangleBorder(
-                                  //           borderRadius: BorderRadius.circular(15))),
-                                  //   child: Ink(
-                                  //     decoration: BoxDecoration(
-                                  //         gradient: const LinearGradient(colors: [
-                                  //           Colors.orangeAccent,
-                                  //           Colors.orange
-                                  //         ]),
-                                  //         borderRadius: BorderRadius.circular(15)),
-                                  //     child: Container(
-                                  //       width: 200,
-                                  //       height: 50,
-                                  //       alignment: Alignment.center,
-                                  //       child: _loading == true
-                                  //           ? Center(
-                                  //         child: CircularProgressIndicator(
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       )
-                                  //           : const Text(
-                                  //         'Insurance',
-                                  //         style: TextStyle(
-                                  //           fontSize: 20,
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  // const SizedBox(
-                                  //   height: 20,
-                                  // ),
-                                  // ElevatedButton(
-                                  //   onPressed: () async {
-                                  //     Navigator.of(context).pushAndRemoveUntil(
-                                  //         MaterialPageRoute(
-                                  //             builder: (context) => ReminderManagementHomePageView()),
-                                  //             (Route<dynamic> route) => false);
-                                  //
-                                  //     // Navigator.of(context).pushAndRemoveUntil(
-                                  //     //     MaterialPageRoute(builder: (context) => Dashboard()),
-                                  //     //         (Route<dynamic> route) => false);
-                                  //   },
-                                  //   style: ElevatedButton.styleFrom(
-                                  //       onPrimary: Colors.orangeAccent,
-                                  //       shadowColor: Colors.orange,
-                                  //       elevation: 15,
-                                  //       padding: EdgeInsets.zero,
-                                  //       shape: RoundedRectangleBorder(
-                                  //           borderRadius: BorderRadius.circular(15))),
-                                  //   child: Ink(
-                                  //     decoration: BoxDecoration(
-                                  //         gradient: const LinearGradient(colors: [
-                                  //           Colors.orangeAccent,
-                                  //           Colors.orange
-                                  //         ]),
-                                  //         borderRadius: BorderRadius.circular(15)),
-                                  //     child: Container(
-                                  //       width: 200,
-                                  //       height: 50,
-                                  //       alignment: Alignment.center,
-                                  //       child: _loading == true
-                                  //           ? Center(
-                                  //         child: CircularProgressIndicator(
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       )
-                                  //           : const Text(
-                                  //         'Reminder System',
-                                  //         style: TextStyle(
-                                  //           fontSize: 20,
-                                  //           color: Colors.white,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //   ),
-                                  // ),
-                                  // const SizedBox(
-                                  //   height: 20,
-                                  // ),
-                                  // Padding(
-                                  //   padding: EdgeInsets.fromLTRB(
-                                  //       SizeConfig.screenWidth!/20.55,
-                                  //       SizeConfig.screenHeight!/136.6,
-                                  //       SizeConfig.screenWidth!/20.55,
-                                  //       0
-                                  //   ),
-                                  //   child: Row(
-                                  //     mainAxisAlignment: MainAxisAlignment.center,
-                                  //     children: [
-                                  //       Text("Don't have an account?", style: TextStyle(color: texthint),),
-                                  //       GestureDetector(
-                                  //         onTap: (){
-                                  //           // Navigator.push(context, MaterialPageRoute(builder: (context) => Register()));
-                                  //         },
-                                  //         child: Text(
-                                  //           "Register",
-                                  //           style: TextStyle(
-                                  //               color: buttonColor,
-                                  //               fontWeight: FontWeight.w600,
-                                  //               fontSize: SizeConfig.screenHeight!/45.54          /// 15
-                                  //           ),
-                                  //         ),
-                                  //       )
-                                  //     ],
-                                  //   ),
-                                  // ),
-                                  // const SizedBox(
-                                  //   height: 10,
-                                  // ),
-                                ],
-                              ))
-                        ],
-                      ),
+                                ]))),
+                      ],
                     ),
                   )
-                : const SizedBox())
+                : const SizedBox(),
+          )
         : Scaffold(
             backgroundColor: Colors.white,
-            body: SizedBox(
-              width: MediaQuery.of(context).size.width * 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 300,
-                    height: 300,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/icons/noNetwork.jpg'),
-                        fit: BoxFit.cover,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 220,
+                      height: 220,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey.shade100,
+                      ),
+                      child: Icon(
+                        timeOut == true
+                            ? Icons.timer_off_rounded
+                            : Icons.wifi_off_rounded,
+                        size: 80,
+                        color: Colors.grey.shade400,
                       ),
                     ),
-                  ),
-                  Text(
-                    timeOut == true
-                        ? "There seems to be a temporary issue !, \n Please retry to continue"
-                        : 'No Network Found !',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      getData();
-                    },
-                    child: SizedBox(
-                      width: 120,
-                      height: 35,
-                      child: Padding(
-                        padding: const EdgeInsets.all(1.5),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Try Again',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold),
+                    const SizedBox(height: 32),
+                    Text(
+                      timeOut == true
+                          ? "Connection Timeout"
+                          : "No Internet Connection",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1F36),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      timeOut == true
+                          ? "Unable to reach the server. Please try again."
+                          : "Please check your internet connection and try again.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade600,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    InkWell(
+                      onTap: () {
+                        getData();
+                      },
+                      child: Container(
+                        width: 160,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade700,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.shade200,
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Try Again',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ));
+            ),
+          );
   }
-  // Future<dynamic> staffDialog(BuildContext context) {
-  //   return showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return StatefulBuilder(builder: (context, setState) {
-  //         return AlertDialog(
-  //             title: const Center(child: Text("Choose Server")),
-  //             content: SizedBox(
-  //               height: updatedata!.data!.server!.length * 50,
-  //               width: MediaQuery.of(context).size.width * .2,
-  //               child: ListView.builder(
-  //                 itemCount: updatedata!.data!.server!.length,
-  //                 physics: const ScrollPhysics(),
-  //                 shrinkWrap: true,
-  //                 itemBuilder: (context, index) {
-  //                   return ListTile(
-  //                       onTap: () {
-  //                         Common.saveSharedPref(
-  //                             "url", updatedata!.data!.server![index].url!);
-  //                         serverChoose = true;
-  //                         setState(() {});
-  //                         if (context.mounted) {
-  //                           Navigator.pop(context);
-  //                         }
-  //                       },
-  //                       title: Text(updatedata!.data!.server![index].name!));
-  //                 },
-  //               ),
-  //             ));
-  //       });
-  //     },
-  //   );
-  // }
+
+  // Helper method to get server display name
+  String _getServerDisplayName() {
+    try {
+      final selectedServer = updatedata!.data!.server!.firstWhere(
+        (server) => server.url == selectedUrl,
+      );
+      return selectedServer.name ?? 'Server';
+    } catch (e) {
+      return 'Server';
+    }
+  }
+}
+
+// Custom painter for blue wave background
+class BlueWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE3F2FD).withOpacity(0.5)
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(0, size.height * 0.3)
+      ..quadraticBezierTo(
+        size.width * 0.25,
+        size.height * 0.2,
+        size.width * 0.5,
+        size.height * 0.3,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.75,
+        size.height * 0.4,
+        size.width,
+        size.height * 0.25,
+      )
+      ..lineTo(size.width, 0)
+      ..lineTo(0, 0)
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    // Draw second wave with lighter blue
+    final paint2 = Paint()
+      ..color = const Color(0xFFBBDEFB).withOpacity(0.4)
+      ..style = PaintingStyle.fill;
+
+    final path2 = Path()
+      ..moveTo(0, size.height * 0.4)
+      ..quadraticBezierTo(
+        size.width * 0.3,
+        size.height * 0.25,
+        size.width * 0.6,
+        size.height * 0.4,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.8,
+        size.height * 0.5,
+        size.width,
+        size.height * 0.35,
+      )
+      ..lineTo(size.width, 0)
+      ..lineTo(0, 0)
+      ..close();
+
+    canvas.drawPath(path2, paint2);
+
+    // Add blue dots for decoration
+    final dotPaint = Paint()
+      ..color = const Color(0xFF42A5F5).withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+        Offset(size.width * 0.8, size.height * 0.7), 30, dotPaint);
+    canvas.drawCircle(
+        Offset(size.width * 0.1, size.height * 0.8), 50, dotPaint);
+    canvas.drawCircle(
+        Offset(size.width * 0.9, size.height * 0.2), 20, dotPaint);
+
+    // Add sparkles
+    final sparklePaint = Paint()
+      ..color = const Color(0xFF64B5F6).withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 5; i++) {
+      double x = size.width * (0.1 + i * 0.2);
+      double y = size.height * (0.1 + sin(i * 1.5) * 0.1);
+      canvas.drawCircle(Offset(x, y), 3, sparklePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 extension StringExtension on String {
